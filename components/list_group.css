@@ -1,0 +1,21 @@
+.list-item {
+    margin: 10px;
+    margin-bottom: 0;
+    margin-top: 4px;
+    border-radius: 7px;
+    padding-left: 5px;
+    padding-right: 5px;
+    transition-property: scale;
+    transition-duration: 0.05s;
+    --accent-color: var(--accent);
+}
+
+.list-item:hover {
+    background-color: #2127317c;
+}
+
+.list-item.active {
+    background-color: var(--bg_content);
+    /* transform: scale(1.02); */
+    color: var(--accent-color);
+}

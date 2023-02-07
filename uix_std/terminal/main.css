@@ -1,0 +1,79 @@
+.terminal {
+    font-family: Menlo, Monaco, "Courier New", monospace;
+    font-size: 14px;
+    user-select: text;
+    width: 100%;
+    color: var(--text_highlight);
+}
+
+.terminal ::selection {
+    background: var(--text);
+}
+
+
+.cursor {
+    color: transparent;
+    display: inline-block;
+    backdrop-filter: invert(1);
+    -webkit-backdrop-filter: invert(1);
+    transition-duration: 50ms;
+    transition-property: opacity;
+}
+
+.term-row {
+    font-size: 14px;
+    min-height: 1.28em;
+    display: flex;
+}
+
+.term-row span {
+    white-space: pre;
+    background: var(--bg);
+}
+
+.blink {
+    animation: blink 0.9s infinite;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    49% {
+        opacity: 1;
+    }
+    60% {
+        opacity: 0;
+    }
+    99% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+.blink-fast {
+    animation: blinkFast 1s step-start infinite;
+}
+
+@keyframes blinkFast {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.hoverable {
+    cursor: pointer;
+}
+
+.hoverable:hover {
+    text-decoration: underline;
+    /* text-underline-position: under; */
+    text-decoration-color: var(--text_highlight);
+}

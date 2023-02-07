@@ -1,0 +1,167 @@
+:host { 
+	position: relative;
+	display: flex;
+	height: 100%;
+	width: 100%;
+	min-height: 0;
+	min-width: 0;
+	box-sizing: border-box;
+	pointer-events: auto;
+}
+
+
+/* content-container */
+.content-container {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	display: flex;
+    flex-direction: column;
+	overflow: hidden;
+}
+
+/* content */
+.content {
+	position: relative;
+	overflow: hidden; /* make visible, but overflow problemns in content container with header*/
+}
+.content.fill {
+	width: 100%;
+	height: 100%;
+}
+
+
+
+/* editing */
+
+.edit-helper {
+    position: absolute;
+    border-radius: 20px;
+    z-index: 400;
+}
+
+.edit-protector {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.edit-overlay {
+    position: absolute;
+}
+
+.focus .edit-helper {
+    background-color: #ccc;
+    z-index: 202;
+}
+.focus .edit-helper.bottom {
+    width: min(40%, 100px);
+    bottom: 6px;
+    left: calc((100% - min(40%, 100px)) / 2);
+    height: 4px;
+    cursor: row-resize;
+}
+.focus .edit-helper.left {
+    height: min(40%, 100px);
+    left: 6px;
+    top: calc((100% - min(40%, 100px)) / 2);
+    width: 4px;
+    cursor: col-resize;
+}
+.focus .edit-helper.right {
+    height: min(40%, 100px);
+    right: 6px;
+    top: calc((100% - min(40%, 100px)) / 2);
+    width: 4px;
+    cursor: col-resize;
+}
+.focus .edit-helper.top {
+    width: min(40%, 100px);
+    top: 6px;
+    left: calc((100% - min(40%, 100px)) / 2);
+    height: 4px;
+    cursor: row-resize;
+}
+
+.edit-overlay {
+    /*&:hover {
+      background-color: var(--border);
+    }*/
+}
+.edit-overlay.center {
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    z-index: 200;
+    cursor: all-scroll;
+    position: absolute;
+    background-color: transparent;
+}
+.edit-overlay.left {
+    height: calc(100% + 15px + 5px);
+    left: calc(5px - 15px);
+    top: calc(5px - 15px);
+    width: 15px;
+    cursor: col-resize;
+    z-index: 201;
+}
+.edit-overlay.right {
+    cursor: col-resize;
+    height: calc(100% + 15px + 5px);
+    left: calc(100% - 5px);
+    top: calc(5px - 15px);
+    width: 15px;
+    z-index: 201;
+}
+.edit-overlay.top {
+    width: calc(100% + 15px + 5px);
+    left: calc(5px - 15px);
+    top: calc(5px - 15px);
+    height: 15px;
+    cursor: row-resize;
+    z-index: 201;
+}
+.edit-overlay.bottom {
+    width: calc(100% + 15px + 5px);
+    left: calc(5px - 15px);
+    top: calc(100% - 5px);
+    height: 15px;
+    cursor: row-resize;
+    z-index: 201;
+}
+.edit-overlay.top-right {
+    width: 15px;
+    left: calc(100% - 15px + 10px);
+    top: -10px;
+    height: 15px;
+    cursor: nesw-resize;
+    z-index: 202;
+}
+.edit-overlay.top-left {
+    width: 15px;
+    left: -10px;
+    top: -10px;
+    height: 15px;
+    cursor: nwse-resize;
+    z-index: 202;
+}
+.edit-overlay.bottom-right {
+    width: 15px;
+    left: calc(100% - 15px + 10px);
+    top: calc(100% - 15px + 10px);
+    height: 15px;
+    cursor: nwse-resize;
+    z-index: 202;
+}
+.edit-overlay.bottom-left {
+    width: 15px;
+    left: -10px;
+    top: calc(100% - 15px + 10px);
+    height: 15px;
+    cursor: nesw-resize;
+    z-index: 202;
+}

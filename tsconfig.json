@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+      "module": "ES2022",
+      "target": "ES2022",
+      "noImplicitOverride":true,
+      "removeComments": true,
+      "preserveConstEnums": true,
+      "esModuleInterop": true,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
+  }
+}

@@ -1,0 +1,14 @@
+{
+	"imports": {
+		"unyt_core": "https://cdn.unyt.org/unyt_core@dev/datex.ts",
+		"uix": "https://cdn.unyt.org/uix@dev/uix.ts",
+
+		"unyt_core/": "https://cdn.unyt.org/unyt_core@dev/",
+		"uix/": "https://cdn.unyt.org/uix@dev/",
+		"uix_std/": "https://cdn.unyt.org/uix@dev/uix_std/",
+		"unyt_tests/": "https://cdn.unyt.org/unyt_tests@dev/",
+		"unyt_web/": "https://cdn.unyt.org/unyt_web@dev/",
+		"unyt_node/": "https://cdn.unyt.org/unyt_node@dev/",
+		"unyt_cli/": "https://cdn.unyt.org/unyt_cli@dev/"
+	}
+}

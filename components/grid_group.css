@@ -1,0 +1,17 @@
+.ghost-element {
+    border-radius: 10px;
+}
+
+.drag-area {
+    backdrop-filter: brightness(0.99) !important;
+    -webkit-backdrop-filter: brightness(0.99) !important;
+    filter: brightness(0.6) !important;
+}
+
+.drag-area.border-drag-area {
+    box-shadow: #a0a0a0 0 0 0 2px inset !important;
+}
+
+.drag-area.drag-invisible {
+    filter: none;
+}

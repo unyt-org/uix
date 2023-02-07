@@ -1,0 +1,5 @@
+.missing-element {
+    background-image: linear-gradient(45deg, #471d2b 25%, transparent 25%), linear-gradient(-45deg, #471d2b 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #471d2b 75%), linear-gradient(-45deg, transparent 75%, #471d2b 75%);
+    background-size: 400px 400px;
+    background-position: 0 0, 0 200px, 200px -200px, -200px 0px;
+}

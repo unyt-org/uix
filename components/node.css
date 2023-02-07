@@ -1,0 +1,28 @@
+
+.node-connector {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    transform: translate(-5px, -5px);
+    border-radius: 50%;
+    background-color: var(--text);
+    border: 1px solid var(--bg_dark);
+    cursor: default;
+    z-index: 300;
+}
+
+.node-connector.fade-out:not(.active) {
+    opacity: 0.1;
+}
+
+.node-connector.fade-out:hover {
+    opacity: 1;
+}
+
+.node-connector.hide-out:not(.active) {
+    opacity: 0;
+}
+
+.node-connector.hide-out:hover {
+    opacity: 1;
+}

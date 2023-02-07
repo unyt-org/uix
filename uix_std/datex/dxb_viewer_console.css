@@ -1,0 +1,62 @@
+.console-view {
+    width: 100%;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.dxb-block {
+    display: inline-block;
+    background: var(--bg_default);
+    margin: 2px;
+    padding: 2px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    user-select: none;
+}
+
+.dxb-outer-block {
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    padding: 7px;
+    cursor: pointer;
+    user-select: none;
+    color: #fff;
+    opacity: 0.8;
+}
+
+.dxb-block::selection, .dxb-section::selection {
+    background: var(--bg_dark);
+}
+
+.dxb-section {
+    display: inline-block;
+    background: var(--bg_default);
+    margin: 0;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    padding: 2px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+}
+.dxb-section.left {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-left: 1px solid var(--border);
+}
+.dxb-section.right {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-right: 1px solid var(--border);
+    margin-right: 4px;
+}
+
+.dxb-section.active, .dxb-outer-block.active {
+    background: var(--bg_default);
+}
+
+.dxb-section.inactive {
+    background: var(--bg_default) !important;
+}

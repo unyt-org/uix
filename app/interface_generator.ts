@@ -1,6 +1,6 @@
 // generates typescript code for @namespace JS classes with static @expose methods
 // (matching code to call the methods on another endpoint)
-import { Datex } from "unyt_core";
+import { $$, Datex } from "unyt_core";
 
 
 type interf = {new(...args:unknown[]):unknown};
@@ -50,7 +50,7 @@ function getJSValueCode(name:string, value: any) {
 				value = {}
 				for (const prop of Object.getOwnPropertyNames(original_value)) {
 					if (prop != "length" && prop != "name" && prop != "prototype") {
-						value[prop] = original_value[prop];
+						value[prop] = typeof original_value[prop] == "function" ? $$(Datex.Function.createFromJSFunction(original_value[prop], original_value)) : $$(original_value[prop]);
 					}
 				}
 			}
@@ -64,8 +64,7 @@ function getJSValueCode(name:string, value: any) {
 			}
 		}
 		
-
-		value = Datex.Pointer.proxifyValue(value);
+		value = $$(value);
 	}
 
 	// disable garbage collection

@@ -24,7 +24,6 @@ export namespace FlexGroup {
 @NoResources
 export class FlexGroup<O extends FlexGroup.Options=FlexGroup.Options, ChildElement extends Base = Base> extends Group<O, ChildElement> {
 
-
     override onCreateLayout(){
         // handle scroll event, otherwise events pass through
         if (!this.options.scroll) this.style.pointerEvents = 'none';

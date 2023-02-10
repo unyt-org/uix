@@ -3,22 +3,26 @@ import { Datex } from "unyt_core";
 import { FrontendManager } from "./frontend_manager.ts";
 import { BackendManager } from "./backend_manager.ts";
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
-import { getLocalFileTextContent } from "unyt_core/datex_all.ts";
+import { getLocalFileContent } from "unyt_core/datex_all.ts";
 
 const logger = new Datex.Logger("UIX App");
 
 let live_frontend = false;
+let watch = false;
 
 // command line args (--watch-backend)
 if (globalThis.Deno) {
     const parse = (await import("https://deno.land/std@0.168.0/flags/mod.ts")).parse;
     const flags = parse(Deno.args, {
-        boolean: ["live"],
+        boolean: ["live", "watch"],
         alias: {
-            l: "live"
-        }
+            l: "live",
+			w: "watch"
+        },
+		default: {watch, live:live_frontend}
     });
     live_frontend = flags["live"]
+	watch = live_frontend || flags["watch"]
 }
 
 
@@ -46,6 +50,7 @@ export interface normalized_app_options extends app_options {
 	frontend: URL[]
 	backend: URL[]
 	common: URL[],
+	icon_path: string,
 
 	scripts: (URL|string)[],
 	import_map_path: never
@@ -67,7 +72,7 @@ class UIXApp {
 
 		n_options.name = options.name;
 		n_options.description = options.description;
-		n_options.icon_path = options.icon_path;
+		n_options.icon_path = options.icon_path ?? 'https://cdn.unyt.org/unyt_core/assets/skeleton_light.svg'
 		n_options.version = options.version;
 		n_options.stage = options.stage;
 		n_options.offline_support = options.offline_support ?? true;
@@ -75,7 +80,7 @@ class UIXApp {
 		
 		// import map or import map path
 		if (options.import_map) n_options.import_map = options.import_map;
-		else if (options.import_map_path) n_options.import_map = JSON.parse(await getLocalFileTextContent(options.import_map_path))
+		else if (options.import_map_path) n_options.import_map = JSON.parse(<string>await getLocalFileContent(options.import_map_path))
 		
 		n_options.frontend = ((options.frontend instanceof Array ? options.frontend : [options.frontend]).filter(p=>!!p) as (string | URL)[]).map(p=>new URL(p,base_url));
 		n_options.backend = ((options.backend instanceof Array ? options.backend : [options.backend]).filter(p=>!!p) as (string | URL)[]).map(p=>new URL(p,base_url));
@@ -108,13 +113,14 @@ class UIXApp {
 			catch {}
 		}
 
-		// logger.info("options", n_options)
+		logger.info("options", n_options)
 
 		// for unyt log
 		Datex.Unyt.setApp(n_options.name!, n_options.version!, n_options.stage!)
 
 		// set .dx path to backend
 		if (n_options.backend.length) {
+			console.log("setting endpoint config for backend: " + new URL("./.dx", n_options.backend[0]));
 			await endpoint_config.load(new URL("./.dx", n_options.backend[0]))
 		}
 
@@ -128,7 +134,7 @@ class UIXApp {
 
 		// load frontend
 		for (const frontend of n_options.frontend) {
-			new FrontendManager(n_options, frontend, this.#base_url, live_frontend).run();
+			new FrontendManager(n_options, frontend, this.#base_url, watch, live_frontend).run();
 		}
 	}
 

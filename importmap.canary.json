@@ -1,0 +1,23 @@
+{
+	"imports": {
+		"unyt_core": "https://cdn.unyt.org/unyt_core@canary/datex.ts",
+		"uix": "https://cdn.unyt.org/uix@canary/uix.ts",
+
+		"unyt_core/": "https://cdn.unyt.org/unyt_core@canary/",
+		"uix/": "https://cdn.unyt.org/uix@canary/",
+		"uix_std/": "https://cdn.unyt.org/uix@canary/uix_std/",
+		"unyt_tests/": "https://cdn.unyt.org/unyt_tests@canary/",
+		"unyt_web/": "https://cdn.unyt.org/unyt_web@canary/",
+		"unyt_node/": "https://cdn.unyt.org/unyt_node@canary/",
+		"unyt_cli/": "https://cdn.unyt.org/unyt_cli@canary/",
+
+		"supranet/": 	"https://portal.unyt.org/ts_module_resolver/",
+
+		"backend/": "./backend/",
+		"common/": "./common/",
+		"frontend/": "./frontend/",
+
+		"x": "https://cdn.unyt.org/x.ts",
+		"y": "./frontend/y.ts"
+	}
+}

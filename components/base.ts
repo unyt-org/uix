@@ -216,7 +216,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                         // add to content if it exists
                         if (this.content) {
                             const previous = this.content.querySelector("#"+id);
-                            if (previous) previous.replaceWith(el);
+                            if (previous == el) {/* ignore */}
+                            else if (previous) this.content.replaceChild(el, previous);
                             else this.content.append(el);
                         }
                        

@@ -86,9 +86,9 @@ class UIXApp {
 		if (options.backend instanceof Datex.Tuple) options.backend = options.backend.toArray();
 		if (options.common instanceof Datex.Tuple) options.common = options.common.toArray();
 
-		n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new URL(p,base_url)) : [new URL(options.frontend??'./frontend/', base_url)];
-		n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new URL(p,base_url)) : [new URL(options.backend??'./backend/', base_url)];
-		n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new URL(p,base_url)) : [new URL(options.common??'./common/', base_url)];
+		n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new URL(p,base_url)) : (new Path(options.frontend??'./frontend/', base_url).fs_exists ? [new Path(options.frontend??'./frontend/', base_url)] : []);
+		n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new URL(p,base_url)) :  (new Path(options.backend??'./backend/', base_url).fs_exists ? [new Path(options.backend??'./backend/', base_url)] : []);
+		n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new URL(p,base_url)) :   (new Path(options.common??'./common/', base_url).fs_exists ? [new Path(options.common??'./common/', base_url)] : []);
 
 
 		if (!n_options.frontend.length) {

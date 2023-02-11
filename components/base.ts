@@ -971,9 +971,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         await this.#datex_lifecycle_ready; // wait for onConstruct, init
 
-
-        // wait until lazy loaded
-        if (this.options.lazy_load) {
+        // wait until lazy loaded if added to group component
+        if (this.options.lazy_load && this.parent instanceof Group) {
             // notify parent about anchor
             this.parent?.handleChildAnchor(this);
             // wait until first focus
@@ -997,6 +996,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         const new_create = !this.#created;
         this.#created = true;
+
 
         // call onCreate
         if (new_create) {

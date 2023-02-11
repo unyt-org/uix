@@ -1,6 +1,6 @@
 import { Logger } from "unyt_core/utils/logger.ts";
 
-import "./filesystem.ts";
+// import "./filesystem.ts";
 import { expose, f, remote, scope, timeout, to } from "unyt_core";
 import { Resource, ResourceManger } from "../../uix_all.ts";
 

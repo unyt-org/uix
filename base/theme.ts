@@ -251,6 +251,15 @@ export class Theme  {
 		return Datex.PointerProperty.get(this.#colors, name)
 	}
 
+	static collapseColorToCss(color:Datex.CompatValue<string>) {
+		if (color instanceof Datex.PointerProperty && color.pointer.val == Theme.colors) {
+			return `var(--${color.key})`; // css variable
+		}
+		else {
+			return Datex.Value.collapseValue(color, true, true);
+		}
+	}
+
 	private static mode_change_observers = new Set<Function>();
 	static onModeChange(observer:(theme:"dark"|"light")=>void) {
 		this.mode_change_observers.add(observer);

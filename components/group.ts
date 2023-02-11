@@ -424,7 +424,9 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
     }
 
     // @implement called when new child element was added and fully created
-    public onNewElement(element:ChildElement){}
+    public onNewElement(element:ChildElement){
+        // element.focus(); // assume focused by default, can be overridden
+    }
 
     // @implement
     // change element properties (position, ...) to match parent

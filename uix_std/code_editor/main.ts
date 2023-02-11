@@ -173,7 +173,7 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
 
     }
 
-    private renderMarkdown(content:string){
+    protected renderMarkdown(content:string){
         const id = UIX.Utils.getUniqueElementId();
 
         let style = `<style>
@@ -195,22 +195,23 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
             #${id} bg_pu {background: var(--purple);}
             #${id} bg_y {background: var(--yellow);}
             #${id} bg_l {background: var(--light_blue);}
-            #${id} info {background: #444488cc;padding:10px;margin-right:50px;margin-left:50px;border:1px solid ${this.options.h1_color}}
+            #${id} info {background: #444488cc;padding:10px;margin-right:50px;margin-left:50px;border:1px solid ${UIX.Theme.collapseColorToCss(this.options.$.h1_color)}}
             `
+            
         if (this.options.h1_color) {
-            style += `#${id} h1, #${id} strong, #${id} b { color:${this.options.h1_color}}\n`
+            style += `#${id} h1, #${id} strong, #${id} b { color:${UIX.Theme.collapseColorToCss(this.options.$.h1_color)}}\n`
         }
         if (this.options.hx_color) {
-            style += `#${id} h2, #${id} h3, #${id} h4, #${id} h5, #${id} h6 { color:${this.options.hx_color}}\n`
+            style += `#${id} h2, #${id} h3, #${id} h4, #${id} h5, #${id} h6 { color:${UIX.Theme.collapseColorToCss(this.options.$.hx_color)}}\n`
         }
         if (this.options.a_color) {
-            style += `#${id} a { color:${this.options.a_color}}\n`
+            style += `#${id} a { color:${UIX.Theme.collapseColorToCss(this.options.$.a_color)}}\n`
         }
         if (this.options.table_bg) {
-            style += `#${id} td, #${id} table { background:${this.options.table_bg}}\n`
+            style += `#${id} td, #${id} table { background:${UIX.Theme.collapseColorToCss(this.options.$.table_bg)}}\n`
         }
         if (this.options.table_header_bg) {
-            style += `#${id} th { background:${this.options.table_header_bg}}\n`
+            style += `#${id} th { background:${UIX.Theme.collapseColorToCss(this.options.$.table_header_bg)}}\n`
         }
             
         style += '</style>\n'    

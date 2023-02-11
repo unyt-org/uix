@@ -113,12 +113,6 @@ export class FrontendManager {
 
 		if (this.server.running) return;
 
-		await this.transpiler.init();
-
-		for (const [_path, [transpiler]] of this.#common_transpilers) {
-			await transpiler.init();
-		}
-
 		// handled default web paths
 		this.server.path("/index.html", (req, path)=>this.handleIndexHTML(req, path));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
@@ -144,17 +138,18 @@ export class FrontendManager {
 		
 		// console.log("oos", module_path.toString(), import_pseudo_path.toString(), rel_import_pseudo_path)
 
-		try {
+		// try {
 			if ((await Deno.stat(import_path)).isFile) {
 				const type = getDirType(this.#app_options, import_path);
-		
+				
 				if (type == "backend") {
 					const web_path = '/@' + import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
 					const import_pseudo_path = this.#scope.getChildPath(web_path);
 					const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
 
 					const ts_code = await this.generateOutOfScopeFileContent(import_path, web_path, imports);
-					// this.#logger.info("backend interface file: " + "http://localhost:" + this.server.port + web_path);
+
+					// this.#logger.info("backend add: " + import_pseudo_path);
 					await this.transpiler.addVirtualFile(import_pseudo_path, ts_code, true);
 
 					return rel_import_pseudo_path;
@@ -183,10 +178,9 @@ export class FrontendManager {
 			return "[ERROR: import path not a file path]"
 			
 			
-		} catch (e) {
-			console.log(e)
-			return "[server error]"
-		}
+		// } catch (e) {
+		// 	return "[server error: "+e.message+"]"
+		// }
 
 	}
 
@@ -280,7 +274,6 @@ catch {
 			await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(skeleton, this.#client_scripts,  (new Path('./entrypoint.ts', this.#scope).fs_exists) ?  './entrypoint.ts' : undefined, compat));
 
 		} catch (e) {
-			console.log(e)
 		}			
 	}
 
@@ -294,7 +287,6 @@ catch {
 		try {
 			await this.server.serveContent(requestEvent, "text/javascript", await (await fetch(this.resolveImport('uix/sw/sw.ts', true /** must be resolved to URL */))).text());
 		} catch (e) {
-			console.log(e)
 		}			
 	}
 
@@ -346,7 +338,6 @@ catch {
 				// ]
 			}));
 		} catch (e) {
-			console.log(e)
 		}			
 	}
 

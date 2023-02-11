@@ -4,6 +4,7 @@ import { FrontendManager } from "./frontend_manager.ts";
 import { BackendManager } from "./backend_manager.ts";
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { getLocalFileContent } from "unyt_core/datex_all.ts";
+import { Path } from "unyt_node/path.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -54,11 +55,10 @@ export interface normalized_app_options extends app_options {
 
 	scripts: (URL|string)[],
 	import_map_path: never
+	import_map: {imports:Record<string,string>}
 }
 
 class UIXApp {
-
-	#base_url!: URL
 
 	public async start(options:app_options = {}, base_url?:string|URL) {
 
@@ -68,7 +68,7 @@ class UIXApp {
 		if (typeof base_url == "string" && !base_url.startsWith("file://")) base_url = 'file://' + base_url;
 		base_url ??= new Error().stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
 		if (!base_url) throw new Error("Could not determine the app base url (this should not happen)");
-		this.#base_url = new URL(base_url.toString());
+		base_url = new URL(base_url.toString());
 
 		n_options.name = options.name;
 		n_options.description = options.description;
@@ -82,9 +82,14 @@ class UIXApp {
 		if (options.import_map) n_options.import_map = options.import_map;
 		else if (options.import_map_path) n_options.import_map = JSON.parse(<string>await getLocalFileContent(options.import_map_path))
 		
-		n_options.frontend = ((options.frontend instanceof Array ? options.frontend : [options.frontend]).filter(p=>!!p) as (string | URL)[]).map(p=>new URL(p,base_url));
-		n_options.backend = ((options.backend instanceof Array ? options.backend : [options.backend]).filter(p=>!!p) as (string | URL)[]).map(p=>new URL(p,base_url));
-		n_options.common = ((options.common instanceof Array ? options.common : [options.common]).filter(p=>!!p) as (string | URL)[]).map(p=>new URL(p,base_url));
+		if (options.frontend instanceof Datex.Tuple) options.frontend = options.frontend.toArray();
+		if (options.backend instanceof Datex.Tuple) options.backend = options.backend.toArray();
+		if (options.common instanceof Datex.Tuple) options.common = options.common.toArray();
+
+		n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new URL(p,base_url)) : [new URL(options.frontend??'./frontend/', base_url)];
+		n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new URL(p,base_url)) : [new URL(options.backend??'./backend/', base_url)];
+		n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new URL(p,base_url)) : [new URL(options.common??'./common/', base_url)];
+
 
 		if (!n_options.frontend.length) {
 			// try to find the frontend dir
@@ -129,82 +134,31 @@ class UIXApp {
 
 		// load backend
 		for (const backend of n_options.backend) {
-			new BackendManager(n_options, backend, this.#base_url).run();
+			new BackendManager(n_options, backend, base_url).run();
 		}
 
 		// load frontend
 		for (const frontend of n_options.frontend) {
-			new FrontendManager(n_options, frontend, this.#base_url, watch, live_frontend).run();
+			await new FrontendManager(n_options, frontend, base_url, watch, live_frontend).run();
 		}
 	}
 
-
-
-	// private addClientScript(file:string|URL){
-	// 	if (typeof file == "string") {
-	// 		if (this.#frontend_root_url) this.#client_scripts.push(new URL(file, this.#frontend_root_url));
-	// 		else this.#js_relative_file_paths.add(file);
-	// 	}
-	// 	else this.#client_scripts.push(file);
-	// }
-
-
-	// // TODO: rename to setFrontendEntrypoint
-	// private setClientEntrypoint(path:string|URL){
-	// 	if (typeof path == "string") {
-	// 		if (this.#frontend_root_url) this.#client_entry_point = new URL(path, this.#frontend_root_url);
-	// 		else this.#relative_client_entry_point = path
-	// 	}
-	// 	else this.#client_entry_point = path;
-	// }
-	
-	// // TODO: rename to setFrontendDir
-	// private setFrontendRootDir(path:URL|string){
-	// 	this.#frontend_root_url = path.toString();
-	// 	this.#frontend_root_path = this.#frontend_root_url.replace("file://","").replace(/\/$/,"");
-	// 	for (const f of this.#js_relative_file_paths) {
-	// 		this.#client_scripts.push(new URL(f, this.#frontend_root_url));
-	// 		this.#js_relative_file_paths.delete(f)
-	// 	}
-
-	// 	if (this.#relative_client_entry_point) {
-	// 		this.#client_entry_point = new URL(this.#relative_client_entry_point, this.#frontend_root_url);
-	// 		this.#relative_client_entry_point = undefined;
-	// 	}
-
-	// 	// default to entrypoint.ts
-	// 	if (!this.#client_entry_point) {
-	// 		this.setClientEntrypoint("./entrypoint.ts");
-	// 	}
-	// }
-
-	// private setBackendDir(path:URL|string) {
-	// 	this.#backend_root_url = path.toString();
-	// 	this.#backend_root_path = path.toString().replace("file://","").replace(/\/$/,"");
-	// }
-
-	// private setCommonDir(path:URL|string) {
-	// 	this.#common_root_url = path.toString();
-	// 	this.#common_root_path = path.toString().replace("file://","").replace(/\/$/,"");
-	// }
 }
 
-export function getDirType(app_options:normalized_app_options, path:string) {
-	if (!path.startsWith("file://")) path =  path.replace("file://","")
-	
+export function getDirType(app_options:normalized_app_options, path:Path) {	
 	// backend path?
 	for (const backend of app_options.backend) {
-		if (path.startsWith(backend.pathname)) return 'backend'
+		if (path.isChildOf(backend)) return 'backend'
 	}
 
 	// frontend path?
 	for (const frontend of app_options.frontend) {
-		if (path.startsWith(frontend.pathname)) return 'frontend'
+		if (path.isChildOf(frontend)) return 'frontend'
 	}
 
 	// common path?
 	for (const common of app_options.common) {
-		if (path.startsWith(common.pathname)) return 'common'
+		if (path.isChildOf(common)) return 'common'
 	}
 }
 

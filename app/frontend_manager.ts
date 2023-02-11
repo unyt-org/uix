@@ -8,50 +8,79 @@ import { getDirType, normalized_app_options, validateDirExists } from "./app.ts"
 import { generateMatchingJSValueCode } from "./interface_generator.ts";
 import { Path } from "unyt_node/path.ts";
 
-const relative = globalThis.Deno ? (await import("https://deno.land/std@0.172.0/path/mod.ts")).relative : null;
-
 export class FrontendManager {
 
-	constructor(app_options:normalized_app_options, path:Path, base_path:Path, watch = false, live = false) {
+	constructor(app_options:normalized_app_options, scope:URL, base_path:URL, watch = false, live = false) {
 
-		validateDirExists(path, 'frontend');
+		validateDirExists(scope, 'frontend');
 
-		this.#path = new Path(path);
+		this.#scope = new Path(scope);
 		this.#base_path = new Path(base_path);
 
 		this.#app_options = app_options;
 		this.#live = live;
 		this.#watch = watch;
 		this.#logger = new Datex.Logger("UIX Frontend");
-		this.#logger.success("init at " + this.#path);
+		this.#logger.success("init at " + this.#scope);
 
-		this.#app_options.backend.forEach((v)=>this.#backend_urls.add(v))
-		this.#app_options.common.forEach((v)=>this.#common_urls.add(v))
-
-		if (this.#app_options.import_map) this.#import_map = this.#app_options.import_map
 		if (this.#app_options.offline_support) this.#client_scripts.push('uix/app/client_sw.ts');
 
-		this.initServerAndTranspiler();
+		this.initFrontendDir();
+		this.intCommonDirs();
+		this.initServer();
 	}
 
-	initServerAndTranspiler(){
-
-		this.import_resolver = new TypescriptImportResolver();
-
-		this.transpiler = new TypescriptTranspiler(this.#path, {
-			watch: this.#watch,
-			on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined,
-			import_resolver: this.import_resolver
+	initFrontendDir(){
+		this.import_resolver = new TypescriptImportResolver(this.#scope, {
+			import_map: this.#app_options.import_map,
+			import_map_base_path: this.#base_path,
+			handle_out_of_scope_path: (path: Path, from:Path, imports:string[]) => this.handleOutOfScopePath(path, from, imports)
 		});
 
-		this.server = new Server(this.#path, undefined, {
+		this.transpiler = new TypescriptTranspiler(this.#scope, {
+			watch: this.#watch,
+			import_resolver: this.import_resolver,
+			on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined
+		});
+
+	}
+
+
+	intCommonDirs() {
+		for (const common_dir of this.#app_options.common) {
+			const transpiler = new TypescriptTranspiler(new Path(common_dir), {
+				dist_parent_dir: this.transpiler.tmp_dir,
+				watch: this.#watch,
+				import_resolver:  new TypescriptImportResolver(new Path(common_dir), {
+					import_map: this.#app_options.import_map,
+					import_map_base_path: this.#base_path,
+					handle_out_of_scope_path: (path: Path, from:Path, imports:string[]) => this.handleOutOfScopePath(path, from, imports)
+				}),
+				on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined
+			})
+			this.#common_transpilers.set(common_dir.toString(), [transpiler, '/@' + new Path(common_dir).name + '/'])
+
+		}
+	}
+
+	initServer() {
+		const transpilers:Record<string,TypescriptTranspiler> = {}
+
+		// set common transpilers to @... web paths
+		for (const [_path, [transpiler, web_path]] of this.#common_transpilers) {
+			transpilers[web_path] = transpiler
+		}
+
+		// set default compiler to root web path
+		transpilers['/'] = this.transpiler
+
+		this.server = new Server(this.#scope, {
 			resolve_index_html: true,
 			cors: true,
-			transpiler: this.transpiler
+			transpilers
 		});
-
-		if (!this.#import_map) this.#import_map = {imports: this.transpiler.import_map}; // use import map from transpiler per default
 	}
+
 
 	#BLANK_PAGE_URL = 'uix/base/blank.ts';
 
@@ -59,35 +88,37 @@ export class FrontendManager {
 	transpiler!: TypescriptTranspiler
 	import_resolver!: TypescriptImportResolver
 
+	#common_transpilers = new Map<string, [transpiler:TypescriptTranspiler, web_path:string]>();
+
 	#live = false;
 	#watch = false;
 
 	#logger: Datex.Logger
 
-	#backend_urls = new Set<URL>();
-	#common_urls = new Set<URL>();
 
 	#base_path!:Path
-	#path!:Path
+	#scope!:Path
 
 	#app_options!:normalized_app_options
-
-	#import_map?:{imports: Record<string,string>}
 
 	#client_scripts:(URL|string)[] = [
 		'uix/app/client_default.ts'
 	]
 
 	private resolveImport(path:string|URL, compat_import_map = false){
-		return this.server.resolveImport(path, undefined, compat_import_map)
+		return compat_import_map ? this.import_resolver.resolveImportSpecifier(path.toString(), this.#scope) : path.toString()
 	}
 
 	async run(){
 
 		if (this.server.running) return;
 
-		// web server
-		// handle oos paths
+		await this.transpiler.init();
+
+		for (const [_path, [transpiler]] of this.#common_transpilers) {
+			await transpiler.init();
+		}
+
 		// handled default web paths
 		this.server.path("/index.html", (req, path)=>this.handleIndexHTML(req, path));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
@@ -108,80 +139,58 @@ export class FrontendManager {
 	}
 
 
-	private oosPaths = new Map<string,Map<string,string>>();
-
 	// resolve oos paths from local (client side) imports - resolve to web (https) paths
-	private async handleOutOfScopePath(module_path:string, import_path:string, imports?:string[]){
-
-		if (this.oosPaths.get(module_path)?.has(import_path)) return this.oosPaths.get(module_path)!.get(import_path)!;
-		if (!this.oosPaths.has(module_path)) this.oosPaths.set(module_path, new Map())
-
-		const module_dir = new URL("./", "file://"+module_path).toString().replace("file://","");
-
-		const import_pseudo_path = '/@' + relative!(this.#base_path.pathname, import_path);
-		const interf_mod_path = this.#path.pathname + import_pseudo_path;
-		let relative_interf_mod_path = relative!(module_dir, interf_mod_path);
-		if (!relative_interf_mod_path.startsWith(".")) relative_interf_mod_path = "./" + relative_interf_mod_path; // make relative path
-
-		const web_path = "/" + relative!(this.#path.pathname, interf_mod_path);
-
-		// console.log("oos", module_path, import_path, import_pseudo_path, interf_mod_path)
+	private async handleOutOfScopePath(import_path:Path, module_path:Path, imports?:string[]){
+		
+		// console.log("oos", module_path.toString(), import_pseudo_path.toString(), rel_import_pseudo_path)
 
 		try {
 			if ((await Deno.stat(import_path)).isFile) {
-				let ts_code = "";
 				const type = getDirType(this.#app_options, import_path);
 		
 				if (type == "backend") {
-					ts_code = await this.generateOutOfScopeFileContent(import_path, web_path, imports);
-					this.#logger.info("backend interface file: " + "http://localhost:" + this.server.port + web_path);
+					const web_path = '/@' + import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
+					const import_pseudo_path = this.#scope.getChildPath(web_path);
+					const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
+
+					const ts_code = await this.generateOutOfScopeFileContent(import_path, web_path, imports);
+					// this.#logger.info("backend interface file: " + "http://localhost:" + this.server.port + web_path);
+					await this.transpiler.addVirtualFile(import_pseudo_path, ts_code, true);
+
+					return rel_import_pseudo_path;
 				}
 		
 				else if (type == "common") {
-					ts_code = await Deno.readTextFile(import_path);
-					this.#logger.info("common file: " + "http://localhost:" + this.server.port + web_path);
+					for (const [path, [transpiler, web_root_path]] of this.#common_transpilers) {
+						if (import_path.isChildOf(path)) {
+							const web_path = web_root_path + transpiler.getDistPath(import_path, false, false)?.getAsRelativeFrom(transpiler.dist_dir).slice(2);
+							return web_path
+						}
+					}
 				}
 		
 				else if (type == "frontend") {
-					this.#logger.warn("TODO handle shared frontend modules")
+					// resolve from common
+					return "[ERROR: TODO resolve frontend paths from common dir]"
 				}
 		
 				else {
 					this.#logger.error("Could not resolve invalid out of scope path: " + import_path);
-					return "[server could not resolve path]"
+					return "[ERROR: server could not resolve path (outside of scope)]"
 				}
-		
-				await this.transpiler.addVirtualFile(interf_mod_path, ts_code);
-				this.setOutOfScopePathListener(import_path, web_path, interf_mod_path);
 			}
 
-			// TODO: if directory, decide which children files to resolve / copy / compile
+			return "[ERROR: import path not a file path]"
+			
 			
 		} catch (e) {
-			// console.log(e)
+			console.log(e)
+			return "[server error]"
 		}
-		
 
-		// cache
-		this.oosPaths.get(module_path)!.set(import_path, relative_interf_mod_path);
-
-		return relative_interf_mod_path;
 	}
 
-	#active_listeners = new Set<string>();
-
-	private async setOutOfScopePathListener(path:string, web_path:string, virtual_path:string){
-		if (!this.server) throw new Error("no server");
-		if (this.#active_listeners.has(path)) return;
-		this.#active_listeners.add(path);
-
-		// console.log("listening to oos file " + path + " (virtual path " + virtual_path + ")");
-
-		for await (const event of Deno.watchFs(path)) {
-			const js_code = await this.generateOutOfScopeFileContent(path, web_path);
-			await this.transpiler.addVirtualFile(virtual_path, js_code)
-		}
-	}
+	
 
 	/**
 	 * generate TS source code with exported interfaces
@@ -189,8 +198,8 @@ export class FrontendManager {
 	 * @param exports exports to generate code for
 	 * @returns 
 	 */
-	private async generateOutOfScopeFileContent(path:string, web_path:string, exports?:string[]) {
-		const module = await import("file://"+path);
+	private async generateOutOfScopeFileContent(path:Path, web_path:string, exports?:string[]) {
+		const module = await import(path.toString());
 
 		const values:[string, unknown][] = [];
 		for (const exp of /*exports??*/Object.keys(module)) {
@@ -259,6 +268,7 @@ catch {
 	private async handleIndexHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
 		try {
+			// @ts-ignore TODO: generator
 			const component = this.generator ? await this.generator() : null;
 			let skeleton: string;
 			if (component instanceof UIX.Components.Base) {
@@ -267,7 +277,7 @@ catch {
 			}
 			else skeleton = "x"
 
-			await this.server.serveContent(requestEvent, "text/html", await this.generateHTMLPage(skeleton, this.#client_scripts, './entrypoint.ts', compat), [{name:"importmap", value:encodeURIComponent(JSON.stringify(this.#import_map))}]);
+			await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(skeleton, this.#client_scripts,  (new Path('./entrypoint.ts', this.#scope).fs_exists) ?  './entrypoint.ts' : undefined, compat));
 
 		} catch (e) {
 			console.log(e)
@@ -277,7 +287,7 @@ catch {
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
-		await this.server.serveContent(requestEvent, "text/html", await this.generateHTMLPage("", [...this.#client_scripts, this.#BLANK_PAGE_URL], undefined, compat), [{name:"importmap", value:encodeURIComponent(JSON.stringify(this.#import_map))}]);
+		await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage("", [...this.#client_scripts, this.#BLANK_PAGE_URL], undefined, compat));
 	}
 
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {
@@ -296,16 +306,6 @@ catch {
 		}			
 	}
 
-	private async handleSSREntrypoint(requestEvent: Deno.RequestEvent, _path:string) {
-		// TODO generate components (also for index skeleton)
-		const content = "TODO"
-		try {
-			await this.server.serveContent(requestEvent, "text/javascript", content);
-		} catch (e) {
-			console.log(e)
-		}			
-	}
-
 	private async handleManifest(requestEvent: Deno.RequestEvent, _path:string) {
 		try {
 			await this.server.serveContent(requestEvent, "application/json", JSON.stringify({
@@ -315,7 +315,7 @@ catch {
 				"version": this.#app_options.version,
 				"icons": [
 				  {
-					"src": this.toWebResolvablePath(this.#app_options.icon_path),
+					"src": this.resolveImport(this.#app_options.icon_path),
 					"sizes": "287x287",
 					"type": "image/png"
 				  }
@@ -350,58 +350,42 @@ catch {
 		}			
 	}
 
-	private async getWebImportMap(){
-		const web_import_map = {imports:{...this.#import_map?.imports}};
-		if (!web_import_map.imports) throw "invalid import map";
 
-		for (const [key, val] of Object.entries(web_import_map.imports)) {
-			// shift relative directory if resolved from import map, because import map is located outside frontend/ directory (TODO: more general approach?)
-			if (val.startsWith("./")) {
-				const import_path = new URL("."+val, this.#path);
+	private getRelativeImportMap() {
+		const import_map = {imports: {...this.#app_options.import_map.imports}};
 
-				// is out of scope
-				if (!import_path.toString().startsWith(this.#path.toString())) {
-					web_import_map.imports[key] = await this.handleOutOfScopePath(this.#path.toString().replace("file://", "") + "__x__.ts", import_path.toString().replace("file://", "")) + (import_path.toString().endsWith("/") ? "/" : "")
-				}
-
-				// just relative
-				else web_import_map.imports[key] = "./" + import_path.toString().replace(this.#path.toString(), '');
-			}
+		for (const [key, value] of Object.entries(import_map.imports)) {
+			import_map.imports[key] = this.import_resolver.resolveRelativeImportMapImport(value, this.#scope);
 		}
-		// console.log(web_import_map)
 
-		return JSON.stringify(web_import_map)
+		return import_map;
 	}
 
-	
-	private toWebResolvablePath(url:URL|string, compat_import_map = false) {
-		return this.resolveImport(url, compat_import_map); // non-path module specifier
-	}
 
-	private async generateHTMLPage(skeleton_content?:string, js_files:(URL|string|undefined)[] = [], entrypoint?:URL|string, compat_import_map = false){
+	private generateHTMLPage(skeleton_content?:string, js_files:(URL|string|undefined)[] = [], entrypoint?:URL|string, compat_import_map = false){
 		let files = '';
 		
 		//js files
 		files += '<script type="module">'
 
 		// set app info
-		files += `
-${"import {Datex, f}"} from "${this.toWebResolvablePath("unyt_core", compat_import_map)}";
-${"import {UIX}"} from "${this.toWebResolvablePath("uix", compat_import_map)}";
-UIX.State._setMetadata({name:"${this.#app_options.name??''}", version:"${this.#app_options.version??''}", stage:"${this.#app_options.stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")});`
+		files += this.indent(4) `
+			${"import {Datex, f}"} from "${this.resolveImport("unyt_core", compat_import_map).toString()}";
+			${"import {UIX}"} from "${this.resolveImport("uix", compat_import_map).toString()}";
+			UIX.State._setMetadata({name:"${this.#app_options.name??''}", version:"${this.#app_options.version??''}", stage:"${this.#app_options.stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")});`
 
 		for (const file of js_files) {
-			if (file) files += `\nawait import("${this.toWebResolvablePath(file, compat_import_map)}");`
+			if (file) files += this.indent(4) `\nawait import("${this.resolveImport(file, compat_import_map).toString()}");`
 		}
 
 		if (entrypoint) {
-			files += `\nconst module_exports = Object.values(await import("${this.toWebResolvablePath(entrypoint, compat_import_map)}"));\nif (module_exports.length) UIX.State.set(module_exports[0])`
+			files += this.indent(4) `\nconst module_exports = Object.values(await import("${this.resolveImport(entrypoint, compat_import_map).toString()}"));\nif (module_exports.length) UIX.State.set(module_exports[0])`
 		}
 
 		files += '\n</script>'
 
 		let importmap = ''
-		if (this.#import_map) importmap = `<script type="importmap">${await this.getWebImportMap()}</script>`
+		if (this.#app_options.import_map) importmap = `<script type="importmap">\n${JSON.stringify(this.getRelativeImportMap(), null, 4)}\n</script>`
 
 		// global variable stylesheet
 		let global_style = "<style>"
@@ -411,12 +395,12 @@ UIX.State._setMetadata({name:"${this.#app_options.name??''}", version:"${this.#a
 		global_style += "</style>"
 
 		let favicon = "";
-		if (this.#app_options.icon_path) favicon = `<link rel="icon" href="${this.toWebResolvablePath(this.#app_options.icon_path, compat_import_map)}">`
+		if (this.#app_options.icon_path) favicon = `<link rel="icon" href="${this.resolveImport(this.#app_options.icon_path, compat_import_map)}">`
 
 		let title = "";
 		if (this.#app_options.name) title = `<title>${this.#app_options.name}</title>`
 
-		return `
+		return this.indent `
 			<!DOCTYPE html>
 			<html>
 				<head>
@@ -427,9 +411,7 @@ UIX.State._setMetadata({name:"${this.#app_options.name??''}", version:"${this.#a
 					${importmap}
 					${files}
 				</head>
-				<body>
-				
-				</body>
+				<body></body>
 			</html>
 		`
 		/*
@@ -437,6 +419,34 @@ UIX.State._setMetadata({name:"${this.#app_options.name??''}", version:"${this.#a
 			${skeleton_content??''}
 		</main>
 		*/
+	}
+
+	private indent(string:TemplateStringsArray, ...insert:(string|undefined)[]): string
+	private indent(base_indentation:number): (string:TemplateStringsArray, ...insert:(string|undefined)[]) => string
+	private indent(string:TemplateStringsArray|number, base_indent?:any, ...insert:(string|undefined)[]) {
+		
+		// create indent function with base indent
+		if (typeof string == "number") return (_string:TemplateStringsArray, ...insert:(string|undefined)[])=>this.indent(_string, <any>string, ...insert)
+
+		if (typeof base_indent == "string") {
+			insert = [base_indent, ...insert]; // base_indent not used, use as insert string
+			base_indent = 0;
+		}
+
+
+		const tab_as_space = '    ';
+		const remove_indentation = string[0].replace(/\t/gm, tab_as_space).match(/\n*(\s*)/)?.[1].length ?? 0;
+
+		let combined = "";
+
+		for (let i=0; i<string.length; i++) {
+			const nstring = string[i].replace(/\t/gm, tab_as_space);
+			const line_indentation = nstring.match(/\n*(\s*)/)?.[1].length ?? 0;
+			combined += nstring.replace(new RegExp('\\n\\s{'+remove_indentation+'}', 'gm'), '\n').replace(/\n/gm, '\n' + ' '.repeat(base_indent));
+			if (i < insert.length) combined += insert[i]?.replace(/\n/gm, '\n' + ' '.repeat(base_indent+Math.max(0,line_indentation-remove_indentation))) ?? '';
+		}
+
+		return combined;
 	}
 
 }

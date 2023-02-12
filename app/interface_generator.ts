@@ -5,7 +5,7 @@ import { $$, Datex } from "unyt_core";
 
 type interf = {new(...args:unknown[]):unknown};
 
-export function generateMatchingJSValueCode(module_name:string, values: [name:string, value:unknown][]){
+export function generateMatchingJSValueCode(module_name:string, values: [name:string, value:unknown, valid:boolean][]){
 
 	let code = `
 /*
@@ -19,28 +19,37 @@ const logger = new Datex.Logger("${module_name}");
 
 `;
 
-	for (const [name, val] of values) {
-		if (typeof val == "function" && val.constructor && (<any>val)[Datex.METADATA]) code += getJSClassCode(name, <interf>val);
-		else code += getJSValueCode(name, val);
+	for (const [name, val, valid] of values) {
+		if (!valid) code += `logger.warn('Another module tried to import "${name}", which does not exist in this module. You might need to restart the backend.');\n`
+		else if (typeof val == "function" && val.constructor && (<any>val)[Datex.METADATA]) code += getJSClassCode(name, <interf>val);
+		else code += getJSValueCode(module_name, name, val);
 	}
 
 
 	return code;
 }
 
-function getJSValueCode(name:string, value: any) {
+const implicitly_converted_primitives = new Map<string, Set<string>>().setAutoDefault(Set);
+const implicitly_converted = new Map<string, Set<string>>().setAutoDefault(Set);
+
+function getJSValueCode(module_name:string, name:string, value: any) {
 	let code = "";
 
 	const type = Datex.Type.ofValue(value)
 	const is_pointer = (value instanceof Datex.Value) || !!(Datex.Pointer.getByValue(value));
 
 	// log warning for primitive non-pointer values (cannot be converted to pointer)
-	if (type.is_primitive && !is_pointer) {
+	if (type.is_primitive && (!is_pointer || implicitly_converted_primitives.get(module_name)?.has(name))) {
 		code += name ? `logger.warn('The export "${name}" cannot be converted to a shared value. Consider explicitly converting it to a primitive pointer using $$().');\n` : `logger.warn('The default export cannot be converted to a shared value. Consider explicitly converting it to a primitive pointer using $$().');\n`
+		implicitly_converted_primitives.getAuto(module_name).add(name);
 	}
 
 	// other value -> create pointers
 	else {
+		if (implicitly_converted.get(module_name)?.has(name)) {
+			code += name ? `logger.warn('The export "${name}" was implicitly converted to a shared pointer value. This might have unintended side effects. Consider explicitly converting it to a ${type} pointer using $$().');\n` : `logger.warn('The default export was implicitly converted to a shared pointer value. This might have unintended side effects. Consider explicitly converting it to a ${type} pointer using $$().');\n`
+		}
+		
 		// special convertions for non-pointer values
 		if (!is_pointer) {
 			// convert es6 class with static properties
@@ -61,6 +70,7 @@ function getJSValueCode(name:string, value: any) {
 			// log warning for non-pointer arrays and object
 			else if (type == Datex.Type.std.Array || type == Datex.Type.std.Object) {
 				code += name ? `logger.warn('The export "${name}" was implicitly converted to a shared pointer value. This might have unintended side effects. Consider explicitly converting it to a ${type} pointer using $$().');\n` : `logger.warn('The default export was implicitly converted to a shared pointer value. This might have unintended side effects. Consider explicitly converting it to a ${type} pointer using $$().');\n`
+				implicitly_converted.getAuto(module_name).add(name);
 			}
 		}
 		

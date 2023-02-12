@@ -132,9 +132,10 @@ export class FrontendManager {
 		if (this.#live) await this.createLiveScript()
 	}
 
+	#backend_virtual_files = new Map<string, Map<string, Set<string>>>()
 
 	// resolve oos paths from local (client side) imports - resolve to web (https) paths
-	private async handleOutOfScopePath(import_path:Path, module_path:Path, imports?:string[]){
+	private async handleOutOfScopePath(import_path:Path, module_path:Path, imports:Set<string>){
 		
 		// console.log("oos", module_path.toString(), import_pseudo_path.toString(), rel_import_pseudo_path)
 
@@ -147,10 +148,7 @@ export class FrontendManager {
 					const import_pseudo_path = this.#scope.getChildPath(web_path);
 					const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
 
-					const ts_code = await this.generateOutOfScopeFileContent(import_path, web_path, imports);
-
-					// this.#logger.info("backend add: " + import_pseudo_path);
-					await this.transpiler.addVirtualFile(import_pseudo_path, ts_code, true);
+					await this.updateBackendInterfaceFile(web_path, import_pseudo_path, import_path, module_path, imports);
 
 					return rel_import_pseudo_path;
 				}
@@ -184,6 +182,51 @@ export class FrontendManager {
 
 	}
 
+	#update_backend_promise?: Promise<any>
+
+	private async updateBackendInterfaceFile(web_path:string, import_pseudo_path:Path, import_path:Path, module_path:Path, imports:Set<string>) {
+
+		await this.#update_backend_promise;
+		let resolve_done: Function|undefined;
+		this.#update_backend_promise = new Promise(resolve=>resolve_done=resolve)
+
+		const module_path_string = module_path.toString();
+
+		if (!this.#backend_virtual_files.has(web_path)) this.#backend_virtual_files.set(web_path, new Map())
+		if (!this.#backend_virtual_files.get(web_path)!.has(module_path_string)) this.#backend_virtual_files.get(web_path)!.set(module_path_string, new Set())
+
+		const used_imports = this.#backend_virtual_files.get(web_path)!;
+
+		const combined_imports_before = <Set<string>> new Set([...used_imports.values()].reduce((a, c) => a.concat( [...c] ), []))
+		// update imports used by module
+		this.#backend_virtual_files.get(web_path)!.set(module_path_string, imports)
+		const new_combined_imports = <Set<string>> new Set([...used_imports.values()].reduce((a, c) => a.concat( [...c] ), []))
+		// check if imports changed:
+	
+		let changed = false;
+		const removed = new Set();
+
+		for (const import_before of combined_imports_before) {
+			if (!new_combined_imports.has(import_before)) {changed = true; removed.add(import_before);} // removed import
+		}
+		for (const new_import of new_combined_imports) {
+			if (!combined_imports_before.has(new_import)) changed = true; // added import
+		}
+
+		// imports changed, update file
+		if (changed) {
+			this.#logger.info(`exposed exports of ${this.getShortPathName(import_path)} have changed: ${new_combined_imports.size ? `\n#color(green)  + ${[...new_combined_imports].join(", ")}` :' '}${removed.size ? `\n#color(red)  - ${[...removed].join(", ")}` : ''}`)
+			
+			const ts_code = await this.generateOutOfScopeFileContent(import_path, web_path, module_path, new_combined_imports);
+			await this.transpiler.addVirtualFile(import_pseudo_path, ts_code, true);
+		}
+
+		resolve_done?.();
+	}
+
+	private getShortPathName(path:Path) {
+		return path.getAsRelativeFrom(this.#scope.parent_dir).replace(/^\.\//, '')
+	}
 	
 
 	/**
@@ -192,15 +235,14 @@ export class FrontendManager {
 	 * @param exports exports to generate code for
 	 * @returns 
 	 */
-	private async generateOutOfScopeFileContent(path:Path, web_path:string, exports?:string[]) {
+	private async generateOutOfScopeFileContent(path:Path, web_path:string, module_path:Path, exports:Set<string>) {
 		const module = await import(path.toString());
 
-		const values:[string, unknown][] = [];
-		for (const exp of /*exports??*/Object.keys(module)) {
-			if (!module[exp]) throw new Error("requested import '" + exp + "' is not exported in module '" + path + "'")
-			values.push([exp, module[exp]]);
+		const values:[string, unknown, boolean][] = [];
+		for (const exp of exports) {
+			if (!(exp in module)) this.#logger.error(this.getShortPathName(module_path) + ": '" + exp + "' is currently not a exported value in module " + this.getShortPathName(path) + " - backend restart might be required")
+			values.push([exp, module[exp], exp in module]);
 		}
-		
 		return generateMatchingJSValueCode(web_path, values);
 	}
 

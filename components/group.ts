@@ -140,14 +140,14 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
     // default route implementation for Group components, resolve children by id
     override onRoute(identifier:string) {
         for (const child of this.elements) {
-            if (child.id == identifier) return child;
+            if (child.identifier == identifier) return child;
         }
     }
 
     // return the current route of the group
     override getCurrentRoute() {
         if (!this.active_element) return [];
-        return [this.active_element.id, ...this.active_element.getCurrentRoute()]
+        return [this.active_element.identifier, ...this.active_element.getCurrentRoute()]
     }
 
     handleChildElementFocused(element:ChildElement) {
@@ -166,7 +166,7 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
         const index = this.elements.indexOf(element);
         this.elements.splice(index, 1);
         this.element_constraints.splice(index, 1);
-        this.elements_by_id.delete(element.id);
+        this.elements_by_id.delete(element.identifier);
         this.disableFlagBubbling(element);
         element.removeNode(); // actually remove element from dom and trigger onRemove
         if (this.elements.length == 0) this.handleHasNoChildElements();
@@ -234,7 +234,7 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
         }
         
         // set uid + id map, update on change
-        if (element.id != undefined) this.elements_by_id.set(element.id, element);
+        if (element.identifier != undefined) this.elements_by_id.set(element.identifier, element);
 
         this.handleHasChildElements();
         this.enableFlagBubbling(element);

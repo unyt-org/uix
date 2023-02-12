@@ -70,8 +70,9 @@ export namespace Base {
         padding_right?:number
         
         overflow?: boolean // allow content overflow
+        scroll_content?: boolean, // create content as scroll container
 
-        id?:string // unique identifier for this movable
+        identifier?:string // unique identifier for this component
         title:string // title, e.g. for tabs
         short_title?: string // shorter title
         icon?:string // icon as html
@@ -174,10 +175,14 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     private handleIdProps(){
 
+        const id_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[ID_PROPS]?.public;
+        const content_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[CONTENT_PROPS]?.public;
+
 		// @UIX.id props
-		const id_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[ID_PROPS]?.public;
-		if (id_props) {
+		
+        if (id_props) {
 			for (const [prop,id] of Object.entries(id_props)) {
+                if (content_props[prop]) continue; // is content, ignore
 
                 const prev = this[prop];
 
@@ -186,7 +191,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 						return this.#id_props.get(prop)
 					},
 					set(el) {
-						if (el instanceof HTMLElement) el.id = id; // auto set id
+						if (el instanceof HTMLElement) el.setAttribute("id", id); // auto set id
 						this.#id_props.set(prop, el)
 					}
 				})
@@ -196,22 +201,23 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 		}
 
         // @UIX.content props
-		const content_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[CONTENT_PROPS]?.public;
 		if (content_props) {
 			for (const [prop,id] of Object.entries(content_props)) {
 
+                if (this[prop] instanceof HTMLElement && this.shadowRoot?.contains(this[prop])) throw new Error("property '" + prop +"' cannot be used as an @content property - already part of the component")
+
                 const prev = this[prop];
 
+                const property_descriptor = Object.getOwnPropertyDescriptor(this, prop) 
+                             
 				Object.defineProperty(this, prop, {
 					get: () => {
-						return this.#id_props.get(prop)
+                        if (property_descriptor?.get) return property_descriptor.get.call(this);
+                        return this.#id_props.get(prop)
 					},
 					set: (el) => {
                         // encapsulate in HTMLElement
 						if (!(el instanceof HTMLElement)) el = Utils.createHTMLElement('<span></span>', el);
-
-                        el.id = id; // auto set id
-                        this.#id_props.set(prop, el)
 
                         // add to content if it exists
                         if (this.content) {
@@ -220,11 +226,15 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                             else if (previous) this.content.replaceChild(el, previous);
                             else this.content.append(el);
                         }
+
+                        el.setAttribute("id", id); // auto set id
+                        if (property_descriptor?.set) property_descriptor.set.call(this, el);
+                        this.#id_props.set(prop, el)
                        
 					}
 				})
 
-                if (prev != undefined) this[prop] = prev; // trigger setter
+                this[prop] = prev ?? document.createElement("div"); // trigger setter (use placeholder if not yet set)
 			}
 		}
     
@@ -286,8 +296,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.shadow_root = this.shadowRoot ?? this.attachShadow({mode: 'open'});
         
         // Component style sheets
-        let loaders = []
+        const loaders = []
         for (const url of (<typeof Base>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
+
+        this.addStyleSheet(Theme.stylesheet);
         
         this.content_container = this.shadow_root.querySelector('.content-container') ?? document.createElement('div');
         this.content_container.classList.add("content-container");
@@ -307,7 +319,12 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             this.content_container.style.overflow = "visible";
         }
 
-        this.content_container.append(this.content);
+        if (this.options.scroll_content) {
+            this.content.style.height = "auto"
+            this.content_container.append(this.makeScrollContainer(this.content));
+        }
+        else this.content_container.append(this.content);
+
         this.shadow_root.append(this.content_container);
 
         this.observeOptions(['border_radius', 'border_tl_radius', 'border_tr_radius', 'border_bl_radius', 'border_br_radius'], this.updateBorderRadius)
@@ -316,11 +333,11 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.observeConstraints(['margin', 'margin_left', 'margin_right', 'margin_right', 'margin_bottom'], this.updateMargin)
 
         Utils.setCSSProperty(this.content_container, 'background', this.options.background ? this.options.$$.background : this.options.$$.bg_color)
-        Utils.setCSSProperty(this.content_container, 'color', this.options_props.text_color)
+        Utils.setCSSProperty(this.content_container, 'color', this.options.$$.text_color)
 
-        Utils.setCSSProperty(this.content_container, '--current_text_color', this.options_props.text_color)
-        Utils.setCSSProperty(this.content_container, '--current_text_color_highlight', this.options_props.text_color_highlight)
-        Utils.setCSSProperty(this.content_container, '--current_text_color_light', this.options_props.text_color_light)
+        Utils.setCSSProperty(this.content_container, '--current_text_color', this.options.$$.text_color)
+        Utils.setCSSProperty(this.content_container, '--current_text_color_highlight', this.options.$$.text_color_highlight)
+        Utils.setCSSProperty(this.content_container, '--current_text_color_light', this.options.$$.text_color_light)
 
 
         // listeners & observers
@@ -1894,8 +1911,14 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     public get icon(){return Datex.Value.collapseValue(this.options.icon,true,true)}
     public get icon_dx(){return <Datex.CompatValue<string>>this.options_props.icon}
 
-    public override get id(){return this.options.id ?? this.tagName.replace('UIX-','').replace(/-/g,'_').toLowerCase()}
-    public get unique_identifier(){return this.options.id ? this.constructor.name + "::" + this.options.id : undefined}
+    public get identifier(){return this.options.identifier ?? this.tagName.replace('UIX-','').replace(/-/g,'_').toLowerCase()}
+    public set identifier(identifier:string){
+        super.id = identifier;
+        this.options.identifier = identifier;
+    }
+
+    
+    public get unique_identifier(){return this.options.identifier ? this.constructor.name + "::" + this.options.identifier : undefined}
 
     public get flags(){return this._flags;}
 
@@ -1911,9 +1934,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.options.icon = icon;
     }
 
-    public override set id(identifier:string){
-        this.options.id = identifier;
-    }
 
 
     // width + height get dynamic

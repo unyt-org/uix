@@ -46,7 +46,7 @@ interface ThemeProperties {
 
 export class Theme  {
 	static LIGHT = {
-		__name: "light",
+		__name: "uix-light",
 		text: "#333333",
 		text_light: "#333333aa",
 		text_highlight: "#171616",
@@ -87,7 +87,7 @@ export class Theme  {
 	}
 
 	static DARK = {
-		__name: "dark",
+		__name: "uix-dark",
 		text: "#ababab",
 		text_light: "#ababab80",
 		text_highlight: "#efefef",
@@ -137,10 +137,13 @@ export class Theme  {
 	static #current_dark_theme:ThemeProperties = this.DARK;
 	static #auto_mode = true;
 
-	static #variable_style_sheet = new window.CSSStyleSheet();
-	static #variable_style_sheet_added = false;
+	static #current_theme_style_sheet = new window.CSSStyleSheet();
+	static #current_theme_style_sheet_added = false;
 
-	static get stylesheet() {return this.#variable_style_sheet}
+	static #global_style_sheet = new window.CSSStyleSheet();
+	static #global_style_sheet_added = false;
+
+	static get stylesheet() {return this.#global_style_sheet}
 
 	static get mode() {return this.#transition_mode ?? this.#current_mode}
 	static get style() {return this.#current_style}
@@ -153,12 +156,14 @@ export class Theme  {
 	// add a new light theme (updates immediately if current mode is light)
 	public static setLightTheme(theme:{[key:string]:any}) {
 		this.#current_light_theme = theme
+		if (theme.__name) this.addGlobalThemeClass(theme.__name, theme);
 		if (this.#current_mode.val == "light") this.update(this.#current_light_theme, "light");
 	}
 
 	// add a new light theme (updates immediately if current mode is dark)
 	public static setDarkTheme(theme:{[key:string]:any}) {
 		this.#current_dark_theme = theme
+		if (theme.__name) this.addGlobalThemeClass(theme.__name, theme);
 		if (this.#current_mode.val == "dark") this.update(this.#current_dark_theme, "dark");
 	}
 
@@ -193,6 +198,9 @@ export class Theme  {
 		}
 	}
 
+	static #current_theme_css_text = ""
+	static #global_themes_css_text = ""
+
 	// update the current theme (changes immediately)
 	private static update(theme:ThemeProperties, mode:"dark"|"light") {
 		this.#transition_mode = $$(mode); // don't trigger Theme.mode observers yet with this.#current_mode, but Theme.mode already updated
@@ -212,19 +220,56 @@ export class Theme  {
 		}
 
 		text += "}";
-		this.#variable_style_sheet.replaceSync?.(text);
+		this.#current_theme_css_text = text;
 
-		// add to document
-		if (!this.#variable_style_sheet_added) {
-			if (!IS_HEADLESS) document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#variable_style_sheet];
-			this.#variable_style_sheet_added = true;
-		}
+		this.updateCurrentThemeStyle()
 
 		this.#current_mode.val = mode; // only now trigger Theme.mode observers
 		this.#transition_mode = undefined;
 
 		// call them change listeners
 		for (const observer of this.mode_change_observers) observer(mode);
+	}
+
+	private static addGlobalThemeClass(name:string, theme:ThemeProperties) {
+		let text = `.theme-${name} {`;
+		// iterate over all properties (also from inherited prototypes)
+		// TODO only iterate over allowed properties?
+		const added_properties = new Set();
+		for (let o = theme; o && o != Object.prototype; o = Object.getPrototypeOf(o)) {
+			for (const [key, value] of Object.entries(o)) {
+				if (added_properties.has(key)) continue;
+				added_properties.add(key);
+				if (key == '__name') continue;
+				text += `--${key}: ${value};` // TODO escape?
+			}
+		}
+
+		text += "}";
+
+		this.#global_themes_css_text += text;
+
+		this.updateGlobalThemeStyle()
+	}
+
+	private static updateCurrentThemeStyle(){
+		this.#current_theme_style_sheet.replaceSync?.(this.#current_theme_css_text);
+
+		// add to document
+		if (!this.#current_theme_style_sheet_added) {
+			if (!IS_HEADLESS) document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
+			this.#current_theme_style_sheet_added = true;
+		}
+	}
+
+	private static updateGlobalThemeStyle(){
+		this.#global_style_sheet.replaceSync?.(this.#global_themes_css_text);
+
+		// add to document
+		if (!this.#global_style_sheet_added) {
+			if (!IS_HEADLESS) document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
+			this.#global_style_sheet_added = true;
+		}
 	}
 
 	// create new theme based on another theme
@@ -265,5 +310,8 @@ export class Theme  {
 		this.mode_change_observers.add(observer);
 	}
 }
+
+Theme.addGlobalThemeClass(Theme.DARK.__name, Theme.DARK);
+Theme.addGlobalThemeClass(Theme.LIGHT.__name, Theme.LIGHT);
 
 Theme.setMode(Theme.mode, true, false)

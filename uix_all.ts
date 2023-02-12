@@ -22,6 +22,9 @@ export * from "./base/unyt_pen.ts"
 export * from "./base/utils.ts"
 export * from "./base/routing.ts"
 
+// html - experimental
+export * from "./html/node.ts"
+
 // sw
 export * from "./sw/sw_installer.ts"
 

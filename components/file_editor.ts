@@ -26,13 +26,13 @@ export abstract class FileEditor<O extends FileEditor.Options = FileEditor.Optio
 
     // do important initial stuff synchronous when creating this element
     override onInit() {
-        this.id = this.options.path;
+        this.identifier = this.options.path;
         this.resource = Resource.get(this.options.path);
 
         // handle resource rename
         this.resource.onRename(()=>{
             this.options.path = this.resource.path;
-            this.id = this.options.path;
+            this.identifier = this.options.path;
             this.updateTitle()
         })
     }
@@ -81,7 +81,7 @@ export abstract class FileEditor<O extends FileEditor.Options = FileEditor.Optio
         }
         this.resource = resource;
         this.options.path = resource.path;
-        this.id = this.options.path;
+        this.identifier = this.options.path;
         this.updateTitle()
 
         this.content.innerHTML = "";

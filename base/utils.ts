@@ -116,9 +116,10 @@ export namespace Utils {
 
 		// convert camelCase to kebab-case
 		property = property?.replace(/[A-Z]/g, x => `-${x.toLowerCase()}`);
-		
+
 		// none
 		if (value == undefined) element.style.removeProperty(property);
+
 
 		// UIX color
 		else if (value instanceof Datex.PointerProperty && value.pointer.val == Theme.colors) {
@@ -128,8 +129,8 @@ export namespace Utils {
 		else {
 			Datex.Value.observeAndInit(value, (v,k,t) => {
 				if (v == undefined) element.style.removeProperty(property);
-				else element.style.setProperty(property, v.toString())
-			});
+				else element.style.setProperty(property, getCSSProperty(v))
+			}, undefined, undefined);
 		}
 		return element;
 	}

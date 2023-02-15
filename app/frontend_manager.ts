@@ -34,7 +34,7 @@ export class FrontendManager {
 		this.import_resolver = new TypescriptImportResolver(this.#scope, {
 			import_map: this.#app_options.import_map,
 			import_map_base_path: this.#base_path,
-			handle_out_of_scope_path: (path: Path, from:Path, imports:string[]) => this.handleOutOfScopePath(path, from, imports)
+			handle_out_of_scope_path: (path: Path, from:Path, imports:Set<string>) => this.handleOutOfScopePath(path, from, imports)
 		});
 
 		this.transpiler = new TypescriptTranspiler(this.#scope, {

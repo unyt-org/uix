@@ -16,6 +16,7 @@ export class FrontendManager {
 
 		this.#scope = new Path(scope);
 		this.#base_path = new Path(base_path);
+		this.frontend_path = `/@${this.#scope.name}/`;
 
 		this.#app_options = app_options;
 		this.#live = live;
@@ -98,6 +99,7 @@ export class FrontendManager {
 
 	#base_path!:Path
 	#scope!:Path
+	frontend_path!: string
 
 	#app_options!:normalized_app_options
 
@@ -113,6 +115,11 @@ export class FrontendManager {
 
 		if (this.server.running) return;
 
+		// bind @frontend to scope
+		this.server.path(new RegExp(String.raw `^\/@${this.#scope.name}\/.*`), (req, path)=>{
+			return path.replace(this.frontend_path, '/');
+		});
+
 		// handled default web paths
 		this.server.path("/index.html", (req, path)=>this.handleIndexHTML(req, path));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
@@ -121,6 +128,11 @@ export class FrontendManager {
 		if (this.#app_options.installable) this.server.path("/manifest.json", (req, path)=>this.handleManifest(req, path));
 		this.server.path("/_uix_sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/_uix_sw.ts", (req, path)=>this.handleServiceWorker(req, path));
+
+		// handle routes (ignore @_internal, @backend, ...)
+		this.server.path(/^\/[^@].*/, (req, path)=>{
+			console.log(path);
+		});
 
 		// if (this.generator){
 		// 	this.server.path("/entrypoint.js", (req, path)=>this.handleSSREntrypoint(req, path));
@@ -144,13 +156,14 @@ export class FrontendManager {
 				const type = getDirType(this.#app_options, import_path);
 				
 				if (type == "backend") {
+					console.log(import_path.toString(), import_path.getAsRelativeFrom(this.#base_path))
 					const web_path = '/@' + import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
 					const import_pseudo_path = this.#scope.getChildPath(web_path);
-					const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
+					// const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
 
 					await this.updateBackendInterfaceFile(web_path, import_pseudo_path, import_path, module_path, imports);
 
-					return rel_import_pseudo_path;
+					return web_path // rel_import_pseudo_path;
 				}
 		
 				else if (type == "common") {
@@ -313,7 +326,7 @@ catch {
 			}
 			else skeleton = "x"
 
-			await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(skeleton, this.#client_scripts,  (new Path('./entrypoint.ts', this.#scope).fs_exists) ?  './entrypoint.ts' : undefined, compat));
+			await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(skeleton, this.#client_scripts, (new Path('./entrypoint.ts', this.#scope).fs_exists) ?  this.frontend_path + 'entrypoint.ts' : undefined, compat));
 
 		} catch (e) {
 		}			

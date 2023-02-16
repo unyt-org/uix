@@ -66,4 +66,4 @@ trigger:
     - /^release.*$/
   script:
     - if [ "$CREATE_VERSION" != "true" ]; then return 1; fi
-    - "curl --request POST --form token=${TRIGGER_CDN} --form ref=main https://git.unyt.org/api/v4/projects/61/trigger/pipeline"
+    - curl https://cdn.unyt.org/update

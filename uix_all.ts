@@ -23,7 +23,7 @@ export * from "./base/utils.ts"
 export * from "./base/routing.ts"
 
 // html - experimental
-export * from "./html/node.ts"
+// export * from "./html/node.ts"
 
 // sw
 export * from "./sw/sw_installer.ts"

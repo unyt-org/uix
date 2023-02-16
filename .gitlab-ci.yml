@@ -52,7 +52,7 @@ package:
   before_script:
     - '[ -f ./version ] && export VERSION=$(cat ./version)'
   script:
-    - tar -czf package.tar.gz *.ts *.json *.sh app/ audio/ base/ components/ elements/ fonts/ icons/ lib/ LICENSE logos/ server_dom/ style/ sw/ uix_std/ utils/
+    - tar -czf package.tar.gz ./
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file package.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uix/${VERSION}/package.tar.gz"'
   only:
     - /^release.*$/

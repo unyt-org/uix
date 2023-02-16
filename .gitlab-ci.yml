@@ -52,8 +52,8 @@ package:
   before_script:
     - '[ -f ./version ] && export VERSION=$(cat ./version)'
   script:
-    - tar -czf package.tar.gz ./
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file package.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uix/${VERSION}/package.tar.gz"'
+    - tar -czf /tmp/package.tar.gz ./
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file /tmp/package.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uix/${VERSION}/package.tar.gz"'
   only:
     - /^release.*$/
 

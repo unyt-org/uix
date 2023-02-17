@@ -14,7 +14,6 @@ import { Sounds } from "../base/sounds.ts";
 import { Handlers } from "../base/handlers.ts";
 import { TabGroup } from "./tab_group.ts";
 import { Files } from "../base/files.ts";
-import { document } from "../utils/constants.ts";
 
 
 export namespace Tree {

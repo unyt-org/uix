@@ -1,9 +1,11 @@
+// html - experimental
+export * from "./html/datex_binding.ts"
+
 // init
 export * from "./base/init.ts"
 
 // base
 export * from "./base/actions.ts"
-export * from "./base/app.ts"
 export * from "./base/clipboard.ts"
 export * from "./base/debug.ts"
 export * from "./base/decorators.ts"
@@ -21,9 +23,6 @@ export * from "./base/theme.ts"
 export * from "./base/unyt_pen.ts"
 export * from "./base/utils.ts"
 export * from "./base/routing.ts"
-
-// html - experimental
-export * from "./html/node.ts"
 
 // sw
 export * from "./sw/sw_installer.ts"

@@ -2,15 +2,15 @@
 
 export const IS_HEADLESS = !!globalThis.Deno;
 
-type window = Window & {HTMLElement: HTMLElement};
+// type window = Window & {HTMLElement: HTMLElement};
 
-// window, document aliases
-export const window:window = <window> (IS_HEADLESS ? (await import("../server_dom/window.ts")).window : globalThis.window);
-export const document = window.document;
-try { 
-	// @ts-ignore only works in deno
-	globalThis.document = document;
-} catch {};
+// // window, document aliases
+// export const window:window = <window> (IS_HEADLESS ? (await import("../server_dom/window.ts")).window : globalThis.window);
+// export const document = window.document;
+// try { 
+// 	// @ts-ignore only works in deno
+// 	globalThis.document = document;
+// } catch {};
 
 // polyfills
 if (!IS_HEADLESS) await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
@@ -38,4 +38,3 @@ export const DEFAULT_BORDER_SIZE = 2; // also set in css (.has-border)
 // @ts-ignore
 export const SAFARI_COMPATIBILITY_MODE = IS_HEADLESS ? false : (typeof window.webkitConvertPointFromNodeToPage === 'function')
 export const PLEEASE_FIREFOX = IS_HEADLESS ? false : navigator.userAgent.indexOf("Firefox") != -1;
-

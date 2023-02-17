@@ -2,8 +2,6 @@
 import { datex, Datex, pointer, eternal } from "unyt_core";
 import { root_container, logger } from "../utils/global_values.ts";
 import { Components} from "../components/main.ts";
-import { UIXAppInstance } from "./app.ts";
-import { document } from "../utils/constants.ts";
 import { ServiceWorker } from "../sw/sw_installer.ts";
 
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
@@ -137,8 +135,8 @@ export namespace State {
 
 
     export function saveSkeleton(skeleton:string)
-    export function saveSkeleton(component:Components.Base<any>|UIXAppInstance)
-    export function saveSkeleton(skeleton:string|Components.Base<any>|UIXAppInstance) {
+    export function saveSkeleton(component:Components.Base<any>)
+    export function saveSkeleton(skeleton:string|Components.Base<any>) {
         if (typeof skeleton == "string") localStorage.setItem('uix_skeleton', skeleton);
         else if (skeleton instanceof Components.Base) localStorage.setItem('uix_skeleton', skeleton.getSkeleton());
         //else throw new Error("Invalid type for skeleton") TODO:
@@ -153,7 +151,7 @@ export namespace State {
         root_container.innerHTML = skeleton;
     }
 
-    let current_state: Components.Base|UIXAppInstance;
+    let current_state: Components.Base;
 
     // completely reset current uix state
     export async function reset(){
@@ -161,9 +159,9 @@ export namespace State {
     }
 
     // @deprecated
-    export async function saved(new_state_pages:()=>Promise<Components.Base[]|Components.Base[]>, state_name?:string):Promise<Components.Base|UIXAppInstance>
-    export async function saved(load_new_state:()=>Promise<Components.Base|UIXAppInstance>|Components.Base|UIXAppInstance, state_name?:string):Promise<Components.Base|UIXAppInstance>
-    export async function saved(load_new_state:()=>Promise<Components.Base|UIXAppInstance|Components.Base[]>|Components.Base|UIXAppInstance|Components.Base[], state_name:string = current_uix_state_name):Promise<Components.Base|UIXAppInstance> {
+    export async function saved(new_state_pages:()=>Promise<Components.Base[]|Components.Base[]>, state_name?:string):Promise<Components.Base>
+    export async function saved(load_new_state:()=>Promise<Components.Base>|Components.Base, state_name?:string):Promise<Components.Base>
+    export async function saved(load_new_state:()=>Promise<Components.Base|Components.Base[]>|Components.Base|Components.Base[], state_name:string = current_uix_state_name):Promise<Components.Base> {
 
         current_uix_state_name = state_name;
 
@@ -172,7 +170,7 @@ export namespace State {
             setLoadingProgress(0.3);
             try {
                 current_state = await Datex.Storage.getItem('uix_state_'+current_uix_state_name);
-                if (!(current_state instanceof UIXAppInstance || current_state instanceof Components.Base)) {
+                if (!(current_state instanceof Components.Base)) {
                     logger.error `${current_state}`;
                     throw new Error("UIX state not a valid value (uix:app or a UIX Element)");
                 }
@@ -198,31 +196,31 @@ export namespace State {
         if (typeof load_new_state == "function") {
             setLoadingProgress(0.1);
             current_state = <any>await load_new_state();
-            if (!(current_state instanceof UIXAppInstance) && !(current_state instanceof Components.Base) && typeof current_state == "object") current_state = new UIXAppInstance(undefined, current_state);
+            // if (!(current_state instanceof Components.Base) && typeof current_state == "object") current_state = new UIXAppInstance(undefined, current_state);
             await Datex.Storage.setItem('uix_state_'+current_uix_state_name, current_state)
             // save constraints for outer component
             if (current_state instanceof Components.Base) {
                 current_state.constraints = pointer(current_state.constraints);
                 await Datex.Storage.setItem('uix_constraints_'+current_uix_state_name, current_state.constraints);
             }
-            root_container.append(<Components.Base|UIXAppInstance>current_state); // add to document
+            root_container.append(<Components.Base>current_state); // add to document
             loadingFinished();
             logger.success("app loaded");
             saveSkeleton(current_state);
             setLoadingProgress(0.8);
             return current_state;
         }
-        else if (typeof load_new_state == "object") {
-            setLoadingProgress(0.1);
-            current_state = new UIXAppInstance(undefined, load_new_state);
-            await Datex.Storage.setItem('uix_state_'+current_uix_state_name, current_state)
-            root_container.append(current_state); // add to document
-            loadingFinished();
-            logger.success("app loaded");
-            saveSkeleton(current_state);
-            setLoadingProgress(0.8);
-            return current_state;
-        }
+        // else if (typeof load_new_state == "object") {
+        //     setLoadingProgress(0.1);
+        //     current_state = new UIXAppInstance(undefined, load_new_state);
+        //     await Datex.Storage.setItem('uix_state_'+current_uix_state_name, current_state)
+        //     root_container.append(current_state); // add to document
+        //     loadingFinished();
+        //     logger.success("app loaded");
+        //     saveSkeleton(current_state);
+        //     setLoadingProgress(0.8);
+        //     return current_state;
+        // }
         else {
             throw Error("Invalid state, must be a function")
         } 

@@ -2,7 +2,6 @@
 import { Datex, datex, decimal, text, transform } from "unyt_core";
 import { Quantity, Time, Unit, unit, ValueError } from "unyt_core/datex_all.ts";
 import { Element } from "../base/decorators.ts";
-import { window } from "../utils/constants.ts";
 import { Utils } from "../base/utils.ts"
 import { Theme } from "../base/theme.ts"
 import { PLEEASE_FIREFOX } from "../uix_all.ts";

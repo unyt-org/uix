@@ -6,7 +6,6 @@ import { Clipboard } from "../base/clipboard.ts";
 import { Types } from "../utils/global_types.ts";
 import { global_states, logger } from "../utils/global_values.ts";
 import { SAFARI_COMPATIBILITY_MODE } from "../utils/constants.ts";
-import { document } from "../utils/constants.ts";
 
 
 export namespace DragGroup {

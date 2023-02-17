@@ -12,7 +12,6 @@ import { I, S } from "../uix_short.ts";
 import { logger } from "../utils/global_values.ts";
 import { FileEditor } from "./file_editor.ts";
 import { Webpage } from "./webpage.ts";
-import { document } from "../utils/constants.ts";
 
 
 export namespace TabGroup {

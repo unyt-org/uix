@@ -13,7 +13,6 @@ import { Theme } from "./theme.ts";
 import { UnytPen } from "./unyt_pen.ts";
 import { Files } from "./files.ts";
 import { abstract_component_classes, component_classes, component_groups } from "../utils/global_values.ts";
-import { document, window } from "../utils/constants.ts";
 
 export namespace Utils {
 

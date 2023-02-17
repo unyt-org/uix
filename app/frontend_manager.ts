@@ -129,8 +129,8 @@ export class FrontendManager {
 		this.server.path("/_uix_sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/_uix_sw.ts", (req, path)=>this.handleServiceWorker(req, path));
 
-		// handle routes (ignore @_internal, @backend, ...)
-		this.server.path(/^\/[^@].*/, (req, path)=>{
+		// handle routes (ignore @_internal, @backend, .dx, ...)
+		this.server.path(/^\/[^@.].*/, (req, path)=>{
 			console.log(path);
 		});
 

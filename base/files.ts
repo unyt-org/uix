@@ -8,7 +8,6 @@ import { Resource } from "../utils/resources.ts";
 import { logger } from "../uix_all.ts";
 import { std_lib_files } from "./std_loader.ts";
 import { Components } from "../components/main.ts";
-import { document } from "../utils/constants.ts";
 
 export namespace Files {
 

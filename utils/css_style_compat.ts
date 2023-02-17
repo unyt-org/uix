@@ -1,4 +1,3 @@
-import { document } from "./constants.ts";
 
 // fake CSSStyleDeclaration element with proxy to update css property names
 export class PlaceholderCSSStyleDeclaration extends Array /*implements CSSStyleDeclaration*/ {

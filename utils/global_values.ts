@@ -1,6 +1,5 @@
 import { Datex } from "unyt_core";
 import type { Components } from "../components/main.ts"
-import { document } from "./constants.ts";
 import type { Types } from "./global_types.ts";
 
 export const logger = new Datex.Logger("UIX");

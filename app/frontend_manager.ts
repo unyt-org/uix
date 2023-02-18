@@ -35,7 +35,7 @@ export class FrontendManager {
 		this.import_resolver = new TypescriptImportResolver(this.#scope, {
 			import_map: this.#app_options.import_map,
 			import_map_base_path: this.#base_path,
-			handle_out_of_scope_path: (path: Path, from:Path, imports:Set<string>) => this.handleOutOfScopePath(path, from, imports)
+			handle_out_of_scope_path: (path: Path, from:Path, imports:Set<string>, no_side_effects:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects)
 		});
 
 		this.transpiler = new TypescriptTranspiler(this.#scope, {
@@ -55,7 +55,7 @@ export class FrontendManager {
 				import_resolver:  new TypescriptImportResolver(new Path(common_dir), {
 					import_map: this.#app_options.import_map,
 					import_map_base_path: this.#base_path,
-					handle_out_of_scope_path: (path: Path, from:Path, imports:string[]) => this.handleOutOfScopePath(path, from, imports)
+					handle_out_of_scope_path: (path: Path, from:Path, imports:string[], no_side_effects:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects)
 				}),
 				on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined
 			})
@@ -147,7 +147,8 @@ export class FrontendManager {
 	#backend_virtual_files = new Map<string, Map<string, Set<string>>>()
 
 	// resolve oos paths from local (client side) imports - resolve to web (https) paths
-	private async handleOutOfScopePath(import_path:Path, module_path:Path, imports:Set<string>){
+	// if no_side_effects is true, don't update any files
+	private async handleOutOfScopePath(import_path:Path, module_path:Path, imports:Set<string>, no_side_effects:boolean){
 		
 		// console.log("oos", module_path.toString(), import_pseudo_path.toString(), rel_import_pseudo_path)
 
@@ -156,12 +157,11 @@ export class FrontendManager {
 				const type = getDirType(this.#app_options, import_path);
 				
 				if (type == "backend") {
-					console.log(import_path.toString(), import_path.getAsRelativeFrom(this.#base_path))
 					const web_path = '/@' + import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
 					const import_pseudo_path = this.#scope.getChildPath(web_path);
 					// const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
 
-					await this.updateBackendInterfaceFile(web_path, import_pseudo_path, import_path, module_path, imports);
+					if (!no_side_effects) await this.updateBackendInterfaceFile(web_path, import_pseudo_path, import_path, module_path, imports);
 
 					return web_path // rel_import_pseudo_path;
 				}

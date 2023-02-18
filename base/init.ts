@@ -180,5 +180,4 @@ Handlers.handleShortcut(globalThis.window, "connect_unyt_pen", async ()=>{
 // strings and shortcuts
 await Res.initShortcuts();
 
-
-logger.success(`v.${VERSION} initialized`)
+Datex.Unyt.setUIXData(VERSION);

@@ -27,8 +27,15 @@ if (!IS_HEADLESS) {
 	})(document);
 }
 
+let version = "0.0.0";
+try {
+    const res = await fetch(new URL("../version", import.meta.url));
+    if (res.ok) version = await res.text()
+}
+catch {}
 
-export const VERSION = "3.beta1";
+
+export const VERSION = version;
 export const IS_PWA = IS_HEADLESS ? false : (window.matchMedia && window.matchMedia('(display-mode: standalone)')?.matches ? true : false);
 // @ts-ignore TODO: headless platform ? macos/windows currently required for shortcuts
 export const PLATFORM = IS_HEADLESS ? 'macos' : window.navigator.userAgentData?.platform?.includes("mac") ? "macos" : "windows";

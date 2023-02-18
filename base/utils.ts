@@ -13,6 +13,7 @@ import { Theme } from "./theme.ts";
 import { UnytPen } from "./unyt_pen.ts";
 import { Files } from "./files.ts";
 import { abstract_component_classes, component_classes, component_groups } from "../utils/global_values.ts";
+import { DX_VALUE } from "unyt_core/datex_all.ts";
 
 export namespace Utils {
 
@@ -132,6 +133,17 @@ export namespace Utils {
 			}, undefined, undefined);
 		}
 		return element;
+	}
+
+	export function getTextNode(content:any) {
+		const textNode = document.createTextNode("");
+		textNode[DX_VALUE] = content;
+
+		Datex.Value.observeAndInit(content, (v,k,t) => {
+			textNode.textContent = v!=undefined ? (<any>v).toString() : ''
+		}, undefined, undefined);
+
+		return textNode;
 	}
 	
 
@@ -260,8 +272,6 @@ export namespace Utils {
 	}
 
 	export function setElementHTML<T extends HTMLElement>(element:T, html:Datex.CompatValue<string|HTMLElement>):T {
-		if (!element) return;
-
 		// unobserve?
 		element_bound_html_values.get(element)?.unobserve(element);
 		element_bound_text_values.get(element)?.unobserve(element);
@@ -283,8 +293,6 @@ export namespace Utils {
 	}
 
 	export function setElementText<T extends HTMLElement>(element:T, text:Datex.CompatValue<unknown>, markdown = false):T{
-		if (!element) return;
-
 		// unobserve?
 		element_bound_html_values.get(element)?.unobserve(element);
 		element_bound_text_values.get(element)?.unobserve(element);
@@ -305,6 +313,17 @@ export namespace Utils {
 		// default
 		else updateElementText.call(element, text);
 
+		return element;
+	}
+
+	// append an element or text to an element
+	export function append<T extends HTMLElement>(element:T, content:Datex.CompatValue<HTMLElement|Text|string>):T {
+
+		if (content instanceof HTMLElement || content instanceof Text) element.append(content);
+		else if (typeof content == "string" || typeof content == "number" || typeof content == "boolean" || typeof content == "bigint") element.append(content);
+		else {
+			element.append(getTextNode(content));
+		}
 		return element;
 	}
 

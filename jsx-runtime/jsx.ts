@@ -28,8 +28,7 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 	// console.log("jsx", type, children, props)
 
 	for (const child of children) {
-		if (child instanceof HTMLElement) element.append(child);
-		else Utils.setElementText(element, child);
+		Utils.append(element, child);
 	}
 
 	return element;

@@ -16,7 +16,7 @@ import "https://cdn.unyt.org/unyt_core/no_init.ts"; // required by getAppConfig
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
 
-import { getAppConfig } from "./utils/config_files.ts";
+import { getAppConfig, getExistingFile } from "./utils/config_files.ts";
 
 const default_importmap = "https://cdn.unyt.org/importmap.json";
 const run_script_url = "app/run.ts";
@@ -30,6 +30,7 @@ const flags = (await import("https://deno.land/std@0.168.0/flags/mod.ts")).parse
 	}
 });
 const root_path = new URL(flags["path"]??'./', 'file://' + Deno.cwd() + '/');
+const deno_config_path = await getExistingFile(root_path, './deno.json');
 
 // find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
 const config = await getAppConfig(root_path);
@@ -63,17 +64,25 @@ if (flags.reload) {
 
 // start actual deno process
 
+const cmd = [
+	"deno",
+	"run",
+	"-A",
+	"-q",
+	"--no-check"
+];
+
+if (deno_config_path) {
+	cmd.push("--config", deno_config_path instanceof URL ? deno_config_path.pathname : deno_config_path)
+}
+if (config.import_map_path) {
+	cmd.push("--import-map", config.import_map_path instanceof URL ? config.import_map_path.pathname : <string> config.import_map_path)
+}
+
 await Deno.run({
 	cmd: [
-		"deno",
-		"run",
-		"--allow-all",
-		"--unstable",
-		"--import-map",
-		<string>config.import_map_path,
-		"-q",
-		"--no-check",
+		...cmd,
 		run_script_abs_url,
-	  ...Deno.args,
+	  	...Deno.args,
 	]
 }).status();

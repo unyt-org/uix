@@ -18,6 +18,8 @@ if (IS_HEADLESS) {
 	globalThis.document = window.document;
 	globalThis.HTMLElement = window.HTMLElement;
 	globalThis.customElements = window.customElements;
+	globalThis.Text = window.Text
+	globalThis.MutationObserver = window.MutationObserver;
 
 	globalThis.CSSStyleSheet = (await import("./deno_css_style_sheet.ts")).CSSStyleSheet;
 

@@ -64,14 +64,15 @@ declare global {
   
 	  // Common attributes of the standard HTML elements and JSX components
 	  interface IntrinsicAttributes {
-		key?: string
-		class?: never
-		className?: string | string[]
-  
+		class?: string
+		id?: string,
+		style?: string,
+		name?: string,
+
 		[key: string]: any
 	  }
   
-	  // Common attributes of the JSX components only
+	  // Common attributes of the UIX components only
 	  interface IntrinsicClassAttributes<ComponentClass> {
   
 	  }

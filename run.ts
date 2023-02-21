@@ -16,7 +16,8 @@ import "https://cdn.unyt.org/unyt_core/no_init.ts"; // required by getAppConfig
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
 
-import { getAppConfig, getExistingFile } from "./utils/config_files.ts";
+import { getAppConfig } from "./utils/config_files.ts";
+import { getExistingFile } from "./utils/file_utils.ts";
 
 const default_importmap = "https://cdn.unyt.org/importmap.json";
 const run_script_url = "app/run.ts";
@@ -30,7 +31,7 @@ const flags = (await import("https://deno.land/std@0.168.0/flags/mod.ts")).parse
 	}
 });
 const root_path = new URL(flags["path"]??'./', 'file://' + Deno.cwd() + '/');
-const deno_config_path = await getExistingFile(root_path, './deno.json');
+const deno_config_path = getExistingFile(root_path, './deno.json');
 
 // find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
 const config = await getAppConfig(root_path);
@@ -50,16 +51,11 @@ const run_script_abs_url = import_map.imports?.['uix/'] + run_script_url;
 
 // reload cache
 if (flags.reload) {
-	await Deno.run({
-		cmd: [
-			"deno",
-			"cache",
-			"--reload",
-			"--no-check",
-			"-q",
-			run_script_abs_url		
-		]
-	}).status();
+	const deno_lock_path = getExistingFile(root_path, './deno.lock');
+	if (deno_lock_path) {
+		console.log("removing deno.lock");
+		await Deno.remove(deno_lock_path)
+	}
 }
 
 // start actual deno process
@@ -71,6 +67,10 @@ const cmd = [
 	"-q",
 	"--no-check"
 ];
+
+if (flags.reload) {
+	cmd.push("--reload");
+}
 
 if (deno_config_path) {
 	cmd.push("--config", deno_config_path instanceof URL ? deno_config_path.pathname : deno_config_path)

@@ -1,3 +1,4 @@
+import { $$ } from "unyt_core";
 import { Utils } from "../base/utils.ts";
 
 const jsxFragment = 'jsx.Fragment'
@@ -31,7 +32,7 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 		Utils.append(element, child);
 	}
 
-	return element;
+	return $$(element);
 
 }
 

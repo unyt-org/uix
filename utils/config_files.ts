@@ -1,10 +1,11 @@
 // no explicit imports, should also work without import maps...
+import {getExistingFile} from "./file_utils.ts";
 
-/**
+/**getExistingFile
  * get combined config of app.dx and deno.json
  */
 export async function getAppConfig(root_path:URL): Promise<Record<string, unknown>> {
-	const config_path = await getExistingFile(root_path, './app.dx', './app.json');
+	const config_path = getExistingFile(root_path, './app.dx', './app.json');
 	let config = {}
 	
 	if (config_path) {
@@ -17,7 +18,7 @@ export async function getAppConfig(root_path:URL): Promise<Record<string, unknow
 	// else throw "Could not find an app.dx or app.json config file in the root directory " + root_path
 
 	// set import map from deno.json if exists
-	const deno_path = await getExistingFile(root_path, './deno.json');
+	const deno_path = getExistingFile(root_path, './deno.json');
 	if (!config.import_map_path && !config.import_map && deno_path) {
 		try {
 			const deno = JSON.parse(await Deno.readTextFile(deno_path));
@@ -34,17 +35,4 @@ export async function getAppConfig(root_path:URL): Promise<Record<string, unknow
 	} 
 
 	return config
-}
-
-export async function getExistingFile(root_path:URL, ...paths:(string|URL)[]):Promise<string|URL|null> {
-	try {
-		const path = paths.shift();
-		if (!path) return null;
-		const abs_path = new URL(path, root_path);
-		await Deno.open(abs_path)
-		return abs_path;
-	}
-	catch {
-		return paths.length ? getExistingFile(root_path, ...paths) : null;
-	}
 }

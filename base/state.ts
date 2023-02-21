@@ -6,6 +6,7 @@ import { ServiceWorker } from "../sw/sw_installer.ts";
 
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { displayInit } from "unyt_core/runtime/display.ts";
+import { collapseToContent, html_content, html_content_or_generator_or_preset } from "../html/rendering.ts";
 
 let current_uix_state_name = 'default';
 
@@ -151,7 +152,7 @@ export namespace State {
         root_container.innerHTML = skeleton;
     }
 
-    let current_state: Components.Base;
+    let current_state: html_content;
 
     // completely reset current uix state
     export async function reset(){
@@ -228,12 +229,14 @@ export namespace State {
     }
 
     // use instead of State.saved
-    export function set(component:Components.Base) {
-        current_state = component;
-        root_container.append(component); // add to document
+    export function set(content:html_content_or_generator_or_preset) {
+        const collapsed_content = collapseToContent(content);
+        current_state = collapsed_content;
+        root_container.innerHTML = "";
+        root_container.append(collapsed_content); // add to document
         loadingFinished();
         logger.success("app loaded");
-        saveSkeleton(component);
+        saveSkeleton(collapsed_content);
     }
 
     export function exportState(uix_component = current_state){

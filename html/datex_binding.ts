@@ -30,14 +30,16 @@ Datex.Type.get('html').setJSInterface({
 				}
 				else Utils.setElementAttribute(el, prop, value);
 			}
-			for (const child of val.indexed) Utils.append(el, child);
+			for (const child of val.indexed) {
+				if (child instanceof HTMLElement) Utils.append(el, <HTMLElement>child);
+				else Utils.append(el, child);
+			}
 		}
 		// direct content
 		else {
-			if (val instanceof HTMLElement) el.append(val);
-			else Utils.setElementText(el, val);
+			if (val instanceof HTMLElement) Utils.append(el, <HTMLElement>val);
+			else Utils.append(el, val);
 		}
-		// console.log("cast", val, type.toString(), el)
 
 		return el;
 	},
@@ -60,7 +62,6 @@ Datex.Type.get('html').setJSInterface({
 		for (const prop of style_props) {
 			style[prop] = val.style[prop];
 		}
-
 		// children
 		for (let i = 0; i < val.childNodes.length; i++) {
 			const child = val.childNodes[i];
@@ -68,7 +69,6 @@ Datex.Type.get('html').setJSInterface({
 			if (child instanceof Text) data.push(child[DX_VALUE] ?? child.textContent);
 			else data.push(child);
 		}
-
 		// logger.info("serialize",data)
 
 		return data;
@@ -106,7 +106,7 @@ const OBSERVER_IGNORE = Symbol("OBSERVER_IGNORE");
 
 
 export function bindObserver(element:HTMLElement) {
-	console.log("bind datex ", element);
+	// console.log("bind datex ", element);
 
 	// @ts-ignore
 	if (element[OBSERVER]) return;
@@ -135,7 +135,7 @@ export function bindObserver(element:HTMLElement) {
 				ptr.handleSetObservers(mut.attributeName)
 			}
 			else if (mut.type == "childList") {
-				console.log("mut",mut)
+				console.log("mut")//,mut, mut.addedNodes, mut.removedNodes)
 			}
 		}
 

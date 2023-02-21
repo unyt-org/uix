@@ -8,7 +8,6 @@ export const logger = new Datex.Logger("UIX");
 export const root_container = document.querySelector(".root-container") ?? document.createElement("main") 
 root_container.classList.add("root-container");
 
-
 // notification container
 export const notification_container = document.createElement("aside"); 
 notification_container.classList.add("notification-container");

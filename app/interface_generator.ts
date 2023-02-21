@@ -39,12 +39,12 @@ function getValueTSCode(module_name:string, name:string, value: any, no_pointer 
 	const type = Datex.Type.ofValue(value)
 	const is_pointer = (value instanceof Datex.Value) || !!(Datex.Pointer.getByValue(value));
 
-	if (no_pointer) {
-		// no pointer
-	}
+	// if (no_pointer) {
+	// 	// no pointer
+	// }
 
 	// log warning for primitive non-pointer values (cannot be converted to pointer)
-	else if (type.is_primitive && (!is_pointer || implicitly_converted_primitives.get(module_name)?.has(name))) {
+	if (type.is_primitive && (!is_pointer || implicitly_converted_primitives.get(module_name)?.has(name))) {
 		code += name ? `logger.warn('The export "${name}" cannot be converted to a shared value. Consider explicitly converting it to a primitive pointer using $$().');\n` : `logger.warn('The default export cannot be converted to a shared value. Consider explicitly converting it to a primitive pointer using $$().');\n`
 		implicitly_converted_primitives.getAuto(module_name).add(name);
 	}
@@ -72,8 +72,8 @@ function getValueTSCode(module_name:string, name:string, value: any, no_pointer 
 			// convert Function to DATEX Function
 			else if (value instanceof Function) value = Datex.Function.createFromJSFunction(value); 
 
-			// log warning for non-pointer arrays and object
-			else if (type == Datex.Type.std.Array || type == Datex.Type.std.Object) {
+			// log warning for non-pointer arrays and object (ignore defaults aka 'no_pointer')
+			else if ((type == Datex.Type.std.Array || type == Datex.Type.std.Object) && !no_pointer) {
 				code += name ? `logger.warn('The export "${name}" was implicitly converted to a shared pointer value. This might have unintended side effects. Consider explicitly converting it to a ${type} pointer using $$().');\n` : `logger.warn('The default export was implicitly converted to a shared pointer value. This might have unintended side effects. Consider explicitly converting it to a ${type} pointer using $$().');\n`
 				implicitly_converted.getAuto(module_name).add(name);
 			}

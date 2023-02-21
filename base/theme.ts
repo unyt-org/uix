@@ -201,6 +201,10 @@ export class Theme  {
 	static #current_theme_css_text = ""
 	static #global_themes_css_text = ""
 
+	static getCSSSnapshot(){
+		return `${this.#current_theme_css_text}\n${this.#global_themes_css_text}`
+	}
+
 	// update the current theme (changes immediately)
 	private static update(theme:ThemeProperties, mode:"dark"|"light") {
 		this.#transition_mode = $$(mode); // don't trigger Theme.mode observers yet with this.#current_mode, but Theme.mode already updated

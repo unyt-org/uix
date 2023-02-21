@@ -229,8 +229,8 @@ export namespace State {
     }
 
     // use instead of State.saved
-    export function set(content:html_content_or_generator_or_preset) {
-        const collapsed_content = collapseToContent(content);
+    export function set(content:html_content_or_generator_or_preset, path = window.location.pathname) {
+        const collapsed_content = collapseToContent(content, path, false);
         current_state = collapsed_content;
         root_container.innerHTML = "";
         root_container.append(collapsed_content); // add to document
@@ -275,5 +275,4 @@ export namespace State {
     }
 
 }
-
 document.body.append(root_container);

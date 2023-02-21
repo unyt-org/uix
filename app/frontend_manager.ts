@@ -88,7 +88,7 @@ export class FrontendManager {
 		transpilers['/'] = this.transpiler
 
 		this.server = new Server(this.#scope, {
-			resolve_index_html: true,
+			resolve_index_html: false,
 			cors: true,
 			transpilers
 		});
@@ -149,7 +149,7 @@ export class FrontendManager {
 		});
 
 		// handled default web paths
-		this.server.path("/index.html", (req, path)=>this.handleIndexHTML(req, path));
+		this.server.path("/", (req, path)=>this.handleIndexHTML(req, path));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
 
 		this.server.path("/new.html", (req, path)=>this.handleNewHTML(req, path));
@@ -159,7 +159,7 @@ export class FrontendManager {
 
 		// handle routes (ignore @_internal, @backend, .dx, ...)
 		this.server.path(/^\/[^@.].*/, (req, path)=>{
-			console.log(path);
+			this.handleIndexHTML(req, path)
 		});
 
 
@@ -368,9 +368,9 @@ export class FrontendManager {
 		return {ts, dts};
 	}
 
-	// exceptions for values that should not be converted to pointers when exported
-	private dontConvertValueToPointer(value:any){
-		return value instanceof RenderPreset
+	// TODO: better solution (currently also targets other objects than uix default exports) exceptions for values that should not be converted to pointers when exported
+	private dontConvertValueToPointer(name:string, value:any){
+		return name == "default" && Datex.Type.ofValue(value) == Datex.Type.std.Object;
 	}
 
 	private async getModuleExports(path_or_specifier:Path|string, module_path:Path, exports:Set<string>) {
@@ -396,7 +396,7 @@ export class FrontendManager {
 						else this.#logger.error(this.getShortPathName(module_path) + ": '" + exp + "' is currently not a exported value in module " + this.getShortPathName(path_or_specifier) + " - backend restart might be required")
 					}
 					const val = module[exp];
-					values.push([exp, val, exists, this.dontConvertValueToPointer(val)]);
+					values.push([exp, val, exists, this.dontConvertValueToPointer(exp, val)]);
 				}
 			}
 	
@@ -477,20 +477,20 @@ catch {
 		}, 200); // wait some time until next update triggered
 	}
 
-	private async handleIndexHTML(requestEvent: Deno.RequestEvent, _path:string) {
+	private async handleIndexHTML(requestEvent: Deno.RequestEvent, path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
 		try {
 			this.updateCheckEntrypoint();
-			const prerendered_content = this.#backend?.getEntrypointHTMLContent();
+			const prerendered_content = this.#backend?.getEntrypointHTMLContent(path);
 
-			await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(prerendered_content, this.#client_scripts, this.#entrypoint, this.#backend?.web_entrypoint, compat));
+			await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(prerendered_content, this.#client_scripts, ['uix/style/document.css'], this.#entrypoint, this.#backend?.web_entrypoint, compat));
 		} catch {}
 	}
 
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
-		await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage("", [...this.#client_scripts, this.#BLANK_PAGE_URL], undefined, undefined, compat));
+		await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage("", [...this.#client_scripts, this.#BLANK_PAGE_URL], [], undefined, undefined, compat));
 	}
 
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {
@@ -562,7 +562,7 @@ catch {
 	}
 
 
-	private generateHTMLPage(prerendered_content?:string, js_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, compat_import_map = false){
+	private generateHTMLPage(prerendered_content?:string, js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, compat_import_map = false){
 		let files = '';
 		let importmap = ''
 
@@ -575,6 +575,7 @@ catch {
 
 			// js imports
 			files += indent(4) `
+				${prerendered_content?`${"import {disableInitScreen}"} from "${this.resolveImport("unyt_core/runtime/display.ts", compat_import_map).toString()}";\ndisableInitScreen();\n` : ''}
 				${"import {Datex, f}"} from "${this.resolveImport("unyt_core", compat_import_map).toString()}";
 				${"import {UIX}"} from "${this.resolveImport("uix", compat_import_map).toString()}";`
 	
@@ -601,12 +602,18 @@ catch {
 			if (this.#app_options.import_map) importmap = `<script type="importmap">\n${JSON.stringify(this.getRelativeImportMap(), null, 4)}\n</script>`	
 		}
 		
+		let global_style = '';
+		// stylesheets
+		for (const stylesheet of global_css_files) {
+			global_style += `<link rel="stylesheet" href="${this.resolveImport(stylesheet, true)}">\n`;
+		}
 
 		// global variable stylesheet
-		let global_style = "<style>"
-		for (const rule of <any>UIX.Theme.stylesheet.cssRules) {
-			global_style += rule.cssText;
-		}
+		global_style += "<style>"
+		// for (const rule of <any>UIX.Theme.stylesheet.cssRules) {
+		// 	global_style += rule.cssText;
+		// }
+		global_style += UIX.Theme.getCSSSnapshot();
 		global_style += "</style>"
 
 		let favicon = "";
@@ -624,12 +631,12 @@ catch {
 					${this.#app_options.installable ? `<link rel="manifest" href="manifest.json">` : ''}
 					${global_style}
 					${importmap}
-					${files}
 				</head>
 				<body>
 					<main class="root-container">
 						${prerendered_content??''}
 					</main>
+					${files}
 				</body>
 			</html>
 		`

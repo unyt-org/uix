@@ -143,14 +143,14 @@ class UIXApp {
 		for (const backend of n_options.backend) {
 			const backend_manager = new BackendManager(n_options, backend, base_url);
 			await backend_manager.run()
-			if (backend_manager.default!=undefined) {
+			if (backend_manager.content_provider!=undefined) {
 				if (backend_with_default_export!=undefined) logger.warn("multiple backend entrypoint export a default content");
 				backend_with_default_export = backend_manager; 
 			}
 		}
 
 		// also override endpoint default
-		if (backend_with_default_export) Datex.Runtime.endpoint_default = backend_with_default_export.default;
+		if (backend_with_default_export) Datex.Runtime.endpoint_default = backend_with_default_export.content_provider;
 
 		// load frontend
 		for (const frontend of n_options.frontend) {

@@ -54,7 +54,6 @@ if (!IS_HEADLESS) {
 		}
 	}
 
-
 	// setup page
 	document.body.append(notification_container);
 

@@ -5,6 +5,7 @@ import { BackendManager } from "./backend_manager.ts";
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { Path } from "unyt_node/path.ts";
 import { ImportMap } from "unyt_node/importmap.ts";
+import { Server } from "unyt_node/server.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -122,26 +123,27 @@ class UIXApp {
 			catch {}
 		}
 
-		logger.info("options", {...n_options, import_map:{imports:n_options.import_map.imports}})
+		// logger.info("options", {...n_options, import_map:{imports:n_options.import_map.imports}})
 
 		// for unyt log
-		Datex.Unyt.setApp(n_options.name!, n_options.version!, n_options.stage!)
+		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:n_options.stage})
 
 		// set .dx path to backend
 		if (n_options.backend.length) {
-			console.log("setting endpoint config for backend: " + new URL("./.dx", n_options.backend[0]));
 			await endpoint_config.load(new URL("./.dx", n_options.backend[0]))
 		}
 
+
 		// connect to supranet
-		await Datex.Supranet.connect();
+		if (endpoint_config.connect !== false) await Datex.Supranet.connect();
+		else await Datex.Supranet.init();
 
 		// TODO: map multiple backends to multiple frontends?
 		let backend_with_default_export:BackendManager|undefined;
 
 		// load backend
 		for (const backend of n_options.backend) {
-			const backend_manager = new BackendManager(n_options, backend, base_url);
+			const backend_manager = new BackendManager(n_options, backend, base_url, watch);
 			await backend_manager.run()
 			if (backend_manager.content_provider!=undefined) {
 				if (backend_with_default_export!=undefined) logger.warn("multiple backend entrypoint export a default content");
@@ -150,15 +152,41 @@ class UIXApp {
 		}
 
 		// also override endpoint default
-		if (backend_with_default_export) Datex.Runtime.endpoint_default = backend_with_default_export.content_provider;
+		if (backend_with_default_export) Datex.Runtime.endpoint_entrypoint = backend_with_default_export.content_provider;
 
+
+		let server:Server|undefined
 		// load frontend
 		for (const frontend of n_options.frontend) {
-			await new FrontendManager(n_options, frontend, base_url, backend_with_default_export, watch, live_frontend).run();
+			const frontend_manager = new FrontendManager(n_options, frontend, base_url, backend_with_default_export, watch, live_frontend)
+			await frontend_manager.run();
+			server = frontend_manager.server;
 		}
+		// no frontend, but has backend with default export -> create empty frontedn
+		if (!n_options.frontend.length && backend_with_default_export) {
+			// TODO: remove tmp dir on exit
+			const frontend_manager = new FrontendManager(n_options, new Path(Deno.makeTempDirSync()).asDir(), base_url, backend_with_default_export, watch, live_frontend)
+			await frontend_manager.run();
+			server = frontend_manager.server;
+		}
+
+		// expose DATEX interfaces
+		// TODO: working, but routing problems
+		// if (server) {
+		// 	const DatexServer = await (await import("unyt_node/datex_server.ts")).DatexServer
+		// 	DatexServer.addInterfaces(["websocket", "webpush"], server);
+		// 	// also add custom .dx file
+		// 	const data = new Map<Datex.Endpoint, {channels:Record<string,string>,keys:[ArrayBuffer, ArrayBuffer]}>();
+		// 	data.set(Datex.Runtime.endpoint,  {
+		// 		channels: {
+		// 			'websocket': '##location##'
+		// 		},
+		// 		keys: Datex.Crypto.getOwnPublicKeysExported()
+		// 	})
+		// 	server.path("/.dx", Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true).replace('"##location##"', '#location'), 'text/datex')
+		// }
+		
 	}
-
-
 
 }
 

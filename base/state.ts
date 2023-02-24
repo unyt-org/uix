@@ -65,7 +65,7 @@ export namespace State {
 
     export function _setMetadata(meta:app_meta){
         Object.assign(APP_META, meta);
-        Datex.Unyt.setApp(meta.name, meta.version, meta.stage, meta.backend)
+        Datex.Unyt.setAppInfo(meta)
         
         if (meta.version) {
             const prev_version = version.val;

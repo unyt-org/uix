@@ -5,12 +5,14 @@ import { collapseToContent, html_content_or_generator_or_preset, RenderMethod, R
 import { logger } from "../utils/global_values.ts";
 import { Utils } from "../uix_all.ts";
 
+
 export class BackendManager {
 	
 	#scope: Path
 	#web_path: Path
 	#entrypoint?: Path
 	#web_entrypoint?: Path
+	#watch: boolean
 
 	#module?: Record<string,any>
 	#content_provider?: html_content_or_generator_or_preset
@@ -27,8 +29,9 @@ export class BackendManager {
 	get module() {return this.#module}
 	get content_provider() {return this.#content_provider}
 
-	constructor(app_options:normalized_app_options, scope:Path, base_path:URL){
+	constructor(app_options:normalized_app_options, scope:Path, base_path:URL, watch = false){
 		this.#scope = scope;
+		this.#watch = watch;
 
 		this.#web_path = new Path(`uix:///@${this.#scope.name}/`);
 		try {
@@ -40,8 +43,18 @@ export class BackendManager {
 			logger.error("Only one of the following entrypoint files can exists in a directory: " + ALLOWED_ENTRYPOINT_FILE_NAMES.join(", "));
 			throw "ambiguous entrypoint"
 		}
+
+		if (this.#watch) this.watchFiles();
 	
 	}
+
+	async watchFiles(){
+		for await (const event of Deno.watchFs(this.#scope.pathname, {recursive: true})) {
+			logger.info("restarting backend...");
+			Deno.exit(42)
+		}
+	}
+
 
 	/**
 	 * start entrypoint if it exists

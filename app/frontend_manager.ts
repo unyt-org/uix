@@ -1,7 +1,7 @@
 import { TypescriptTranspiler } from "unyt_node/ts_transpiler.ts";
 import { TypescriptImportResolver } from "unyt_node/ts_import_resolver.ts";
 
-import { Datex } from "unyt_core";
+import { Datex, eternal } from "unyt_core";
 import { Server } from "unyt_node/server.ts";
 import { UIX } from "../uix.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, getDirType, normalized_app_options, validateDirExists } from "./app.ts";
@@ -165,7 +165,10 @@ export class FrontendManager {
 
 		await this.server.listen();
 
-		if (this.#live) await this.createLiveScript()
+		if (this.#live){
+			await this.createLiveScript()
+			this.handleFrontendReload() // reload frontends from before backend restart
+		}
 	}
 
 	#backend_virtual_files = new Map<string, Map<string, Set<string>>>()
@@ -207,6 +210,7 @@ export class FrontendManager {
 			}
 	
 			else if (import_type == "frontend") {
+				// only relevant for .dx files
 				if (module_type == "frontend") {
 					const rel_path = mapped_import_path.getAsRelativeFrom(module_path);
 					if (!no_side_effects) await this.updateDxMapFile(import_path.getAsRelativeFrom(this.#scope), mapped_import_path, import_path, compat);
@@ -222,12 +226,12 @@ export class FrontendManager {
 					return rel_path;
 				}
 				else if (module_type == "backend") {
-					// resolve from common
 					return "[ERROR: TODO resolve frontend paths from backend dir]"
 				}
+				// resolve from common
 				else if (module_type == "common") {
-					// resolve from common
-					return "[ERROR: TODO resolve frontend paths from common dir]"
+					const web_path = '/@' + mapped_import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
+					return web_path
 				}
 
 			}
@@ -647,7 +651,7 @@ catch {
 
 
 
-const reload_handlers = new Set<()=>void>();
+const reload_handlers = await eternal(()=>new Set<()=>void>());
 
 @endpoint class provider {
 	@property static addReloadHandler(handler:()=>void) {

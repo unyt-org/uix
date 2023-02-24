@@ -32,7 +32,6 @@ export class DatexRuntimeInfo<O extends UIX.Components.Base.Options = UIX.Compon
         
 
         table.append(UIX.Utils.createHTMLElement(`<tr><td style='color:var(--text_color_highlight)'>Endpoint</td><td style='font:14px Menlo, Monaco, "Courier New", monospace'>${await MonacoHandler.colorize(Datex.Runtime.endpoint.toString(), 'datex')}</td></tr>`))
-        table.append(UIX.Utils.createHTMLElement(`<tr><td style='color:var(--text_color_highlight)'>IdEndpoint</td><td style='font:14px Menlo, Monaco, "Courier New", monospace'>${await MonacoHandler.colorize(Datex.Runtime.endpoint.id_endpoint.toString(), 'datex')}</td></tr>`))
 
 
         // OPTIONS

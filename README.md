@@ -199,9 +199,9 @@ Since UIX components are normal DATEX JS template classes, additional DATEX-expo
 
 ### Global states
 
-Persistent values can also be created outside of components with the `eternal` function:
+Persistent values can also be created outside of components with the `eternal` label:
 ```typescript
-const counter = await eternal(() => 0);
+const counter = eternal ?? $$(0);
 counter.val ++; // counter gets incremented every time the page is reloaded
 ```
 

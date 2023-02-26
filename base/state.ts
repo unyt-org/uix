@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-namespace
-import { datex, Datex, pointer, eternal } from "unyt_core";
+import { datex, Datex, pointer, $$ } from "unyt_core";
 import { root_container, logger } from "../utils/global_values.ts";
 import { Components} from "../components/main.ts";
 import { ServiceWorker } from "../sw/sw_installer.ts";
@@ -10,7 +10,7 @@ import { collapseToContent, html_content, html_content_or_generator_or_preset } 
 
 let current_uix_state_name = 'default';
 
-const version = await eternal(()=>"unknown");
+const version = eternal ?? $$("unknown");
 
 
 export namespace State {

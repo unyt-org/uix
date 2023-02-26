@@ -1,7 +1,7 @@
 import { TypescriptTranspiler } from "unyt_node/ts_transpiler.ts";
 import { TypescriptImportResolver } from "unyt_node/ts_import_resolver.ts";
 
-import { Datex, eternal } from "unyt_core";
+import { $$, Datex } from "unyt_core";
 import { Server } from "unyt_node/server.ts";
 import { UIX } from "../uix.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, getDirType, normalized_app_options, validateDirExists } from "./app.ts";
@@ -28,7 +28,6 @@ export class FrontendManager {
 		this.#live = live;
 		this.#watch = watch;
 		this.#logger = new Datex.Logger("UIX Frontend");
-		this.#logger.success("init at " + this.#scope);
 
 		if (this.#app_options.offline_support) this.#client_scripts.push('uix/app/client_sw.ts');
 
@@ -583,6 +582,8 @@ catch {
 				${"import {Datex, f}"} from "${this.resolveImport("unyt_core", compat_import_map).toString()}";
 				${"import {UIX}"} from "${this.resolveImport("uix", compat_import_map).toString()}";`
 	
+			// files += `\nDatex.MessageLogger.enable();`
+
 
 			// set app info
 			files += indent(4) `\n\nUIX.State._setMetadata({name:"${this.#app_options.name??''}", version:"${this.#app_options.version??''}", stage:"${this.#app_options.stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")});`
@@ -651,7 +652,7 @@ catch {
 
 
 
-const reload_handlers = await eternal(()=>new Set<()=>void>());
+const reload_handlers = eternal ?? $$(new Set<()=>void>());
 
 @endpoint class provider {
 	@property static addReloadHandler(handler:()=>void) {

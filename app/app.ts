@@ -171,20 +171,20 @@ class UIXApp {
 		}
 
 		// expose DATEX interfaces
-		// TODO: working, but routing problems
-		// if (server) {
-		// 	const DatexServer = await (await import("unyt_node/datex_server.ts")).DatexServer
-		// 	DatexServer.addInterfaces(["websocket", "webpush"], server);
-		// 	// also add custom .dx file
-		// 	const data = new Map<Datex.Endpoint, {channels:Record<string,string>,keys:[ArrayBuffer, ArrayBuffer]}>();
-		// 	data.set(Datex.Runtime.endpoint,  {
-		// 		channels: {
-		// 			'websocket': '##location##'
-		// 		},
-		// 		keys: Datex.Crypto.getOwnPublicKeysExported()
-		// 	})
-		// 	server.path("/.dx", Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true).replace('"##location##"', '#location'), 'text/datex')
-		// }
+		// TODO: also enable without connect == false (For all uix servers), working, but routing problems
+		if (server && endpoint_config.connect === false) {
+			const DatexServer = (await import("unyt_node/datex_server.ts")).DatexServer
+			DatexServer.addInterfaces(["websocket", "webpush"], server);
+			// also add custom .dx file
+			const data = new Map<Datex.Endpoint, {channels:Record<string,string>,keys:[ArrayBuffer, ArrayBuffer]}>();
+			data.set(Datex.Runtime.endpoint,  {
+				channels: {
+					'websocket': '##location##'
+				},
+				keys: Datex.Crypto.getOwnPublicKeysExported()
+			})
+			server.path("/.dx", Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true).replace('"##location##"', '#location'), 'text/datex')
+		}
 		
 	}
 

@@ -18,6 +18,7 @@ Datex.Type.get('html').setJSInterface({
 
 	cast(val, type, ctx) {
 		if (!type.variation) throw new Error("cannot create HTMLElement without concrete type")
+		console.log("el",type.variation)
 		const el = document.createElement(type.variation);
 
 		// attrs + children tuple

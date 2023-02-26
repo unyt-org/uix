@@ -308,7 +308,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.content_container.style.justifyContent = this.options.vertical_align||"";
         this.content_container.style.alignItems = this.options.horizontal_align||"";
 
-        this.content = document.createElement('div');
+        this.content = document.createElement('slot');
         this.content.classList.add("content");
         this.content.id = "content";
 

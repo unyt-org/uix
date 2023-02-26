@@ -7,7 +7,6 @@ import { I, S } from "../uix_short.ts";
 import { Theme } from "../base/theme.ts";
 import { TabGroup } from "./tab_group.ts";
 import { Elements } from "../elements/main.ts";
-import { document } from "../utils/constants.ts";
 import { Element } from "../base/decorators.ts";
 
 

@@ -9,7 +9,6 @@ import { Sounds } from "../base/sounds.ts";
 import { Clipboard } from "../base/clipboard.ts";
 import { ComponentSettings } from "./component_settings.ts";
 import { Utils } from "../base/utils.ts"
-import { document } from "../utils/constants.ts";
 import {Routing} from "../base/routing.ts";
 
 export namespace Group {

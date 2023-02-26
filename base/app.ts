@@ -2,7 +2,6 @@ import { Datex } from "unyt_core";
 import { constructor, property, replicator, type } from "unyt_core/datex_all.ts";
 import { Components } from "../components/main.ts";
 import { Elements } from "../elements/main.ts";
-import { window } from "../utils/constants.ts";
 
 export let UIX_APP:UIXAppInstance;
 

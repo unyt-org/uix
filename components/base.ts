@@ -12,7 +12,7 @@ import { Handlers } from "../base/handlers.ts"
 import { Class, Logger, METADATA, ValueError } from "unyt_core/datex_all.ts"
 import { UIXAppInstance } from "../base/app.ts"
 import { I, S } from "../uix_short.ts"
-import { DEFAULT_BORDER_SIZE, document, IS_HEADLESS, window } from "../utils/constants.ts"
+import { DEFAULT_BORDER_SIZE, IS_HEADLESS } from "../utils/constants.ts"
 import { Clipboard } from "../base/clipboard.ts"
 import type { Group } from "./group.ts"
 import { Components } from "./main.ts"
@@ -136,7 +136,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     options_props: Datex.ObjectWithDatexValues<O>
     constraints_props: Datex.ObjectWithDatexValues<Types.component_constraints>
 
-    protected SCROLL_TO_BOTTOM = true;
+    protected SCROLL_TO_BOTTOM = false;
     protected FORCE_SCROLL_TO_BOTTOM = false;
     protected CONTENT_PADDING = true;
 
@@ -594,7 +594,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
      */
     private static findModuleBoundStylesheets(){
         if (this._use_resources) {
-            const css_url = this._module.replace(/\.(ts|js)$/, '.css');
+            const css_url = this._module.replace(/\.m?(ts|js)x?$/, '.css');
             this._module_stylesheets = [...this._module_stylesheets]; // create new module stylesheets are for this class
             this._module_stylesheets.push(css_url); // remmeber as module stylesheets
             const url_string = new URL(css_url).toString();
@@ -607,7 +607,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
      */
     private static findModuleBoundDatexScripts(){
         if (this._use_resources) {
-            const dx_url = this._module.replace(/\.(ts|js)$/, '.dx');
+            const dx_url = this._module.replace(/\.m?(ts|js)x?$/, '.dx');
             this._dx_files = [...this._dx_files]; // create new dx module array are for this class
             this._dx_files.push(dx_url)
         }
@@ -672,7 +672,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                 if (!valid_dx_files.length) {
                     if (!this._use_resources) throw new Error(`Could not load export '${exprt}' for component class '${this.name}' - external resources are disabled. Either remove the @NoResources decorator and create a corresponding DATEX file next to the TypeScript module file, or specifiy a different resource location in the @use decorator.`)
                     else if (!this._module) throw new Error(`Could not load export '${exprt}' for component class '${this.name}'. The component module could not be initialized correctly (missing @Component decorator?)`);  // this.module could not be set for whatever reason
-                    else throw new Error(`No corresponding DATEX module file found for export '${exprt}' in component class '${this.name}'. Please create a DATEX file '${this._module.replace(/\.(ts|js)$/, '.dx')} or specifiy a resource location in the @use decorator.`)
+                    else throw new Error(`No corresponding DATEX module file found for export '${exprt}' in component class '${this.name}'. Please create a DATEX file '${this._module.replace(/\.m?(ts|js)x?$/, '.dx')} or specifiy a resource location in the @use decorator.`)
                 }
 
                 for (const file_data of dx_file_values.values()) {
@@ -1309,19 +1309,19 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     // takes element, returns scroll container element
     protected makeScrollContainer(element:HTMLElement, scroll_x = true, scroll_y = true) {
 
-        let container = document.createElement("div");
+        const container = document.createElement("div");
         container.classList.add('uix-scrollbar-container')
-        let content = this.#scroll_element = document.createElement("div");
+        const content = this.#scroll_element = document.createElement("div");
         content.classList.add('uix-scrollbar-content')
 
         content.append(element)
         container.append(content);
 
-        let scrollbar_y = document.createElement("div");
+        const scrollbar_y = document.createElement("div");
         scrollbar_y.classList.add('uix-scrollbar', 'y');
         if (scroll_y) container.append(scrollbar_y)
 
-        let scrollbar_x = document.createElement("div");
+        const scrollbar_x = document.createElement("div");
         scrollbar_x.classList.add('uix-scrollbar', 'x');
         if (scroll_x) container.append(scrollbar_x)
 

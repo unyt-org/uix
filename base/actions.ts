@@ -6,7 +6,6 @@ import { IS_PWA } from "../utils/constants.ts";
 import { Utils } from "./utils.ts";
 import { Components } from "../components/main.ts";
 import { Types } from "../utils/global_types.ts";
-import { document } from "../utils/constants.ts";
 import { UIX } from "../uix.ts";
 
 

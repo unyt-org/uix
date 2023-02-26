@@ -8,7 +8,6 @@ import { I, S } from "../uix_short.ts";
 import { Elements } from "../elements/main.ts";
 import { Types } from "../utils/global_types.ts";
 import { Snippets } from "../base/snippets.ts";
-import { document } from "../utils/constants.ts";
 
 export namespace List {
 

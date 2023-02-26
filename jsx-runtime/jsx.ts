@@ -28,8 +28,7 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 	// console.log("jsx", type, children, props)
 
 	for (const child of children) {
-		if (child instanceof HTMLElement) element.append(child);
-		else Utils.setElementText(element, child);
+		Utils.append(element, child);
 	}
 
 	return element;
@@ -65,14 +64,15 @@ declare global {
   
 	  // Common attributes of the standard HTML elements and JSX components
 	  interface IntrinsicAttributes {
-		key?: string
-		class?: never
-		className?: string | string[]
-  
+		class?: string
+		id?: string,
+		style?: string,
+		name?: string,
+
 		[key: string]: any
 	  }
   
-	  // Common attributes of the JSX components only
+	  // Common attributes of the UIX components only
 	  interface IntrinsicClassAttributes<ComponentClass> {
   
 	  }

@@ -1,6 +1,6 @@
 import { Datex, $$,  f, static_pointer } from "unyt_core"
 import { logger } from "../utils/global_values.ts"
-import { window, document, IS_HEADLESS } from "../utils/constants.ts"
+import { IS_HEADLESS } from "../utils/constants.ts"
 
 interface ThemeProperties {
 	__name?:string,
@@ -177,7 +177,7 @@ export class Theme  {
 			this.update(mode == "dark" ? this.#current_dark_theme : this.#current_light_theme, mode);
 
 			// css global color scheme
-			document.body.style.colorScheme = mode;
+			if (!IS_HEADLESS) document.body.style.colorScheme = mode;
 		}
 	}
 

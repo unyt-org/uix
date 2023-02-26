@@ -1,7 +1,7 @@
 import { UIX } from "../../uix.ts";
 import { Logger } from "unyt_core/utils/logger.ts";
 import { CodeEditor } from "./main.ts";
-import { Resource, window } from "../../uix_all.ts";
+import { Resource } from "../../uix_all.ts";
 
 const MONACO_VERSION = "0.33.0"
 

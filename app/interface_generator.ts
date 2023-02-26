@@ -84,8 +84,7 @@ function getJSValueCode(module_name:string, name:string, value: any) {
 	const dx_type = Datex.Type.ofValue(value).root_type;
 
 	const [ts_type, is_primitive] = DX_TS_TYPE_MAP.get(dx_type)??[];
-	code += `${name?'export const ' + name : 'const datexValue'} = await datex(\`${Datex.Runtime.valueToDatexStringExperimental(value)}\`)${ts_type ? (is_primitive ? ` as Datex.CompatValue<${ts_type}>` : ` as ${ts_type}`):''};\n`;
-	if (!name) code += `export default datexValue;\n`;
+	code += `${name =='default' ? 'export default' : 'export const ' + name + ' ='} await datex(\`${Datex.Runtime.valueToDatexStringExperimental(value)}\`)${ts_type ? (is_primitive ? ` as Datex.CompatValue<${ts_type}>` : ` as ${ts_type}`):''};\n`;
 	return code;
 }
 
@@ -124,7 +123,7 @@ function getJSClassCode(name:string, interf: interf) {
 	
 
 	return `
-${meta_endpoint?`@endpoint("${meta_endpoint.toString()}"${meta_scope_name?`, "${meta_scope_name}"`:''})`:''}${meta_is_sync?' @sync':''}${meta_is_sync?' @sealed':''} export ${name?'':'default '}class ${name??'DatexValue'} {
+${meta_endpoint?`@endpoint("${meta_endpoint.toString()}"${meta_scope_name?`, "${meta_scope_name}"`:''})`:''}${meta_is_sync?' @sync':''}${meta_is_sync?' @sealed':''} export ${name == 'default' ? 'default ' : ''}class ${(name == 'default')?'DatexValue' : name} {
 ${fields}
 }
 `

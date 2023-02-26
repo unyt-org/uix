@@ -4,7 +4,6 @@ import { Actions } from "../base/actions.ts";
 
 import { I } from "../uix_short.ts";
 import { Types } from "../utils/global_types.ts";
-import { UIX_APP } from "../base/app.ts";
 
 // Page navigation:  Main > Sub > Sub 2
 
@@ -43,7 +42,7 @@ export class BreadcrumbView<O extends Base.Options = Base.Options> extends Base<
             this.main.append(el);
             if (entry.onClick || entry.page) {
                 el.classList.add('breadcrumb-link');
-                el.addEventListener('click', ()=>{entry.onClick ? entry.onClick() :UIX_APP?.showPage(entry.page)});
+                el.addEventListener('click', ()=>{entry.onClick ? entry.onClick() : null});
             }
             if (n<nav.length-1) this.main.insertAdjacentHTML('beforeend', `<span style='color:${this.text_color_light};margin-left:5px;margin-right:5px'>${I('fa-chevron-right')}</span>`);
         }

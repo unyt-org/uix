@@ -1,6 +1,6 @@
 import { UIX } from "../../uix.ts";
 import { Logger } from "unyt_core/utils/logger.ts";
-import { Resource, window } from "../../uix_all.ts";
+import { Resource } from "../../uix_all.ts";
 const MONACO_VERSION = "0.33.0";
 const logger = new Logger("monaco");
 const monaco_style_sheet_css = await (await fetch("https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/" + MONACO_VERSION + "/min/vs/editor/editor.main.css")).text();

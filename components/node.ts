@@ -11,7 +11,6 @@ import { DragGroup } from "./drag_group.ts";
 import { constructor, Datex, property, sync } from "unyt_core";
 import { NodeGroup } from "./node_group.ts";
 import { assignDefaultPrototype } from "../utils/utils.ts";
-import { document } from "../utils/constants.ts";
 
 
 @UIXGroup("Nodes")

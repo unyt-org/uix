@@ -5,6 +5,7 @@ import { BackendManager } from "./backend_manager.ts";
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { getLocalFileContent } from "unyt_core/datex_all.ts";
 import { Path } from "unyt_node/path.ts";
+import { VERSION } from "../utils/constants.ts";
 
 const logger = new Datex.Logger("UIX App");
 

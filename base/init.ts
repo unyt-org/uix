@@ -90,8 +90,8 @@ if (!IS_HEADLESS) {
 
 	// watch system theme change
 	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+		if (Theme.auto_mode) return;
 		logger.debug("system color scheme change")
-		if (!Theme.auto_mode) return;
 		if (event.matches) Theme.setMode("dark")
 		else Theme.setMode("light");
 		Theme.auto_mode = true;
@@ -152,7 +152,7 @@ Handlers.handleShortcut(globalThis.window, "uix_debug", Debug.toggleDebugMode);
 
 Res.addShortcut("uix_theme", "ctrl+t")
 Handlers.handleShortcut(globalThis.window, "uix_theme", ()=>{
-    if (Theme.mode == "dark") Theme.setMode("light")
+    if (Theme.mode.val == "dark") Theme.setMode("light")
     else Theme.setMode("dark")
 });
 
@@ -180,5 +180,4 @@ Handlers.handleShortcut(globalThis.window, "connect_unyt_pen", async ()=>{
 // strings and shortcuts
 await Res.initShortcuts();
 
-
-logger.success(`v.${VERSION} initialized`)
+Datex.Unyt.setUIXData(VERSION);

@@ -6,7 +6,6 @@ import { getCloneKeys } from "../utils/utils.ts";
 import { Components} from "../components/main.ts";
 import { Elements} from "../elements/main.ts";
 import { Files } from "./files.ts";
-import { window } from "../utils/constants.ts";
 
 
 //export const customElements = <typeof globalThis.customElements> globalThis.customElements ? globalThis.customElements : {define:()=>null};

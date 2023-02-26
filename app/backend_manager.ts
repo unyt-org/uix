@@ -1,4 +1,5 @@
 import { normalized_app_options } from "./app.ts";
+import {Path} from "unyt_node/path.ts";
 
 export class BackendManager {
 	
@@ -10,12 +11,11 @@ export class BackendManager {
 
 	async run() {
 		// start entrypoint if it exists
-		const entrypoint = new URL('./entrypoint.ts', this.#path);
-		try {
-			await Deno.stat(entrypoint)
+		const entrypoint = new Path('./entrypoint.ts', this.#path);
+		if (entrypoint.fs_exists) {
 			await import(entrypoint.toString());
 		} 
-		catch {}
+
 	}
 
 }

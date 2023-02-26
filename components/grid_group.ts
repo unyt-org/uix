@@ -5,7 +5,6 @@ import { Base } from "./base.ts";
 import { Handlers } from "../base/handlers.ts";
 import { Types } from "../utils/global_types.ts";
 import { Webpage } from "./webpage.ts";
-import { document } from "../utils/constants.ts";
 import { I } from "../uix_short.ts";
 
 export namespace GridGroup {

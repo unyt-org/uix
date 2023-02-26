@@ -1,5 +1,7 @@
 // deno-lint-ignore-file no-namespace
-import { IS_HEADLESS, window, document } from "../utils/constants.ts";
+import { IS_HEADLESS } from "../utils/constants.ts";
+
+import "../html/deno_dom.ts";
 
 export namespace Debug {
 

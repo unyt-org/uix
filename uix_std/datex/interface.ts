@@ -26,8 +26,8 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
         this.addStyleSheet(MonacoHandler.standalone_stylesheet);
 
         // datex editor + console
-        const editor = new DatexEditor({id:'editor', border_br_radius:0, border_bl_radius:0});
-        const console = new DatexConsoleView({id:'console', border_tr_radius:0, border_tl_radius:0, header:false, timestamps:false, editor:editor}, {gy:1});
+        const editor = new DatexEditor({identifier:'editor', border_br_radius:0, border_bl_radius:0});
+        const console = new DatexConsoleView({identifier:'console', border_tr_radius:0, border_tl_radius:0, header:false, timestamps:false, editor:editor}, {gy:1});
 
         this.addChild(editor);
         this.addChild(console);
@@ -61,6 +61,7 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
 
     private async tryConnectInterface() {
         // automatically create and add local interface
+        console.log("local_interface",this.options.local_interface,this.options)
         if (this.options.local_interface) {
             await Datex.InterfaceManager.enableLocalInterface();
             await this.setDatexOutput(Datex.InterfaceManager.local_interface);

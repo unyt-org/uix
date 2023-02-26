@@ -1,5 +1,5 @@
 // html - experimental
-export * from "./html/datex_binding.ts"
+// export * from "./html/datex_binding.ts"
 
 // init
 export * from "./base/init.ts"

@@ -15,8 +15,8 @@ export class DatexDataViewer extends UIX.Components.GridGroup {
     scope_history:[Datex.dxb_header, ArrayBuffer, boolean][] = [];
 
     override onAssemble() {
-        this.addChild(new DatexDataFlowViewer({id:"data_flow_viewer", border_br_radius:0,border_tr_radius:0, enable_drop:false}));
-        this.addChild(new DXBViewer({id:"dxb_viewer", border_bl_radius:0,border_tl_radius:0, enable_drop:false}, {gx:1}));
+        this.addChild(new DatexDataFlowViewer({identifier:"data_flow_viewer", border_br_radius:0,border_tr_radius:0, enable_drop:false}));
+        this.addChild(new DXBViewer({identifier:"dxb_viewer", border_bl_radius:0,border_tl_radius:0, enable_drop:false}, {gx:1}));
     }
 
     override onReady() {

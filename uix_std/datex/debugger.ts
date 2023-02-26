@@ -20,7 +20,7 @@ export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Comp
 
     override onAssemble() {
         // left & right sections
-        let interface_group = new InterfaceTabGroup({id:"interface_group"});
+        let interface_group = new InterfaceTabGroup({identifier:"interface_group"});
         let right_tab_group = new UIX.Components.TabGroup({header_location:'right', editable:false, enable_drop:false}, {gx:1, margin_left:10});
 
         // pointers and scopes
@@ -78,7 +78,7 @@ export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Comp
             // multiple endpoints
             else {
                 let max = 5;
-                for (let e of interf.endpoints) {
+                for (const e of interf.endpoints??[]) {
                     d = new DatexInterface({removable:!interf.persistent, local_interface:false});
                     await d.setDatexOutput(interf, e);
                     await this.interface_group.addChild(d);

@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-namespace
 import { Datex, property, props, text } from "unyt_core";
-import { UIX, I, S, SVAL } from "uix";
+import { UIX, I, S, SVAL, HTML } from "uix";
 import MonacoHandler, { MonacoTab } from "../code_editor/monaco.ts";
 import { LogBuffer } from "../console/main.ts";
 import { escapeHtml } from "./resource_manager.ts";
@@ -10,11 +10,30 @@ export namespace DatexEditor {
 	export interface Options extends UIX.Components.Base.Options {
 		local_interface?: boolean // use local interface
 		expand_header?: boolean // expand header per default
+        advanced_view?: boolean // display advanced DATEX settings
 		content?: string
 	}
 }
 
 globalThis.DX_INSERT = []; // for default ? values
+
+const example_script = `
+use print from #std;
+print 'Executed on (#endpoint), initiated by (#sender)';
+
+# example object:
+{
+    "json key": "json value",
+    values: ['1', 2, 3.0, 0xff, -infinity, nan, true, null, void],
+    advanced: [
+        <Set> [1,2,3,4],
+        69kg,
+        https://unyt.org,
+        @example,
+        'template string with evaluated expression: (5 * 10m)',
+        (true or false) and (1+1 == 2)
+    ]
+}`
 
 // Datex Editor
 @UIX.Group("Datex")
@@ -23,8 +42,11 @@ globalThis.DX_INSERT = []; // for default ? values
     horizontal_align: UIX.Types.HORIZONTAL_ALIGN.LEFT,
     expand_header: true,
     fill_content: true,
-    content: "############################################\nPress [F2] to run the DATEX Script\nMore info about DATEX: docs.unyt.org/datex\n############################################\n\nuse print from #public.std;\n\nprint 'Executed on (#current), sent by (#sender)';"
-}) 
+    advanced_view: false,
+    content: Datex.Runtime.ENV.LANG == 'de'?
+         "############################################\nDrücke [F2], um das DATEX Script auszuführen\nMehr Infos zu DATEX: docs.unyt.org/datex\n############################################\n\n"+example_script:
+         "############################################\nPress [F2] to run the DATEX Script\nMore info about DATEX: docs.unyt.org/datex\n############################################\n\n"+example_script
+    })
 @UIX.NoResources
 export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
@@ -46,6 +68,14 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
                 shortcut: "f4",
                 handler: ()=> {
                     let req = this.runDatex(true)
+                    this.options.content = req;
+                }
+            },
+            save: {
+                text: S('download'),
+                shortcut: "save",
+                handler: ()=> {
+                    let req = this.downloadDXB();
                     this.options.content = req;
                 }
             }
@@ -88,18 +118,30 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
         const settings = props(this.settings);
 
-        this.header = new UIX.Elements.Header([
-            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(true), content:await text`<span>${I`fa-play`} ${S('v2')}</span>`, color:'var(--green)', text_color:'#151515'})},
+        const header_els:{element:HTMLElement}[] = [
+            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({marginRight:'10px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.downloadDXB(), content:await text`<span>${I`fa-download`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.downloadDXB(), content:await text`<span>${I`fa-upload`} ${S('upload_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
 
-            {element: new UIX.Elements.DropdownMenu(Datex.ProtocolDataTypesMap, {title:"Type", selected_index:settings.type})},
-            {element: new UIX.Elements.Checkbox({label:'Sign', checked: settings.sign})},
-            {element: new UIX.Elements.Checkbox({label:'Enrypt', checked: settings.encrypt})},
-            {element: new UIX.Elements.Checkbox({label:'EOS', checked: settings.end_of_scope})},
-            {element: new UIX.Elements.Checkbox({label:'IR', checked: settings.intermediate_result})},
-            {element: new UIX.Elements.Checkbox({label:'Fixed SID', checked: this.settings.sid!=undefined, onChange:checked => (this.settings.sid = checked ? Math.round(Math.random()*20000) : undefined)})},
+        ]
 
-        ], {gaps:5, margin_bottom:true, seperator:true});
+        if (this.options.advanced_view) {
+            header_els.push(
+                {element: new UIX.Elements.Button({onClick:()=>this.runDatex(true), content:await text`<span>${I`fa-play`} ${S('v2')}</span>`, color:'var(--green)', text_color:'#151515'})},
+
+                {element: new UIX.Elements.DropdownMenu(Datex.ProtocolDataTypesMap, {title:"Type", selected_index:settings.type})},
+                {element: new UIX.Elements.Checkbox({label:'Sign', checked: settings.sign})},
+                {element: new UIX.Elements.Checkbox({label:'Enrypt', checked: settings.encrypt})},
+                {element: new UIX.Elements.Checkbox({label:'EOS', checked: settings.end_of_scope})},
+                {element: new UIX.Elements.Checkbox({label:'IR', checked: settings.intermediate_result})},
+                {element: new UIX.Elements.Checkbox({label:'Fixed SID', checked: this.settings.sid!=undefined, onChange:checked => (this.settings.sid = checked ? Math.round(Math.random()*20000) : undefined)})},
+            )
+        }
+        else {
+            header_els.unshift({element: HTML `<h2 style="margin-right:20px;color:var(--text_highlight)">DATEX <span style="color:var(--text)">Playground</span></h2>`})
+        }
+
+        this.header = new UIX.Elements.Header(header_els, {gaps:5, margin_bottom:true, seperator:true});
 
         this.header.style.padding = "10px";
     }
@@ -113,6 +155,16 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         const req = this.monaco.getContent();
         this.sendDatexRequest(req,v2);
         return req;
+    }
+
+    setContent(content:Datex.CompatValue<string>) {
+        Datex.Value.observeAndInit(content, content => {
+            this.monaco.setContent(content)
+        })
+    }
+
+    downloadDXB(){
+        Datex.Compiler.compileAndExport(this.monaco.getContent())
     }
 
     @property settings = {
@@ -439,25 +491,25 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
             {
                 label: "print",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                insertText:  '#public.std.print(${1:})',
+                insertText:  '#std.print(${1:})',
                 insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             },
             {
                 label: "printf",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                insertText:  '#public.std.printf(${1:})',
+                insertText:  '#std.printf(${1:})',
                 insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             },
             {
                 label: "printn",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                insertText:  '#public.std.printn(${1:})',
+                insertText:  '#std.printn(${1:})',
                 insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             },
             {
                 label: "read",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                insertText:  '#public.std.read(${1:})',
+                insertText:  '#std.read(${1:})',
                 insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             },
             {
@@ -485,25 +537,25 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         // static scopes
         function autocompleteStaticScopes(range) {
             const list = [];
-            for (const [key, scope] of Object.entries(Datex.StaticScope.scopes)) {
+            for (const [key, scope] of Object.entries(Datex.Runtime.STD_STATIC_SCOPE)) {
                 list.push({
                     label: `${key}`,
                     kind: MonacoHandler.monaco.languages.CompletionItemKind.Module,
-                    insertText: `#static.${key}`,
+                    insertText: `#std.${key}`,
                     range: range
                 })
                 for (const variable of Object.keys(scope)) {
                     list.push({
-                        label: `use ${variable} from #public.${key}`,
+                        label: `use ${variable} from #std.${key}`,
                         kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                        insertText: `use (${variable}) from #public.${key};`,
+                        insertText: `use (${variable}) from #std.${key};`,
                         range: range
                     })
 
                     list.push({
                         label: `${key}.${variable}`,
                         kind: MonacoHandler.monaco.languages.CompletionItemKind.Variable,
-                        insertText:  `#public.${key}.${variable}`,
+                        insertText:  `#std.${key}.${variable}`,
                         insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                         range: range
                     })

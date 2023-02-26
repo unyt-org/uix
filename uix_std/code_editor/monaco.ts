@@ -595,58 +595,58 @@ export default class MonacoHandler {
                 unit: [
                     [/((?:[YZEPTGMkhdcmµunpfazy]?[A-Za-z€¢$¥Ω£₽⁄⁄]{1,4}(?:\^-?\d{1,4})?)(?:[*\/][YZEPTGMkhdcmµunpfazy]?[A-Za-z€¢$%¥Ω£₽]{1,4}(?:\^-?\d{1,4})?)*)/, 'unit', '@pop'],
                     [/\d/, "number"],
-                    [/./, 'key', '@pop'],
+                    [/./, {'token':'@rematch', 'next':'@pop'}],
                 ],
 
                 alias: [
-                    [/\:(\:)+/, {'token':'@rematch', 'next':'@popall'}],
+                    [/\:(\:)+/, {'token':'@rematch', 'next':'@pop'}],
                     [/\//, {'token':'key','next':'@alias_instance'}],
                     [/\:/, {'token':'key','next':'@alias_sub'}],
-                    [/./, {'token':'@rematch', 'next':'@popall'}],
+                    [/./, {'token':'@rematch', 'next':'@pop'}],
                 ],
                 alias_sub: [
                     [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'alias-light', 'next':'@pop'}],
                     [/\*/, 'boolean', '@pop'], // wildcard (*)
                 ],
                 alias_instance: [
-                    [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'alias-light', 'next':'@popall'}],
-                    [/\*/, 'boolean', '@popall'], // wildcard (*)
+                    [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'alias-light', 'next':'@pop'}],
+                    [/\*/, 'boolean', '@pop'], // wildcard (*)
                 ],
 
                 alias2: [
-                    [/\:(\:)+/, {'token':'@rematch', 'next':'@popall'}],
+                    [/\:(\:)+/, {'token':'@rematch', 'next':'@pop'}],
                     [/\//, {'token':'key','next':'@alias2_instance'}],
                     [/\:/, {'token':'key','next':'@alias2_sub'}],
-                    [/./, {'token':'@rematch', 'next':'@popall'}],
+                    [/./, {'token':'@rematch', 'next':'@pop'}],
                 ],
                 alias2_sub: [
                     [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'alias-2-light', 'next':'@pop'}],
                     [/\*/, 'boolean', '@pop'], // wildcard (*)
                 ],
                 alias2_instance: [
-                    [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'alias-2-light', 'next':'@popall'}],
-                    [/\*/, 'boolean', '@popall'], // wildcard (*)
+                    [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'alias-2-light', 'next':'@pop'}],
+                    [/\*/, 'boolean', '@pop'], // wildcard (*)
                 ],
 
                 endpoint_id: [
-                    [/\:(\:)+/, {'token':'@rematch', 'next':'@popall'}],
+                    [/\:(\:)+/, {'token':'@rematch', 'next':'@pop'}],
                     [/\//, {'token':'key','next':'@endpoint_id_instance'}],
                     [/\:/, {'token':'key','next':'@endpoint_id_sub'}],
                     [/\*/, 'boolean'], // wildcard (*)
-                    [/./, {'token':'@rematch', 'next':'@popall'}],
+                    [/./, {'token':'@rematch', 'next':'@pop'}],
                 ],
                 endpoint_id_sub: [
                     [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'idendpoint-light', 'next':'@pop'}],
                     [/\*/, 'boolean', '@pop'], // wildcard (*)
                 ],
                 endpoint_id_instance: [
-                    [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'idendpoint-light', 'next':'@popall'}],
-                    [/\*/, 'boolean', '@popall'], // wildcard (*)
+                    [/[A-Za-z0-9À-ž-_]{1,32}/, {'token':'idendpoint-light', 'next':'@pop'}],
+                    [/\*/, 'boolean', '@pop'], // wildcard (*)
                 ],
 
                 endpoint: [
                     [/\*/, 'boolean'], // wildcard (*)
-                    [/./, {'token':'@rematch', 'next':'@popall'}],
+                    [/./, {'token':'@rematch', 'next':'@pop'}],
                 ],
 
                 comment: [

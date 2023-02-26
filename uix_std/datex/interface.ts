@@ -10,15 +10,22 @@ import { DXBViewer } from "./dxb_viewer.ts";
 export namespace DatexInterface {
 	export interface Options extends UIX.Components.GridGroup.Options {
 		local_interface?: boolean // use local interface
-		endpoint?: Datex.Endpoint
-		interface_type?: string
+		endpoint?: Datex.Endpoint,
+        advanced_view?: boolean // display advanced DATEX settings
+		interface_type?: string,
 	}
 }
 
+@endpoint("@dx_playground") class SharedScripts {
+    @property static get(id:string):Datex.Return<Datex.CompatValue<string>> {}
+}
+
 @UIX.Group("Datex")
-@UIX.Component<DatexInterface.Options>({title:"Datex Interface", local_interface:true, icon:undefined, rows:[1,1], columns: [1], gaps:4, sealed:false})
+@UIX.Component<DatexInterface.Options>({title:"Datex Interface", enable_routes:true, advanced_view:false, local_interface:true, icon:undefined, rows:[1,1], columns: [1], gaps:4, sealed:false})
 @UIX.NoResources
 export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Options> extends UIX.Components.GridGroup<O>{
+
+    @property content_id = this.generateId()
 
     override async onAssemble() {
         
@@ -26,7 +33,7 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
         this.addStyleSheet(MonacoHandler.standalone_stylesheet);
 
         // datex editor + console
-        const editor = new DatexEditor({identifier:'editor', border_br_radius:0, border_bl_radius:0});
+        const editor = new DatexEditor({identifier:'editor', advanced_view:this.options.advanced_view, border_br_radius:0, border_bl_radius:0});
         const console = new DatexConsoleView({identifier:'console', border_tr_radius:0, border_tl_radius:0, header:false, timestamps:false, editor:editor}, {gy:1});
 
         this.addChild(editor);
@@ -44,8 +51,40 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
             console.log("treey interface")
             this.tryConnectInterface();
         }, "RETRY_INTERFACE")
+
+        this.loadScript();
     }
     
+    private generateId(length = 10) {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        let counter = 0;
+        while (counter < length) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength));
+          counter += 1;
+        }
+        return result;
+    }
+
+    private async loadScript(){
+        const script = await SharedScripts.get(this.content_id);
+        console.log("get sfript", script)
+        this.editor.setContent(script);
+    }
+    
+    override getCurrentRoute(): string[] {
+        return [this.content_id]
+    }
+
+    override onRoute(identifier: string) {
+        if (identifier != this.content_id) {
+            console.log("new content id", identifier)
+            this.content_id = identifier;
+        }
+        return undefined;
+    }
+
     override async onReady() {
 
         await MonacoHandler.init(); // load monaco first
@@ -61,7 +100,6 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
 
     private async tryConnectInterface() {
         // automatically create and add local interface
-        console.log("local_interface",this.options.local_interface,this.options)
         if (this.options.local_interface) {
             await Datex.InterfaceManager.enableLocalInterface();
             await this.setDatexOutput(Datex.InterfaceManager.local_interface);

@@ -45,6 +45,9 @@ UIX.Res.addStrings({
         add_endpoint: "Add Endpoint",
         clear_history: "Clear history",
         clear_storage: "Clear storage",
+        download: "Download script",
+        download_short: "Save",
+        upload_short: "Load",
 
         copy_decompiled_datex: "Copy Decompiled DATEX",
 
@@ -67,7 +70,10 @@ UIX.Res.addStrings({
         add_endpoint: "Endpoint hinzufügen",
         clear_history: "Verlauf löschen",
         clear_storage: "Speicher löschen",
-        
+        download: "Script herunterladen",
+        download_short: "Speichern",
+        upload_short: "Laden",
+
         copy_decompiled_datex: "Dekompilerten DATEX-Code kopieren",
 
         menu_file: "Datei",

@@ -32,11 +32,11 @@ export namespace Routing {
 		return parts;
 	}
 
-	export function setCurrentRoute(parts?:string[], silent = false) {
+	export function setCurrentRoute(parts?:string[], silent = false, _prefix: Prefix = prefix) {
 		if (JSON.stringify(getCurrentRouteFromURL()) === JSON.stringify(parts)) return; // no change, ignore
 
 		if (!parts?.length) history.pushState(null, "", "/");
-		else history.pushState(null, "", prefix + parts.join("/"))
+		else history.pushState(null, "", _prefix + parts.join("/"))
 
 		if (!silent) handleCurrentURLRoute();
 	}

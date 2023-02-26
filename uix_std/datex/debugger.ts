@@ -64,14 +64,14 @@ export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Comp
 
         // local interface
         if (interf == Datex.InterfaceManager.local_interface) {
-            d = new DatexInterface({removable:!interf.persistent, local_interface:true});
+            d = new DatexInterface({removable:!interf.persistent, local_interface:true, advanced_view:true});
             await this.interface_group.addChild(d);
         }
         // other
         else {
             // single (main) endpoint
             if (interf.endpoint) {
-                d = new DatexInterface({removable:!interf.persistent, local_interface:false});
+                d = new DatexInterface({removable:!interf.persistent, local_interface:false, advanced_view:true});
                 await d.setDatexOutput(interf);
                 await this.interface_group.addChild(d);
             }
@@ -79,7 +79,7 @@ export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Comp
             else {
                 let max = 5;
                 for (const e of interf.endpoints??[]) {
-                    d = new DatexInterface({removable:!interf.persistent, local_interface:false});
+                    d = new DatexInterface({removable:!interf.persistent, local_interface:false, advanced_view:true});
                     await d.setDatexOutput(interf, e);
                     await this.interface_group.addChild(d);
 

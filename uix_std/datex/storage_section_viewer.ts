@@ -3,7 +3,7 @@ import { Datex, property, props, text } from "unyt_core";
 import { UIX, I, S, SVAL } from "uix";
 import MonacoHandler from "../code_editor/monaco.ts";
 import { logger } from "../../utils/global_values.ts";
-import { convertANSIToHTML } from "../../utils/ansi_to_html.ts";
+import { convertANSIWithDATEXToHTML } from "../../utils/ansi_to_html_datex.ts";
 
 export namespace DatexStorageSectionViewer {
 	export interface Options extends UIX.Components.List.Options {
@@ -58,8 +58,8 @@ export class DatexStorageSectionViewer extends UIX.Components.List<DatexStorageS
 
         const key_colorized = is_pointer ? (await MonacoHandler.colorize("$"+key, "datex")) : key;
 
-        const value_colorized = '<span style="user-select:text">' + convertANSIToHTML(value) + '</span>';
-
+        const value_colorized = UIX.Utils.createHTMLElement('<span style="user-select:text"></span>');
+        value_colorized.append(convertANSIWithDATEXToHTML(value));
         this.addEntry({
             id: key,
             title: key,

@@ -1504,13 +1504,19 @@ export class Terminal<O extends TERMINAL_OPTIONS = TERMINAL_OPTIONS> extends UIX
 
     #pointer_tooltips = new Map<HTMLElement, Function>()
     #persistant_pointer_tooltips = new Set<HTMLElement>()
+    #visible_pointers = new Map<HTMLElement, any>();
 
     private async showPointerTooltip(target:HTMLElement){
         if (this.#pointer_tooltips.has(target)) return; // already expanded
 
         const pointer_string = target.innerText.trim();
-        console.log("terminal pointer hover", pointer_string);
-        await datex(pointer_string);// make sure pointer is loaded; TODO: injection vulnerability
+        try {
+            this.#visible_pointers.set(target, (await Datex.Pointer.load(pointer_string.replace("$",""))).val);
+        }
+        catch (e){
+            logger.warn("could not load pointer " + pointer_string);
+            return;
+        }
 
         // create new container for pointer tooltip
         const tree_view = new DatexValueTreeView({padding_left: 10, padding_top:10, padding:10, root_resource_path:"dxptr://"+Datex.Pointer.normalizePointerId(pointer_string)+"/", display_root:true, header:false, title:pointer_string}, {dynamic_size:true})
@@ -1540,6 +1546,7 @@ export class Terminal<O extends TERMINAL_OPTIONS = TERMINAL_OPTIONS> extends UIX
 
     private hidePointerTooltip(target:HTMLElement){
         if (this.#persistant_pointer_tooltips.has(target)) return; // is persistant, don't hide
+        if (this.#visible_pointers.has(target)) this.#visible_pointers.delete(target); // make pointer garbage-collectable again
         this.#pointer_tooltips.get(target)?.();
         this.#pointer_tooltips.delete(target);
     }

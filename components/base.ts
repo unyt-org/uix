@@ -343,9 +343,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         // listeners & observers
         this.addEventListener("mousedown", (e)=>{
             this.handleFocus();
-            if (global_states.meta_pressed) {
-                Actions.toggleFullscreen(this, false)
-            }
+            // if (global_states.meta_pressed) {
+            //     Actions.toggleFullscreen(this, false)
+            // }
             e.stopPropagation()
         })
 

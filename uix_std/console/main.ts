@@ -16,7 +16,7 @@ import { UIX, I, S} from "uix";
 import { Datex } from "unyt_core";
 
 import MonacoHandler from "uix_std/code_editor/monaco.ts";
-import {convertANSIToHTML} from "uix/utils/ansi_to_html.ts"
+import {convertANSIWithDATEXToHTML} from "uix/utils/ansi_to_html_datex.ts"
 
 
 
@@ -289,7 +289,7 @@ export class ConsoleView<O extends ConsoleView.CONSOLE_OPTIONS = ConsoleView.CON
         // ansi formatting
         else if (type == "ansi" && !(message instanceof HTMLElement)) {
             if (typeof message == "string") {
-                return UIX.Utils.createHTMLElement(convertANSIToHTML(message));
+                return convertANSIWithDATEXToHTML(message);
             }
         }
 

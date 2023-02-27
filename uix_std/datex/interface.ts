@@ -2,7 +2,7 @@
 import { Datex } from "unyt_core";
 import { UIX, I, S, SVAL } from "uix";
 import MonacoHandler from "../code_editor/monaco.ts";
-import { DatexEditor } from "./editor.ts";
+import { DatexEditor, getExampleScript } from "./editor.ts";
 import { DatexConsoleView } from "./console_view.ts";
 import { logger } from "../../utils/global_values.ts";
 import { DXBViewer } from "./dxb_viewer.ts";
@@ -17,7 +17,8 @@ export namespace DatexInterface {
 }
 
 @endpoint("@dx_playground") class SharedScripts {
-    @property static get(id:string):Datex.Return<Datex.CompatValue<string>> {}
+    @property static get(id:string, lang?:string, content?:string):Datex.Return<Datex.CompatValue<string>> {}
+    @property static getNewId():Datex.Return<string> {}
 }
 
 @UIX.Group("Datex")
@@ -25,7 +26,11 @@ export namespace DatexInterface {
 @UIX.NoResources
 export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Options> extends UIX.Components.GridGroup<O>{
 
-    @property content_id = this.generateId()
+    @property content_id!: string
+
+    protected override async onConstruct() {
+        this.content_id = await this.getValidId();
+    }
 
     override async onAssemble() {
         
@@ -55,7 +60,52 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
         this.loadScript();
     }
     
-    private generateId(length = 10) {
+
+    private async loadScript(content?:string){
+        try {
+            const script = await SharedScripts.get(this.content_id, Datex.Runtime.ENV.LANG, content);
+
+            if (script) {
+                this.editor.setContent(script);
+            }
+        }
+        catch {
+            // maybe offline or endpoint not reachable, set default content if none set
+            if (!this.editor.getContent()) this.editor.setContent(getExampleScript(Datex.Runtime.ENV.LANG, this.content_id));
+        }
+        
+    }
+    
+    override getCurrentRoute(): string[] {
+        return [this.content_id]
+    }
+
+    override onRoute(identifier: string) {
+        this.setContent(identifier);
+        return undefined;
+    }
+
+    async setContent(id?:string, content?:string) {
+
+        if (!id) id = await this.getValidId();
+
+        if (id != this.content_id) {
+            console.log("new content id", id)
+            this.content_id = id;
+            await this.loadScript(content);
+            UIX.Routing.update();
+        }
+    }
+
+    private async getValidId() {
+        try {
+            return <string> await SharedScripts.getNewId();
+        } catch {
+            return this.generateOfflineId();
+        }
+    }
+
+    private generateOfflineId(length = 10) {
         let result = '';
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const charactersLength = characters.length;
@@ -64,25 +114,7 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
           result += characters.charAt(Math.floor(Math.random() * charactersLength));
           counter += 1;
         }
-        return result;
-    }
-
-    private async loadScript(){
-        const script = await SharedScripts.get(this.content_id);
-        console.log("get sfript", script)
-        this.editor.setContent(script);
-    }
-    
-    override getCurrentRoute(): string[] {
-        return [this.content_id]
-    }
-
-    override onRoute(identifier: string) {
-        if (identifier != this.content_id) {
-            console.log("new content id", identifier)
-            this.content_id = identifier;
-        }
-        return undefined;
+        return "offline-"+result;
     }
 
     override async onReady() {

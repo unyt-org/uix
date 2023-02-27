@@ -17,10 +17,29 @@ export namespace DatexEditor {
 
 globalThis.DX_INSERT = []; // for default ? values
 
-const example_script = `
-use print from #std;
-print 'Executed on (#endpoint), initiated by (#sender)';
+const example_script_info = {
+    de: ["DATEX Playground", "Erstellt von", "Mehr Infos zu DATEX:", "Lade andere zu diesem Playground ein:"],
+    en: ["DATEX Playground", "Created by", "More info about DATEX:", "Share this playground with others:"],
+}
 
+
+export function getExampleScript(lang:'de'|'en' = 'en', id?:string, endpoint = Datex.Runtime.endpoint) {
+    const info = example_script_info[lang] ?? example_script_info['en'];
+    return `##########################################################################
+
+${info[0]} 
+
+${info[1]} ${endpoint}
+${info[2]} https://datex.unyt.org${id ? `\n${info[3]} https://playground.unyt.org/#${id}`:''}
+
+##########################################################################
+
+
+use print from #std;
+
+print 'Executed on (#endpoint), initiated by (#origin)';
+print (@example :: 'Executed on (#endpoint), initiated by (#origin)');`
+/*
 # example object:
 {
     "json key": "json value",
@@ -33,7 +52,9 @@ print 'Executed on (#endpoint), initiated by (#sender)';
         'template string with evaluated expression: (5 * 10m)',
         (true or false) and (1+1 == 2)
     ]
-}`
+}
+*/
+}
 
 // Datex Editor
 @UIX.Group("Datex")
@@ -43,10 +64,8 @@ print 'Executed on (#endpoint), initiated by (#sender)';
     expand_header: true,
     fill_content: true,
     advanced_view: false,
-    content: Datex.Runtime.ENV.LANG == 'de'?
-         "############################################\nDrücke [F2], um das DATEX Script auszuführen\nMehr Infos zu DATEX: docs.unyt.org/datex\n############################################\n\n"+example_script:
-         "############################################\nPress [F2] to run the DATEX Script\nMore info about DATEX: docs.unyt.org/datex\n############################################\n\n"+example_script
-    })
+    content: ""
+})
 @UIX.NoResources
 export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
@@ -120,9 +139,9 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
         const header_els:{element:HTMLElement}[] = [
             {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({marginRight:'10px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.uploadFile(), content:await text`<span>${I`fa-file-invoice`} ${S('upload_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
             {element: new UIX.Elements.Button({onClick:()=>this.downloadDXB(), content:await text`<span>${I`fa-download`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.downloadDXB(), content:await text`<span>${I`fa-upload`} ${S('upload_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
-
         ]
 
         if (this.options.advanced_view) {
@@ -157,10 +176,60 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         return req;
     }
 
+    #current_content?:Datex.CompatValue<string>
+    #observe_handler?:any
+    #monaco_listener_initialized = false
+    #was_external_update = false;
+    #silent_update = false
+
     setContent(content:Datex.CompatValue<string>) {
-        Datex.Value.observeAndInit(content, content => {
-            this.monaco.setContent(content)
+        // unobserve updates for previous content
+        if (this.#current_content instanceof Datex.Value && this.#observe_handler) {
+            Datex.Value.unobserve(this.#current_content, this.#observe_handler)
+        }
+        if (content instanceof Datex.Value) this.#current_content = content;
+
+        let initial_set = true;
+        this.#was_external_update = false;
+        this.#silent_update = false;
+
+        Datex.Value.observeAndInit(content, this.#observe_handler = (content) => {
+            if (this.#silent_update) {
+                this.#silent_update = false;
+                return;
+            }
+            console.log("set editor content from external update")
+            // update was external, besides first initial update
+            if (initial_set) initial_set = false
+            else this.#was_external_update = true;
+            this.monaco.setContent(<string> content)
+        });
+
+        if (this.#current_content instanceof Datex.Value) this.addMonacoListener()
+    }
+
+    addMonacoListener(){
+        if (this.#monaco_listener_initialized) return;
+        this.#monaco_listener_initialized = true;
+        this.monaco.addChangeListener(()=>{
+            if (!(this.#current_content instanceof Datex.Value)) return;
+            console.log("editor updated")
+            // don't trigger local observer to update editor again, editor was already updated internally
+            if (!this.#was_external_update) {
+                this.#silent_update = true;
+            }
+            this.#was_external_update = false;
+            this.#current_content.val = this.monaco.getContent()
         })
+    }
+
+    getContent(){
+        return this.monaco.getContent();
+    }
+
+    async uploadFile() {
+        const data = await Datex.uploadDatexFile();
+        this.parent?.setContent(undefined, data.text);
     }
 
     downloadDXB(){
@@ -354,14 +423,14 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         // default variables
         const variables_list:any[] = [
             {
-                label: "sender",
+                label: "origin",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Variable,
-                insertText:  `#sender`,
+                insertText:  `#origin`,
             },
             {
-                label: "current",
+                label: "endpoint",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Variable,
-                insertText:  `#current`,
+                insertText:  `#endpoint`,
             },
             {
                 label: "root",

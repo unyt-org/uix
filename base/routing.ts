@@ -74,7 +74,7 @@ export namespace Routing {
 
 
 	// listen for history changes
-	globalThis.addEventListener('popstate', () => {
+	globalThis.addEventListener('popstate', (e) => {
 		handleCurrentURLRoute();
 	});
 

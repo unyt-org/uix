@@ -530,9 +530,9 @@ export default class MonacoHandler {
                     
                     [/\bnan\b/, "number"], // nan
 
-                    [/\@\@([A-Fa-f0-9_-]{2,26}|local|any)/, { token: 'idendpoint'}], // :lookahead (not working with monaco):  (?<=@.*?:*)[A-Za-zÀ-ž-_]{1,42}(?!.*:)
-                    [/\@[A-Za-z0-9À-ž-_]{1,32}/, { token: 'alias'}], // lookahead (not working with monaco):  (?<=@.*?:*)[A-Za-zÀ-ž-_]{1,42}(?!.*:)
-                    [/\@\+[A-Za-z0-9À-ž-_]{1,32}/, { token: 'alias-2'}], // lookahead (not working with monaco):  (?<=@.*?:*)[A-Za-zÀ-ž-_]{1,42}(?!.*:)
+                    [/\@\@([A-Fa-f0-9_-]{2,36}|local|any)/, { token: 'idendpoint'}], // :lookahead (not working with monaco):  (?<=@.*?:*)[A-Za-zÀ-ž-_]{1,42}(?!.*:)
+                    [/\@[A-Za-z0-9À-ž-_]{1,18}/, { token: 'alias'}], // lookahead (not working with monaco):  (?<=@.*?:*)[A-Za-zÀ-ž-_]{1,42}(?!.*:)
+                    [/\@\+[A-Za-z0-9À-ž-_]{1,18}/, { token: 'alias-2'}], // lookahead (not working with monaco):  (?<=@.*?:*)[A-Za-zÀ-ž-_]{1,42}(?!.*:)
                     [/\@/, { token: 'idendpoint', next: '@endpoint'}], // lookahead (not working with monaco):  (?<=@.*?:*)[A-Za-zÀ-ž-_]{1,42}(?!.*:)
 
                     // /\@[A-Za-z0-9À-ž-_]{1,32}(\:[A-Za-z0-9À-ž-_]{1,32})*(\/(\*|[A-Za-z0-9À-ž-_]{1,8}))?
@@ -543,7 +543,7 @@ export default class MonacoHandler {
                     //[/\!(\w|\.)+/, "error"],
                     [/\b(true|false)\b/, "boolean"],
                     //[/\b(print|read|debug|printf|current|sender|global|signed|encrypted|timestamp)\b/, "keyword"],
-                    [/\b(clone_collapse|response|collapse|named|default|scope|run|export|as|from|var|val|ref|const|new|to|iterator|skip|leave|once|accept|try|yeet|next|keys|has|iterate|assert|matches|freeze|seal|function|do|await|get|base|transaction|debugger|extends|implements|constructor|destructor|creator|replicator|template|return|exit|use|delete|count|about|if|else|while|origin|copy|clone|type|subscribers|always)\b/, "call"],
+                    [/\b(clone_collapse|response|collapse|named|default|scope|run|export|as|from|var|val|ref|const|new|to|iterator|skip|leave|defer|accept|try|yeet|next|keys|has|iterate|assert|matches|freeze|seal|function|do|await|get|base|transaction|debugger|extends|implements|constructor|destructor|creator|replicator|template|return|exit|use|delete|count|about|if|else|while|origin|copy|clone|type|subscribers|always)\b/, "call"],
 
                     [/(jmp|jtr|jfa) +/, "call", "@jmp"],
                     [/lbl +/, "call", "@lbl"],

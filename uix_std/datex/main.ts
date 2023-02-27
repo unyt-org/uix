@@ -46,8 +46,9 @@ UIX.Res.addStrings({
         clear_history: "Clear history",
         clear_storage: "Clear storage",
         download: "Download script",
-        download_short: "Save",
-        upload_short: "Load",
+        download_short: "Download",
+        upload_short: "Open File",
+        new_file: "New",
 
         copy_decompiled_datex: "Copy Decompiled DATEX",
 
@@ -71,8 +72,9 @@ UIX.Res.addStrings({
         clear_history: "Verlauf löschen",
         clear_storage: "Speicher löschen",
         download: "Script herunterladen",
-        download_short: "Speichern",
+        download_short: "Datei öffnen",
         upload_short: "Laden",
+        new_file: "Neu",
 
         copy_decompiled_datex: "Dekompilerten DATEX-Code kopieren",
 

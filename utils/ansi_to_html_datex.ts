@@ -15,13 +15,12 @@ async function showPointerTooltip(target:HTMLElement){
 
 	const pointer_string = target.innerText.trim();
 	try {
-		visible_pointers.set(target, (await Datex.Pointer.load(pointer_string.replace("$",""))).val); // prevent garbage collection
+		visible_pointers.set(target, (await Datex.Pointer.load(pointer_string.replace("$",""), undefined, undefined, undefined, true)).val); // prevent garbage collection
 	}
 	catch (e){
 		logger.warn("could not load pointer " + pointer_string);
 		return;
 	}
-	console.log(visible_pointers.get(target))
 	await new Promise(resolve=>setTimeout(resolve,10));
 
 	// create new container for pointer tooltip

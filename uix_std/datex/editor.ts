@@ -4,6 +4,7 @@ import { UIX, I, S, SVAL, HTML } from "uix";
 import MonacoHandler, { MonacoTab } from "../code_editor/monaco.ts";
 import { LogBuffer } from "../console/main.ts";
 import { escapeHtml } from "./resource_manager.ts";
+import { datex_file_data, FILE_TYPE } from "unyt_core/datex_all.ts";
 
 export namespace DatexEditor {
 
@@ -78,24 +79,21 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
                 text: S('run'),
                 shortcut: "f2",
                 handler: ()=> {
-                    let req = this.runDatex()
-                    this.options.content = req;
+                    this.runDatex()
                 }
             },
             v4: {
                 text: S('v2'),
                 shortcut: "f4",
                 handler: ()=> {
-                    let req = this.runDatex(true)
-                    this.options.content = req;
+                    this.runDatex(true)
                 }
             },
             save: {
                 text: S('download'),
                 shortcut: "save",
                 handler: ()=> {
-                    let req = this.downloadDXB();
-                    this.options.content = req;
+                    this.saveFile();
                 }
             }
         }
@@ -140,8 +138,8 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         const header_els:{element:HTMLElement}[] = [
             {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({marginRight:'10px'})},
             {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.uploadFile(), content:await text`<span>${I`fa-file-invoice`} ${S('upload_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.downloadDXB(), content:await text`<span>${I`fa-download`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.openFile(), content:await text`<span>${I`fa-file-invoice`} ${S('open_file')}</span>`, color:'var(--text)', text_color:'#151515'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.saveFile(), content:await text`<span>${I`fa-save`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
         ]
 
         if (this.options.advanced_view) {
@@ -227,13 +225,46 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         return this.monaco.getContent();
     }
 
-    async uploadFile() {
-        const data = await Datex.uploadDatexFile();
-        this.parent?.setContent(undefined, data.text);
+    #file_data:datex_file_data
+
+    async openFile() {
+        this.#file_data = await Datex.uploadDatexFile();
+        this.parent?.setContent(undefined, this.#file_data.text);
     }
 
-    downloadDXB(){
-        Datex.Compiler.compileAndExport(this.monaco.getContent())
+    setFileData(file_data: datex_file_data) {
+        this.#file_data = file_data;
+        this.parent?.setContent(undefined, this.#file_data.text);
+    }
+
+    async saveFile(){
+        // try to get file handle writable
+        // @ts-ignore
+        if (!this.#file_data?.fileHandle?.createWritable && window.showSaveFilePicker) {
+            if (!this.#file_data) this.#file_data = {};
+            // @ts-ignore
+            this.#file_data.fileHandle = await window.showSaveFilePicker({suggestedName:'script', types: [
+                {
+                    description: 'DATEX  Files',
+                    accept: {
+                        'text/datex': ['.dx'],
+                        'application/datex': ['.dxb']
+                    }
+                }
+            ]});
+        }
+
+        // no file handle or dxb - download file
+        if (!this.#file_data?.fileHandle?.createWritable || this.#file_data.type == FILE_TYPE.DATEX_BINARY) {
+            Datex.Compiler.compileAndExport(this.monaco.getContent())
+        }
+        // save file with file handle writable
+        else {
+            const writable = await this.#file_data.fileHandle.createWritable();
+            await writable.write(this.monaco.getContent());
+            await writable.close();
+            console.log(writable)
+        }
     }
 
     @property settings = {

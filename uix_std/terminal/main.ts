@@ -1511,7 +1511,7 @@ export class Terminal<O extends TERMINAL_OPTIONS = TERMINAL_OPTIONS> extends UIX
 
         const pointer_string = target.innerText.trim();
         try {
-            this.#visible_pointers.set(target, (await Datex.Pointer.load(pointer_string.replace("$",""))).val);
+            this.#visible_pointers.set(target, (await Datex.Pointer.load(pointer_string.replace("$",""), undefined, undefined, undefined, true)).val);
         }
         catch (e){
             logger.warn("could not load pointer " + pointer_string);

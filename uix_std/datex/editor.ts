@@ -136,15 +136,15 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         const settings = props(this.settings);
 
         const header_els:{element:HTMLElement}[] = [
-            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({marginRight:'10px'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.openFile(), content:await text`<span>${I`fa-file-invoice`} ${S('open_file')}</span>`, color:'var(--text)', text_color:'#151515'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.saveFile(), content:await text`<span>${I`fa-save`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({marginRight:'10px', padding: '2px 6px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.openFile(), content:await text`<span>${I`fa-file-invoice`} ${S('open_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.saveFile(), content:await text`<span>${I`fa-save`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
         ]
 
         if (this.options.advanced_view) {
             header_els.push(
-                {element: new UIX.Elements.Button({onClick:()=>this.runDatex(true), content:await text`<span>${I`fa-play`} ${S('v2')}</span>`, color:'var(--green)', text_color:'#151515'})},
+                {element: new UIX.Elements.Button({onClick:()=>this.runDatex(true), content:await text`<span>${I`fa-play`} ${S('v2')}</span>`, color:'var(--green)', text_color:'#151515'}).css({padding: '2px 6px'})},
 
                 {element: new UIX.Elements.DropdownMenu(Datex.ProtocolDataTypesMap, {title:"Type", selected_index:settings.type})},
                 {element: new UIX.Elements.Checkbox({label:'Sign', checked: settings.sign})},
@@ -155,12 +155,14 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
             )
         }
         else {
-            header_els.unshift({element: HTML `<h2 style="margin-right:20px;color:var(--text_highlight)">DATEX <span style="color:var(--text)">Playground</span></h2>`})
+            header_els.unshift({element: HTML `<h3 style="margin-right:20px;color:var(--text_highlight)">DATEX <span style="color:var(--text)">Playground</span></h3>`})
         }
 
         this.header = new UIX.Elements.Header(header_els, {gaps:5, margin_bottom:true, seperator:true});
 
         this.header.style.padding = "10px";
+        this.header.style.paddingTop = "1px";
+        this.header.style.paddingBottom = "1px";
     }
 
     private endpoint?: Datex.Endpoint

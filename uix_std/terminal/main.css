@@ -67,13 +67,3 @@
         opacity: 1;
     }
 }
-
-.hoverable {
-    cursor: pointer;
-}
-
-.hoverable:hover {
-    text-decoration: underline;
-    /* text-underline-position: under; */
-    text-decoration-color: var(--text_highlight);
-}

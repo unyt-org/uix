@@ -1,20 +1,61 @@
 // deno-lint-ignore-file no-namespace
 import { Datex, property, props, text } from "unyt_core";
-import { UIX, I, S, SVAL } from "uix";
+import { UIX, I, S, SVAL, HTML } from "uix";
 import MonacoHandler, { MonacoTab } from "../code_editor/monaco.ts";
 import { LogBuffer } from "../console/main.ts";
 import { escapeHtml } from "./resource_manager.ts";
+import { datex_file_data, FILE_TYPE } from "unyt_core/datex_all.ts";
 
 export namespace DatexEditor {
 
 	export interface Options extends UIX.Components.Base.Options {
 		local_interface?: boolean // use local interface
 		expand_header?: boolean // expand header per default
+        advanced_view?: boolean // display advanced DATEX settings
 		content?: string
 	}
 }
 
 globalThis.DX_INSERT = []; // for default ? values
+
+const example_script_info = {
+    de: ["DATEX Playground", "Erstellt von", "Mehr Infos zu DATEX:", "Lade andere zu diesem Playground ein:"],
+    en: ["DATEX Playground", "Created by", "More info about DATEX:", "Share this playground with others:"],
+}
+
+
+export function getExampleScript(lang:'de'|'en' = 'en', id?:string, endpoint = Datex.Runtime.endpoint) {
+    const info = example_script_info[lang] ?? example_script_info['en'];
+    return `##########################################################################
+
+${info[0]} 
+
+${info[1]} ${endpoint}
+${info[2]} https://datex.unyt.org${id ? `\n${info[3]} https://playground.unyt.org/#${id}`:''}
+
+##########################################################################
+
+
+use print from #std;
+
+print 'Executed on (#endpoint), initiated by (#origin)';
+print (@example :: 'Executed on (#endpoint), initiated by (#origin)');`
+/*
+# example object:
+{
+    "json key": "json value",
+    values: ['1', 2, 3.0, 0xff, -infinity, nan, true, null, void],
+    advanced: [
+        <Set> [1,2,3,4],
+        69kg,
+        https://unyt.org,
+        @example,
+        'template string with evaluated expression: (5 * 10m)',
+        (true or false) and (1+1 == 2)
+    ]
+}
+*/
+}
 
 // Datex Editor
 @UIX.Group("Datex")
@@ -23,8 +64,9 @@ globalThis.DX_INSERT = []; // for default ? values
     horizontal_align: UIX.Types.HORIZONTAL_ALIGN.LEFT,
     expand_header: true,
     fill_content: true,
-    content: "############################################\nPress [F2] to run the DATEX Script\nMore info about DATEX: docs.unyt.org/datex\n############################################\n\nuse print from #public.std;\n\nprint 'Executed on (#current), sent by (#sender)';"
-}) 
+    advanced_view: false,
+    content: ""
+})
 @UIX.NoResources
 export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
@@ -37,16 +79,21 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
                 text: S('run'),
                 shortcut: "f2",
                 handler: ()=> {
-                    let req = this.runDatex()
-                    this.options.content = req;
+                    this.runDatex()
                 }
             },
             v4: {
                 text: S('v2'),
                 shortcut: "f4",
                 handler: ()=> {
-                    let req = this.runDatex(true)
-                    this.options.content = req;
+                    this.runDatex(true)
+                }
+            },
+            save: {
+                text: S('download'),
+                shortcut: "save",
+                handler: ()=> {
+                    this.saveFile();
                 }
             }
         }
@@ -88,20 +135,34 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
         const settings = props(this.settings);
 
-        this.header = new UIX.Elements.Header([
-            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(true), content:await text`<span>${I`fa-play`} ${S('v2')}</span>`, color:'var(--green)', text_color:'#151515'})},
+        const header_els:{element:HTMLElement}[] = [
+            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({marginRight:'10px', padding: '2px 6px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.openFile(), content:await text`<span>${I`fa-file-invoice`} ${S('open_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.saveFile(), content:await text`<span>${I`fa-save`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+        ]
 
-            {element: new UIX.Elements.DropdownMenu(Datex.ProtocolDataTypesMap, {title:"Type", selected_index:settings.type})},
-            {element: new UIX.Elements.Checkbox({label:'Sign', checked: settings.sign})},
-            {element: new UIX.Elements.Checkbox({label:'Enrypt', checked: settings.encrypt})},
-            {element: new UIX.Elements.Checkbox({label:'EOS', checked: settings.end_of_scope})},
-            {element: new UIX.Elements.Checkbox({label:'IR', checked: settings.intermediate_result})},
-            {element: new UIX.Elements.Checkbox({label:'Fixed SID', checked: this.settings.sid!=undefined, onChange:checked => (this.settings.sid = checked ? Math.round(Math.random()*20000) : undefined)})},
+        if (this.options.advanced_view) {
+            header_els.push(
+                {element: new UIX.Elements.Button({onClick:()=>this.runDatex(true), content:await text`<span>${I`fa-play`} ${S('v2')}</span>`, color:'var(--green)', text_color:'#151515'}).css({padding: '2px 6px'})},
 
-        ], {gaps:5, margin_bottom:true, seperator:true});
+                {element: new UIX.Elements.DropdownMenu(Datex.ProtocolDataTypesMap, {title:"Type", selected_index:settings.type})},
+                {element: new UIX.Elements.Checkbox({label:'Sign', checked: settings.sign})},
+                {element: new UIX.Elements.Checkbox({label:'Enrypt', checked: settings.encrypt})},
+                {element: new UIX.Elements.Checkbox({label:'EOS', checked: settings.end_of_scope})},
+                {element: new UIX.Elements.Checkbox({label:'IR', checked: settings.intermediate_result})},
+                {element: new UIX.Elements.Checkbox({label:'Fixed SID', checked: this.settings.sid!=undefined, onChange:checked => (this.settings.sid = checked ? Math.round(Math.random()*20000) : undefined)})},
+            )
+        }
+        else {
+            header_els.unshift({element: HTML `<h3 style="margin-right:20px;color:var(--text_highlight)">DATEX <span style="color:var(--text)">Playground</span></h3>`})
+        }
+
+        this.header = new UIX.Elements.Header(header_els, {gaps:5, margin_bottom:true, seperator:true});
 
         this.header.style.padding = "10px";
+        this.header.style.paddingTop = "1px";
+        this.header.style.paddingBottom = "1px";
     }
 
     private endpoint?: Datex.Endpoint
@@ -113,6 +174,99 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         const req = this.monaco.getContent();
         this.sendDatexRequest(req,v2);
         return req;
+    }
+
+    #current_content?:Datex.CompatValue<string>
+    #observe_handler?:any
+    #monaco_listener_initialized = false
+    #was_external_update = false;
+    #silent_update = false
+
+    setContent(content:Datex.CompatValue<string>) {
+        // unobserve updates for previous content
+        if (this.#current_content instanceof Datex.Value && this.#observe_handler) {
+            Datex.Value.unobserve(this.#current_content, this.#observe_handler)
+        }
+        if (content instanceof Datex.Value) this.#current_content = content;
+
+        let initial_set = true;
+        this.#was_external_update = false;
+        this.#silent_update = false;
+
+        Datex.Value.observeAndInit(content, this.#observe_handler = (content) => {
+            if (this.#silent_update) {
+                this.#silent_update = false;
+                return;
+            }
+            console.log("set editor content from external update")
+            // update was external, besides first initial update
+            if (initial_set) initial_set = false
+            else this.#was_external_update = true;
+            this.monaco.setContent(<string> content)
+        });
+
+        if (this.#current_content instanceof Datex.Value) this.addMonacoListener()
+    }
+
+    addMonacoListener(){
+        if (this.#monaco_listener_initialized) return;
+        this.#monaco_listener_initialized = true;
+        this.monaco.addChangeListener(()=>{
+            if (!(this.#current_content instanceof Datex.Value)) return;
+            console.log("editor updated")
+            // don't trigger local observer to update editor again, editor was already updated internally
+            if (!this.#was_external_update) {
+                this.#silent_update = true;
+            }
+            this.#was_external_update = false;
+            this.#current_content.val = this.monaco.getContent()
+        })
+    }
+
+    getContent(){
+        return this.monaco.getContent();
+    }
+
+    #file_data:datex_file_data
+
+    async openFile() {
+        this.#file_data = await Datex.uploadDatexFile();
+        this.parent?.setContent(undefined, this.#file_data.text);
+    }
+
+    setFileData(file_data: datex_file_data) {
+        this.#file_data = file_data;
+        this.parent?.setContent(undefined, this.#file_data.text);
+    }
+
+    async saveFile(){
+        // try to get file handle writable
+        // @ts-ignore
+        if (!this.#file_data?.fileHandle?.createWritable && window.showSaveFilePicker) {
+            if (!this.#file_data) this.#file_data = {};
+            // @ts-ignore
+            this.#file_data.fileHandle = await window.showSaveFilePicker({suggestedName:'script', types: [
+                {
+                    description: 'DATEX  Files',
+                    accept: {
+                        'text/datex': ['.dx'],
+                        'application/datex': ['.dxb']
+                    }
+                }
+            ]});
+        }
+
+        // no file handle or dxb - download file
+        if (!this.#file_data?.fileHandle?.createWritable || this.#file_data.type == FILE_TYPE.DATEX_BINARY) {
+            Datex.Compiler.compileAndExport(this.monaco.getContent())
+        }
+        // save file with file handle writable
+        else {
+            const writable = await this.#file_data.fileHandle.createWritable();
+            await writable.write(this.monaco.getContent());
+            await writable.close();
+            console.log(writable)
+        }
     }
 
     @property settings = {
@@ -302,14 +456,14 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         // default variables
         const variables_list:any[] = [
             {
-                label: "sender",
+                label: "origin",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Variable,
-                insertText:  `#sender`,
+                insertText:  `#origin`,
             },
             {
-                label: "current",
+                label: "endpoint",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Variable,
-                insertText:  `#current`,
+                insertText:  `#endpoint`,
             },
             {
                 label: "root",
@@ -439,25 +593,25 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
             {
                 label: "print",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                insertText:  '#public.std.print(${1:})',
+                insertText:  '#std.print(${1:})',
                 insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             },
             {
                 label: "printf",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                insertText:  '#public.std.printf(${1:})',
+                insertText:  '#std.printf(${1:})',
                 insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             },
             {
                 label: "printn",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                insertText:  '#public.std.printn(${1:})',
+                insertText:  '#std.printn(${1:})',
                 insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             },
             {
                 label: "read",
                 kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                insertText:  '#public.std.read(${1:})',
+                insertText:  '#std.read(${1:})',
                 insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             },
             {
@@ -485,25 +639,25 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         // static scopes
         function autocompleteStaticScopes(range) {
             const list = [];
-            for (const [key, scope] of Object.entries(Datex.StaticScope.scopes)) {
+            for (const [key, scope] of Object.entries(Datex.Runtime.STD_STATIC_SCOPE)) {
                 list.push({
                     label: `${key}`,
                     kind: MonacoHandler.monaco.languages.CompletionItemKind.Module,
-                    insertText: `#static.${key}`,
+                    insertText: `#std.${key}`,
                     range: range
                 })
                 for (const variable of Object.keys(scope)) {
                     list.push({
-                        label: `use ${variable} from #public.${key}`,
+                        label: `use ${variable} from #std.${key}`,
                         kind: MonacoHandler.monaco.languages.CompletionItemKind.Function,
-                        insertText: `use (${variable}) from #public.${key};`,
+                        insertText: `use (${variable}) from #std.${key};`,
                         range: range
                     })
 
                     list.push({
                         label: `${key}.${variable}`,
                         kind: MonacoHandler.monaco.languages.CompletionItemKind.Variable,
-                        insertText:  `#public.${key}.${variable}`,
+                        insertText:  `#std.${key}.${variable}`,
                         insertTextRules: MonacoHandler.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                         range: range
                     })

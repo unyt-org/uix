@@ -2,7 +2,7 @@
 import { Datex } from "unyt_core";
 import { UIX, I, S, SVAL } from "uix";
 import MonacoHandler from "../code_editor/monaco.ts";
-import { DatexEditor } from "./editor.ts";
+import { DatexEditor, getExampleScript } from "./editor.ts";
 import { DatexConsoleView } from "./console_view.ts";
 import { logger } from "../../utils/global_values.ts";
 import { DXBViewer } from "./dxb_viewer.ts";
@@ -10,15 +10,27 @@ import { DXBViewer } from "./dxb_viewer.ts";
 export namespace DatexInterface {
 	export interface Options extends UIX.Components.GridGroup.Options {
 		local_interface?: boolean // use local interface
-		endpoint?: Datex.Endpoint
-		interface_type?: string
+		endpoint?: Datex.Endpoint,
+        advanced_view?: boolean // display advanced DATEX settings
+		interface_type?: string,
 	}
 }
 
+@endpoint("@dx_playground") class SharedScripts {
+    @property static get(id:string, lang?:string, content?:string):Datex.Return<Datex.CompatValue<string>> {}
+    @property static getNewId():Datex.Return<string> {}
+}
+
 @UIX.Group("Datex")
-@UIX.Component<DatexInterface.Options>({title:"Datex Interface", local_interface:true, icon:undefined, rows:[1,1], columns: [1], gaps:4, sealed:false})
+@UIX.Component<DatexInterface.Options>({title:"Datex Interface", enable_routes:true, advanced_view:false, local_interface:true, icon:undefined, rows:[1,1], columns: [1], gaps:4, sealed:false})
 @UIX.NoResources
 export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Options> extends UIX.Components.GridGroup<O>{
+
+    @property content_id!: string
+
+    protected override async onConstruct() {
+        this.content_id = await this.getValidId();
+    }
 
     override async onAssemble() {
         
@@ -26,8 +38,8 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
         this.addStyleSheet(MonacoHandler.standalone_stylesheet);
 
         // datex editor + console
-        const editor = new DatexEditor({id:'editor', border_br_radius:0, border_bl_radius:0});
-        const console = new DatexConsoleView({id:'console', border_tr_radius:0, border_tl_radius:0, header:false, timestamps:false, editor:editor}, {gy:1});
+        const editor = new DatexEditor({identifier:'editor', advanced_view:this.options.advanced_view, border_br_radius:0, border_bl_radius:0});
+        const console = new DatexConsoleView({identifier:'console', border_tr_radius:0, border_tl_radius:0, header:false, timestamps:false, editor:editor}, {gy:1});
 
         this.addChild(editor);
         this.addChild(console);
@@ -44,8 +56,67 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
             console.log("treey interface")
             this.tryConnectInterface();
         }, "RETRY_INTERFACE")
+
+        this.loadScript();
     }
     
+
+    private async loadScript(content?:string){
+        try {
+            const script = await SharedScripts.get(this.content_id, Datex.Runtime.ENV.LANG, content);
+
+            if (script) {
+                this.editor.setContent(script);
+            }
+        }
+        catch {
+            // maybe offline or endpoint not reachable, set default content if none set
+            if (!this.editor.getContent()) this.editor.setContent(getExampleScript(Datex.Runtime.ENV.LANG, this.content_id));
+        }
+        
+    }
+    
+    override getCurrentRoute(): string[] {
+        return [this.content_id]
+    }
+
+    override onRoute(identifier: string) {
+        this.setContent(identifier);
+        return undefined;
+    }
+
+    async setContent(id?:string, content?:string) {
+
+        if (!id) id = await this.getValidId();
+
+        if (id != this.content_id) {
+            console.log("new content id", id)
+            this.content_id = id;
+            await this.loadScript(content);
+            UIX.Routing.update();
+        }
+    }
+
+    private async getValidId() {
+        try {
+            return <string> await SharedScripts.getNewId();
+        } catch {
+            return this.generateOfflineId();
+        }
+    }
+
+    private generateOfflineId(length = 10) {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        let counter = 0;
+        while (counter < length) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength));
+          counter += 1;
+        }
+        return "offline-"+result;
+    }
+
     override async onReady() {
 
         await MonacoHandler.init(); // load monaco first

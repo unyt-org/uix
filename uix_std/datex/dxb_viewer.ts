@@ -22,8 +22,8 @@ export class DXBViewer extends UIX.Components.GridGroup {
     // @implement
     override onAssemble() {
         // dxb viewer
-        const main = new DXBViewerConsole({id:"main", border_br_radius:0, border_bl_radius:0, border_tl_radius:0, border:false});
-        const info = new DXBViewerInfo({id:"info", border_tl_radius:0, border_tr_radius:0, border_bl_radius:0, border:false, border_top:true}, {gy:1});
+        const main = new DXBViewerConsole({identifier:"main", border_br_radius:0, border_bl_radius:0, border_tl_radius:0, border:false});
+        const info = new DXBViewerInfo({identifier:"info", border_tl_radius:0, border_tr_radius:0, border_bl_radius:0, border:false, border_top:true}, {gy:1});
 
         this.addChild(main);
         this.addChild(info);

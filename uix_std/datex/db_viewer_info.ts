@@ -3,7 +3,7 @@ import { Datex, property, props, text } from "unyt_core";
 import { UIX, I, S, SVAL } from "uix";
 import MonacoHandler from "../code_editor/monaco.ts";
 import { DatexValueTreeView } from "./value_tree_view.ts";
-import { convertANSIToHTML } from "../../utils/ansi_to_html.ts";
+import { convertANSIWithDATEXToHTML } from "../../utils/ansi_to_html_datex.ts";
 import { dx_value_manager } from "./resource_manager.ts";
 
 export type dxb_section = [start:number, end:number, color:string, title:string, description?:string, bits?:any[], buffer?:string[], parsed?:string];
@@ -103,7 +103,8 @@ export class DXBViewerInfo extends UIX.Components.Base {
         div.style.marginTop = "10px";
         div.style.padding = "5px";
 
-        div.innerHTML = convertANSIToHTML(decompiled[0])
+        div.innerHTML = "";
+        div.append(convertANSIWithDATEXToHTML(decompiled[0]))
 
         this.outer.innerHTML = "";
         this.outer.append(this.makeScrollContainer(div))

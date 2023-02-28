@@ -531,23 +531,24 @@ catch {
 				"manifest_version": 2,
 				"permissions": ["webNavigation", "unlimitedStorage"],
 				
-				// "file_handlers": [
-				//   {
-				// 	"action": "/",
-				// 	"accept": {
-				// 	  "application/datex": ".dxb",
-				// 	  "text/datex": ".dx"
-				// 	},
-				// 	"icons": [
-				// 	  {
-				// 		"src": "https://workbench.unyt.org/unyt_web/assets/logo_icon.png",
-				// 		"sizes": "287x287",
-				// 		"type": "image/png"
-				// 	  }
-				// 	],
-				// 	"launch_type": "single-client"
-				//   }
-				// ]
+				"file_handlers": [
+				  {
+					"action": "/",
+					"accept": {
+					  "application/datex": ".dxb",
+					  "text/datex": ".dx",
+					  "application/json": ".json"
+					},
+					"icons": [
+					  {
+						"src": "https://dev.cdn.unyt.org/unyt_core/assets/square_dark_datex.png",
+						"sizes": "600x600",
+						"type": "image/png"
+					  }
+					],
+					"launch_type": "single-client"
+				  }
+				]
 			}));
 		} catch (e) {
 		}			

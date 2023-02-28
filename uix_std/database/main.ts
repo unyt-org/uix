@@ -184,8 +184,8 @@ export class DBView <O extends DB_VIEW_OPTIONS = DB_VIEW_OPTIONS> extends UIX.Co
             db        : this.options.db,
             table_name: this.options.table_name,
         }
-        this.tab_group = new UIX.Components.TabGroup({id:'tab_group', add_btn:false, ...credentials, no_elements_string: "no_tables", enable_drop:false}, {gx: 1});
-        const tree_options = {id:'tree', ...credentials, enable_drop:false, endpoint:this.options.endpoint, collector: this.tab_group};
+        this.tab_group = new UIX.Components.TabGroup({identifier:'tab_group', add_btn:false, ...credentials, no_elements_string: "no_tables", enable_drop:false}, {gx: 1});
+        const tree_options = {identifier:'tree', ...credentials, enable_drop:false, endpoint:this.options.endpoint, collector: this.tab_group};
         if (this.options.hasOwnProperty("title")) tree_options.title = this.options.title;
         this.tree = new DBTree(tree_options, {gx:0})
         this.addChild(this.tree)
@@ -1292,9 +1292,9 @@ export class DBExtendedTableView<O extends DB_TABLE_VIEW_OPTIONS = DB_TABLE_VIEW
     // }
     
     override onAssemble() {
-        const query_view = new DBQueryView({id:'query_view', enable_drop:false, endpoint: this.options.endpoint}, {dynamic_size:true, margin_bottom:5, margin_top:5});
+        const query_view = new DBQueryView({identifier:'query_view', enable_drop:false, endpoint: this.options.endpoint}, {dynamic_size:true, margin_bottom:5, margin_top:5});
         const table_view = new DBTableView<DB_TABLE_VIEW_OPTIONS>({
-            id: 'table_view',
+            identifier: 'table_view',
             db: this.options.db,
             table_name: this.options.table_name,
             hostname: this.options.hostname,

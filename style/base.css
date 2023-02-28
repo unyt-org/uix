@@ -264,3 +264,15 @@ pre code:hover::before {
 .animate-on-hover:hover {
     transform: scale(1);
 }
+
+
+.hoverable {
+    cursor: pointer;
+}
+
+.hoverable:hover {
+    text-decoration: underline;
+    text-underline-position: under;
+    /* text-decoration-color: var(--text_highlight); */
+    text-decoration-thickness: 1.5px;
+}

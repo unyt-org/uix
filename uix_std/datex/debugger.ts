@@ -20,7 +20,7 @@ export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Comp
 
     override onAssemble() {
         // left & right sections
-        let interface_group = new InterfaceTabGroup({id:"interface_group"});
+        let interface_group = new InterfaceTabGroup({identifier:"interface_group"});
         let right_tab_group = new UIX.Components.TabGroup({header_location:'right', editable:false, enable_drop:false}, {gx:1, margin_left:10});
 
         // pointers and scopes
@@ -64,22 +64,22 @@ export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Comp
 
         // local interface
         if (interf == Datex.InterfaceManager.local_interface) {
-            d = new DatexInterface({removable:!interf.persistent, local_interface:true});
+            d = new DatexInterface({removable:!interf.persistent, local_interface:true, advanced_view:true});
             await this.interface_group.addChild(d);
         }
         // other
         else {
             // single (main) endpoint
             if (interf.endpoint) {
-                d = new DatexInterface({removable:!interf.persistent, local_interface:false});
+                d = new DatexInterface({removable:!interf.persistent, local_interface:false, advanced_view:true});
                 await d.setDatexOutput(interf);
                 await this.interface_group.addChild(d);
             }
             // multiple endpoints
             else {
                 let max = 5;
-                for (let e of interf.endpoints) {
-                    d = new DatexInterface({removable:!interf.persistent, local_interface:false});
+                for (const e of interf.endpoints??[]) {
+                    d = new DatexInterface({removable:!interf.persistent, local_interface:false, advanced_view:true});
                     await d.setDatexOutput(interf, e);
                     await this.interface_group.addChild(d);
 

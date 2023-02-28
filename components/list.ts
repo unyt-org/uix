@@ -14,7 +14,7 @@ export namespace List {
     export type list_view_entry = {
         id?: string|number,
         title?:string,
-        body?: string|string[]
+        body?: string|HTMLElement|(string|HTMLElement)[]
     }
 
     export interface Options extends Base.Options {
@@ -86,19 +86,19 @@ export class List<O extends List.Options = List.Options> extends Base<O> {
 
     addEntry(entry:List.list_view_entry){
 
-        let index = this.entries.push(entry)-1;
+        const index = this.entries.push(entry)-1;
 
-        let entry_dom = document.createElement("div");
+        const entry_dom = document.createElement("div");
         entry_dom.classList.add('list-entry');
         this.entry_doms[index] = entry_dom;
 
         let i = 0;
-        for (let e of (typeof entry.body == "string" ? [entry.body] : entry.body||[])) {
-            let container = document.createElement("div");
+        for (const e of (!(entry.body instanceof Array) ? [entry.body] : entry.body||[])) {
+            const container = document.createElement("div");
             container.classList.add('list-entry-value')
             if (this.column_backgrounds && !this.column_backgrounds[i]) container.classList.add('no-bg');
             if (this.column_widths&&this.column_widths[i]) container.style.width = this.column_widths[i];
-            container.innerHTML = e;
+            if (e) container.append(e);
             entry_dom.append(container);
             i++;
         }

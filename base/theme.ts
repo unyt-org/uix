@@ -173,7 +173,7 @@ export class Theme  {
 		if (!force_update && this.#current_mode.val == mode) return;
 		else {
 			if (persist) this.#auto_mode = false; // keep theme even if os changes theme
-			logger.info("mode changed to " + mode);
+			logger.debug("mode changed to " + mode);
 			this.update(mode == "dark" ? this.#current_dark_theme : this.#current_light_theme, mode);
 
 			// css global color scheme
@@ -187,7 +187,7 @@ export class Theme  {
 
 	// update style
 	public static setStyle(style:string) {
-		logger.info("style changed to " + Theme.mode);
+		logger.debug("style changed to " + Theme.mode);
 		this.#current_style = style;
 	}
 

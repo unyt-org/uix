@@ -45,7 +45,7 @@ if (config.import_map) throw "embeded import maps are not yet supported for uix 
 
 // todo: fix
 if (!config.import_map_path) throw '"import_map_path" in app.dx or "importMap" in deno.json required'
-console.log("using import map: " + config.import_map_path);
+// console.log("using import map: " + config.import_map_path);
 
 const importmap_path = <string> (<any> config.import_map_path)?.toString();
 

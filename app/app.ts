@@ -133,7 +133,6 @@ class UIXApp {
 			await endpoint_config.load(new URL("./.dx", n_options.backend[0]))
 		}
 
-
 		// connect to supranet
 		if (endpoint_config.connect !== false) await Datex.Supranet.connect();
 		else await Datex.Supranet.init();

@@ -359,6 +359,7 @@ ul.json-dict, ol.json-array {
     border-radius: 5px;
     padding: 0px;
     box-sizing: border-box;
+    white-space: nowrap;
     overflow-x: scroll;
 }
 

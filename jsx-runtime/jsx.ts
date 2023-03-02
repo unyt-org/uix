@@ -32,8 +32,9 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 		Utils.append(element, child);
 	}
 
-	return $$(element);
-
+	// !important, cannot return directly because of stack problems, store in ptr variable first
+	const ptr = $$(element);
+	return ptr;
 }
 
 jsx.Fragment = jsxFragment

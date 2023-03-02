@@ -74,8 +74,8 @@ class UIXApp {
 		n_options.name = options.name;
 		n_options.description = options.description;
 		n_options.icon_path = options.icon_path ?? 'https://cdn.unyt.org/unyt_core/assets/skeleton_light.svg'
-		n_options.version = options.version;
-		n_options.stage = options.stage;
+		n_options.version = options.version?.replaceAll("\n","");
+		n_options.stage = options.stage?.replaceAll("\n","");
 		n_options.offline_support = options.offline_support ?? true;
 		n_options.installable = options.installable ?? false;
 		
@@ -119,7 +119,7 @@ class UIXApp {
 			catch {}
 		}
 
-		logger.info("options", n_options)
+		// logger.info("options", n_options)
 
 		// for unyt log
 		Datex.Unyt.setApp(n_options.name!, n_options.version!, n_options.stage!)

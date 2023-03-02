@@ -61,7 +61,7 @@ declare global {
   
 	  // Property in 'props' that will hold the children of the Component
 	  interface ElementChildrenAttribute {
-		children: HTMLElement
+		children: HTMLElement[]
 	  }
   
 	  // Common attributes of the standard HTML elements and JSX components

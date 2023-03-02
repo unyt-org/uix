@@ -33,7 +33,6 @@
  ╚═════════════════════════════════════════╩════════════════════════════════════════════╝
 */
 
-console.log("uiix start")
 // all UIX.*
 import * as UIX from "./uix_all.ts";
 export {UIX};

@@ -30,7 +30,7 @@ if (!IS_HEADLESS) {
 let version = "0.0.0";
 try {
     const res = await fetch(new URL("../version", import.meta.url));
-    if (res.ok) version = await res.text()
+    if (res.ok) version = (await res.text()).replaceAll("\n","");
 }
 catch {}
 

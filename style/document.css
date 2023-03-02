@@ -3,7 +3,7 @@
 @import url('../fonts/Roboto.css');
 
 /* Fontawesome */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css');
+@import url('./fontawesome.css');
 
 @import url('./elements.css'); /* TODO: refactor*/
 @import url('./base.css');

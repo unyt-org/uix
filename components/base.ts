@@ -423,7 +423,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         // global base style
         new URL('../style/elements.css', import.meta.url).toString(),
         new URL('../style/base.css', import.meta.url).toString(),
-        new URL('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css').toString(),
+        new URL('../style/fontawesome.css', import.meta.url).toString(),
 
         // components style
         new URL('./base.css', import.meta.url).toString()

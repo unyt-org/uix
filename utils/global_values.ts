@@ -5,8 +5,8 @@ import type { Types } from "./global_types.ts";
 export const logger = new Datex.Logger("UIX");
 
 // app container
-export const root_container = document.querySelector(".root-container") ?? document.createElement("main") 
-root_container.classList.add("root-container");
+export const root_container = document.querySelector("#main") ?? document.createElement("main") 
+root_container.id = "main"
 
 // notification container
 export const notification_container = document.createElement("aside"); 

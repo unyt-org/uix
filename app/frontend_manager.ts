@@ -68,7 +68,10 @@ export class FrontendManager {
 					import_map_base_path: this.#base_path,
 					handle_out_of_scope_path: (path: Path|string, from:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects, compat)
 				}),
-				on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined
+				on_file_update: this.#watch ? ()=>{
+					if (this.#backend) this.#backend.restart();
+					this.handleFrontendReload();
+				} : undefined
 			})
 			this.#common_transpilers.set(common_dir.toString(), [transpiler, '/@' + new Path(common_dir).name + '/'])
 
@@ -487,7 +490,10 @@ catch {
 			const prerendered_content = this.#backend?.getEntrypointHTMLContent(path);
 
 			await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(prerendered_content, this.#client_scripts, ['uix/style/document.css'], this.#entrypoint, this.#backend?.web_entrypoint, compat));
-		} catch {}
+		} catch (e) {
+			console.log(e)
+			await this.server.sendError(requestEvent, 500);
+		}
 	}
 
 	// html page for new empty pages (includes blank.ts)
@@ -499,7 +505,9 @@ catch {
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {
 		try {
 			await this.server.serveContent(requestEvent, "text/javascript", await (await fetch(this.resolveImport('uix/sw/sw.ts', true /** must be resolved to URL */))).text());
-		} catch {}			
+		} catch {
+			await this.server.sendError(requestEvent, 500);
+		}			
 	}
 
 	private async handleFavicon(requestEvent: Deno.RequestEvent, _path:string) {
@@ -507,6 +515,7 @@ catch {
 			await this.server.serveContent(requestEvent, "image/*", await (await fetch(this.resolveImport(this.#app_options.icon_path, true /** must be resolved to URL */))).text());
 		} catch (e) {
 			console.log(e)
+			await this.server.sendError(requestEvent, 500);
 		}			
 	}
 
@@ -550,7 +559,8 @@ catch {
 				  }
 				]
 			}));
-		} catch (e) {
+		} catch {
+			await this.server.sendError(requestEvent, 500);
 		}			
 	}
 
@@ -571,7 +581,7 @@ catch {
 		let importmap = ''
 
 		// only use js if entrypoints are loaded, otherwise just static content
-		const use_js = !!(frontend_entrypoint || backend_entrypoint);
+		const use_js = !!(frontend_entrypoint || backend_entrypoint || this.#live);
 		
 		//js files
 		if (use_js) {
@@ -580,8 +590,9 @@ catch {
 			// js imports
 			files += indent(4) `
 				${prerendered_content?`${"import {disableInitScreen}"} from "${this.resolveImport("unyt_core/runtime/display.ts", compat_import_map).toString()}";\ndisableInitScreen();\n` : ''}
-				${"import {Datex, f}"} from "${this.resolveImport("unyt_core", compat_import_map).toString()}";
-				${"import {UIX}"} from "${this.resolveImport("uix", compat_import_map).toString()}";`
+				const f = (await import("${this.resolveImport("unyt_core", compat_import_map).toString()}")).f;
+				const UIX = (await import("${this.resolveImport("uix", compat_import_map).toString()}")).UIX;` 
+				// await new Promise(resolve=>setTimeout(resolve,5000))
 	
 			// files += `\nDatex.MessageLogger.enable();`
 
@@ -593,6 +604,11 @@ catch {
 				if (file) files += indent(4) `\nawait import("${this.resolveImport(file, compat_import_map).toString()}");`
 			}
 
+			// load frontend entrypoint first
+			if (frontend_entrypoint) {
+				files += indent(4) `\n\nconst frontend_entrypoint = await datex.get("${this.resolveImport(frontend_entrypoint, compat_import_map).toString()}");`
+			}
+
 			// hydration with backend content after ssr
 			if (backend_entrypoint) {
 				// load default export of ts module or dx export
@@ -601,7 +617,7 @@ catch {
 			// alternative: frontend rendering
 			if (frontend_entrypoint) {
 				// load default export of ts module or dx export
-				files += indent(4) `\n\nconst frontend_entrypoint = await datex.get("${this.resolveImport(frontend_entrypoint, compat_import_map).toString()}");\nif (frontend_entrypoint.default) UIX.State.set(frontend_entrypoint.default)\nelse if (frontend_entrypoint && Object.getPrototypeOf(frontend_entrypoint) != null) UIX.State.set(frontend_entrypoint);`
+				files += indent(4) `\nif (frontend_entrypoint.default) UIX.State.set(frontend_entrypoint.default)\nelse if (frontend_entrypoint && Object.getPrototypeOf(frontend_entrypoint) != null) UIX.State.set(frontend_entrypoint);`
 			}
 			files += '\n</script>'
 
@@ -619,7 +635,7 @@ catch {
 		// for (const rule of <any>UIX.Theme.stylesheet.cssRules) {
 		// 	global_style += rule.cssText;
 		// }
-		global_style += UIX.Theme.getCSSSnapshot();
+		global_style += UIX.Theme.getCSSSnapshot().replaceAll("\n","");
 		global_style += "</style>"
 
 		let favicon = "";
@@ -631,6 +647,7 @@ catch {
 		return indent `
 			<!DOCTYPE html>
 			<html>
+				<meta charset="UTF-8">
 				<head>
 					${title}
 					${favicon}
@@ -639,7 +656,7 @@ catch {
 					${importmap}
 				</head>
 				<body>
-					<main class="root-container">
+					<main id=main>
 						${prerendered_content??''}
 					</main>
 					${files}

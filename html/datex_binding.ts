@@ -3,6 +3,7 @@
  */
 
 import "./deno_dom.ts";
+import "./render.ts";
 
 import { $$, Datex } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
@@ -29,8 +30,8 @@ Datex.Type.get('html').setJSInterface({
 			type.newJSInstance(false) :  // call js constructor, but don't handle as constructor in lifecycle 
 			document.createElement(type.variation); // create normal HTMLElement, no UIX lifecycle
 
-		// set attrs, style, content
-		if (typeof val == "object") {
+		// set attrs, style, content from object
+		if (typeof val == "object" && Object.getPrototypeOf(val) === Object.prototype) {
 			for (const [prop,value] of Object.entries(val)) {
 				if (prop=="style" && typeof value != "string") {
 					for (const [prop, val] of Object.entries(value)) {
@@ -63,7 +64,7 @@ Datex.Type.get('html').setJSInterface({
 			// set 'p' properties (contains options, other properties)
 			if (val.p) type.initProperties(el, val.p);
 			// trigger UIX lifecycle (onReplicate)
-			type.construct(el, undefined, false);
+			type.construct(el, undefined, false, true);
 		}
 		
 		return el;
@@ -71,20 +72,26 @@ Datex.Type.get('html').setJSInterface({
 
 	serialize(val) {
 		if (!(val instanceof HTMLElement)) throw "not an HTMLElement";
-		const data: {style:Record<string,string>, content:any[], attr:Record<string,unknown>} = {style: {}, attr: {}, content: []}
+		const data: {style?:Record<string,string>, content?:any[], attr?:Record<string,unknown>} = {style: {}, attr: {}, content: []}
 
 		// attributes
 		for (let i = 0; i < val.attributes.length; i++) {
 			const attrib = val.attributes[i];
-			if (attrib.name !== "style") data.attr[attrib.name] = attrib.value;
+			if (attrib.name !== "style" && attrib.name !== "data-ptr") data.attr[attrib.name] = attrib.value;
 		}
 
-		// style
-		// @ts-ignore
-		const style_props = val.style._importants? Object.keys(val.style._importants) : val.style;
-		for (const prop of style_props) {
-			data.style[prop] = val.style[prop];
+		// style (uix _original_style)
+		// @ts-ignore 
+		const style = val._original_style??val.style;
+		let style_props = style._importants ? [...Object.keys(style._importants)] : style;
+		if (style_props && !(style_props instanceof Array || (globalThis.CSSStyleDeclaration && style_props instanceof globalThis.CSSStyleDeclaration))) style_props = [...Object.keys(style_props)];
+
+		if (style_props instanceof Array) {
+			for (const prop of style_props) {
+				data.style[prop] = style[prop];
+			}
 		}
+		
 		// children
 		for (let i = 0; i < val.childNodes.length; i++) {
 			const child = val.childNodes[i];
@@ -93,6 +100,15 @@ Datex.Type.get('html').setJSInterface({
 			else data.content.push(child);
 		}
 		// logger.info("serialize",data)
+
+		// optimize serialization
+		if (Object.keys(data.style).length == 0) delete data.style;
+		if (Object.keys(data.attr).length == 0) delete data.attr;
+		if (Object.keys(data.content).length == 0) delete data.content;
+
+		if (data.content?.length == 1) {
+			data.content = data.content[0];
+		}
 
 		return data;
 	},
@@ -114,7 +130,7 @@ Datex.Type.get('html').setJSInterface({
 		parent.setAttribute(key, value);
 	},
 
-	create_proxy(val) {
+	create_proxy(val, pointer) {
 		bindObserver(val);
 		return val;
 	}
@@ -130,6 +146,9 @@ const OBSERVER_IGNORE = Symbol("OBSERVER_IGNORE");
 
 export function bindObserver(element:HTMLElement) {
 	// console.log("bind datex ", element);
+	const pointer = Datex.Pointer.getByValue(element);
+	if (!pointer) throw new Error("cannot bind observers for HTMLElement without pointer")
+	if (!element.dataset['ptr']) element.dataset['ptr'] = pointer.id;
 
 	// @ts-ignore
 	if (element[OBSERVER]) return;
@@ -154,6 +173,7 @@ export function bindObserver(element:HTMLElement) {
 
 		for (const mut of mutations) {
 			if (mut.type == "attributes") {
+				if (mut.attributeName == "data-ptr") continue;
 				// TODO find style changes, don't send full style attribute
 				ptr.handleSetObservers(mut.attributeName)
 			}
@@ -169,7 +189,7 @@ export function bindObserver(element:HTMLElement) {
 	// @ts-ignore
 	element[OBSERVER] = new MutationObserver(handler)
 	// @ts-ignore
-	element[OBSERVER].observe(element, {attributes: true, childList: true})
+	// element[OBSERVER].observe(element, {attributes: true, childList: true})
 
 	return element;
 }

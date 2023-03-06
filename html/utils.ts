@@ -39,9 +39,11 @@ export namespace HTMLUtils {
 
 	export function setCSS<T extends HTMLElement>(element:T, property:string, value?:Datex.CompatValue<string|number>):T
 	export function setCSS<T extends HTMLElement>(element:T, properties:{[property:string]:Datex.CompatValue<string|number>}):T
-	export function setCSS<T extends HTMLElement>(element:T, properties_object_or_property:{[property:string]:Datex.CompatValue<string|number>}|string, value?:Datex.CompatValue<string|number>):T {
+	export function setCSS<T extends HTMLElement>(element:T, style:Datex.CompatValue<string>):T
+	export function setCSS<T extends HTMLElement>(element:T, properties_object_or_property:{[property:string]:Datex.CompatValue<string|number>}|Datex.CompatValue<string>, value?:Datex.CompatValue<string|number>):T {
 		let properties:{[property:string]:Datex.CompatValue<string|number|undefined>};
-		if (typeof properties_object_or_property == "string") properties = {[properties_object_or_property]:value};
+		if (typeof properties_object_or_property == "string" && value != undefined) properties = {[properties_object_or_property]:value};
+		else if (typeof properties_object_or_property == "string" || (properties_object_or_property instanceof Datex.Value && Datex.Type.ofValue(properties_object_or_property) == Datex.Type.std.text)) return setElementAttribute(element, "style", properties_object_or_property);
 		else properties = properties_object_or_property;
 
 		for (const [property, value] of Object.entries(properties)) {
@@ -57,18 +59,27 @@ export namespace HTMLUtils {
 		property = property?.replace(/[A-Z]/g, x => `-${x.toLowerCase()}`);
 
 		// none
-		if (value == undefined) element.style.removeProperty(property);
-
+		if (value == undefined) {
+			if (element.style.removeProperty) element.style.removeProperty(property);
+			else delete element.style[property];
+		}
 
 		// UIX color
 		else if (value instanceof Datex.PointerProperty && value.pointer.val == Theme.colors) {
-			element.style.setProperty(property, `var(--${value.key})`); // autmatically updated css variable
+			if (element.style.setProperty) element.style.setProperty(property, `var(--${value.key})`); // autmatically updated css variable
+			else element.style[property] = `var(--${value.key})`
 		}
 		// other Datex CompatValue
 		else {
 			Datex.Value.observeAndInit(value, (v,k,t) => {
-				if (v == undefined) element.style.removeProperty(property);
-				else element.style.setProperty(property, getCSSProperty(v))
+				if (v == undefined) {
+					if (element.style.removeProperty) element.style.removeProperty(property);
+					else delete element.style[property];
+				}
+				else {
+					if (element.style.setProperty) element.style.setProperty(property, getCSSProperty(v))
+					else element.style[property] = getCSSProperty(v);
+				}
 			}, undefined, undefined);
 		}
 		return element;
@@ -257,7 +268,6 @@ export namespace HTMLUtils {
 
 	// append an element or text to an element
 	export function append<T extends HTMLElement>(element:T, content:Datex.CompatValue<HTMLElement|Text|string>):T {
-
 		if (content instanceof HTMLElement || content instanceof Text) element.append(content);
 		else if (typeof content == "string" || typeof content == "number" || typeof content == "boolean" || typeof content == "bigint") element.append(content);
 		else {

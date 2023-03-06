@@ -69,12 +69,12 @@ if (!IS_HEADLESS) {
     // to change app color
     document.head.insertAdjacentHTML('beforeend', '<meta name="theme-color"/>')
 
-    const skel = State.getSkeleton();
-    if (skel) State.renderSkeleton(skel);
-    addEventListener("unload", ()=>{
-        logger.debug(`Exit - Saving DOM Skeleton...`);
-        State.saveSkeleton(<Components.Base<any>>root_container.children[0]);
-    }, {capture: true});
+    // const skel = State.getSkeleton();
+    // if (skel) State.renderSkeleton(skel);
+    // addEventListener("unload", ()=>{
+    //     logger.debug(`Exit - Saving DOM Skeleton...`);
+    //     State.saveSkeleton(<Components.Base<any>>root_container.children[0]);
+    // }, {capture: true});
 
 
 	

@@ -148,7 +148,7 @@ export namespace State {
     }
 
     export function renderSkeleton(skeleton:string) {
-        logger.info("rendering skeleton")//, skeleton)
+        logger.info("rendering skeleton",skeleton)//, skeleton)
         root_container.innerHTML = skeleton;
     }
 

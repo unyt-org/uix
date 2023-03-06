@@ -17,6 +17,7 @@ if (IS_HEADLESS) {
 
 	globalThis.document = window.document;
 	globalThis.HTMLElement = window.HTMLElement;
+	globalThis.Element = window.Element;
 	globalThis.customElements = window.customElements;
 	globalThis.Text = window.Text
 	globalThis.MutationObserver = window.MutationObserver;

@@ -13,8 +13,8 @@ body, html {
     width: 100vw;
     position: relative;
     -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
+    /* -webkit-user-select: none;
+    user-select: none; */
 }
 
 body {
@@ -30,7 +30,7 @@ body {
 
 
 /* Layout Containers */
-.root-container {
+#main {
 	width: 100dvw;
 	height: 100dvh;
 }

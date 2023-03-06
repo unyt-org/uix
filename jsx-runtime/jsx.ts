@@ -19,7 +19,8 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 	if (typeof type === 'function') {
 		// class extending HTMLElement
 		if (HTMLElement.isPrototypeOf(type)) {
-			element = new type() // uix component
+			element = new type(props) // uix component
+			init_attributes = false;
 		}
 		else {
 			element = type(config) // function
@@ -32,7 +33,8 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 
 	if (init_attributes) {
 		for (const [key,val] of Object.entries(props)) {
-			HTMLUtils.setElementAttribute(element, key, val);
+			if (key == "style") HTMLUtils.setCSS(element, val);
+			else HTMLUtils.setElementAttribute(element, key, val);
 		}
 	}
 
@@ -78,7 +80,6 @@ declare global {
 	  interface IntrinsicAttributes {
 		class?: string
 		id?: string,
-		style?: string,
 		name?: string,
 
 		[key: string]: any

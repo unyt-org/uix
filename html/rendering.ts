@@ -73,26 +73,31 @@ type get_content<C extends html_content_or_generator_or_preset> =
 
 export function collapseToContent<T extends html_content_or_generator_or_preset>(content:T|undefined, path?:string, only_return_static_content = false): get_content<T> {
 	
-	if (content == undefined) return <get_content<T>>"";
-	if (only_return_static_content && content && content.__render_method == RenderMethod.DYNAMIC) return <get_content<T>>"";
+	let collapsed:unknown;
+
+	if (content == undefined) collapsed = <get_content<T>>"";
+	else if (only_return_static_content && content && content.__render_method == RenderMethod.DYNAMIC) collapsed = <get_content<T>>"";
 
 
 	// handle generator functions
-	if (typeof content == "function") {
-		return <get_content<T>>collapseToContent(content(), path, only_return_static_content)
+	else if (typeof content == "function") {
+		collapsed = <get_content<T>>collapseToContent(content(), path, only_return_static_content)
 	}
 	// handle presets
-	else if (content instanceof RenderPreset || (content && typeof content == "object" && !(content instanceof HTMLElement) && '__content' in content)) return <get_content<T>>collapseToContent(<html_content_or_generator>content.__content, path, only_return_static_content);
+	else if (content instanceof RenderPreset || (content && typeof content == "object" && !(content instanceof HTMLElement) && '__content' in content)) collapsed = <get_content<T>>collapseToContent(<html_content_or_generator>content.__content, path, only_return_static_content);
 
 	// path object
-	else if (!(content instanceof HTMLElement) && content && typeof content == "object") {
+	else if (!(content instanceof HTMLElement) && content && typeof content == "object" && Object.getPrototypeOf(content) == Object.prototype) {
 		// TODO better route resolution
 		for (const route of [...Object.keys(content)].reverse()) {
-			if (path?.startsWith(route)) return collapseToContent(content[route], undefined, only_return_static_content);
+			if (path?.startsWith(route)) collapsed = collapseToContent(content[route], undefined, only_return_static_content);
 		}
-		return <get_content<T>>"";
+		collapsed = <get_content<T>>"";
 	}
 
 	// collapsed content
-	else return <get_content<T>>content;
+	else collapsed = <get_content<T>>content;
+
+	if (content instanceof HTMLElement) globalThis.document.body.append(content);
+	return collapsed;
 }

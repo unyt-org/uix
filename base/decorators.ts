@@ -74,7 +74,6 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 				if (!html_serialized.p) html_serialized.p = {};
                 html_serialized.p[key] = pointer?.shadow_object ? pointer.shadow_object[key]/*keep references*/ : value[key];
             }
-			// console.log("seri component",value, html_serialized);
 
 			return html_serialized;
 		}

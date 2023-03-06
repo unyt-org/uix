@@ -162,7 +162,7 @@ export namespace Elements {
 			}
 
 			else if (this.options.src) {
-				content = new globalThis.Image();
+				content = document.createElement("img")
 				content.src = this.options.src.toString();
 				content.style.width = "100%"
 			}
@@ -199,7 +199,7 @@ export namespace Elements {
 			`
 			console.log("url: ", url.toString(), this);
 
-			const content = new globalThis.Image();
+			const content = document.createElement("img")
 			content.src = url.toString();
 			content.style.width = "100%"
 			this.formatContent(content)

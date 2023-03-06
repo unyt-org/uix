@@ -5,6 +5,10 @@ export class CSSStyleSheet implements globalThis.CSSStyleSheet {
 
 	}
 
+	replaceSync() {
+
+	}
+
 	cssRules:CSSStyleRule[] = []
 
 }

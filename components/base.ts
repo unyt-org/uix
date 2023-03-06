@@ -19,6 +19,7 @@ import type { Group } from "./group.ts"
 import { Components } from "./main.ts"
 import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS } from "../base/decorators.ts";
 import {Routing} from "../base/routing.ts";
+import { bindObserver } from "../html/datex_binding.ts";
 
 // deno-lint-ignore no-namespace
 export namespace Base {
@@ -46,7 +47,7 @@ export namespace Base {
         fill_border?: boolean // allow children to extend over onto the border
         fill_content?: boolean // html_element 100% height, 100%width
 
-        style?:string // override global style with custom style variant (e.g. neum)
+        style?:string|Record<string,string|number> // style attribute
 
         bg_color?: string // background color
         background?: string // general background
@@ -74,7 +75,7 @@ export namespace Base {
         scroll_content?: boolean, // create content as scroll container
 
         identifier?:string // unique identifier for this component
-        title:string // title, e.g. for tabs
+        title?:string // title, e.g. for tabs
         short_title?: string // shorter title
         icon?:string // icon as html
         group?:string // group identifier
@@ -131,6 +132,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     @property declare options:Datex.JSValueWith$<O>; // uses element.DEFAULT_OPTIONS as default options (also for all child elements)
     @property constraints!:Datex.JSValueWith$<Types.component_constraints>
 
+    declare public props: O
+
     declare $:Datex.Proxy$<this> // reference to value (might generate pointer property, if no underlying pointer reference)
     declare $$:Datex.PropertyProxy$<this> // always returns a pointer property reference
 
@@ -155,7 +158,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     constructor(options?:Datex.DatexObjectInit<O>, constraints?:Datex.DatexObjectInit<Types.component_constraints>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super(null)
-
+        
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
             if (!this.constructor[Datex.DX_TYPE]) {
@@ -293,6 +296,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     // init for base element (and every element)
     private async init(constructed = false) {
 
+        Datex.Pointer.onPointerForValueCreated(this, ()=>bindObserver(this))
+
         this.options_props = <Datex.ObjectWithDatexValues<O>> props(this.options); // TODO typescript correct types
         this.constraints_props = <Datex.ObjectWithDatexValues<Types.component_constraints>> props(this.constraints); 
 
@@ -392,7 +397,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         
         this.onCreateLayout?.(); // custom layout extensions
-        this.applyStyle(); // custom style
+        // this.applyStyle(); // custom style
+        if (this.options.style) HTMLUtils.setCSS(this, this.options.style)
 
         await (<typeof Base>this.constructor).loadModuleDatexImports();
 
@@ -467,6 +473,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     #style_sheets:CSSStyleSheet[] = [];
     #pseudo_style = {};
     #style_sheets_urls:string[] = [];
+
+    get style_sheets_urls () {return this.#style_sheets_urls}
 
     // // adopted constructed stylesheet for shadow root
     #adopted_root_style?:CSSStyleDeclaration 
@@ -600,7 +608,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (this._use_resources) {
             const css_url = this._module.replace(/\.m?(ts|js)x?$/, '.css');
             this._module_stylesheets = [...this._module_stylesheets]; // create new module stylesheets are for this class
-            this._module_stylesheets.push(css_url); // remmeber as module stylesheets
+            this._module_stylesheets.push(css_url); // remember as module stylesheets
             const url_string = new URL(css_url).toString();
             if (!this.stylesheets.includes(url_string)) this.stylesheets.push(url_string) // add to normal stylesheets
         }
@@ -760,6 +768,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.adoptStyle(":host:host {}", true); // use ':host:host' for higher specificity (should behave like inline style)
     }
 
+    public get _original_style() {
+        return super.style;
+    }
 
     // returns style of this element, if shadow_root not yet attached to a document (styleSheets not available, see https://github.com/WICG/webcomponents/issues/526)
     public override get style():CSSStyleDeclaration {

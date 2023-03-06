@@ -10,7 +10,7 @@ export namespace Routing {
 
 	export enum Prefix {
 		LOCAL_HASH = "#",
-		PATH = "/@/" // @experimental, currently not working
+		PATH = "/" // @experimental, currently not working
 	}
 
 	type set_handler = (parts:string[])=>string[]
@@ -25,18 +25,30 @@ export namespace Routing {
 	}
 
 	export function getCurrentRouteFromURL() {
-		const url = new URL(window.location.href);
+		return getRouteFromURL(window.location.href, prefix);
+	}
+
+	export function getRouteFromURL(url:string|URL, prefix = Prefix.PATH) {
+		url = new URL(window.location.href);
 		const path = prefix == Prefix.LOCAL_HASH ? url.hash.replace(Prefix.LOCAL_HASH, "") : url.pathname.replace(Prefix.PATH, "");
 		let parts = path.split("/");
 		if (parts.length == 1 && parts[0] == '') parts = []; // empty
 		return parts;
 	}
 
-	export function setCurrentRoute(parts?:string[], silent = false, _prefix: Prefix = prefix) {
-		if (JSON.stringify(getCurrentRouteFromURL()) === JSON.stringify(parts)) return; // no change, ignore
+	export function setCurrentRoute(parts?:string[]|URL, silent = false, _prefix: Prefix = prefix) {
+		if (JSON.stringify(getCurrentRouteFromURL()) === JSON.stringify(parts instanceof URL ? getRouteFromURL(parts) : parts)) return; // no change, ignore
 
-		if (!parts?.length) history.pushState(null, "", "/");
-		else history.pushState(null, "", _prefix + parts.join("/"))
+		if (!parts || (parts instanceof Array && !parts.length)) history.pushState(null, "", "/");
+		else {
+			let url:URL|string;
+			if (parts instanceof URL) url = parts;
+			else {
+				url = _prefix + parts.join("/");
+				if (url.startsWith("//")) url = url.slice(1);
+			}
+			history.pushState(null, "", url)
+		}
 
 		if (!silent) handleCurrentURLRoute();
 	}

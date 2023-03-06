@@ -9,6 +9,7 @@ import { HTMLUtils } from "../uix_all.ts";
 export class BackendManager {
 	
 	#scope: Path
+	#base_path: Path
 	#web_path: Path
 	#entrypoint?: Path
 	#web_entrypoint?: Path
@@ -31,6 +32,7 @@ export class BackendManager {
 
 	constructor(app_options:normalized_app_options, scope:Path, base_path:URL, watch = false){
 		this.#scope = scope;
+		this.#base_path = base_path;
 		this.#watch = watch;
 
 		this.#web_path = new Path(`uix:///@${this.#scope.name}/`);
@@ -50,11 +52,14 @@ export class BackendManager {
 
 	async watchFiles(){
 		for await (const event of Deno.watchFs(this.#scope.pathname, {recursive: true})) {
-			logger.info("restarting backend...");
-			Deno.exit(42)
+			this.restart()
 		}
 	}
 
+	restart() {
+		logger.info("restarting backend...");
+		Deno.exit(42)
+	}
 
 	/**
 	 * start entrypoint if it exists
@@ -65,6 +70,7 @@ export class BackendManager {
 			const module = this.#module = <any> await datex.get(this.#entrypoint);
 			this.#content_provider = module.default ?? (Object.getPrototypeOf(module) !== null ? module : null);
 			// default ts export, or just the result if DX and not ts module
+			collapseToContent(this.#content_provider); // load fully
 			return this.#content_provider;
 		}
 		return null;
@@ -76,7 +82,7 @@ export class BackendManager {
 		const content = collapseToContent(this.#content_provider, path, true);
 		
 		// convert content to valid HTML string
-		if (content instanceof HTMLElement) return content.outerHTML;
+		if (content instanceof HTMLElement) return content.getOuterHTML({includeShadowRoots:true, rootDir:this.#base_path});
 		else return HTMLUtils.escapeHtml(content?.toString() ?? "");
 	}
 

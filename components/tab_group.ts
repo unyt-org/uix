@@ -40,6 +40,7 @@ export namespace TabGroup {
     show_flags: true,
     add_btn: true,
     selected_tab_index: 0,
+    fill_content: true,
     responsive: true
 })
 export class TabGroup<O extends TabGroup.Options = TabGroup.Options, ChildElement extends Base = Base> extends Group<O, ChildElement> {
@@ -582,7 +583,7 @@ export class TabGroup<O extends TabGroup.Options = TabGroup.Options, ChildElemen
         full_header.append(this.header_element);
         full_header.append(this.add_tab_btn)
 
-        this.content_container.append(this.slot_element)
+        // this.content_container.append(this.slot_element)
 
         if (is_header_first) {
             this.shadow_root.append(full_header)

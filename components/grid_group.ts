@@ -51,45 +51,45 @@ export class GridGroup<O extends GridGroup.Options=GridGroup.Options, ChildEleme
 
         this.style.pointerEvents = 'none';
 
-        this.slot_element.style.display = "grid";
-        this.slot_element.style.width = "100%";
-        this.slot_element.style.height = "100%";
-        this.slot_element.style.gridAutoFlow = "dense";
-        this.slot_element.style.overflow = "visible";
+        this.content.style.display = "grid";
+        this.content.style.width = "100%";
+        this.content.style.height = "100%";
+        this.content.style.gridAutoFlow = "dense";
+        this.content.style.overflow = "visible";
 
         // grid gaps
         if (this.options.gaps) {
-            this.slot_element.style.columnGap = this.options.gaps + "px";
-            this.slot_element.style.rowGap = this.options.gaps + "px";
+            this.content.style.columnGap = this.options.gaps + "px";
+            this.content.style.rowGap = this.options.gaps + "px";
         }
 
         // enable height > 100%
         if (this.options.auto_size && this.options.overflow_scroll) {
-            this.slot_element.style.minHeight = "100%"
-            this.slot_element.style.height = "max-content"
+            this.content.style.minHeight = "100%"
+            this.content.style.height = "max-content"
             this.content_container.style.overflow = "scroll";
             this.style.pointerEvents = 'all';
         }
         else {
-            this.slot_element.style.height = "100%"
+            this.content.style.height = "100%"
         }
 
-        this.content_container.append(this.slot_element);
+        this.content_container.append(this.content);
     }
   
     // changed to normal mode
     protected override onLayoutModeNormal() {
 
-        this.slot_element.style.display = "grid";
+        this.content.style.display = "grid";
 
         // enable height > 100%
         if (this.options.auto_size && this.options.overflow_scroll) {
-            this.slot_element.style.minHeight = "100%"
-            this.slot_element.style.height = "max-content"
+            this.content.style.minHeight = "100%"
+            this.content.style.height = "max-content"
             this.content_container.style.overflow = "scroll";
         }
         else {
-            this.slot_element.style.height = "100%"
+            this.content.style.height = "100%"
             this.content_container.style.overflow = "visible";
         }
 
@@ -111,14 +111,14 @@ export class GridGroup<O extends GridGroup.Options=GridGroup.Options, ChildEleme
 
         // scroll elements down, fill as much height is needed
         if (this.options.overflow_scroll) {
-            this.slot_element.style.display = "block";
+            this.content.style.display = "block";
         }
         // fit all elements in 100% height 
         else {
-            this.slot_element.style.display = "flex";
-            this.slot_element.style.flexDirection = "column";
+            this.content.style.display = "flex";
+            this.content.style.flexDirection = "column";
         }
-        this.slot_element.style.height = "100%";
+        this.content.style.height = "100%";
         this.content_container.style.overflow = "scroll";
 
         this.content_container.style.pointerEvents = 'all';
@@ -261,7 +261,7 @@ export class GridGroup<O extends GridGroup.Options=GridGroup.Options, ChildEleme
         let type = {0: "columns", 1: "rows"};
 
         let full_fr_width = this.options[type[axis]].reduce((a,v)=>v+a, 0);
-        let full_width = axis == 0 ? this.slot_element.offsetWidth : this.slot_element.offsetHeight;
+        let full_width = axis == 0 ? this.content.offsetWidth : this.content.offsetHeight;
 
         let size = axis == 0 ? box_width : box_height;
 
@@ -349,7 +349,7 @@ export class GridGroup<O extends GridGroup.Options=GridGroup.Options, ChildEleme
         // let columns = this.options.grid[type[axis]].map(fr => `minmax(30px,${fr}fr)`).join(" ");
         let columns = this.options[type[axis]].map(fr => `${fr}fr`).join(" ");
         // console.log(columns);
-        this.slot_element.style.setProperty("grid-template-" + type[axis], columns);
+        this.content.style.setProperty("grid-template-" + type[axis], columns);
     }
 
 
@@ -359,13 +359,13 @@ export class GridGroup<O extends GridGroup.Options=GridGroup.Options, ChildEleme
         if (this.options.auto_size) {
             // exact width / height
             if (this.options.strict_size) {
-                this.slot_element.style.gridTemplateColumns = `repeat(auto-fill, ${this.options.column_width}px)`;
-                this.slot_element.style.gridTemplateRows = `repeat(auto-fill, ${this.options.row_height}px)`;
+                this.content.style.gridTemplateColumns = `repeat(auto-fill, ${this.options.column_width}px)`;
+                this.content.style.gridTemplateRows = `repeat(auto-fill, ${this.options.row_height}px)`;
             }
             // dynamic, auto find best size
             else {
-                this.slot_element.style.gridTemplateColumns = `repeat(auto-fill, minmax(${this.options.column_width}px, 1fr))`;
-                this.slot_element.style.gridTemplateRows = `repeat(auto-fill, minmax(${this.options.row_height}px, 1fr))`;
+                this.content.style.gridTemplateColumns = `repeat(auto-fill, minmax(${this.options.column_width}px, 1fr))`;
+                this.content.style.gridTemplateRows = `repeat(auto-fill, minmax(${this.options.row_height}px, 1fr))`;
             }
            
             return;
@@ -376,8 +376,8 @@ export class GridGroup<O extends GridGroup.Options=GridGroup.Options, ChildEleme
         let rows = this.options.rows.map(fr => `${fr}fr`).join(" ");
 
 
-        this.slot_element.style.gridTemplateColumns = columns;
-        this.slot_element.style.gridTemplateRows = rows;
+        this.content.style.gridTemplateColumns = columns;
+        this.content.style.gridTemplateRows = rows;
 
         // if (!this.options.enable_drop) return; // TODO just debug, find a better solution (different option parameter?)
 
@@ -433,7 +433,7 @@ export class GridGroup<O extends GridGroup.Options=GridGroup.Options, ChildEleme
                     show: () => ghost_element.style.display = 'block'
                 }, true, true)
 
-                this.slot_element.append(ghost_element)
+                this.content.append(ghost_element)
             }
         }
 

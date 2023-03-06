@@ -145,7 +145,7 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
         this.menu.style.setProperty('transform','translateX(-40px)');
 
         // fixed default width
-        if (!this.options.dynamic_header_size) this.menu.style.width = offset + 'px';
+        // if (!this.options.dynamic_header_size) this.menu.style.width = offset + 'px';
 
         this.header_element = document.createElement("div");
         this.header_element.style.paddingTop = '8px';
@@ -170,11 +170,13 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
         this.header_element.style.flexDirection = 'column';
 
         // assemble
+        const scroll = this.makeScrollContainer(this.header_element);
+        scroll.style.minWidth = "250px";
 
-        this.menu.append(this.makeScrollContainer(this.header_element));
+        this.menu.append(scroll);
 
-        this.content_container.append(this.menu)
-        this.content_container.append(this.slot_element)
+        this.content_container.prepend(this.menu)
+        // this.content_container.append(this.slot_element)
 
         this.addEventListener("click", e=>{
             if (this.options.editable) TabGroup.setLastActiveGroup(this)
@@ -232,12 +234,12 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
         this.style.flexDirection = "row"
 
         this.menu.style.setProperty('display', 'flex');
-        this.menu.style.setProperty('width', 300 + 'px');
         this.menu.style.setProperty('height','calc(100% - 40px)');
         this.menu.style.setProperty('margin-top','20px');
         this.menu.style.setProperty('margin-right','-40px');
         this.menu.style.setProperty('transform','translateX(-40px)');
         this.menu.style.setProperty('position','relative');
+        this.menu.style.setProperty('width','');
 
         this.content_container.style.display = 'flex';
         this.content_container.style.width = "calc(100% - 40px)";

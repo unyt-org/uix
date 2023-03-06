@@ -47,7 +47,7 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
 
     protected elements_by_id: Map<string, ChildElement> = new Map();
 
-    protected slot_element:HTMLSlotElement = document.createElement("slot"); // has to be addded to DOM
+    protected slot_element:HTMLSlotElement = this.content // document.createElement("slot"); // has to be addded to DOM
     
     protected focus_next?: HTMLElement
 

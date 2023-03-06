@@ -3,7 +3,7 @@ import { Datex } from "unyt_core";
 import { Elements } from "../elements/main.ts";
 import { logger, notification_container } from "../utils/global_values.ts";
 import { IS_PWA } from "../utils/constants.ts";
-import { Utils } from "./utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 import { Components } from "../components/main.ts";
 import { Types } from "../utils/global_types.ts";
 import { UIX } from "../uix.ts";
@@ -159,9 +159,9 @@ export namespace Actions {
         is_enforced = override_use;
         const meta_theme = <HTMLElement> document.querySelector('meta[name="theme-color"]');
         if (meta_theme) {
-            Utils.setElementAttribute(meta_theme, 'content', color);
+            HTMLUtils.setElementAttribute(meta_theme, 'content', color);
         }
-        UIX.Utils.setCSSProperty(document.body, 'background-color', color);
+        UIX.HTMLUtils.setCSSProperty(document.body, 'background-color', color);
         return true;
     }
 
@@ -199,8 +199,8 @@ export namespace Actions {
     }
 
     export function elementDialog(element: HTMLElement, cancelable=true, onCancel?:()=>void, size?:DialogSize) {
-        if (!active_alert_container) active_alert_container = Utils.createHTMLElement(`<div class="alert-container ${cancelable?"cancelable":""}"></div>`);
-        const alert = Utils.createHTMLElement(`<div class="basic-alert"></div>`);
+        if (!active_alert_container) active_alert_container = HTMLUtils.createHTMLElement(`<div class="alert-container ${cancelable?"cancelable":""}"></div>`);
+        const alert = HTMLUtils.createHTMLElement(`<div class="basic-alert"></div>`);
         active_alert_container.append(alert);
 
         if (size == DialogSize.DYNAMIC) alert.classList.add("dynamic-alert")
@@ -269,8 +269,8 @@ export namespace Actions {
 
         //body = Utils.escapeHtml(body);
 
-        let close_btn = Utils.createHTMLElement(`<button class='c-button' style='background:var(--bg_content)'><i class='fa fa-times'></i></button>`)
-        Utils.setCSS(close_btn, {
+        let close_btn = HTMLUtils.createHTMLElement(`<button class='c-button' style='background:var(--bg_content)'><i class='fa fa-times'></i></button>`)
+        HTMLUtils.setCSS(close_btn, {
             position: 'absolute',
             top: '-9px',
             left: '-9px',
@@ -286,12 +286,12 @@ export namespace Actions {
             }, 8000);
         }
 
-        let notification = Utils.createHTMLElement(`
+        let notification = HTMLUtils.createHTMLElement(`
         <div class='notification' style='position:relative'>
             <div><h4 style='margin-bottom:5px;margin-top:0px'></h4><div>${body}</div></div>
         </div>`);
-        Utils.setElementText(<HTMLElement>notification.children[0].children[0], title);
-        Utils.setElementText(<HTMLElement>notification.children[0].children[1], body);
+        HTMLUtils.setElementText(<HTMLElement>notification.children[0].children[0], title);
+        HTMLUtils.setElementText(<HTMLElement>notification.children[0].children[1], body);
         notification.append(close_btn)
 
         close_btn.addEventListener("click", ()=>notification.remove())
@@ -320,20 +320,20 @@ export namespace Actions {
     export function dialog(title:Datex.CompatValue<string>, body:Datex.CompatValue<string|HTMLElement>, buttons?:alert_button[], cancelable:boolean=true, onCancel?:()=>void){
         // document.querySelector(".alert-container.cancelable")?.remove();
 
-        if (!active_alert_container) active_alert_container = Utils.createHTMLElement(`<div class="alert-container ${cancelable?"cancelable":""}"></div>`);
+        if (!active_alert_container) active_alert_container = HTMLUtils.createHTMLElement(`<div class="alert-container ${cancelable?"cancelable":""}"></div>`);
 
-        const alert = Utils.createHTMLElement(`<div class="basic-alert text-alert"></div>`)
+        const alert = HTMLUtils.createHTMLElement(`<div class="basic-alert text-alert"></div>`)
         active_alert_container.append(alert);
-        const titleEl = Utils.createHTMLElement(`<div><h3 style="text-align: center">${title??""}</h3></div>`);
-        Utils.setElementText(<HTMLElement>titleEl.children[0], title)
+        const titleEl = HTMLUtils.createHTMLElement(`<div><h3 style="text-align: center">${title??""}</h3></div>`);
+        HTMLUtils.setElementText(<HTMLElement>titleEl.children[0], title)
         alert.append(titleEl)
-        const bodyEl = Utils.createHTMLElement(`<div style="flex:1"></div>`);
-        if (Datex.Value.collapseValue(body) instanceof HTMLElement) Utils.setElementHTML(bodyEl, body)
-        else Utils.setElementText(bodyEl, body)
+        const bodyEl = HTMLUtils.createHTMLElement(`<div style="flex:1"></div>`);
+        if (Datex.Value.collapseValue(body) instanceof HTMLElement) HTMLUtils.setElementHTML(bodyEl, body)
+        else HTMLUtils.setElementText(bodyEl, body)
         alert.append(titleEl)
         alert.append(bodyEl);
 
-        let button_div = Utils.createHTMLElement(`<div style="width: 100%; display: flex;gap:5px"></div>`)
+        let button_div = HTMLUtils.createHTMLElement(`<div style="width: 100%; display: flex;gap:5px"></div>`)
         let i = 0;
         let focus_btn;
         for (let b of buttons??[]) {

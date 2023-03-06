@@ -553,7 +553,7 @@ export abstract class ChartXY<O extends CHART_XY_OPTIONS> extends Chart<O> {
 
     protected addGradient(element:SVGElement, styleAttribute:string, colors:{[percent:number]:string}, rotation = 0){
         const gradient = document.createElementNS(svgns, "linearGradient");
-        gradient.id = UIX.Utils.getUniqueElementId("gradient_");
+        gradient.id = UIX.HTMLUtils.getUniqueElementId("gradient_");
         gradient.setAttribute("gradientTransform", "rotate("+rotation+")");
 
         for (let [percent,color] of Object.entries(colors)) {
@@ -644,15 +644,15 @@ export class Graph extends ChartXY<CHART_XY_OPTIONS> {
         const line_width = this.getLabelFormat(label, 'line_width', 4);
         const line_color = this.getLabelFormat(label, 'color', UIX.Theme.getColorReference('light_blue'));
 
-        const lightLineColor = UIX.Utils.lightenDarkenColor(UIX.Utils.getCSSProperty(line_color, false), 20);
+        const lightLineColor = UIX.Utils.lightenDarkenColor(UIX.HTMLUtils.getCSSProperty(line_color, false), 20);
 
         line.style.strokeWidth = line_width.toString();
 
         
         if (this.options.fill) {
-            if (this.options.gradient) this.addGradient(line, "fill", {0:UIX.Utils.getCSSProperty(line_color, true), 100:'transparent'},90);
+            if (this.options.gradient) this.addGradient(line, "fill", {0:UIX.HTMLUtils.getCSSProperty(line_color, true), 100:'transparent'},90);
             else {
-                line.style.fill = UIX.Utils.getCSSProperty(line_color, true);
+                line.style.fill = UIX.HTMLUtils.getCSSProperty(line_color, true);
                 line.style.fillOpacity = "0.7";
             }
         }

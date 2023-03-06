@@ -218,7 +218,7 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
 
         content = style + content;
 
-        const container = UIX.Utils.createHTMLElement(`<div class='docs-code' id='${id}' style='font-size: 17px;max-width:1200px;user-select:text;padding:20px;padding-top:35px;padding-left:30px;padding-right:30px;width: calc(100% - 60px)'></div>`)
+        const container = UIX.HTMLUtils.createHTMLElement(`<div class='docs-code' id='${id}' style='font-size: 17px;max-width:1200px;user-select:text;padding:20px;padding-top:35px;padding-left:30px;padding-right:30px;width: calc(100% - 60px)'></div>`)
         
         if (!content) {
             content = ""

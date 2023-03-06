@@ -1,5 +1,5 @@
 import { $$ } from "unyt_core";
-import { Utils } from "../base/utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 
 const jsxFragment = 'jsx.Fragment'
 const jsxTextNode = 'jsx.Text'
@@ -9,27 +9,37 @@ type jsxDOMElement = HTMLElement | DocumentFragment | Text
 
 export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): HTMLElement {
 
-	if (typeof type === 'function') {
-		if (type.prototype !== undefined) {
-			return new type(config)
-		}
-		return type(config)
-	}
-
+	let element:HTMLElement;
 	let { children = [], ...props } = config
-
 	if (!(children instanceof Array)) children = [children];
 
-	const element = <HTMLElement> document.createElement(type);
+	let init_children = true;
+	let init_attributes = true;
 
-	for (const [key,val] of Object.entries(props)) {
-		Utils.setElementAttribute(element, key, val);
+	if (typeof type === 'function') {
+		// class extending HTMLElement
+		if (HTMLElement.isPrototypeOf(type)) {
+			element = new type() // uix component
+		}
+		else {
+			element = type(config) // function
+			// TODO:
+			init_children = false;
+			init_attributes = true;
+		}
+	}
+	else element = <HTMLElement> document.createElement(type);
+
+	if (init_attributes) {
+		for (const [key,val] of Object.entries(props)) {
+			HTMLUtils.setElementAttribute(element, key, val);
+		}
 	}
 
-	// console.log("jsx", type, children, props)
-
-	for (const child of children) {
-		Utils.append(element, child);
+	if (init_children) {
+		for (const child of children) {
+			HTMLUtils.append(element, child);
+		}
 	}
 
 	// !important, cannot return directly because of stack problems, store in ptr variable first

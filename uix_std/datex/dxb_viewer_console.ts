@@ -66,7 +66,7 @@ export class DXBViewerConsole extends UIX.Components.Base {
         controls.append(right);
         
         this.body = document.createElement("div");
-        UIX.Utils.setCSS(this.body, {
+        UIX.HTMLUtils.setCSS(this.body, {
             'font-size': '14px',
             'user-select': 'text',
             'padding': '20px',
@@ -89,13 +89,13 @@ export class DXBViewerConsole extends UIX.Components.Base {
     }
 
     private reset(){
-        let empty = UIX.Utils.createHTMLElement(`
+        let empty = UIX.HTMLUtils.createHTMLElement(`
         <div style="user-select:none;width:100%;height:100%;display:flex;align-items:center;flex-direction:column;justify-content:center;color:var(--border_color);font-size:30px">
             ${I`fa-th`}
             <span style='font-size:20px;text-align: center;font-family: "Roboto";margin-top: 10px;'></span>
         </div>`)
 
-        UIX.Utils.setElementText(<HTMLElement>empty.children[1], S('no_dxb'))
+        UIX.HTMLUtils.setElementText(<HTMLElement>empty.children[1], S('no_dxb'))
 
         this.body.innerHTML = "";
         this.body.append(empty);
@@ -230,7 +230,7 @@ export class DXBViewerConsole extends UIX.Components.Base {
         let current_section:dxb_section;
         
         // ROUTING HEADER starts
-        let current_div = UIX.Utils.createHTMLElement(`<div class="dxb-outer-block"><div style='margin-bottom:10px'>ROUTING HEADER</div></div>`)
+        let current_div = UIX.HTMLUtils.createHTMLElement(`<div class="dxb-outer-block"><div style='margin-bottom:10px'>ROUTING HEADER</div></div>`)
         const routing_header = current_div;
         current_div.addEventListener("mousedown", (e)=>{
             this.shadow_root.querySelector(`.dxb-id-${class_id}`).classList.remove("inactive","active");
@@ -248,7 +248,7 @@ export class DXBViewerConsole extends UIX.Components.Base {
             
             // BODY starts
             if (i == body_start) {
-                current_div = UIX.Utils.createHTMLElement(`<div class="dxb-outer-block active" style="margin-top:15px"><div style='margin-bottom:10px'>BODY${header.encrypted?' (encrypted)' :''}</div></div>`)
+                current_div = UIX.HTMLUtils.createHTMLElement(`<div class="dxb-outer-block active" style="margin-top:15px"><div style='margin-bottom:10px'>BODY${header.encrypted?' (encrypted)' :''}</div></div>`)
                 block_div.append(current_div);
                 // on click BODY
                 const body = current_div;
@@ -264,7 +264,7 @@ export class DXBViewerConsole extends UIX.Components.Base {
 
             // SIGNATURE starts
             else if (header.signed && i == signed_header_start) {
-                current_div = UIX.Utils.createHTMLElement(`<div class="dxb-outer-block" style="margin-top:15px"><div style='margin-bottom:10px'>SIGNATURE</div></div>`)
+                current_div = UIX.HTMLUtils.createHTMLElement(`<div class="dxb-outer-block" style="margin-top:15px"><div style='margin-bottom:10px'>SIGNATURE</div></div>`)
                 const header_div = current_div;
                 current_div.addEventListener("mousedown", (e)=>{
                     this.shadow_root.querySelector(`.dxb-id-${class_id}`).classList.remove("inactive","active");
@@ -278,7 +278,7 @@ export class DXBViewerConsole extends UIX.Components.Base {
 
             // HEADER starts
             else if (i == signed_header_start || (header.signed && i == signed_header_start + o)) {
-                current_div = UIX.Utils.createHTMLElement(`<div class="dxb-outer-block" style="margin-top:15px"><div style='margin-bottom:10px'>HEADER</div></div>`)
+                current_div = UIX.HTMLUtils.createHTMLElement(`<div class="dxb-outer-block" style="margin-top:15px"><div style='margin-bottom:10px'>HEADER</div></div>`)
                 const header_div = current_div;
                 current_div.addEventListener("mousedown", (e)=>{
                     this.shadow_root.querySelector(`.dxb-id-${class_id}`).classList.remove("inactive","active");
@@ -310,7 +310,7 @@ export class DXBViewerConsole extends UIX.Components.Base {
             // is currently in a section
             if (current_section) {
                 const index = current_section[0];
-                const block = UIX.Utils.createHTMLElement(`<div tabindex="0" class="dxb-id-${class_id} dxb-index-${index} dxb-section ${left?"left":""} ${right?"right":""}" style="${current_section[2] ?"background-color:"+current_section[2]:""}">${content}</div>`);
+                const block = UIX.HTMLUtils.createHTMLElement(`<div tabindex="0" class="dxb-id-${class_id} dxb-index-${index} dxb-section ${left?"left":""} ${right?"right":""}" style="${current_section[2] ?"background-color:"+current_section[2]:""}">${content}</div>`);
                 const next = current_section[1];
                 const prev = current_section[0]-previous_length;
 

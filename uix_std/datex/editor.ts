@@ -310,7 +310,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
                 for (let i=1;i<error_array.length;i++) {
                     error_string += `<br><span style='white-space:break-spaces;color:#d26476'>${escapeHtml(error_array[i]??'')}</span>`
                 }
-                error = UIX.Utils.createHTMLElement(`<div>${error_string}</div>`);
+                error = UIX.HTMLUtils.createHTMLElement(`<div>${error_string}</div>`);
             }
             else error = await Datex.Runtime.castValue(Datex.Type.std.text, error);
             
@@ -323,7 +323,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
     private code_el:HTMLDivElement;
 
     private noConnection(){
-        let empty = UIX.Utils.createHTMLElement(`<div style="user-select:none;width:100%;height:100%;display:flex;align-items:center;flex-direction:column;justify-content:center;color:var(--border_color);font-size:30px">${I`fas-redo-alt`}<span style='font-size:20px;text-align: center;font-family: "Roboto";margin-top: 10px;'>${S('no_interface')}</span></div>`)
+        let empty = UIX.HTMLUtils.createHTMLElement(`<div style="user-select:none;width:100%;height:100%;display:flex;align-items:center;flex-direction:column;justify-content:center;color:var(--border_color);font-size:30px">${I`fas-redo-alt`}<span style='font-size:20px;text-align: center;font-family: "Roboto";margin-top: 10px;'>${S('no_interface')}</span></div>`)
 
         empty.addEventListener("click", ()=>{
             this.sendMessageUp("RETRY_INTERFACE")
@@ -407,7 +407,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         Datex.IOHandler.setStdOutF(async (data)=>{
                 let new_data = [];
                 for (let d of data) {
-                        new_data.push(await this.format_output(d), UIX.Utils.createHTMLElement('<span style="width:0.6em"></span>'));
+                        new_data.push(await this.format_output(d), UIX.HTMLUtils.createHTMLElement('<span style="width:0.6em"></span>'));
                 }
                 await this.log_buffer.log({data:new_data, meta:{format:"ansi", prepend:"printf >"}});
         }, endpoint)

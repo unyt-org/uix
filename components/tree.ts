@@ -3,7 +3,7 @@ import { Component, NoResources } from "../base/decorators.ts"
 import { Base } from "./base.ts";
 import { Datex, text } from "unyt_core";
 import { Utils } from "../base/utils.ts";
-
+import { HTMLUtils } from "../html/utils.ts";
 import { I, S } from "../uix_short.ts";
 import { Elements } from "../elements/main.ts";
 import { Types } from "../utils/global_types.ts";
@@ -329,7 +329,7 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
         // is directory item
         if (resource.is_directory) {
 
-            let dir_el_creator = Utils.createElementCreator(resource.path, async (path)=>{
+            let dir_el_creator = HTMLUtils.createElementCreator(resource.path, async (path)=>{
                 return await this.handleCreateElementFromResource(Resource.get(path))
             },async (path)=>{
                 return this.handleCreateSeparateElementsFromEntry(Resource.get(path))
@@ -344,11 +344,11 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
             // <span style="margin-right: 5px" class="fa fa-caret-right"></span>
             let collapsed_brace = resource.meta.braces ? `<span class='collapsed-brace'><span style="color:#aaa">…</span><span style='color:${this.text_color_highlight};margin-left:3px'>${resource.meta.braces[1]}</span></span>` : "";
             let start_brace = resource.meta.braces? `<span style='color:${this.text_color_highlight};margin-right:3px;'>${resource.meta.braces[0]}</span>`:"";
-            header = Utils.createHTMLElement(`<div class="dir-header" style="color:${Utils.getResourceColor(resource)}"><div ${this.options.enable_entry_drag?'draggable="true"':''} tabindex="0" style="display:flex;align-items:baseline;${this.options.full_entry_width?"width:100%":""}">${Utils.getResourceIcon(resource)}<span class="entry-name" style="${this.options.full_entry_width?"width:100%":""}" spellcheck=false>${(el_name??"") + start_brace}${collapsed_brace}</span></div></div>`);
-            outer_el = Utils.createHTMLElement(`<div class="tree-entry dir ${expanded ? "":"collapsed"} ${typeof el_name == "string" && el_name?.startsWith(".") ? "hidden":""} ${!await resource.children || resource.meta.linked ? "empty":""}"></div>`);
+            header = HTMLUtils.createHTMLElement(`<div class="dir-header" style="color:${Utils.getResourceColor(resource)}"><div ${this.options.enable_entry_drag?'draggable="true"':''} tabindex="0" style="display:flex;align-items:baseline;${this.options.full_entry_width?"width:100%":""}">${Utils.getResourceIcon(resource)}<span class="entry-name" style="${this.options.full_entry_width?"width:100%":""}" spellcheck=false>${(el_name??"") + start_brace}${collapsed_brace}</span></div></div>`);
+            outer_el = HTMLUtils.createHTMLElement(`<div class="tree-entry dir ${expanded ? "":"collapsed"} ${typeof el_name == "string" && el_name?.startsWith(".") ? "hidden":""} ${!await resource.children || resource.meta.linked ? "empty":""}"></div>`);
 
             if (await resource.children && !resource.meta.linked) {
-                let header_caret = Utils.createHTMLElement(`<div class="dir-caret">${I`fa-caret-down`}</div>`)
+                let header_caret = HTMLUtils.createHTMLElement(`<div class="dir-caret">${I`fa-caret-down`}</div>`)
                 header.prepend(header_caret)
             }
             
@@ -367,22 +367,22 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
             if (!(this.options.display_root && is_first)) {
                 // open dir normally, collapse/expand only via caret
                 if (resource.meta.open) {
-                    if (this.options.enable_entry_open) Utils.addDelegatedEventListener(header, "click", "div:not(.dir-caret, .additional)", ()=>this.onEntryClick(resource))
-                    Utils.addDelegatedEventListener(header, "click", ".dir-caret", ()=>this.toggleCollapse(resource))
+                    if (this.options.enable_entry_open) HTMLUtils.addDelegatedEventListener(header, "click", "div:not(.dir-caret, .additional)", ()=>this.onEntryClick(resource))
+                    HTMLUtils.addDelegatedEventListener(header, "click", ".dir-caret", ()=>this.toggleCollapse(resource))
                 }
                 // open/collapse when clicking on entry, or on caret
                 else {
-					Utils.addDelegatedEventListener(header, "click", "div:not(.additional)", () => this.toggleCollapse(resource))
+					HTMLUtils.addDelegatedEventListener(header, "click", "div:not(.additional)", () => this.toggleCollapse(resource))
                 }
             }
 
             // Enter key press => toggle folder collapse
             let enter_free = true;
-            Utils.addDelegatedEventListener(header, "keydown", "div", (e:KeyboardEvent)=>{
+            HTMLUtils.addDelegatedEventListener(header, "keydown", "div", (e:KeyboardEvent)=>{
                 if (enter_free && e.key=="Enter") this.toggleCollapse(resource)
                 enter_free = false;
             })
-            Utils.addEventListener(header, "keyup", (e:KeyboardEvent)=>{
+            HTMLUtils.addEventListener(header, "keyup", (e:KeyboardEvent)=>{
                 if (e.key=="Enter") enter_free = true;
             });
 
@@ -432,7 +432,7 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
             Handlers.contextMenu(header, ...this.createEntryContextMenu(resource));
 
 
-            let braces_element = (resource.meta.braces) ? Utils.createHTMLElement(`<div class="end-brace">${resource.meta.braces[1]}</div>`) : null;
+            let braces_element = (resource.meta.braces) ? HTMLUtils.createHTMLElement(`<div class="end-brace">${resource.meta.braces[1]}</div>`) : null;
 
             let expand_immediately = is_first || expanded;
 
@@ -468,7 +468,7 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
         // file item
         else {
 
-            let file_el_creator = Utils.createElementCreator(resource.path, async (path)=>{
+            let file_el_creator = HTMLUtils.createElementCreator(resource.path, async (path)=>{
                 return await this.handleCreateElementFromResource(Resource.get(path))
             })
 
@@ -479,11 +479,11 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
             }
 
             //UIX.formatFileName(el_name)
-            header = Utils.createHTMLElement(`<div class="tree-entry file ${typeof el_name == "string" && el_name?.startsWith(".") ? "hidden":""}" style="color:${Utils.getResourceColor(resource)}"><div ${this.options.enable_entry_drag?'draggable="true"':''} tabindex="0" style="display:flex;align-items:baseline">${Utils.getResourceIcon(resource)}<span class="entry-name" style="${this.options.full_entry_width?"width:100%":""}" spellcheck=false>${el_name??""}</span></div></div>`)
+            header = HTMLUtils.createHTMLElement(`<div class="tree-entry file ${typeof el_name == "string" && el_name?.startsWith(".") ? "hidden":""}" style="color:${Utils.getResourceColor(resource)}"><div ${this.options.enable_entry_drag?'draggable="true"':''} tabindex="0" style="display:flex;align-items:baseline">${Utils.getResourceIcon(resource)}<span class="entry-name" style="${this.options.full_entry_width?"width:100%":""}" spellcheck=false>${el_name??""}</span></div></div>`)
 
             if (this.options.enable_entry_open) {
-				Utils.addDelegatedEventListener(header, "click", "div", ()=>this.onEntryClick(resource))
-				Utils.addDelegatedEventListener(header, "keypress", "div", async (e:KeyboardEvent) => {
+				HTMLUtils.addDelegatedEventListener(header, "click", "div", ()=>this.onEntryClick(resource))
+				HTMLUtils.addDelegatedEventListener(header, "keypress", "div", async (e:KeyboardEvent) => {
                     if (e.key=="Enter") {
                         let tab_group = this.collector ?? TabGroup.getLastActiveGroup();
                         if (tab_group) tab_group.addChild(await this.handleCreateElementFromResource(resource), {}, true);
@@ -492,7 +492,7 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
             }
 
             if (this.options.enable_entry_edit) {
-                Utils.addDelegatedEventListener(header, "dblclick", "div", (e)=>{
+                HTMLUtils.addDelegatedEventListener(header, "dblclick", "div", (e)=>{
                     this.handleEntryEdit(resource)
                     e.preventDefault();
                     e.stopPropagation();
@@ -673,12 +673,12 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
 
         let end_edit = ()=>{
             edit_field.removeAttribute("contenteditable")
-			Utils.removeEventListener(edit_field, "mousedown click", click_listener)
+			HTMLUtils.removeEventListener(edit_field, "mousedown click", click_listener)
             edit_field.removeEventListener("keydown", keydown_listener)
             edit_field.removeEventListener('grey', blur_listener);
         }
 
-		Utils.addEventListener(edit_field, "mousedown click", click_listener)
+		HTMLUtils.addEventListener(edit_field, "mousedown click", click_listener)
         edit_field.addEventListener("keydown", keydown_listener)
         edit_field.addEventListener('grey', blur_listener);
 

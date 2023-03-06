@@ -6,6 +6,7 @@ import { Types } from "../utils/global_types.ts"
 import { global_states, logger, root_container, unsaved_components } from "../utils/global_values.ts"
 import { addStyleSheet as addStyleSheetLink, PlaceholderCSSStyleDeclaration } from "../utils/css_style_compat.ts"
 import { assignDefaultPrototype } from "../utils/utils.ts"
+import { HTMLUtils } from "../html/utils.ts"
 import { Utils } from "../base/utils.ts"
 import { Actions } from "../base/actions.ts"
 import { Handlers } from "../base/handlers.ts"
@@ -140,7 +141,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected FORCE_SCROLL_TO_BOTTOM = false;
     protected CONTENT_PADDING = true;
 
-    protected shadow_root:ShadowRoot // outer element
+    get shadow_root() {
+        return this.shadowRoot ?? this.attachShadow({mode: 'open'})
+    }
+
     content_container:HTMLElement; // inner container for element specific and custom content
     content:HTMLElement; // all content goes here
     get html_element() {return this.content} // legacy backwards compatibility TODO remove at some point
@@ -217,7 +221,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 					},
 					set: (el) => {
                         // encapsulate in HTMLElement
-						if (!(el instanceof HTMLElement)) el = Utils.createHTMLElement('<span></span>', el);
+						if (!(el instanceof HTMLElement)) el = HTMLUtils.createHTMLElement('<span></span>', el);
 
                         // add to content if it exists
                         if (this.content) {
@@ -293,7 +297,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.constraints_props = <Datex.ObjectWithDatexValues<Types.component_constraints>> props(this.constraints); 
 
         // create dom (shadow_root)
-        this.shadow_root = this.shadowRoot ?? this.attachShadow({mode: 'open'});
+        // this.shadow_root = this.shadowRoot ?? this.attachShadow({mode: 'open'});
         
         // Component style sheets
         const loaders = []
@@ -332,12 +336,12 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.observeOptions(['padding', 'padding_left', 'padding_right', 'padding_right', 'padding_bottom'], this.updatePadding)
         this.observeConstraints(['margin', 'margin_left', 'margin_right', 'margin_right', 'margin_bottom'], this.updateMargin)
 
-        Utils.setCSSProperty(this.content_container, 'background', this.options.background ? this.options.$$.background : this.options.$$.bg_color)
-        Utils.setCSSProperty(this.content_container, 'color', this.options.$$.text_color)
+        HTMLUtils.setCSSProperty(this.content_container, 'background', this.options.background ? this.options.$$.background : this.options.$$.bg_color)
+        HTMLUtils.setCSSProperty(this.content_container, 'color', this.options.$$.text_color)
 
-        Utils.setCSSProperty(this.content_container, '--current_text_color', this.options.$$.text_color)
-        Utils.setCSSProperty(this.content_container, '--current_text_color_highlight', this.options.$$.text_color_highlight)
-        Utils.setCSSProperty(this.content_container, '--current_text_color_light', this.options.$$.text_color_light)
+        HTMLUtils.setCSSProperty(this.content_container, '--current_text_color', this.options.$$.text_color)
+        HTMLUtils.setCSSProperty(this.content_container, '--current_text_color_highlight', this.options.$$.text_color_highlight)
+        HTMLUtils.setCSSProperty(this.content_container, '--current_text_color_light', this.options.$$.text_color_light)
 
 
         // listeners & observers
@@ -423,7 +427,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         // global base style
         new URL('../style/elements.css', import.meta.url).toString(),
         new URL('../style/base.css', import.meta.url).toString(),
-        new URL('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css').toString(),
+        new URL('../style/fontawesome.css', import.meta.url).toString(),
 
         // components style
         new URL('./base.css', import.meta.url).toString()
@@ -1641,13 +1645,13 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         // has border color TODO also update
         if (this.options.border_color) {
-            this.current_border_color = Utils.getCSSProperty(this.options.border_color);
+            this.current_border_color = HTMLUtils.getCSSProperty(this.options.border_color);
         }
         // calculate color from background (dynamic)
-        else if (this.options.bg_color&&Utils.getCSSProperty(this.options.bg_color, false)!="transparent") {
+        else if (this.options.bg_color&&HTMLUtils.getCSSProperty(this.options.bg_color, false)!="transparent") {
             this.current_border_color = Theme.mode.val == "dark" ? 
-                    Utils.lightenDarkenColor(<`#${string}`>Utils.getCSSProperty(this.options.bg_color, false), 35) :  
-                    Utils.lightenDarkenColor(<`#${string}`>Utils.getCSSProperty(this.options.bg_color, false), -30);
+                    Utils.lightenDarkenColor(<`#${string}`>HTMLUtils.getCSSProperty(this.options.bg_color, false), 35) :  
+                    Utils.lightenDarkenColor(<`#${string}`>HTMLUtils.getCSSProperty(this.options.bg_color, false), -30);
         }
         else this.current_border_color = 'var(--border)'   
     }
@@ -1672,7 +1676,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     protected floatingMenu(el:HTMLElement|string) {
         const menu = document.createElement("div");
-		Utils.setCSS(menu, {
+		HTMLUtils.setCSS(menu, {
             position: 'absolute',
             right: '15px',
             top: '15px',
@@ -1753,7 +1757,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             Handlers.handleDrop(this, {drop:(v)=>this.onDrop(v)}, this, false);
         }
         else {
-            Utils.addEventListener(this, "drop dragenter dragover dragleave", e=>{e.preventDefault();e.stopPropagation();return false})
+            HTMLUtils.addEventListener(this, "drop dragenter dragover dragleave", e=>{e.preventDefault();e.stopPropagation();return false})
         }
     }
 
@@ -1819,7 +1823,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (this.edit_areas[type]) return;
 
         // create edit area
-        const edit_area = Utils.createHTMLElement(`<div class="edit-overlay ${type}"></div>`);
+        const edit_area = HTMLUtils.createHTMLElement(`<div class="edit-overlay ${type}"></div>`);
         this.edit_areas[type] = edit_area;
         this.shadow_root.append(edit_area);
 
@@ -1943,9 +1947,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     public get top(): number {return this.offsetTop}
 
     // get colors
-    public get text_color(): string {return Utils.getCSSProperty(this.options.text_color) || 'var(--text)'}
-    public get text_color_light(): string {return Utils.getCSSProperty(this.options.text_color_light) || 'var(--text_light)'}
-    public get text_color_highlight(): string {return Utils.getCSSProperty(this.options.text_color_highlight) || 'var(--text_highlight)'}
+    public get text_color(): string {return HTMLUtils.getCSSProperty(this.options.text_color) || 'var(--text)'}
+    public get text_color_light(): string {return HTMLUtils.getCSSProperty(this.options.text_color_light) || 'var(--text_light)'}
+    public get text_color_highlight(): string {return HTMLUtils.getCSSProperty(this.options.text_color_highlight) || 'var(--text_highlight)'}
    
 
     // paddings
@@ -1984,7 +1988,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     public get margin_bottom() {return ((this.constraints.margin_bottom != null)  ? this.constraints.margin_bottom  : this.constraints.margin) || 0}
 
     // border
-    public get border_color() {return Utils.getCSSProperty(this.options.border_color)}
+    public get border_color() {return HTMLUtils.getCSSProperty(this.options.border_color)}
     public set border_color(color:string) {
         this.options.border_color = color;
         this.updateBorders();
@@ -2009,7 +2013,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
     public get bg_color(){
-        return Utils.getCSSProperty(this.options.bg_color, false);
+        return HTMLUtils.getCSSProperty(this.options.bg_color, false);
     }
 
     // grid positioning

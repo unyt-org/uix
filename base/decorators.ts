@@ -6,7 +6,7 @@ import { getCloneKeys } from "../utils/utils.ts";
 import { Components} from "../components/main.ts";
 import { Elements} from "../elements/main.ts";
 import { Files } from "./files.ts";
-
+import "../html/datex_binding.ts";
 
 //export const customElements = <typeof globalThis.customElements> globalThis.customElements ? globalThis.customElements : {define:()=>null};
 
@@ -55,23 +55,38 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 
 		const name = String(component_class.name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // convert from CamelCase to snake-case
 
-		const datex_type = Datex.Type.get("uix", name.replaceAll("-",""));
-		const options_datex_type = Datex.Type.get("uixopt", name.replaceAll("-",""));
+		const datex_type = Datex.Type.get("std", "uix", name);
+		const options_datex_type = Datex.Type.get("uixopt", name);
 
 		// create template class for component
 		const new_class = <Types.ComponentSubClass>Datex.createTemplateClass(component_class, datex_type, true);
 
-		// add custom serialization
-		//updateJSInterfaceConfiguration(datex_type, "serialize", (value:Components.Base)=>value.stored_datex_state);
+		const html_interface = Datex.Type.get('html').interface_config!;
+		datex_type.interface_config.cast_no_tuple = html_interface.cast_no_tuple; // handle casts from object
+		datex_type.interface_config.serialize = (value) => {
+
+			// serialize html part (style, attr, content)
+			const html_serialized = <Record<string,unknown>> html_interface.serialize!(value);
+
+			// add additional properties (same as in Datex.Runtime.serializeValue)
+            const pointer = Datex.Pointer.getByValue(value)
+            for (const key of datex_type.visible_children){
+				if (!html_serialized.p) html_serialized.p = {};
+                html_serialized.p[key] = pointer?.shadow_object ? pointer.shadow_object[key]/*keep references*/ : value[key];
+            }
+			// console.log("seri component",value, html_serialized);
+
+			return html_serialized;
+		}
 
 		// component default options
 
 		new_class.DEFAULT_OPTIONS = Object.create(Object.getPrototypeOf(new_class).DEFAULT_OPTIONS ?? Components.Base.DEFAULT_OPTIONS);
-		if (params[0]) {
-			// ! title is overriden, even if a parent class has specified another default title
-			if (!(<Components.Base.Options>params[0]).title)(<Components.Base.Options>params[0]).title = component_class.name;
-			Object.assign(new_class.DEFAULT_OPTIONS, params[0])
-		}
+		if (!params[0]) params[0] = {};
+		// set default options + title
+		// ! title is overriden, even if a parent class has specified another default title
+		if (!(<Components.Base.Options>params[0]).title)(<Components.Base.Options>params[0]).title = component_class.name;
+		Object.assign(new_class.DEFAULT_OPTIONS, params[0])
 
 		// find non-primitive values in default options (must be copied)
 		new_class.CLONE_OPTION_KEYS = getCloneKeys(new_class.DEFAULT_OPTIONS);
@@ -96,7 +111,7 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 		})
 
 		// define custom DOM element after everything is initialized
-		window.customElements.define("uix-"+name, component_class)
+		window.customElements.define("uix-" + name, component_class)
 		
 		return new_class //element_class
 	}

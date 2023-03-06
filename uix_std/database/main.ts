@@ -418,9 +418,9 @@ export class DBQueryView<O extends DB_QUERY_VIEW_OPTIONS = DB_QUERY_VIEW_OPTIONS
         this.content.style.flexDirection = 'row';
         this.content.style.alignItems = 'center';
 
-        let where = UIX.Utils.setCSS(document.createElement("div"), {color:'var(--text_color_light)', 'font-size': '18px', 'margin-right': '8px'})
+        let where = UIX.HTMLUtils.setCSS(document.createElement("div"), {color:'var(--text_color_light)', 'font-size': '18px', 'margin-right': '8px'})
         where.innerText = "WHERE";
-        this.where_edit = UIX.Utils.setCSS(document.createElement("div"), {'padding-top': '2px', height: '24px', width:'300px', flex:1});
+        this.where_edit = UIX.HTMLUtils.setCSS(document.createElement("div"), {'padding-top': '2px', height: '24px', width:'300px', flex:1});
         this.where_edit.classList.add('single-line-editor')
 
         let update_btn = new UIX.Elements.Button({content:I`fa-sync-alt`, onClick:()=>this.updateQuery()})
@@ -767,8 +767,8 @@ export class DBTableView<O extends DB_TABLE_VIEW_OPTIONS = DB_TABLE_VIEW_OPTIONS
         try {
             console.log("exporting table as xls");
             let body = document.createElement("div");
-            UIX.Utils.setCSS(body, {width:'100%',display:'flex', height:'100px', 'justify-content':'center', 'align-items':'center'})
-            body.append(UIX.Utils.createHTMLElement('<div class="loading-circle"></div>'));
+            UIX.HTMLUtils.setCSS(body, {width:'100%',display:'flex', height:'100px', 'justify-content':'center', 'align-items':'center'})
+            body.append(UIX.HTMLUtils.createHTMLElement('<div class="loading-circle"></div>'));
 
             d = UIX.Actions.dialog(S('exporting'), body, null, false);
 
@@ -1033,8 +1033,8 @@ export class DBTableView<O extends DB_TABLE_VIEW_OPTIONS = DB_TABLE_VIEW_OPTIONS
             this.column_info[column.COLUMN_NAME] = column;
             if (column.COLUMN_KEY=="PRI") primary_keys.push(column.COLUMN_NAME);
             if (column.EXTRA=="INVISIBLE") invisible_columns.push(column.COLUMN_NAME);
-            let sort_btn = UIX.Utils.createHTMLElement(`<span style="margin-left:4px;">${I`fa-sort`}</span>`);
-            let th = UIX.Utils.createHTMLElement(`<th style="${column.COLUMN_KEY=="PRI"?"color:var(--light_blue);":(column.EXTRA=="INVISIBLE"?"color:var(--text_color_light);":"")}cursor: pointer"><div>${column.COLUMN_KEY=="PRI"? `<span style="margin-right: 6px;">${I`fa-key`}</span>`:""}<span style="flex:1">${column.COLUMN_NAME}</span></div></th>`);
+            let sort_btn = UIX.HTMLUtils.createHTMLElement(`<span style="margin-left:4px;">${I`fa-sort`}</span>`);
+            let th = UIX.HTMLUtils.createHTMLElement(`<th style="${column.COLUMN_KEY=="PRI"?"color:var(--light_blue);":(column.EXTRA=="INVISIBLE"?"color:var(--text_color_light);":"")}cursor: pointer"><div>${column.COLUMN_KEY=="PRI"? `<span style="margin-right: 6px;">${I`fa-key`}</span>`:""}<span style="flex:1">${column.COLUMN_NAME}</span></div></th>`);
             th.querySelector("div").append(sort_btn)
             header_row.append(th)
 
@@ -1065,7 +1065,7 @@ export class DBTableView<O extends DB_TABLE_VIEW_OPTIONS = DB_TABLE_VIEW_OPTIONS
 
         this.createRow(add_row, primary_keys, invisible_columns, this.column_info, true);
 
-        UIX.Utils.addDelegatedEventListener(this.table, 'keydown paste', 'td', (e:KeyboardEvent) => {
+        UIX.HTMLUtils.addDelegatedEventListener(this.table, 'keydown paste', 'td', (e:KeyboardEvent) => {
             const el = <HTMLElement> e.target;
             var cntMaxLength = parseInt(el.getAttribute('data-maxlength'));
             if (el.innerText.length === cntMaxLength && e.code != "Backspace") {
@@ -1073,13 +1073,13 @@ export class DBTableView<O extends DB_TABLE_VIEW_OPTIONS = DB_TABLE_VIEW_OPTIONS
             }
         });
 
-        UIX.Utils.addDelegatedEventListener(this.table, "keypress", "td.number, td.boolean", (e:KeyboardEvent) => {
+        UIX.HTMLUtils.addDelegatedEventListener(this.table, "keypress", "td.number, td.boolean", (e:KeyboardEvent) => {
             let x = e.key;
             // @ts-ignore
             if (x==" " || (x!="-" && isNaN(String.fromCharCode(e.which)))) e.preventDefault();
         });
 
-        UIX.Utils.addDelegatedEventListener(this.table, "keypress", "td.decimal", (e:KeyboardEvent) => {
+        UIX.HTMLUtils.addDelegatedEventListener(this.table, "keypress", "td.decimal", (e:KeyboardEvent) => {
             let x = e.code;
             // @ts-ignore
             if ((e.target.innerText.includes(".") && x==46) || x==32 || (isNaN(String.fromCharCode(e.which)) && x!=46)) e.preventDefault();
@@ -1190,7 +1190,7 @@ export class DBTableView<O extends DB_TABLE_VIEW_OPTIONS = DB_TABLE_VIEW_OPTIONS
             }
 
             entry = entry??"";
-            let td = UIX.Utils.createHTMLElement(`<td spellcheck="false" ${(is_date_time||is_date) ? '' : 'contenteditable="true"'}  data-maxlength="${max_length}"  class="${special_style}">${entry}</td>`);
+            let td = UIX.HTMLUtils.createHTMLElement(`<td spellcheck="false" ${(is_date_time||is_date) ? '' : 'contenteditable="true"'}  data-maxlength="${max_length}"  class="${special_style}">${entry}</td>`);
 
             if (is_insert_row) {
                 td.classList.add("new-row")

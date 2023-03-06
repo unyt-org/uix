@@ -1,6 +1,7 @@
 // html - experimental
-// export * from "./html/datex_binding.ts"
+export * from "./html/datex_binding.ts"
 export * from "./html/rendering.ts"
+export * from "./html/utils.ts"
 
 // init
 export * from "./base/init.ts"

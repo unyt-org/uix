@@ -1,6 +1,6 @@
 import { Compiler } from "unyt_core/compiler/compiler.ts";
 import { Logger } from "unyt_core/utils/logger.ts";
-import { Utils } from "./utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 
 
 const logger = new Logger("UnytPen")
@@ -95,7 +95,7 @@ export class UnytPenPad {
 
     getHTMLElement(){
 
-        const element = Utils.createHTMLElement("<div class='unyt-pen-pad'></div>");
+        const element = HTMLUtils.createHTMLElement("<div class='unyt-pen-pad'></div>");
         this.dom_elements.add(element);
 
         if (!this.transmitting) this.startTransmit();

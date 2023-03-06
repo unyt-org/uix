@@ -9,7 +9,7 @@ import { UIX } from "uix";
 export class InterfaceTabGroup extends UIX.Components.TabGroup {
 
     showDialog(body_text:string, on_add:(name:string)=>void){
-        const body = UIX.Utils.createHTMLElement('<div style="display: flex;flex-direction: column;text-align: center;"></div>')
+        const body = UIX.HTMLUtils.createHTMLElement('<div style="display: flex;flex-direction: column;text-align: center;"></div>')
         const target = text("@");
         const input = new UIX.Elements.TextInput(target);
         input.style.textAlign = "center";

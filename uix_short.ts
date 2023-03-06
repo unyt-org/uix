@@ -1,5 +1,5 @@
 import { Datex, transform } from "unyt_core";
-import { content, Res, Theme, Utils } from "./uix_all.ts";
+import { content, Res, Theme, HTMLUtils } from "./uix_all.ts";
 
 export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
 
@@ -85,7 +85,7 @@ export function I (_name:TemplateStringsArray|string, color?:string){
 }
 
 export function IEL (_name:TemplateStringsArray|string, color?:string):HTMLSpanElement{
-	return Utils.createHTMLElement(I(_name, color));
+	return HTMLUtils.createHTMLElement(I(_name, color));
 }
 
 // get Theme Color
@@ -104,7 +104,7 @@ const find_el_id_regex = /<[^> ]* id=["']?([^ "'\n>]+)["']?[^>]*$/;
 export function HTML (name:TemplateStringsArray|string, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]) {
 	// just HTML string and children
 	if (typeof name == "string") {
-		return Utils.createHTMLElement(name, content);
+		return HTMLUtils.createHTMLElement(name, content);
 	}
 	// template
 	else {
@@ -166,7 +166,7 @@ export function HTML (name:TemplateStringsArray|string, ...content:(HTMLElement|
 
 		// console.log(html, style_injections, attribute_injections)
 
-		const el = Utils.createHTMLElement(html);
+		const el = HTMLUtils.createHTMLElement(html);
 
 		const findElement = (id:string)=>{
 			// find element
@@ -187,7 +187,7 @@ export function HTML (name:TemplateStringsArray|string, ...content:(HTMLElement|
 				const [prop, id] = style_injections[c];
 				// find element
 				const parent = findElement(id);
-				Utils.setCSSProperty(parent, prop, child)
+				HTMLUtils.setCSSProperty(parent, prop, child)
 			}
 			// inject attribute
 			else if (c in attribute_injections) {
@@ -198,7 +198,7 @@ export function HTML (name:TemplateStringsArray|string, ...content:(HTMLElement|
 				if (attr.startsWith("on") && child instanceof Function) {
 					parent.addEventListener(<keyof HTMLElementEventMap> attr.replace("on",""), <any>child);
 				}
-				else Utils.setElementAttribute(parent, attr, child)
+				else HTMLUtils.setElementAttribute(parent, attr, child)
 				// console.log("attr parent",parent,attr,child)
 			}
 
@@ -212,7 +212,7 @@ export function HTML (name:TemplateStringsArray|string, ...content:(HTMLElement|
 					// tmp.style.all = "inherit"; //TODO keep?
 					tmp.append(...child);
 				}
-				else Utils.setElementText(tmp, child);
+				else HTMLUtils.setElementText(tmp, child);
 			}
 
 			c++;

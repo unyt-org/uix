@@ -44,7 +44,7 @@ interface ELEMENT_WITH_MENU_OPTIONS extends UIX.Components.Base.Options {
 //             const update_entry = ()=>list.set(key, (checked?'- [x] ':'- [ ] ') + content);
 
 //             // format content + listen for content changes
-//             const content_div = UIX.Utils.createHTMLElement(`<div contenteditable spellcheck='false' style='cursor:text'>${UIX.Utils.escapeHtml(content).replace(/\n/g, '<br>')}</div>`);
+//             const content_div = UIX.HTMLUtils.createHTMLElement(`<div contenteditable spellcheck='false' style='cursor:text'>${UIX.Utils.escapeHtml(content).replace(/\n/g, '<br>')}</div>`);
 //             content_div.addEventListener("input", ()=>{
 //                 content = content_div.innerHTML;
 //                 update_entry();
@@ -84,27 +84,27 @@ export class HeaderMenu extends UIX.Elements.Header {
         // create menu elements
         const elements:UIX.Elements.Header.ElementData[] = [];
         if (logo) {
-            const logo_el = UIX.Utils.createHTMLElement(`<img style="height:25px;margin-right:10px;margin-left: 25px;"/>`)
-            UIX.Utils.setElementAttribute(logo_el, "src", logo)
+            const logo_el = UIX.HTMLUtils.createHTMLElement(`<img style="height:25px;margin-right:10px;margin-left: 25px;"/>`)
+            UIX.HTMLUtils.setElementAttribute(logo_el, "src", logo)
             elements.push({element:logo_el, show_collapsed:false})
             
-            // let logo_el_collapsed = UIX.Utils.createHTMLElement(`<img style="height:25px;margin-right:10px;margin-left: 5px;"/>`)
+            // let logo_el_collapsed = UIX.HTMLUtils.createHTMLElement(`<img style="height:25px;margin-right:10px;margin-left: 5px;"/>`)
             // UIX.Utils.setElementAttribute(logo_el_collapsed, "src", logo)
             // elements.push({element:logo_el_collapsed, show_collapsed:true, show_expanded:false, align:'end'})
         }
         
         if (title) {
-            const title_el = UIX.Utils.createHTMLElement(`<h1 style='margin:15px;margin-right:20px;margin-left:0px;font-size:20px;white-space:nowrap'></h1>`);
+            const title_el = UIX.HTMLUtils.createHTMLElement(`<h1 style='margin:15px;margin-right:20px;margin-left:0px;font-size:20px;white-space:nowrap'></h1>`);
             if (!logo) title_el.style.marginLeft = "25px"; // add margin
-            UIX.Utils.setElementHTML(title_el, title)
+            UIX.HTMLUtils.setElementHTML(title_el, title)
             elements.push({element:title_el, show_collapsed:false})
         } 
         
-        const menu = UIX.Utils.createHTMLElement(`<div></div>`);
+        const menu = UIX.HTMLUtils.createHTMLElement(`<div></div>`);
         UIX.Actions.addMenuBarEntriesUpdateListener((entries)=>{
             menu.innerHTML = "";
             for (const [name, context_menu] of Object.entries(entries||{})) {
-                const entry = UIX.Utils.createHTMLElement(`<div class="tab-title small" style="margin-right:6px"><div style="position:relative; display: flex; align-items: center;">${name}</div></div>`);
+                const entry = UIX.HTMLUtils.createHTMLElement(`<div class="tab-title small" style="margin-right:6px"><div style="position:relative; display: flex; align-items: center;">${name}</div></div>`);
                 UIX.Handlers.contextMenu(entry, context_menu, undefined, undefined, ["mousedown"])
                 menu.append(entry)
                 
@@ -192,8 +192,8 @@ export class UserIconView<O extends LOGIN_VIEW_OPTIONS = LOGIN_VIEW_OPTIONS> ext
             container.append(endpoint);
         }
        
-        if (this.options.display == 'small') container.append(UIX.Utils.createHTMLElement("<div style='display:flex;justify-content:center;align-items:center;cursor:pointer;height:40px;aspect-ratio:1;border-radius:50%;text-align:center;line-height:42px;font-size:1.2em;line-height:2em;color:var(--text_highlight)'>"+I('fas-fingerprint')+"</div>"));
-        else container.append(UIX.Utils.createHTMLElement("<div style='margin-left:5px;display:flex;justify-content:center;align-items:center;cursor:pointer;height:40px;aspect-ratio:1;border-radius:50%;background:#eeeeee36;text-align:center;line-height:42px;font-size:1.4em;line-height:2em;color:var(--text_highlight)'>"+I('fas-fingerprint')+"</div>"));
+        if (this.options.display == 'small') container.append(UIX.HTMLUtils.createHTMLElement("<div style='display:flex;justify-content:center;align-items:center;cursor:pointer;height:40px;aspect-ratio:1;border-radius:50%;text-align:center;line-height:42px;font-size:1.2em;line-height:2em;color:var(--text_highlight)'>"+I('fas-fingerprint')+"</div>"));
+        else container.append(UIX.HTMLUtils.createHTMLElement("<div style='margin-left:5px;display:flex;justify-content:center;align-items:center;cursor:pointer;height:40px;aspect-ratio:1;border-radius:50%;background:#eeeeee36;text-align:center;line-height:42px;font-size:1.4em;line-height:2em;color:var(--text_highlight)'>"+I('fas-fingerprint')+"</div>"));
         
         this.content.append(container);
 
@@ -222,7 +222,7 @@ export class AuthView<O extends AUTH_VIEW_OPTIONS = AUTH_VIEW_OPTIONS> extends U
     private main!:HTMLDivElement;
 
     override onCreate(){
-        this.content.append(UIX.Utils.createHTMLElement('<div style="font-size:25px;margin-bottom:20px;display:flex;justify-content:center;align-items:center">'+I('fas-fingerprint')+'<span style="margin-left:5px">unyt<span style="color:var(--green)">auth</span></span></div>'))
+        this.content.append(UIX.HTMLUtils.createHTMLElement('<div style="font-size:25px;margin-bottom:20px;display:flex;justify-content:center;align-items:center">'+I('fas-fingerprint')+'<span style="margin-left:5px">unyt<span style="color:var(--green)">auth</span></span></div>'))
         this.main = document.createElement("div");
         this.main.style.display = "flex";
         this.main.style.flexDirection = "column";
@@ -320,7 +320,7 @@ export class LoginView<O extends LOGIN_VIEW_OPTIONS = LOGIN_VIEW_OPTIONS> extend
     main!:HTMLDivElement
 
     override onCreate(){
-        this.content.append(UIX.Utils.createHTMLElement('<div style="font-size:25px;margin-bottom:20px;display:flex;justify-content:center;align-items:center">'+I('fas-fingerprint')+'<span style="margin-left:5px">unyt<span style="color:var(--green)">auth</span></span></div>'))
+        this.content.append(UIX.HTMLUtils.createHTMLElement('<div style="font-size:25px;margin-bottom:20px;display:flex;justify-content:center;align-items:center">'+I('fas-fingerprint')+'<span style="margin-left:5px">unyt<span style="color:var(--green)">auth</span></span></div>'))
         this.main = document.createElement("div");
         this.main.style.display = "flex";
         this.main.style.flexDirection = "column";

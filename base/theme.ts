@@ -1,6 +1,7 @@
 import { Datex, $$,  f, static_pointer } from "unyt_core"
-import { logger } from "../utils/global_values.ts"
 import { IS_HEADLESS } from "../utils/constants.ts"
+
+const logger = new Datex.Logger("uix theme");
 
 interface ThemeProperties {
 	__name?:string,

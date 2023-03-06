@@ -240,7 +240,7 @@ export namespace State {
     }
 
     export function exportState(uix_component = current_state){
-        return Datex.Decompiler.decompile(Datex.Compiler.encodeValue(uix_component, undefined,true,true), false, false, false, false)
+        return Datex.Runtime.valueToDatexStringExperimental(uix_component, false, false, true, true, false);
     }
 
     export async function importState(dx:string){

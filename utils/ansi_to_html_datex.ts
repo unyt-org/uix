@@ -63,7 +63,7 @@ export function convertANSIWithDATEXToHTML(content: string) {
 	let html = convertANSIToHTML(content)
 
 	html = html.replace(POINTER_REGEX, '<span class="dx-pointer hoverable">$&</span>')
-	const el = UIX.Utils.createHTMLElement(html);
+	const el = UIX.HTMLUtils.createHTMLElement(html);
 
 	el.querySelectorAll('.dx-pointer').forEach(ptr=>{
 		ptr.addEventListener("mouseenter", e => showPointerTooltip(ptr));

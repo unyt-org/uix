@@ -3,7 +3,7 @@ import { Base } from "./base.ts";
 import { I, S } from "../uix_short.ts";
 import { Clipboard } from "../base/clipboard.ts";
 import { Theme } from "../base/theme.ts";
-import { Utils } from "../base/utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 import { Elements } from "../elements/main.ts";
 import { Types } from "../utils/global_types.ts";
 import { pointer, props, text, transform } from "unyt_core/datex_short.ts";
@@ -251,7 +251,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
             if (!Node.connector_dom_elements.has(connector)) {
                 created_new = true;
-                Node.connector_dom_elements.set(connector, Utils.createHTMLElement(`<div class='node-connector'></div>`));
+                Node.connector_dom_elements.set(connector, HTMLUtils.createHTMLElement(`<div class='node-connector'></div>`));
             }
           
             let dom_element = Node.connector_dom_elements.get(connector);   
@@ -481,7 +481,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         div.append(this.getCollapseToggleButton());
         div.append(new Elements.Text(<Datex.Value<string>>this.options_props.title));
 
-        Utils.setCSSProperty(div, 'color', this.options.accent_color);
+        HTMLUtils.setCSSProperty(div, 'color', this.options.accent_color);
         div.style.marginBottom = "10px";
         div.style.fontFamily = "sans-serif";
         div.style.fontWeight = "bold";

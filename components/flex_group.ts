@@ -1,7 +1,7 @@
 import { Group } from "./group.ts"
 import { Component, NoResources, Group as UIXGroup } from "../base/decorators.ts"
 import { Base } from "./base.ts";
-import { Utils } from "../base/utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 import { I } from "../uix_short.ts";
 
 export namespace FlexGroup {
@@ -29,7 +29,7 @@ export class FlexGroup<O extends FlexGroup.Options=FlexGroup.Options, ChildEleme
         if (!this.options.scroll) this.style.pointerEvents = 'none';
 
         this.content.style.display = 'flex';
-        Utils.setCSSProperty(this.content, "flex-direction", this.options.$$.direction);
+        HTMLUtils.setCSSProperty(this.content, "flex-direction", this.options.$$.direction);
         this.content.style.position = 'relative';
         this.content.style.width = '100%';
         this.content.style.height = '100%';

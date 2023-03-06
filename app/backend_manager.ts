@@ -3,7 +3,7 @@ import {Path} from "unyt_node/path.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
 import { collapseToContent, html_content_or_generator_or_preset, RenderMethod, RenderPreset } from "../html/rendering.ts";
 import { logger } from "../utils/global_values.ts";
-import { Utils } from "../uix_all.ts";
+import { HTMLUtils } from "../uix_all.ts";
 
 
 export class BackendManager {
@@ -77,7 +77,7 @@ export class BackendManager {
 		
 		// convert content to valid HTML string
 		if (content instanceof HTMLElement) return content.outerHTML;
-		else return Utils.escapeHtml(content?.toString() ?? "");
+		else return HTMLUtils.escapeHtml(content?.toString() ?? "");
 	}
 
 }

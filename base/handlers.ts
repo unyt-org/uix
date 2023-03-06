@@ -2,7 +2,7 @@ import { Datex } from "unyt_core";
 import { Components } from "../components/main.ts";
 import { Resource } from "../utils/resources.ts";
 import { Types } from "../utils/global_types.ts";
-import { Utils } from "./utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 import { Res } from "./res.ts";
 import { global_states, logger } from "../utils/global_values.ts";
 import { IS_MOBILE_PORTRAIT } from "../utils/utils.ts";
@@ -58,7 +58,7 @@ export namespace Handlers {
 				res.types.add(Types.DRAGGABLE.ELEMENT_CREATOR)
 				try {
 					creator_data = JSON.parse(creator_data);
-					let creator = Utils.getElementCreatorById(creator_data.creator_id);
+					let creator = HTMLUtils.getElementCreatorById(creator_data.creator_id);
 					if (creator) {
 						res.data[Types.DRAGGABLE.ELEMENT_CREATOR] = {
 							type: creator.type,
@@ -402,9 +402,9 @@ export namespace Handlers {
 
 		let item_els:{[key:string]:HTMLElement} = {}; // local object saving all dom elements for the current context menu items
 
-		menu_container = menu_container ?? Utils.createHTMLElement('<div class="contextmenu-container"></div>')
-		let menu_body = Utils.createHTMLElement('<div class="contextmenu-body"></div>')
-		let menu_header = Utils.createHTMLElement('<div class="contextmenu-header"></div>')
+		menu_container = menu_container ?? HTMLUtils.createHTMLElement('<div class="contextmenu-container"></div>')
+		let menu_body = HTMLUtils.createHTMLElement('<div class="contextmenu-body"></div>')
+		let menu_header = HTMLUtils.createHTMLElement('<div class="contextmenu-header"></div>')
 
 		menu_container.append(menu_header);
 		menu_container.append(menu_body);
@@ -491,7 +491,7 @@ export namespace Handlers {
 				
 				// add horizontal ---------
 				if (item === "space") {
-					if (!first) menu_body.append(Utils.createHTMLElement('<div class="space"></div>'));
+					if (!first) menu_body.append(HTMLUtils.createHTMLElement('<div class="space"></div>'));
 				}
 				else  {
 					item_els[id] = Snippets.ListItem(item.text, item.icon, item.get_pad?item.get_pad():item.shortcut, item.sub_menu!=null);

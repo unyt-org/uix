@@ -87,7 +87,7 @@ export class Terminal<O extends TERMINAL_OPTIONS = TERMINAL_OPTIONS> extends UIX
     override onCreate() {
         this.content.style.width = "100%";
         this.content.style.height = "100%";
-        UIX.Utils.setCSSProperty(this.content, '--bg', this.options_props.bg_color) // to add bg color to text spans
+        UIX.HTMLUtils.setCSSProperty(this.content, '--bg', this.options_props.bg_color) // to add bg color to text spans
 
         this.handleInStream();
 

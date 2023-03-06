@@ -5,8 +5,10 @@
 import "./deno_dom.ts";
 
 import { $$, Datex } from "unyt_core";
-import { Utils } from "../base/utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 import { DX_VALUE } from "unyt_core/datex_all.ts";
+
+// handles html/x and also casts from uix/x
 
 Datex.Type.get('html').setJSInterface({
     class: globalThis.HTMLElement,
@@ -16,59 +18,79 @@ Datex.Type.get('html').setJSInterface({
 		else throw "not an HTMLElement"
 	},
 
-	cast(val, type, ctx) {
-		if (!type.variation) throw new Error("cannot create HTMLElement without concrete type")
-		console.log("el",type.variation)
-		const el = document.createElement(type.variation);
+	// called when replicating from state
+	cast_no_tuple(val, type, ctx) {
 
-		// attrs + children tuple
-		if (val instanceof Datex.Tuple) {
-			for (const [prop,value] of val.named) {
+		const is_uix = type.name == "uix";
+		if (!is_uix && !type.variation) throw new Error("cannot create HTMLElement without concrete type")
+		
+		// create HTMLElement / UIX component
+		const el = is_uix ?
+			type.newJSInstance(false) :  // call js constructor, but don't handle as constructor in lifecycle 
+			document.createElement(type.variation); // create normal HTMLElement, no UIX lifecycle
+
+		// set attrs, style, content
+		if (typeof val == "object") {
+			for (const [prop,value] of Object.entries(val)) {
 				if (prop=="style" && typeof value != "string") {
 					for (const [prop, val] of Object.entries(value)) {
 						el.style[prop] = val;
 					}
 				}
-				else Utils.setElementAttribute(el, prop, value);
+				else if (prop=="attr") {
+					for (const [prop, val] of Object.entries(value)) {
+						HTMLUtils.setElementAttribute(el, prop, val);
+					}
+				}
+				else if (prop=="content") {
+					for (const child of (value instanceof Array ? value : [value])) {
+						if (child instanceof HTMLElement) HTMLUtils.append(el, <HTMLElement>child);
+						else HTMLUtils.append(el, child);
+					}
+				}
 			}
-			for (const child of val.indexed) {
-				if (child instanceof HTMLElement) Utils.append(el, <HTMLElement>child);
-				else Utils.append(el, child);
-			}
-		}
-		// direct content
-		else {
-			if (val instanceof HTMLElement) Utils.append(el, <HTMLElement>val);
-			else Utils.append(el, val);
 		}
 
+		// set direct content when cast from different value
+		else {
+			if (val instanceof HTMLElement) HTMLUtils.append(el, <HTMLElement>val);
+			else HTMLUtils.append(el, val);
+		}
+
+		
+		// uix
+		if (is_uix) {
+			// set 'p' properties (contains options, other properties)
+			if (val.p) type.initProperties(el, val.p);
+			// trigger UIX lifecycle (onReplicate)
+			type.construct(el, undefined, false);
+		}
+		
 		return el;
 	},
 
 	serialize(val) {
 		if (!(val instanceof HTMLElement)) throw "not an HTMLElement";
-		const data = new Datex.Tuple();
+		const data: {style:Record<string,string>, content:any[], attr:Record<string,unknown>} = {style: {}, attr: {}, content: []}
 
 		// attributes
 		for (let i = 0; i < val.attributes.length; i++) {
 			const attrib = val.attributes[i];
-			if (attrib.name !== "style") data.set(attrib.name, attrib.value)
+			if (attrib.name !== "style") data.attr[attrib.name] = attrib.value;
 		}
 
 		// style
-		const style:Record<string,string> = {};
-		data.set("style",style);
 		// @ts-ignore
 		const style_props = val.style._importants? Object.keys(val.style._importants) : val.style;
 		for (const prop of style_props) {
-			style[prop] = val.style[prop];
+			data.style[prop] = val.style[prop];
 		}
 		// children
 		for (let i = 0; i < val.childNodes.length; i++) {
 			const child = val.childNodes[i];
 			// @ts-ignore
-			if (child instanceof Text) data.push(child[DX_VALUE] ?? child.textContent);
-			else data.push(child);
+			if (child instanceof Text) data.content.push(child[DX_VALUE] ?? child.textContent);
+			else data.content.push(child);
 		}
 		// logger.info("serialize",data)
 

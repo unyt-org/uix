@@ -5,6 +5,7 @@ import { Base } from "./base.ts";
 import { Handlers } from "../base/handlers.ts";
 import { Types } from "../utils/global_types.ts";
 import { Datex, text, transform } from "unyt_core";
+import { HTMLUtils } from "../html/utils.ts";
 import { Utils } from "../base/utils.ts";
 import { Resource } from "../utils/resources.ts";
 import { Files } from "../base/files.ts";
@@ -109,11 +110,11 @@ export class TabGroup<O extends TabGroup.Options = TabGroup.Options, ChildElemen
 
         const title_div = document.createElement("div");
         if (this.options.header_type!='small') title_div.style.minHeight = '27px';
-        Utils.setElementHTML(title_div, element.options.$$.title);
+        HTMLUtils.setElementHTML(title_div, element.options.$$.title);
 
         const icon_div = document.createElement("div");
         icon_div.style.marginRight = '4px';
-        Utils.setElementHTML(icon_div, transform([element.icon_dx], (s)=>I(s)));
+        HTMLUtils.setElementHTML(icon_div, transform([element.icon_dx], (s)=>I(s)));
 
         const state_div = document.createElement("div");
         state_div.style.marginRight = '4px';
@@ -129,8 +130,8 @@ export class TabGroup<O extends TabGroup.Options = TabGroup.Options, ChildElemen
         inner_container.append(icon_div)
 
         if (element.options.title_color != null) {
-            Utils.setCSSProperty(title_div, 'color', element.options.title_color);
-            Utils.setCSSProperty(icon_div, 'color', element.options.title_color);
+            HTMLUtils.setCSSProperty(title_div, 'color', element.options.title_color);
+            HTMLUtils.setCSSProperty(icon_div, 'color', element.options.title_color);
         }
 
 
@@ -148,7 +149,7 @@ export class TabGroup<O extends TabGroup.Options = TabGroup.Options, ChildElemen
 
             if (!element.icon) {
                 title_div.style.display = "block"
-                Utils.setElementHTML(title_div, transform([element.title_dx], v=>v?.[0]??'?'))
+                HTMLUtils.setElementHTML(title_div, transform([element.title_dx], v=>v?.[0]??'?'))
                 title_div.innerHTML = element.title?.[0] ?? '?';
             }
             else {
@@ -605,7 +606,7 @@ export class TabGroup<O extends TabGroup.Options = TabGroup.Options, ChildElemen
         this.no_elements_div.style.alignItems = 'center';
         this.no_elements_div.style.justifyContent = 'center';
 
-        (async ()=>Utils.setElementHTML(this.no_elements_div, await text `<span style='font-size:2em'>${I('fa-th')}</span><span>${S(this.options.no_elements_string ?? 'no_elements')}</span>`))()
+        (async ()=>HTMLUtils.setElementHTML(this.no_elements_div, await text `<span style='font-size:2em'>${I('fa-th')}</span><span>${S(this.options.no_elements_string ?? 'no_elements')}</span>`))()
         
         this.content_container.append(this.no_elements_div)
 

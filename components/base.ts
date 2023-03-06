@@ -158,6 +158,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     constructor(options?:Datex.DatexObjectInit<O>, constraints?:Datex.DatexObjectInit<Types.component_constraints>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super(null)
+        console.log("conts",this,Datex.Type.isConstructing(this))
         
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
@@ -165,10 +166,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                 logger.error("cannot construct UIX element from DOM because DATEX type could not be found")
                 return;
             }
-            // ignore skeleton here
-            if (this.hasAttribute("skeleton")) {
+            // ignore if currently hydrating static element
+            if (this.hasAttribute("data-static")) {
                 this.is_skeleton = true;
-                // logger.debug("skeleton component " + this.constructor[Datex.DX_TYPE]);
+                logger.debug("hydrating component " + this.constructor[Datex.DX_TYPE]);
             }
             else {
                 // logger.debug("creating " + this.constructor[Datex.DX_TYPE] + " component from DOM");
@@ -296,7 +297,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     // init for base element (and every element)
     private async init(constructed = false) {
 
-        Datex.Pointer.onPointerForValueCreated(this, ()=>bindObserver(this))
+        Datex.Pointer.onPointerForValueCreated(this, ()=>{
+            bindObserver(this)
+        })
 
         this.options_props = <Datex.ObjectWithDatexValues<O>> props(this.options); // TODO typescript correct types
         this.constraints_props = <Datex.ObjectWithDatexValues<Types.component_constraints>> props(this.constraints); 
@@ -928,17 +931,19 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
 
     // component becomes full-featured uix component, no longer a skeleton
-    public async unSkeletonize() {
+    public unSkeletonize() {
         if (!this.is_skeleton) return;
 
         this.is_skeleton = false;
-        this.removeAttribute("skeleton");
-        // this.removeAttribute("id");
-        this.setAttribute("restored", "");
+        this.removeAttribute("data-static");
 
         // continue component lifecycle
-        await this.replicate();
-    
+        const type = Datex.Type.ofValue(this);
+        type.initProperties(this, {options:$$({}), constraints:$$({})});
+        // trigger UIX lifecycle (onReplicate)
+        type.construct(this, undefined, false, true);
+
+        // await this.replicate();
         //this.updateResponsive();
 
         // if (this instanceof Group) {

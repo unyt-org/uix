@@ -7,13 +7,16 @@ import { Components} from "../components/main.ts";
 class DOMPointerSource implements Datex.PointerSource {
 
 	async getPointer(pointer_id: string, pointerify?: boolean) {
-		const element = document.getElementById(pointer_id); // get skeleton element from DOM
+		const element = null// document.querySelector(`[data-ptr="${pointer_id}"]`);
+		// console.log("ptrsrc ",pointer_id,element)
+
+		// get skeleton element from DOM
 	
 		if (element) {
-			if (!element.hasAttribute("skeleton")) throw new ValueError("Cannot bind a value to a non-skeleton UIX component");
+			if (!element.hasAttribute("data-static")) throw new ValueError("Cannot bind a pointer to a non-static UIX component");
 			//console.log("get dom pointer", pointer_id, element);
-			await Datex.Storage.getPointer(pointer_id, pointerify, element); // bind pointer to element
-			await (<Components.Base>element).unSkeletonize() // no longer a skeleton element
+			// await Datex.Storage.getPointer(pointer_id, pointerify, element); // bind pointer to element
+			(<Components.Base>element).unSkeletonize() // no longer a skeleton element
 			return element;
 		} 
 		else return NOT_EXISTING;

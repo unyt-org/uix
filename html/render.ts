@@ -40,7 +40,7 @@ function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRoots?:boolean,
 					// relative web path (@...)
 					sheet = new Path(sheet).getAsRelativeFrom(opts.rootDir).replace(/^\.\//, "/@");
 				}
-				html += `<link rel='stylesheet' href='${sheet}'>`;
+				html += `<link rel=stylesheet href="${sheet}">`;
 			}
 		}
 		if (el.style_sheets_urls) {
@@ -49,7 +49,7 @@ function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRoots?:boolean,
 					// relative web path (@...)
 					sheet = new Path(sheet).getAsRelativeFrom(opts.rootDir).replace(/^\.\//, "/@");
 				}
-				html += `<link rel='stylesheet' href='${sheet}'>`;
+				html += `<link rel=stylesheet href="${sheet}">`;
 			}
 		}
 
@@ -60,15 +60,18 @@ function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRoots?:boolean,
 		html += getOuterHTML(child, opts);
 	}
 
-	return html;
+	return html || el.innerText || ""; // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
 function getOuterHTML(el:Element, opts?:{includeShadowRoots?:boolean, rootDir?:URL}) {
 	if (el instanceof globalThis.Text) return el.textContent; // text node
 
+
 	const inner = getInnerHTML(el, opts);
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
+
+	
 
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];
@@ -77,6 +80,7 @@ function getOuterHTML(el:Element, opts?:{includeShadowRoots?:boolean, rootDir?:U
 		if (val.startsWith("file://") && opts?.rootDir) val = new Path(val).getAsRelativeFrom(opts.rootDir).replace(/^\.\//, "/@");
 		attrs.push(`${attrib.name}="${val}"`) // TODO escape
 	}
+	attrs.push("data-static");
 
 	return `<${tag} ${attrs.join(" ")}>${inner}</${tag}>`
 	// const outer = el.cloneNode().outerHTML;

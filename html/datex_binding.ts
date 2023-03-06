@@ -145,7 +145,6 @@ const OBSERVER_IGNORE = Symbol("OBSERVER_IGNORE");
 
 
 export function bindObserver(element:HTMLElement) {
-	// console.log("bind datex ", element);
 	const pointer = Datex.Pointer.getByValue(element);
 	if (!pointer) throw new Error("cannot bind observers for HTMLElement without pointer")
 	if (!element.dataset['ptr']) element.dataset['ptr'] = pointer.id;

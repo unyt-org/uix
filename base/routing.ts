@@ -61,7 +61,6 @@ export namespace Routing {
 				url = "/" + parts.join("/");
 				if (url.startsWith("//")) url = url.slice(1);
 			}
-			console.log("new " + url,silent)
 			history.pushState(null, "", url)
 		}
 
@@ -99,7 +98,7 @@ export namespace Routing {
         // console.log("-->",collapsed_content)
         HTMLUtils.append(document.body, content) // add to document
         // loadingFinished();
-        logger.success("loaded " + (path??"/"));
+        logger.success `loaded ${path??"/"}`;
 	}
 
 
@@ -119,20 +118,6 @@ export namespace Routing {
 
 		setContent(content);
 		await update(getCurrentRouteFromURL(), false)
-		// if (!current_set_handler) return;
-		// const route = getCurrentRouteFromURL();
-		// if (route.length) {
-		// 	const valid_route_part = await current_set_handler(route);
-		// 	console.log(route,valid_route_part)
-
-		// 	// route could not be fully resolved on frontend, try to reload from backend
-		// 	if (route.join("/") !== valid_route_part.join("/")) {
-		// 		if (window.location) window.location.pathname = route.join("/")
-		// 		// logger.warn `invalid route "/${route.join("/")}" - redirected to "/${valid_route_part.join("/")}"`;
-		// 	}
-		// 	await update(valid_route_part);
-		// }
-		// else await update()
 	}
 
 	/**
@@ -146,8 +131,6 @@ export namespace Routing {
 		if (typeof current_content?.getInternalRoute !== "function") return;
 		const current_route = await (<RoutingSink>current_content).getInternalRoute();
 		if (current_route.length == 1 && current_route[0] == "") current_route.shift();
-
-		console.log("update with current_content", current_content, current_route);
 
 		// check of accepted route matches new calculated current_route
 		if (compare && (compare.join("/") !== current_route.join("/"))) {
@@ -168,7 +151,7 @@ export namespace Routing {
 		const url = new URL(e.destination.url);
 		if (url.origin != new URL(window.location.href).origin) return;
 
-		console.log("nav " + url, e)
+		// console.log("nav " + url, e)
 		e.intercept({
 			async handler() {
 				await handleCurrentURLRoute();

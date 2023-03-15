@@ -227,7 +227,7 @@ export async function collapseToContent<T extends Entrypoint, P extends string>(
 		render_method = <RenderMethod> content.__render_method;
 	}
 
-	// routing adapter
+	// routing adapter TODO: better checks for interfaces? (not just 'getRoute')
 	else if (typeof content?.getRoute == "function") {
 		[collapsed, render_method, loaded] = await collapseToContent(await content.getRoute(path.replace(/^\//,'').split("/")), path, context, only_return_static_content)
 	}
@@ -284,6 +284,7 @@ export async function collapseToContent<T extends Entrypoint, P extends string>(
 			if (content instanceof UIX.Components.Base) await content.created; 
 		}
 
+
 		// routing component?
 		if (path && typeof collapsed?.resolveRoute == "function") {
 			if (!await resolveRouteForRoutingSink(<RoutingSink> collapsed, path.replace(/^\//,'').split("/"))) {
@@ -306,6 +307,7 @@ export async function collapseToContent<T extends Entrypoint, P extends string>(
  */
 async function resolveRouteForRoutingSink(routingSink: RoutingSink, route:string[]){
 	if (route.length) {
+
 		const valid_route_part = await routingSink.resolveRoute(route);
 
 		// route could not be fully resolved on frontend, try to reload from backend

@@ -37,7 +37,7 @@ export namespace Actions {
         active_fullscreen_el = elem;
         active_fullscreen_el_original_parent = elem.parent;
 
-        document.body.append(elem);
+        document.body.shadowRoot?.append(elem);
         elem.classList.add("full-screen-element");
         elem.classList.add("animate");
 
@@ -100,7 +100,7 @@ export namespace Actions {
         portal.style.position = "absolute";
         portal.style.opacity = "0";
 
-        document.body.appendChild(portal);
+        document.body.shadowRoot?.appendChild(portal);
 
         portal.addEventListener('load', (evt) => {
             setTimeout(()=>{
@@ -251,7 +251,7 @@ export namespace Actions {
         })
         active_alert_container.addEventListener("mouseup", ()=>alert.classList.remove("animate-half"))
 
-        document.body.append(active_alert_container);
+        document.body.shadowRoot?.append(active_alert_container);
 
         // animate
         setTimeout(()=>{
@@ -363,7 +363,7 @@ export namespace Actions {
         active_alert_container.addEventListener("mousedown", ()=>alert.classList.add("animate-half"))
         active_alert_container.addEventListener("mouseup", ()=>alert.classList.remove("animate-half"))
 
-        document.body.append(active_alert_container)
+        document.body.shadowRoot?.append(active_alert_container)
 
         // animate
         setTimeout(()=>{

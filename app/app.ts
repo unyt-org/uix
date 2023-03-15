@@ -11,20 +11,23 @@ const logger = new Datex.Logger("UIX App");
 
 let live_frontend = false;
 let watch = false;
+let watch_backend = false;
 
-// command line args (--watch-backend)
+// command line args (--watch)
 if (globalThis.Deno) {
     const parse = (await import("https://deno.land/std@0.168.0/flags/mod.ts")).parse;
     const flags = parse(Deno.args, {
-        boolean: ["live", "watch"],
+        boolean: ["live", "watch", "watch-backend"],
         alias: {
             l: "live",
-			w: "watch"
+			w: "watch",
+			b: "watch-backend"
         },
-		default: {watch, live:live_frontend}
+		default: {watch, 'watch-backend':watch_backend, live:live_frontend}
     });
     live_frontend = flags["live"]
 	watch = live_frontend || flags["watch"]
+	watch_backend = flags["watch-backend"]
 }
 
 
@@ -61,6 +64,15 @@ export interface normalized_app_options extends app_options {
 
 class UIXApp {
 
+
+	frontends = new Map<string, FrontendManager>()
+	#ready_handlers = new Set<()=>void>();
+
+	public onReady(handler:()=>void) {
+		this.#ready_handlers.add(handler);
+	}
+
+	public ready = new Promise<void>(resolve=>this.onReady(()=>resolve()))
 
 	public async start(options:app_options = {}, base_url?:string|URL) {
 
@@ -142,7 +154,7 @@ class UIXApp {
 
 		// load backend
 		for (const backend of n_options.backend) {
-			const backend_manager = new BackendManager(n_options, backend, base_url, watch);
+			const backend_manager = new BackendManager(n_options, backend, base_url, watch_backend);
 			await backend_manager.run()
 			if (backend_manager.content_provider!=undefined) {
 				if (backend_with_default_export!=undefined) logger.warn("multiple backend entrypoint export a default content");
@@ -160,11 +172,13 @@ class UIXApp {
 			const frontend_manager = new FrontendManager(n_options, frontend, base_url, backend_with_default_export, watch, live_frontend)
 			await frontend_manager.run();
 			server = frontend_manager.server;
+			this.frontends.set(frontend.toString(), frontend_manager);
 		}
 		// no frontend, but has backend with default export -> create empty frontedn
 		if (!n_options.frontend.length && backend_with_default_export) {
 			// TODO: remove tmp dir on exit
-			const frontend_manager = new FrontendManager(n_options, new Path(Deno.makeTempDirSync()).asDir(), base_url, backend_with_default_export, watch, live_frontend)
+			const dir = new Path(Deno.makeTempDirSync()).asDir();
+			const frontend_manager = new FrontendManager(n_options, dir, base_url, backend_with_default_export, watch, live_frontend)
 			await frontend_manager.run();
 			server = frontend_manager.server;
 		}
@@ -185,6 +199,10 @@ class UIXApp {
 			server.path("/.dx", Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true).replace('"##location##"', '#location'), 'text/datex')
 		}
 		
+		try {
+			for (const handler of this.#ready_handlers) await handler();
+		}
+		catch {}
 	}
 
 }

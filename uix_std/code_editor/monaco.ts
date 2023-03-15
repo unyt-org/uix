@@ -543,7 +543,7 @@ export default class MonacoHandler {
                     //[/\!(\w|\.)+/, "error"],
                     [/\b(true|false)\b/, "boolean"],
                     //[/\b(print|read|debug|printf|current|sender|global|signed|encrypted|timestamp)\b/, "keyword"],
-                    [/\b(clone_collapse|response|collapse|named|default|scope|run|export|as|from|var|val|ref|const|new|to|iterator|skip|leave|defer|accept|try|yeet|next|keys|has|iterate|assert|matches|freeze|seal|function|do|await|get|base|transaction|debugger|extends|implements|constructor|destructor|creator|replicator|template|return|exit|use|delete|count|about|if|else|while|origin|copy|clone|type|subscribers|always)\b/, "call"],
+                    [/\b(extension|clone_collapse|response|collapse|named|default|scope|run|export|as|from|var|val|ref|const|new|to|iterator|skip|leave|defer|accept|try|yeet|next|keys|has|iterate|assert|matches|freeze|seal|function|do|await|get|base|transaction|debugger|extends|implements|constructor|destructor|creator|replicator|template|return|exit|use|delete|count|about|if|else|while|origin|copy|clone|type|subscribers|always)\b/, "call"],
 
                     [/(jmp|jtr|jfa) +/, "call", "@jmp"],
                     [/lbl +/, "call", "@lbl"],

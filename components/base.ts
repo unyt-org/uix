@@ -3,7 +3,7 @@ import { constructor, Datex, property, props, replicator, template, boolean, get
 import { Elements } from "../elements/main.ts"
 import { Theme } from "../base/theme.ts"
 import { Types } from "../utils/global_types.ts"
-import { global_states, logger, root_container, unsaved_components } from "../utils/global_values.ts"
+import { global_states, logger, unsaved_components } from "../utils/global_values.ts"
 import { addStyleSheet as addStyleSheetLink, PlaceholderCSSStyleDeclaration } from "../utils/css_style_compat.ts"
 import { assignDefaultPrototype } from "../utils/utils.ts"
 import { HTMLUtils } from "../html/utils.ts"
@@ -20,6 +20,8 @@ import { Components } from "./main.ts"
 import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS } from "../base/decorators.ts";
 import {Routing} from "../base/routing.ts";
 import { bindObserver } from "../html/datex_binding.ts";
+import { Path } from "unyt_node/path.ts";
+import { RoutingSink } from "../html/rendering.ts";
 
 // deno-lint-ignore no-namespace
 export namespace Base {
@@ -96,7 +98,7 @@ export namespace Base {
 }
 
 @template("uix:component") 
-export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base {
+export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base implements RoutingSink {
 
     static DEFAULT_OPTIONS:Base.Options = {
         bg_color: Theme.getColorReference('bg_default'),
@@ -158,7 +160,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     constructor(options?:Datex.DatexObjectInit<O>, constraints?:Datex.DatexObjectInit<Types.component_constraints>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super(null)
-        console.log("conts",this,Datex.Type.isConstructing(this))
         
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
@@ -249,8 +250,16 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
 
-    #datex_lifecycle_ready_resolve:Function
+    #datex_lifecycle_ready_resolve?:Function
     #datex_lifecycle_ready = new Promise((resolve)=>this.#datex_lifecycle_ready_resolve = resolve)
+
+
+    #create_lifecycle_ready_resolve?:Function
+    #create_lifecycle_ready = new Promise((resolve)=>this.#create_lifecycle_ready_resolve = resolve)
+
+    get created() {
+        return this.#create_lifecycle_ready
+    }
 
     // default constructor
     @constructor async construct(options?:Datex.DatexObjectInit<O>, constraints?:Types.component_constraints): Promise<void>|void{
@@ -284,13 +293,13 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         
         await this.init(true);
         await this.onConstructed?.();
-        this.#datex_lifecycle_ready_resolve(); // onCreate can be called (required because of async)
+        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
 
     // called when created from saved state
     @replicator async replicate():Promise<void>|void{
         await this.init();
-        this.#datex_lifecycle_ready_resolve(); // onCreate can be called (required because of async)
+        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
 
 
@@ -477,7 +486,60 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     #pseudo_style = {};
     #style_sheets_urls:string[] = [];
 
-    get style_sheets_urls () {return this.#style_sheets_urls}
+    // get style_sheets_urls () {return this.#style_sheets_urls}
+    // get style_sheets () {return this.#style_sheets}
+
+    // return rendered HTML for stylesheets used in this component
+    public getRenderedStyle(rel_path?:Path) {
+        let html = "";
+
+        // for (let sheet of this.constructor._module_stylesheets) {
+        //     if (sheet.toString().startsWith("file://") && rel_path) {
+        //         // relative web path (@...)
+        //         sheet = new Path(sheet).getAsRelativeFrom(rel_path).replace(/^\.\//, "/@");
+        //     }
+        //     html += `<link rel=stylesheet href="${sheet}">`;
+        // }
+
+        // links
+		for (let url of this.#style_sheets_urls) {
+            if (url.toString().startsWith("file://") && rel_path) {
+                // relative web path (@...)
+                url = new Path(url).getAsRelativeFrom(rel_path).replace(/^\.\//, "/@uix/src/");
+            }
+            html += `<link rel=stylesheet href="${url}">`;
+        }
+
+        // stylesheets
+        // for (const sheet of this.#style_sheets) {
+        //     // workaround for server side stylesheet
+        //     if (sheet._cached_css) html += `<style>${sheet._cached_css}</style>`
+        //     // normal impl
+        //     else {
+        //         html += `<style>`
+        //         for (const rule of sheet.cssRules) {
+        //             html += rule.cssText;
+        //         }
+        //         html += `</style>`
+        //     }
+        //     break; // only add first style (:host:host style)
+        // }
+
+        if (this.#adopted_root_style) {
+            html += `<style>${this.#adopted_root_style.cssText}</style>`
+        }
+        else if (this.#pseudo_style) {
+            let css = "";
+            for (const [key,val] of Object.entries(this.#pseudo_style)) {
+                // key to kebab case
+                css += `${key.replace(/[A-Z]/g, x => `-${x.toLowerCase()}`)}:${val};`
+            }
+            html += `<style>:host:host{${css}}</style>`
+        }
+
+        return html;
+    }
+
 
     // // adopted constructed stylesheet for shadow root
     #adopted_root_style?:CSSStyleDeclaration 
@@ -647,7 +709,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                 if ((await fetch(path)).ok) {
                     valid_dx_files.push(path);
                     try {
-                        dx_file_values.set(path, [<any>await get(path, this._module), new Set()])
+                        dx_file_values.set(path, [<any>await get(path, undefined, this._module), new Set()])
                         logger.debug("loaded DATEX module script: " + path)    
                     }
                     catch (e) {
@@ -664,6 +726,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
 
         for (const [path, [file_val, used]] of dx_file_values) {
+            if (!file_val) continue;
             for (const [exprt] of Datex.DatexObject.entries(file_val)) {
                 if (!used.has(<string> exprt) && !used.has('*')) logger.warn(`unused DATEX export '${exprt}' in ${path}`);
             }
@@ -714,7 +777,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             else {
                 let err:Error|undefined;
                 try {
-                    const res = await get(location, this._module);
+                    const res = await get(location, undefined, this._module);
                     if (exprt == "*") {
                         target[prop] = res;
                     }
@@ -784,6 +847,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
             // is using polyfill which does not correctly propagate updates -> propagate updates via proxy
             // @ts-ignore CSSStyleSheet
+
+            // safari compat
             if (window.CSSStyleSheet.name == "ConstructedStyleSheet") {
                 this.#adopted_root_style = new Proxy((<CSSStyleRule>stylesheet.cssRules[0]).style, {
                     set(target, p, value) {
@@ -806,6 +871,13 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                     }
                 })
             }
+
+            // deno server compat, just use normal CSSStyleDeclaration
+            else if (window.CSSStyleSheet.IS_COMPAT) {
+                this.#adopted_root_style = new CSSStyleDeclaration();
+            }
+
+            // normal
             else this.#adopted_root_style = (<CSSStyleRule>stylesheet.cssRules[0]).style;
         }
 
@@ -827,7 +899,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     // is element the current top parent (root) element
     public get is_root_element(){
-        return this.parentElement == root_container || this.parent?.isChildPseudoRootElement(this);
+        return this.parentElement == document.body || this.parent?.isChildPseudoRootElement(this);
     }
     
 
@@ -877,57 +949,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
     /************/
-
-    // convert file:// or https:// url to url relative to uix lib
-    private urlToRelativeUrl(url:string){
-        return 'uix/components/' + url.replace(new URL(".", import.meta.url).toString(), "");
-    }
-
-    // skeleton generator
-    public getSkeleton():string {
-
-        const id = Datex.Pointer.getByValue(this)?.id;
-
-        let style = "";
-        // pseudo style if CSSStylesheet not working
-        for (let [key,value] of Object.entries(this.#pseudo_style)) {
-            style += `${PlaceholderCSSStyleDeclaration.toKebabCase(key)}: ${value};`
-        }
-
-        let skeleton = `<${this.tagName.toLowerCase()} skeleton id="${id}" style="${style}">`
-
-        // // stylesheets
-        // for (let stylesheet of this.#style_sheets) {
-        //     skeleton += "<style>"
-        //     for (let rule of stylesheet.cssRules) {
-        //         skeleton += rule.cssText;
-        //     }
-        //     skeleton += "</style>"
-        // }
-        
-
-        // // shadow root
-        // skeleton += `<template shadowroot="open">`
-        // // inject style sheet urls
-        // for (let url of this.#style_sheets_urls) {
-        //     skeleton += `<link rel="stylesheet" href="${this.urlToRelativeUrl(url)}">`   
-        // }
-        // skeleton += this.content_container.outerHTML;
-        // skeleton += `</template>`
-
-        let children = this.generateSkeletonChildren();
-        for (let c of children) skeleton += ('\n' + c).replace(/\n/g, "\n  "); // inset
-
-        //if (children.length == 0) skeleton += "x";
-
-        skeleton += `</${this.tagName.toLowerCase()}>`;
-        return skeleton;
-    }
-
-    // @override
-    protected generateSkeletonChildren():string[]{
-        return [];
-    }
 
 
     // component becomes full-featured uix component, no longer a skeleton
@@ -1065,29 +1086,28 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     
         // this.updateResponsive(false, true);
 
-        if (this.parentElement == root_container) this.useAsRoutingBase(); // automatically enable routing of root element
+        this.#create_lifecycle_ready_resolve?.();
     }
 
-    public useAsRoutingBase(){
-        Routing.setHandler((parts)=>this.handleRoute(parts), ()=>this.getCurrentRoute()); // handle route updates
-    }
 
-    // implements onRoute per default, can be overriden for more custom routing behaviour
-    protected handleRoute(parts:string[]): string[] {
+    // implements resolveRoute per default, can be overriden for more custom routing behaviour
+    public async resolveRoute(parts:string[]): Promise<string[]> {
+
+        const delegate = this.routeDelegate??this;
 
         // ignore if route is already up to date
-        if (JSON.stringify(parts)==JSON.stringify(this.getCurrentRoute())) return parts;
+        if (JSON.stringify(parts)==JSON.stringify(delegate.getInternalRoute())) return parts;
 
-        const child = this.onRoute?.(parts[0]);
+        const child = await delegate.onRoute?.(parts[0]);
 
-        if (!child) return []; // route not valid
-        else child.focus(); // bring child to foreground
+        if (child == false) return []; // route not valid
+        else if (child instanceof Base) child.focus() // bring child to foreground
 
-        // end of route reached, all ok
-        if (parts.length == 1) return parts; 
+        // end of route reached / handled in component without redirecting to children, all ok
+        if (parts.length == 1 || !(child instanceof Base)) return parts; 
         // recursively follow route
         else {
-            return [parts[0], ...child.handleRoute(parts.slice(1))];
+            return [parts[0], ...await child.resolveRoute(parts.slice(1))];
         }
     }
 
@@ -1095,7 +1115,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     // anchor, if no parent_element is specfied, it is appended to the body
     public anchor(parent_element?:HTMLElement) {  
         // add to body if no parent element provided
-        if (parent_element==null) parent_element = root_container;
+        if (parent_element==null) parent_element = document.body;
         parent_element.append(this);
     }
 
@@ -2147,8 +2167,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected onHide?():void // called when element is created with options.hidden set to true, or when hide() is called
     protected onClick?():void // called when element is clicked (options.clickable must be enabled)
 
-    protected onRoute?(identifier:string):void|Base // called when a route is requested from the component, return element matching the route identifier
-    getCurrentRoute():string[] {return []} // called to get the current route of the component (child route)
+    protected onRoute?(identifier:string):Promise<void|Base|boolean>|void|Base|boolean // called when a route is requested from the component, return element matching the route identifier or true if route was handled
+    protected routeDelegate?: Base; // delegate that handles all routes for this component
+    getInternalRoute():string[] {return []} // called to get the current route of the component (child route)
 
     // called when element size or position changed
     protected onConstraintsChanged() {}

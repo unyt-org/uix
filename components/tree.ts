@@ -329,7 +329,7 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
         // is directory item
         if (resource.is_directory) {
 
-            let dir_el_creator = HTMLUtils.createElementCreator(resource.path, async (path)=>{
+            let dir_el_creator = Utils.createElementCreator(resource.path, async (path)=>{
                 return await this.handleCreateElementFromResource(Resource.get(path))
             },async (path)=>{
                 return this.handleCreateSeparateElementsFromEntry(Resource.get(path))
@@ -468,7 +468,7 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
         // file item
         else {
 
-            let file_el_creator = HTMLUtils.createElementCreator(resource.path, async (path)=>{
+            let file_el_creator = Utils.createElementCreator(resource.path, async (path)=>{
                 return await this.handleCreateElementFromResource(Resource.get(path))
             })
 

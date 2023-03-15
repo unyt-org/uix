@@ -17,8 +17,8 @@ if (!IS_HEADLESS) await import("https://unpkg.com/construct-style-sheets-polyfil
 
 if (!IS_HEADLESS) {
 	(function attachShadowRoots(root) {
-		document.querySelectorAll("template[shadowroot]").forEach((template:any) => {
-			const mode = template.getAttribute("shadowroot");
+		document.querySelectorAll("template[shadowrootmode]").forEach((template:any) => {
+			const mode = template.getAttribute("shadowrootmode");
 			const shadowRoot = template.parentNode.attachShadow({ mode });
 			shadowRoot.appendChild(template.content);
 			template.remove();

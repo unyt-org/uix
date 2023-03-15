@@ -1,17 +1,23 @@
 import { Datex } from "unyt_core";
 import type { Components } from "../components/main.ts"
+import { IS_HEADLESS } from "./constants.ts";
 import type { Types } from "./global_types.ts";
 
 export const logger = new Datex.Logger("UIX");
 
-// app container
-export const root_container = document.querySelector("#main") ?? document.createElement("main") 
+// main container
+export const root_container = <HTMLElement> document.querySelector("#main") ?? document.body.shadowRoot?.querySelector("#main") ?? document.createElement("slot") 
 root_container.id = "main"
+// init body shadow root
+if (!IS_HEADLESS && !document.body.shadowRoot) {
+	document.body.attachShadow({mode:'open'});
+	document.body.shadowRoot!.append(root_container);
+}
 
 // notification container
 export const notification_container = document.createElement("aside"); 
 notification_container.classList.add("notification-container");
-
+if (!IS_HEADLESS) document.body.shadowRoot!.append(notification_container)
 
 
 export const global_states = {

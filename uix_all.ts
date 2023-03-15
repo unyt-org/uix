@@ -25,6 +25,7 @@ export * from "./base/theme.ts"
 export * from "./base/unyt_pen.ts"
 export * from "./base/utils.ts"
 export * from "./base/routing.ts"
+export * from "./base/context.ts"
 
 // sw
 export * from "./sw/sw_installer.ts"
@@ -46,3 +47,4 @@ export * from "./utils/utils.ts"
 
 // UIX app
 export * from "./app/app.ts"
+export * from "./app/entrypoint.ts"

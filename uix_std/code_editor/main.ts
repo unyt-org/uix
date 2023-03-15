@@ -232,9 +232,10 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
             // format code  
             let current_lang; // current inline lang
             container.querySelectorAll("code").forEach(async c=>{
-                let text = c.innerText;
+                let text = c.innerText;+
+                console.log("md",text,c)
                 // inline language?
-                let _inline_lang = text.match(/^([a-zA-Z0-9_-]+)!/);
+                let _inline_lang = text?.match(/^([a-zA-Z0-9_-]+)!/);
                 let _attr_lang = c.getAttribute("class")?.replace("language-", "");
                 // code block language?
                 if (_inline_lang) {

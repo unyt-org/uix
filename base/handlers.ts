@@ -372,7 +372,7 @@ export namespace Handlers {
 		outer.style.minHeight = '1.5em';
 		outer.style.width = 'max-content';
 		outer.append(el)
-		document.body.append(outer);
+		document.body.shadowRoot?.append(outer);
 
 		outer.style.top = (y-outer.getBoundingClientRect().height/2)+'px'; // adjust height to center_number
 
@@ -517,7 +517,7 @@ export namespace Handlers {
 
 
 			start_time = new Date().getTime();
-			document.body.append(menu_container)
+			document.body.shadowRoot?.append(menu_container)
 
 
 			menu_position.x = overrideX ?? e.clientX;

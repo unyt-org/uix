@@ -49,6 +49,7 @@ UIX.Res.addStrings({
         download_short: "Save",
         open_file: "Open File",
         new_file: "New",
+        test: "Test",
 
         copy_decompiled_datex: "Copy Decompiled DATEX",
 
@@ -75,6 +76,7 @@ UIX.Res.addStrings({
         download_short: "Speichern",
         open_file: "Datei öffnen",
         new_file: "Neu",
+        test: "Testen",
 
         copy_decompiled_datex: "Dekompilerten DATEX-Code kopieren",
 

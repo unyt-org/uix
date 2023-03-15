@@ -144,9 +144,9 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
     }
 
     // return the current route of the group
-    override getCurrentRoute() {
+    override getInternalRoute() {
         if (!this.active_element) return [];
-        return [this.active_element.identifier, ...this.active_element.getCurrentRoute()]
+        return [this.active_element.identifier, ...this.active_element.getInternalRoute()]
     }
 
     handleChildElementFocused(element:ChildElement) {
@@ -260,11 +260,6 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
     }
 
 
-    override generateSkeletonChildren(){
-        const children_skeletons = [];
-        for (const c of this.elements) children_skeletons.push(c.getSkeleton())
-        return children_skeletons;
-    }
 
 
     public enableEditProtectors(){

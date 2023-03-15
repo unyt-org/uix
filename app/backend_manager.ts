@@ -1,19 +1,27 @@
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, normalized_app_options } from "./app.ts";
 import {Path} from "unyt_node/path.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
-import { collapseToContent, html_content_or_generator_or_preset, RenderMethod, RenderPreset } from "../html/rendering.ts";
+import { collapseToContent, html_content, html_content_or_generator_or_preset, RenderMethod, RenderPreset } from "../html/rendering.ts";
 import { logger } from "../utils/global_values.ts";
-import { HTMLUtils } from "../uix_all.ts";
+import { Context, ContextGenerator, HTMLUtils } from "../uix_all.ts";
+import { Routing } from "../base/routing.ts";
+import { Base } from "../components/base.ts";
+import { getOuterHTML } from "../html/render.ts";
+import { Datex } from "unyt_core/datex.ts";
 
 
 export class BackendManager {
 	
+	srcPrefix = "/@uix/src/"
+
 	#scope: Path
 	#base_path: Path
 	#web_path: Path
 	#entrypoint?: Path
 	#web_entrypoint?: Path
 	#watch: boolean
+
+	get watch() {return this.#watch}
 
 	#module?: Record<string,any>
 	#content_provider?: html_content_or_generator_or_preset
@@ -35,7 +43,7 @@ export class BackendManager {
 		this.#base_path = base_path;
 		this.#watch = watch;
 
-		this.#web_path = new Path(`uix:///@${this.#scope.name}/`);
+		this.#web_path = new Path(`uix://${this.srcPrefix}${this.#scope.name}/`);
 		try {
 			const entrypoint_path = getExistingFileExclusive(this.#scope, ...ALLOWED_ENTRYPOINT_FILE_NAMES);
 			this.#entrypoint = entrypoint_path ? new Path(entrypoint_path) : undefined;
@@ -70,20 +78,26 @@ export class BackendManager {
 			const module = this.#module = <any> await datex.get(this.#entrypoint);
 			this.#content_provider = module.default ?? (Object.getPrototypeOf(module) !== null ? module : null);
 			// default ts export, or just the result if DX and not ts module
-			collapseToContent(this.#content_provider); // load fully
+			await collapseToContent(this.#content_provider); // load fully
 			return this.#content_provider;
 		}
 		return null;
 	}
 
 
-	public getEntrypointHTMLContent(path?: string) {
+	public async getEntrypointHTMLContent(path?: string, context?:ContextGenerator|Context): Promise<[content:string|Blob, render_method:RenderMethod]> {
 		// extract content from provider, depending on path
-		const content = collapseToContent(this.#content_provider, path, true);
-		
+		const [content, render_method] = await collapseToContent(this.#content_provider, path, context, true);
+
+		// raw file content
+		if (content instanceof Blob) return [content, RenderMethod.RAW_CONTENT];
+
+		// Markdown
+		if (content instanceof Datex.Markdown) return [await getOuterHTML(content.getHTML(false), {includeShadowRoots:true, rootDir:this.#base_path}), render_method];
+
 		// convert content to valid HTML string
-		if (content instanceof HTMLElement) return content.getOuterHTML({includeShadowRoots:true, rootDir:this.#base_path});
-		else return HTMLUtils.escapeHtml(content?.toString() ?? "");
+		if (content instanceof HTMLElement) return [await getOuterHTML(content, {includeShadowRoots:true, rootDir:this.#base_path}), render_method];
+		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method];
 	}
 
 }

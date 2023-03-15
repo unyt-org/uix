@@ -1,7 +1,7 @@
 
 // global event listeners
 
-import { root_container, global_states, logger, notification_container, unsaved_components } from "../utils/global_values.ts";
+import { global_states, logger, notification_container, unsaved_components } from "../utils/global_values.ts";
 import { IS_HEADLESS, VERSION } from "../utils/constants.ts";
 import { Handlers } from "./handlers.ts";
 import { Res } from "./res.ts";
@@ -54,10 +54,6 @@ if (!IS_HEADLESS) {
 		}
 	}
 
-	// setup page
-	document.body.append(notification_container);
-
-
     // keyboard overlay content (on chrome)
     if ('virtualKeyboard' in navigator) {
         // @ts-ignore
@@ -65,20 +61,11 @@ if (!IS_HEADLESS) {
     }
 
     // header meta tag for mobile viewport sizing,  allow content over notch
-    document.head.insertAdjacentHTML('beforeend', '<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>')
+	if (!document.querySelector("meta[name=viewport]")) document.head.insertAdjacentHTML('beforeend', '<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>')
     // to change app color
-    document.head.insertAdjacentHTML('beforeend', '<meta name="theme-color"/>')
-
-    // const skel = State.getSkeleton();
-    // if (skel) State.renderSkeleton(skel);
-    // addEventListener("unload", ()=>{
-    //     logger.debug(`Exit - Saving DOM Skeleton...`);
-    //     State.saveSkeleton(<Components.Base<any>>root_container.children[0]);
-    // }, {capture: true});
+    if (!document.querySelector("meta[name=theme-color]")) document.head.insertAdjacentHTML('beforeend', '<meta name="theme-color"/>')
 
 
-	
-	
 	// Activate if Safari sucks:
 	// if (/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
 	//     window.location.href = "https://www.google.com/chrome/"
@@ -107,9 +94,13 @@ if (!IS_HEADLESS) {
 		return confirmationMessage;
 	});
 
-	// load document style
-	addStyleSheet(document.head, new URL("../style/document.css", import.meta.url));
+	// load document + body style, if not yet added
 
+	const body_style_url = new URL("../style/body.css", import.meta.url).toString();
+	const document_style_url = new URL("../style/document.css", import.meta.url).toString();
+
+	if (!IS_HEADLESS && !document.head.querySelector("link[href='"+document_style_url+"']")) addStyleSheet(document.head, document_style_url);
+	if (!IS_HEADLESS && document.body.shadowRoot && !document.body.shadowRoot.querySelector("link[href='"+body_style_url+"']")) addStyleSheet(document.body.shadowRoot, body_style_url);
 }
 
 @scope("uix") class UIXDatexScope {

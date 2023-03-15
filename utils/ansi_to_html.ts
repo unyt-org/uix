@@ -188,7 +188,7 @@ function escapeSpecialChars(content:string) {
 		.replace(/>/g, "&gt;")
 		.replace(/"/g, "&quot;")
 		.replace(/'/g, "&#39;");   
- }
+}
 
 export function convertANSIToHTML(content:string){
     

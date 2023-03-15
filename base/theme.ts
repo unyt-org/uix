@@ -132,11 +132,11 @@ export class Theme  {
 
 	static #current_style = "flat";
 	static #style_handlers:Map<string,(element:HTMLElement)=>void> = new Map();
-	static #current_mode:Datex.Pointer<"dark"|"light"> = static_pointer(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light", f('@@000000000000000000000000'), 1236, "$uix_mode");
+	static #current_mode:Datex.Pointer<"dark"|"light"> = eternal ?? $$(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") as Datex.Pointer<"dark"|"light">;// static_pointer(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light", f('@@000000000000000000000000'), 1236, "$uix_mode");
 	static #transition_mode:Datex.Pointer<"dark"|"light">|undefined;
 	static #current_light_theme:ThemeProperties = this.LIGHT;
 	static #current_dark_theme:ThemeProperties = this.DARK;
-	static #auto_mode = true;
+	static #auto_mode = eternal ?? $$(true);
 
 	static #current_theme_style_sheet = new window.CSSStyleSheet();
 	static #current_theme_style_sheet_added = false;
@@ -151,8 +151,8 @@ export class Theme  {
 
 	static get colors() {return this.#colors}
 
-	static get auto_mode() {return this.#auto_mode}
-	static set auto_mode(auto_mode:boolean) {this.#auto_mode = auto_mode}
+	static get auto_mode() {return this.#auto_mode.val}
+	static set auto_mode(auto_mode:boolean) {this.#auto_mode.val = auto_mode}
 
 	// add a new light theme (updates immediately if current mode is light)
 	public static setLightTheme(theme:{[key:string]:any}) {
@@ -173,12 +173,15 @@ export class Theme  {
 		const mode = Datex.Value.collapseValue(_mode, true, true);
 		if (!force_update && this.#current_mode.val == mode) return;
 		else {
-			if (persist) this.#auto_mode = false; // keep theme even if os changes theme
+			if (persist) this.#auto_mode.val = false; // keep theme even if os changes theme
 			logger.debug("mode changed to " + mode);
 			this.update(mode == "dark" ? this.#current_dark_theme : this.#current_light_theme, mode);
 
 			// css global color scheme
-			if (!IS_HEADLESS) document.body.style.colorScheme = mode;
+			if (!IS_HEADLESS) {
+				document.body.style.colorScheme = mode;
+				document.body.dataset.colorScheme = mode;
+			}
 		}
 	}
 
@@ -246,9 +249,14 @@ export class Theme  {
 				if (added_properties.has(key)) continue;
 				added_properties.add(key);
 				if (key == '__name') continue;
-				text += `--${key}: ${value};` // TODO escape?
+				text += `--${key}: ${value};` // TODO escape?				
 			}
 		}
+
+		// update default current text colors
+		text += `--current_text_color: var(--text);`
+		text += `--current_text_color_highlight: var(--text_highlight);`
+		text += `color: var(--current_text_color);`
 
 		text += "}";
 

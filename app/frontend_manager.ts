@@ -15,13 +15,19 @@ import { logger } from "../utils/global_values.ts";
 
 export class FrontendManager {
 
+	srcPrefix = "/@uix/src/"
+	externalPrefix = "/@uix/external/"
+	debugPrefix = "/@uix/debug/"
+
+	srcPrefixRegex = String.raw `\/@uix\/src\/`
+
 	constructor(app_options:normalized_app_options, scope:URL, base_path:URL, backend?:BackendManager, watch = false, live = false) {
 
 		validateDirExists(scope, 'frontend');
 
 		this.#scope = new Path(scope);
 		this.#base_path = new Path(base_path);
-		this.#web_path = new Path(`uix:///@${this.#scope.name}/`);
+		this.#web_path = new Path(`uix://${this.srcPrefix}${this.#scope.name}/`);
 		this.#backend = backend;
 
 		this.#app_options = app_options;
@@ -69,11 +75,11 @@ export class FrontendManager {
 					handle_out_of_scope_path: (path: Path|string, from:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects, compat)
 				}),
 				on_file_update: this.#watch ? ()=>{
-					if (this.#backend) this.#backend.restart();
+					if (this.#backend?.watch) this.#backend.restart();
 					this.handleFrontendReload();
 				} : undefined
 			})
-			this.#common_transpilers.set(common_dir.toString(), [transpiler, '/@' + new Path(common_dir).name + '/'])
+			this.#common_transpilers.set(common_dir.toString(), [transpiler, this.srcPrefix + new Path(common_dir).name + '/'])
 
 		}
 	}
@@ -145,23 +151,24 @@ export class FrontendManager {
 
 		if (this.server.running) return;
 
-		// bind @frontend to scope
-		this.server.path(new RegExp(String.raw `^\/@${this.#scope.name}\/.*`), (req, path)=>{
+		// bind /@uix/frontend to scope
+		this.server.path(new RegExp(String.raw `^${this.srcPrefixRegex}${this.#scope.name}\/.*`), (req, path)=>{
 			return path.replace(this.#web_path.pathname, '/');
 		});
 
 		// handled default web paths
-		this.server.path("/", (req, path)=>this.handleIndexHTML(req, path));
+		this.server.path("/", (req, path, con)=>this.handleIndexHTML(req, path, con));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
 
+		// TODO: remap to @uix/ paths
 		this.server.path("/new.html", (req, path)=>this.handleNewHTML(req, path));
 		if (this.#app_options.installable) this.server.path("/manifest.json", (req, path)=>this.handleManifest(req, path));
 		this.server.path("/_uix_sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/_uix_sw.ts", (req, path)=>this.handleServiceWorker(req, path));
 
-		// handle routes (ignore @_internal, @backend, .dx, ...)
-		this.server.path(/^\/[^@.].*/, (req, path)=>{
-			this.handleIndexHTML(req, path)
+		// handle routes (ignore /@uix/.... .dx)
+		this.server.path(/^((?!^(\/@uix\/|\/\.dx)).)*$/, (req, path, con)=>{
+			this.handleIndexHTML(req, path, con)
 		});
 
 
@@ -193,7 +200,7 @@ export class FrontendManager {
 			const module_type = getDirType(this.#app_options, module_path);
 
 			if (import_type == "backend") {
-				const web_path = '/@' + mapped_import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
+				const web_path = this.srcPrefix + mapped_import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
 				const import_pseudo_path = this.#scope.getChildPath(web_path);
 				// const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
 
@@ -232,7 +239,7 @@ export class FrontendManager {
 				}
 				// resolve from common
 				else if (module_type == "common") {
-					const web_path = '/@' + mapped_import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
+					const web_path = this.srcPrefix + mapped_import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
 					return web_path
 				}
 
@@ -268,7 +275,7 @@ export class FrontendManager {
 
 		else if (module_type == "frontend") {
 			const escaped_specifier = specifier.replace(/[^A-Za-z0-9_\-.]/g, '_') + '.dx.ts';
-			const web_path = '/@_external/' + escaped_specifier;
+			const web_path = this.externalPrefix + escaped_specifier;
 			const import_pseudo_path = this.#scope.getChildPath(web_path);
 
 			if (!no_side_effects) this.createTypescriptInterfaceFiles(web_path, specifier, import_pseudo_path, module_path, imports);
@@ -341,7 +348,7 @@ export class FrontendManager {
 
 	// create ts + d.ts interface file for ts/dx/dxb file and try to update import map
 	private async createTypescriptInterfaceFiles(web_path:string, import_path_or_specifier:Path|string, import_pseudo_path:Path, module_path:Path, imports:Set<string>){
-		const {ts, dts} = await this.generateTypeScriptInterface(import_path_or_specifier, web_path.replace(/^\/@/,'').replace(/.dx.ts$/, '.dx').replace(/.dxb.ts$/, '.dxb'), module_path, imports);
+		const {ts, dts} = await this.generateTypeScriptInterface(import_path_or_specifier, web_path.replace(new RegExp(String.raw`^${this.srcPrefixRegex}`), '').replace(/.dx.ts$/, '.dx').replace(/.dxb.ts$/, '.dxb'), module_path, imports);
 		await this.transpiler.addVirtualFile(import_pseudo_path, ts, true);
 		if (dts) {
 			const actual_path = await this.transpiler.addVirtualFile(import_pseudo_path.replaceFileExtension("ts", "d.ts"), dts, true);
@@ -449,9 +456,9 @@ catch {
 	logger.warn("Could not enable live page reloads");
 }
 `
-		await this.transpiler.addVirtualFile("@_internal/live.ts", script);
+		await this.transpiler.addVirtualFile(this.debugPrefix.slice(1)+"live.ts", script);
 
-		this.#client_scripts.push("/@_internal/live.ts")
+		this.#client_scripts.push(this.debugPrefix+"live.ts")
 
 	}
 
@@ -483,13 +490,29 @@ catch {
 		}, 200); // wait some time until next update triggered
 	}
 
-	private async handleIndexHTML(requestEvent: Deno.RequestEvent, path:string) {
+	private getUIXContextGenerator(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn){
+		return ()=>{
+			return new UIX.ContextBuilder()
+				.setRequestData(requestEvent, path, conn)
+				.build()
+		}
+	}
+
+	private async handleIndexHTML(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn) {
 		const compat = Server.isSafariClient(requestEvent.request);
 		try {
 			this.updateCheckEntrypoint();
-			const prerendered_content = this.#backend?.getEntrypointHTMLContent(path);
+			const [prerendered_content, render_method] = await this.#backend?.getEntrypointHTMLContent(path, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
 
-			await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(prerendered_content, this.#client_scripts, ['uix/style/document.css'], this.#entrypoint, this.#backend?.web_entrypoint, compat));
+			// serve raw content
+			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
+				await this.server.serveContent(requestEvent, <any>(<Blob>prerendered_content).type, prerendered_content, [], prerendered_content._http_status);
+			}
+
+			// serve normal page
+			else {
+				await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(<string> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css'], ['uix/style/body.css'], this.#entrypoint, this.#backend?.web_entrypoint, compat));
+			}
 		} catch (e) {
 			console.log(e)
 			await this.server.sendError(requestEvent, 500);
@@ -499,7 +522,7 @@ catch {
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
-		await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage("", [...this.#client_scripts, this.#BLANK_PAGE_URL], [], undefined, undefined, compat));
+		await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage("", UIX.RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], ['uix/style/document.css'], ['uix/style/body.css'], undefined, undefined, compat));
 	}
 
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {
@@ -576,12 +599,12 @@ catch {
 	}
 
 
-	private generateHTMLPage(prerendered_content?:string, js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, compat_import_map = false){
+	private generateHTMLPage(prerendered_content?:string, render_method:UIX.RenderMethod = UIX.RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string)[] = [], body_css_files:(URL|string)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, compat_import_map = false){
 		let files = '';
 		let importmap = ''
 
-		// only use js if entrypoints are loaded, otherwise just static content
-		const use_js = !!(frontend_entrypoint || backend_entrypoint || this.#live);
+		// use js if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content
+		const use_js = (render_method == UIX.RenderMethod.DYNAMIC || render_method == UIX.RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || this.#live);
 		
 		//js files
 		if (use_js) {
@@ -606,19 +629,22 @@ catch {
 
 			// load frontend entrypoint first
 			if (frontend_entrypoint) {
-				files += indent(4) `\n\nconst frontend_entrypoint = await datex.get("${this.resolveImport(frontend_entrypoint, compat_import_map).toString()}");`
+				files += indent(4) `\n\nconst _frontend_entrypoint = await datex.get("${this.resolveImport(frontend_entrypoint, compat_import_map).toString()}");`
 			}
 
 			// hydration with backend content after ssr
 			if (backend_entrypoint) {
 				// load default export of ts module or dx export
-				files += indent(4) `\n\nconst backend_entrypoint = await datex.get("${this.resolveImport(backend_entrypoint, compat_import_map).toString()}");\nif (backend_entrypoint.default) UIX.State.set(backend_entrypoint.default)\nelse if (backend_entrypoint && Object.getPrototypeOf(backend_entrypoint) != null) UIX.State.set(backend_entrypoint);`
+				files += indent(4) `\n\nconst _backend_entrypoint = await datex.get("${this.resolveImport(backend_entrypoint, compat_import_map).toString()}");let backend_entrypoint;\nif (_backend_entrypoint.default) backend_entrypoint = _backend_entrypoint.default\nelse if (_backend_entrypoint && Object.getPrototypeOf(_backend_entrypoint) != null) backend_entrypoint = _backend_entrypoint;`
 			}
 			// alternative: frontend rendering
 			if (frontend_entrypoint) {
 				// load default export of ts module or dx export
-				files += indent(4) `\nif (frontend_entrypoint.default) UIX.State.set(frontend_entrypoint.default)\nelse if (frontend_entrypoint && Object.getPrototypeOf(frontend_entrypoint) != null) UIX.State.set(frontend_entrypoint);`
+				files += indent(4) `\nlet frontend_entrypoint; if (_frontend_entrypoint.default) frontend_entrypoint = _frontend_entrypoint.default\nelse if (_frontend_entrypoint && Object.getPrototypeOf(_frontend_entrypoint) != null) frontend_entrypoint = _frontend_entrypoint;`
 			}
+
+			files += `await UIX.Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint)`
+
 			files += '\n</script>'
 
 			if (this.#app_options.import_map) importmap = `<script type="importmap">\n${JSON.stringify(this.getRelativeImportMap(), null, 4)}\n</script>`	
@@ -632,11 +658,14 @@ catch {
 
 		// global variable stylesheet
 		global_style += "<style>"
-		// for (const rule of <any>UIX.Theme.stylesheet.cssRules) {
-		// 	global_style += rule.cssText;
-		// }
 		global_style += UIX.Theme.getCSSSnapshot().replaceAll("\n","");
 		global_style += "</style>"
+
+		let body_style = ''
+		// stylesheets
+		for (const stylesheet of body_css_files) {
+			body_style += `<link rel="stylesheet" href="${this.resolveImport(stylesheet, true)}">\n`;
+		}
 
 		let favicon = "";
 		if (this.#app_options.icon_path) favicon = `<link rel="icon" href="${this.resolveImport(this.#app_options.icon_path, compat_import_map)}">`
@@ -648,18 +677,22 @@ catch {
 			<!DOCTYPE html>
 			<html>
 				<meta charset="UTF-8">
+				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+				<meta name="theme-color"/>
 				<head>
 					${title}
 					${favicon}
 					${this.#app_options.installable ? `<link rel="manifest" href="manifest.json">` : ''}
-					${global_style}
 					${importmap}
+					${global_style}
+					${files}
 				</head>
 				<body>
-					<main id=main>
-						${prerendered_content??''}
-					</main>
-					${files}
+					<template shadowrootmode=open>
+						<slot id=main></slot>
+						${body_style}
+					</template>
+					${prerendered_content??''}
 				</body>
 			</html>
 		`

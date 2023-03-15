@@ -267,7 +267,7 @@ export namespace HTMLUtils {
 	}
 
 	// append an element or text to an element
-	export function append<T extends HTMLElement>(element:T, content:Datex.CompatValue<HTMLElement|Text|string>):T {
+	export function append<T extends HTMLElement>(element:T, content:Datex.CompatValue<HTMLElement|Text|string|number|bigint|boolean>):T {
 		if (content instanceof HTMLElement || content instanceof Text) element.append(content);
 		else if (typeof content == "string" || typeof content == "number" || typeof content == "boolean" || typeof content == "bigint") element.append(content);
 		else {

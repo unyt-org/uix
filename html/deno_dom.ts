@@ -21,7 +21,22 @@ if (IS_HEADLESS) {
 	globalThis.customElements = window.customElements;
 	globalThis.Text = window.Text
 	globalThis.MutationObserver = window.MutationObserver;
+	globalThis.IntersectionObserver = window.IntersectionObserver;
+	globalThis.Comment = window.Comment;
+	globalThis.Document = window.Document;
+	globalThis.NodeFilter = window.NodeFilter;
+	globalThis.NodeIterator = window.NodeIterator;
+
+	globalThis.Node = window.Node;
+	globalThis.NodeList = window.NodeList;
+	globalThis.requestAnimationFrame = ()=>0;
+
+	// globalThis.location = new URL(import.meta.url);
+
+	globalThis.CSSStyleDeclaration = window.CSSStyleDeclaration;
 
 	globalThis.CSSStyleSheet = (await import("./deno_css_style_sheet.ts")).CSSStyleSheet;
 
+	// globalThis.CSSStyleSheet = window.CSSStyleSheet;
+	// await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
 }

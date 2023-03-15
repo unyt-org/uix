@@ -157,8 +157,8 @@ export class ElementWithMenu<O extends ELEMENT_WITH_MENU_OPTIONS = ELEMENT_WITH_
         return this.options.main_element?.onRoute(identifier)
     }
 
-    override getCurrentRoute() {
-        return this.options.main_element?.getCurrentRoute()
+    override getInternalRoute() {
+        return this.options.main_element?.getInternalRoute()
     }
 }
 

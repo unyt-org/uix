@@ -18,45 +18,6 @@ export namespace DatexEditor {
 
 globalThis.DX_INSERT = []; // for default ? values
 
-const example_script_info = {
-    de: ["DATEX Playground", "Erstellt von", "Mehr Infos zu DATEX:", "Lade andere zu diesem Playground ein:"],
-    en: ["DATEX Playground", "Created by", "More info about DATEX:", "Share this playground with others:"],
-}
-
-
-export function getExampleScript(lang:'de'|'en' = 'en', id?:string, endpoint = Datex.Runtime.endpoint) {
-    const info = example_script_info[lang] ?? example_script_info['en'];
-    return `##########################################################################
-
-${info[0]} 
-
-${info[1]} ${endpoint}
-${info[2]} https://datex.unyt.org${id ? `\n${info[3]} https://playground.unyt.org/#${id}`:''}
-
-##########################################################################
-
-
-use print from #std;
-
-print 'Executed on (#endpoint), initiated by (#origin)';
-print (@example :: 'Executed on (#endpoint), initiated by (#origin)');`
-/*
-# example object:
-{
-    "json key": "json value",
-    values: ['1', 2, 3.0, 0xff, -infinity, nan, true, null, void],
-    advanced: [
-        <Set> [1,2,3,4],
-        69kg,
-        https://unyt.org,
-        @example,
-        'template string with evaluated expression: (5 * 10m)',
-        (true or false) and (1+1 == 2)
-    ]
-}
-*/
-}
-
 // Datex Editor
 @UIX.Group("Datex")
 @UIX.Component<DatexEditor.Options>({
@@ -131,13 +92,17 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         }
     }
 
+    #testBtn?:UIX.Elements.Button
+
     private async createHeader(){
 
         const settings = props(this.settings);
 
         const header_els:{element:HTMLElement}[] = [
-            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({marginRight:'10px', padding: '2px 6px'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+            {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({padding: '2px 6px'})},
+            {element: (this.#testBtn = new UIX.Elements.Button({onClick:()=>this.testDatex(), content:await text`<span>${I`fas-vial`} ${S('test')}</span>`, color:'var(--green)', text_color:'#151515'}).css({padding: '2px 6px', display:'none'}))},
+
+            {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({marginLeft:'10px', padding: '2px 6px'})},
             {element: new UIX.Elements.Button({onClick:()=>this.openFile(), content:await text`<span>${I`fa-file-invoice`} ${S('open_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
             {element: new UIX.Elements.Button({onClick:()=>this.saveFile(), content:await text`<span>${I`fa-save`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
         ]
@@ -159,6 +124,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         }
 
         this.header = new UIX.Elements.Header(header_els, {gaps:5, margin_bottom:true, seperator:true});
+        this.#testBtn.style.display = "none"
 
         this.header.style.padding = "10px";
         this.header.style.paddingTop = "1px";
@@ -170,9 +136,15 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
     _first = false;
 
-    runDatex(v2=false):string{
+    runDatex(v2=false):string {
         const req = this.monaco.getContent();
         this.sendDatexRequest(req,v2);
+        return req;
+    }
+
+    testDatex(v2=false): string {
+        const req = this.monaco.getContent();
+        this.sendDatexRequest(req,v2, ['test']);
         return req;
     }
 
@@ -205,6 +177,8 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
             this.monaco.setContent(<string> content)
         });
 
+        this.checkHasTests(Datex.Value.collapseValue(content, true, true))
+
         if (this.#current_content instanceof Datex.Value) this.addMonacoListener()
     }
 
@@ -212,6 +186,11 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         if (this.#monaco_listener_initialized) return;
         this.#monaco_listener_initialized = true;
         this.monaco.addChangeListener(()=>{
+
+            const content = this.monaco.getContent();
+            // has tests?
+            this.checkHasTests(content)
+
             if (!(this.#current_content instanceof Datex.Value)) return;
             console.log("editor updated")
             // don't trigger local observer to update editor again, editor was already updated internally
@@ -219,8 +198,14 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
                 this.#silent_update = true;
             }
             this.#was_external_update = false;
-            this.#current_content.val = this.monaco.getContent()
+            this.#current_content.val = content
         })
+    }
+
+    // has tests (extension test())?
+    checkHasTests(content:string) {
+        if (content.match(/extension\s+test\s*\(/gm)) this.#testBtn.style.display = "initial"
+        else this.#testBtn.style.display = "none"
     }
 
     getContent(){
@@ -278,7 +263,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         sid: Math.round(Math.random()*20000)
     }
 
-    async sendDatexRequest(request:string, v2=false) {
+    async sendDatexRequest(request:string, v2=false, extensions?:string[]) {
         this._first = true;
 
         try {
@@ -294,7 +279,8 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
                     end_of_scope: this.settings.end_of_scope,
                     sid: this.settings.sid,
                     return_index: this.settings.intermediate_result ? Datex.Compiler.getNextReturnIndexForSID(this.settings.sid) : 0,
-                    __v2:v2
+                    __v2:v2,
+                    required_extensions:extensions
                 }
             ], this.endpoint, this.settings.sid);
             

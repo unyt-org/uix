@@ -76,7 +76,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
         this.outer_container.append(this.bg_container);
 
         // child elements are added here
-        this.node_container = this.slot_element;
+        this.node_container = this.content;
         this.node_container.style.position = "absolute";
         this.node_container.style.display = "block";
         this.node_container.style.width = "100%";
@@ -104,10 +104,14 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
         this.select_box.style.zIndex = "1000";
         this.outer_container.append(this.select_box);
 
-        this.content.append(this.outer_container);
+        this.content_container.append(this.outer_container);
 
         this.content.style.width = "100%";
         this.content.style.height = "100%";
+        this.content.style.overflow = "visible";
+
+        this.content_container.style.height = "100%";
+        this.content_container.style.height = "100%";
 
         this.handleContainerChanges();
 
@@ -285,8 +289,8 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
         const SCALE_CHANGE = 1.02; // factor by which the scale changes
 
         if (this.options.zoomable) {
-            this.content.addEventListener('wheel', (e:WheelEvent) => {    
-                let bounds = this.content.getBoundingClientRect()
+            this.content_container.addEventListener('wheel', (e:WheelEvent) => {    
+                let bounds = this.content_container.getBoundingClientRect()
                 let x = (e.clientX - bounds.x)
                 let y = (e.clientY - bounds.y)
     
@@ -347,7 +351,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                 e.stopPropagation();
             }
 
-            this.content.addEventListener("mousedown", e => {
+            this.content_container.addEventListener("mousedown", e => {
                 if (e.button == 2) {
                     e.stopPropagation();
                     return; // contextmenu mousedown
@@ -369,7 +373,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                     this.select_box.style.height = "0px";
                 }
                 else {
-                    this.content.style.cursor = "grabbing";
+                    this.content_container.style.cursor = "grabbing";
                     this.select_box.style.display = "none";
                 } 
                 
@@ -389,7 +393,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
             window.addEventListener("mouseup", e => {
                 if (moving) {
                     window.removeEventListener("mousemove", handle_move, true)
-                    this.content.style.cursor = "default";
+                    this.content_container.style.cursor = "default";
                     moving = false;
                     moving_select_box = false;
                     this.select_box.style.display = "none";
@@ -414,7 +418,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
 
     // get container-local x and y from client x,y for nodes inside node_container
     protected globalPositionToLocalPosition(clientX:number, clientY:number){
-        let bounds = this.content.getBoundingClientRect()
+        let bounds = this.content_container.getBoundingClientRect()
         let x = clientX - bounds.x;
         let y = clientY - bounds.y;
 
@@ -429,7 +433,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
     
     // return container-global x and y
     protected getMousePositionInContainer(clientX:number, clientY:number){
-        let bounds = this.content.getBoundingClientRect()
+        let bounds = this.content_container.getBoundingClientRect()
         let x = clientX - bounds.x;
         let y = clientY - bounds.y;
 

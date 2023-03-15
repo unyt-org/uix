@@ -2,12 +2,12 @@ import { Component, NoResources, Group as UIXGroup } from "../base/decorators.ts
 import { Base } from "./base.ts";
 import { DragGroup } from "./drag_group.ts";
 import { property } from "unyt_core";
-import { Node } from "./node.ts";
+import { Node, NodeConnection, NodeConnector } from "./node.ts";
 import { logger } from "../utils/global_values.ts";
 
 export namespace NodeGroup {
     export interface Options extends DragGroup.Options {
-        default_connection_options?: Node.Connection.Options // line, right_angle, ...
+        default_connection_options?: NodeConnection.Options // line, right_angle, ...
     }
 }
 
@@ -31,11 +31,11 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
     override async onCreate(){
 
         // recreate saved connections
-        for (let connection of this.connections) {
+        for (const connection of this.connections) {
             this.addConnection(connection);
         }
 
-        await super.onCreate()
+        await super.onCreate?.()
     }
 
     // TODO onShow?
@@ -57,7 +57,7 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
         }
     }
 
-    public static deleteConnection(connection:Node.Connection) {
+    public static deleteConnection(connection:NodeConnection) {
         
         const group = this.node_groups_by_connection.get(connection);
 
@@ -80,12 +80,12 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
     }
 
     // update the connection rendering
-    public updateConnection(connection: Node.Connection, mouse_e_end?:MouseEvent) {
+    public updateConnection(connection: NodeConnection, mouse_e_end?:MouseEvent) {
         connection.handleUpdate(this.outer_container.getBoundingClientRect(), this.options._zoom, mouse_e_end)
     }
 
     // a node connector has been clicked
-    public onNodeConnectorClicked(node:Node, connector:Node.Connector) {
+    public onNodeConnectorClicked(node:Node, connector:NodeConnector) {
 
         // close connection
         if (this.moving_connection) {
@@ -131,7 +131,7 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
 
 
     // hovering over a node connector
-    public onNodeConnectorMouseIn(node:Node, connector:Node.Connector){
+    public onNodeConnectorMouseIn(node:Node, connector:NodeConnector){
         if (this.moving_connection) {
             // bind temporary connector
             if (!this.moving_connection.c1) this.moving_connection.temp_c1 = connector;
@@ -140,7 +140,7 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
         }
     }
 
-    public onNodeConnectorMouseOut(node:Node, connector:Node.Connector){
+    public onNodeConnectorMouseOut(node:Node, connector:NodeConnector){
         // if (this.moving_connection) {
         //     this.moving_connection.temp_c1 = null;
         //     this.moving_connection.temp_c2 = null;
@@ -149,23 +149,23 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
     }
 
     // connect node connectors with a line
-    public startNodeConnection(connector:Node.Connector) {
+    public startNodeConnection(connector:NodeConnector) {
         //console.log("start connect", connector);
         const item_data = Node.getItemDataForConnector(connector);
         const [options, end_1, end_2] = this.getDefaultConnectionForConnector(connector.options, item_data);
         this.createConnection(connector, undefined, end_1, end_2, options);
     }
 
-    @property protected connections = new Set<Node.Connection>();
-    public static connections_by_connector = new Map<Node.Connector, Set<Node.Connection>>();
-    public static node_groups_by_connection = new Map<Node.Connection, NodeGroup>();
-    protected static nodes_for_connectors = new Map<Node.Connector, Node>();
+    @property protected connections = new Set<NodeConnection>();
+    public static connections_by_connector = new Map<NodeConnector, Set<NodeConnection>>();
+    public static node_groups_by_connection = new Map<NodeConnection, NodeGroup>();
+    protected static nodes_for_connectors = new Map<NodeConnector, Node>();
 
-    protected moving_connection:Node.Connection = null;
+    protected moving_connection:NodeConnection = null;
     private moving_connection_listener:(e)=>void = null;
 
 
-    public setMovingConnection(connection: Node.Connection) {
+    public setMovingConnection(connection: NodeConnection) {
         this.moving_connection = connection;
         this.moving_connection.element.style.zIndex = "10000";
 
@@ -175,12 +175,12 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
         this.content.addEventListener("mousemove", this.moving_connection_listener)
     }
 
-    public createConnection(out_connector?:Node.Connector, in_connector?:Node.Connector, out_end?:string, in_end?:string, options?:Node.Connection.Options){
-        const connection = new Node.Connection(this, out_connector, in_connector, out_end, in_end, this.options.default_connection_options ? {...this.options.default_connection_options, ...options} : options);
+    public createConnection(out_connector?:NodeConnector, in_connector?:NodeConnector, out_end?:string, in_end?:string, options?:NodeConnection.Options){
+        const connection = new NodeConnection(this, out_connector, in_connector, out_end, in_end, this.options.default_connection_options ? {...this.options.default_connection_options, ...options} : options);
         this.addConnection(connection);
     }
 
-    public addConnection(connection:Node.Connection){
+    public addConnection(connection:NodeConnection){
 
         // invalid state because a node is missing
         if ((connection.c1 && !NodeGroup.nodes_for_connectors.has(connection.c1)) || (connection.c2 && !NodeGroup.nodes_for_connectors.has(connection.c2))) {
@@ -220,11 +220,11 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
         }
     }
   
-    public static setConnectorNode(connector:Node.Connector, node:Node) {
+    public static setConnectorNode(connector:NodeConnector, node:Node) {
         NodeGroup.nodes_for_connectors.set(connector, node);
     }
 
-    public static getConnectorNode(connector:Node.Connector):Node {
+    public static getConnectorNode(connector:NodeConnector):Node {
         return NodeGroup.nodes_for_connectors.get(connector);
     }
 
@@ -235,7 +235,7 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
     }
 
     // @override 
-    getDefaultConnectionForConnector(connector_options:any, item_data:Node.item_data):[options?:Node.Connection.Options, end_1?:string, end_2?:string] {
+    getDefaultConnectionForConnector(connector_options:any, item_data:Node.item_data):[options?:NodeConnection.Options, end_1?:string, end_2?:string] {
         return []
     }
 

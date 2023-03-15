@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-namespace
 import { Component, NoResources, Group as UIXGroup } from "../base/decorators.ts"
 import { Base } from "./base.ts";
 import { I, S } from "../uix_short.ts";
@@ -29,7 +30,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
     declare protected body: HTMLElement
     declare protected collapse_toggle: Elements.ToggleButton
 
-    public connectors = new Set<Node.Connector>();
+    public connectors = new Set<NodeConnector>();
 
     // return additional context menu items
     protected override createContextMenu() {
@@ -189,18 +190,18 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         if (this.parent instanceof DragGroup) this.parent.onChildConstraintsChanged(this)
     }
     
-    static connector_dom_elements = new WeakMap<Node.Connector, HTMLElement>();
-    static connector_item_elements = new WeakMap<Node.Connector, HTMLElement>();
+    static connector_dom_elements = new WeakMap<NodeConnector, HTMLElement>();
+    static connector_item_elements = new WeakMap<NodeConnector, HTMLElement>();
     static item_data_by_generated_item = new WeakMap<HTMLElement, Node.item_data>();
     static item_data_by_connector_item = new WeakMap<HTMLElement, Node.item_data>();
     static connector_items_by_item_data = new WeakMap<Node.item_data, HTMLElement>();
 
 
-    public static getItemDataForConnector(connector: Node.Connector) {
+    public static getItemDataForConnector(connector: NodeConnector) {
         return this.item_data_by_connector_item.get(this.connector_item_elements.get(connector));
     }
 
-    public setConnectorActive(connector: Node.Connector) {
+    public setConnectorActive(connector: NodeConnector) {
         connector.active = true;
         // hide when connected
         if (this.options.connector_visibility == Node.CONNECTOR_VISIBILITY.HIDE_WHEN_CONNECTED || this.options.connector_visibility == Node.CONNECTOR_VISIBILITY.HIDE_WHEN_CONNECTED_OR_INACTIVE)
@@ -210,7 +211,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         this.onConnectorConnected(connector);
     }
 
-    public setConnectorInactive(connector: Node.Connector) {
+    public setConnectorInactive(connector: NodeConnector) {
         connector.active = false;
         // no more connections on this connection -> no longer active
         if (!NodeGroup.connections_by_connector.get(connector)?.size) {
@@ -223,7 +224,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
     // generate existing items (for reconstruct)
     private loadItems(){
-        for (let item_data of this.options.items) {
+        for (const item_data of this.options.items) {
             this.addItem(item_data, false, false);
         }
         this.updateConnectors();
@@ -234,11 +235,11 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
             right_connectors = 0,
             left_index = 0,
             right_index = 0,
-            height;
+            height = 0;
 
         // get number of connectors on each side if collapsed
         if (!this.options.expanded) {
-            for (let connector of this.connectors) {
+            for (const connector of this.connectors) {
                 if (connector.position == Node.CONNECTOR_POSITION.LEFT) left_connectors++;
                 else if (connector.position == Node.CONNECTOR_POSITION.RIGHT) right_connectors++;
             }
@@ -246,7 +247,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         }
 
         // update each connector
-        for (let connector of this.connectors) {
+        for (const connector of this.connectors) {
             let created_new = false;
 
             if (!Node.connector_dom_elements.has(connector)) {
@@ -254,11 +255,11 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                 Node.connector_dom_elements.set(connector, HTMLUtils.createHTMLElement(`<div class='node-connector'></div>`));
             }
           
-            let dom_element = Node.connector_dom_elements.get(connector);   
+            const dom_element = Node.connector_dom_elements.get(connector)!;   
 
             if (Node.connector_item_elements.has(connector)) {
                     if (connector.position == Node.CONNECTOR_POSITION.LEFT || connector.position == Node.CONNECTOR_POSITION.RIGHT) {
-                        if (this.options.expanded) connector.translate = Node.connector_item_elements.get(connector).offsetTop + Node.connector_item_elements.get(connector).offsetHeight/2 - dom_element.offsetHeight/2 + 5; // TODO why +5 ?
+                        if (this.options.expanded) connector.translate = Node.connector_item_elements.get(connector)!.offsetTop + Node.connector_item_elements.get(connector)!.offsetHeight/2 - dom_element.offsetHeight/2 + 15; // TODO why +15 ?
                         
                         // handle collapsed node
                         else {
@@ -267,13 +268,14 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                         }
                     }
                     else
-                        connector.translate = Node.connector_item_elements.get(connector).offsetLeft + Node.connector_item_elements.get(connector).offsetWidth/2 - dom_element.offsetWidth/2 + 5; // TODO why +5 ?
+                        connector.translate = Node.connector_item_elements.get(connector)!.offsetLeft + Node.connector_item_elements.get(connector)!.offsetWidth/2 - dom_element.offsetWidth/2 + 15; // TODO why +15 ?
             }
 
             // right position
             if (connector.position == Node.CONNECTOR_POSITION.LEFT) {
                 dom_element.style.left = '0';
                 dom_element.style.setProperty(this.connectorAlignToPosition(connector.align??Node.CONNECTOR_ALIGN.START, true), connector.translate+'px');
+                // dom_element.style.transform = 'translate(-5px, 5px)'
             }
             else if (connector.position == Node.CONNECTOR_POSITION.RIGHT) {
                 dom_element.style.right = '0';
@@ -284,7 +286,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
             else if (connector.position == Node.CONNECTOR_POSITION.BOTTOM) {
                 dom_element.style.bottom = '0';
                 dom_element.style.setProperty(this.connectorAlignToPosition(connector.align??Node.CONNECTOR_ALIGN.START, false), connector.translate+'px');
-                dom_element.style.transform = connector.align==Node.CONNECTOR_ALIGN.END ? 'translate(5px, 5px)':'translate(-5px, 5px)' // correct translation
+                dom_element.style.transform = connector.align==Node.CONNECTOR_ALIGN.END ? 'translate(5px, 5px)':'translate(-5px, -5px)' // correct translation
 
             }
             else if (connector.position == Node.CONNECTOR_POSITION.TOP) {
@@ -389,9 +391,9 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
     // add item dom + save item data in items array, initialize connectors
     addItem(item_data:Node.item_data, focus = false, save = true) {
-        if (save) item_data = pointer(item_data);
+        item_data = pointer(item_data);
 
-        let generated_content = this.generateItemContent(item_data, props(item_data).value, focus);
+        const generated_content = this.generateItemContent(item_data, props(item_data).value, focus);
         let content_element:HTMLElement;
         let options: {wrap:boolean} = {wrap: true};
 
@@ -423,7 +425,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
             if (!this.options.items) this.options.items = [];
             this.options.items.push(item_data)
         }
-        for (let connector of item_data.connectors) {
+        for (const connector of item_data.connectors) {
             if (!connector) {console.error("connector is null"); continue}
             this.connectors.add(connector)
             NodeGroup.setConnectorNode(connector, this);
@@ -512,14 +514,14 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
     // @override
     // options for other connector, options for current connector, number of existing connections for other connector, number of existing connections for current connector
-    isConnectionValid(options_1:object, options_2:object, connection_count_1:number, connection_count_2:number, connections_1:Set<Node.Connection>, connections_2:Set<Node.Connection>) {
+    isConnectionValid(options_1:object, options_2:object, connection_count_1:number, connection_count_2:number, connections_1:Set<NodeConnection>, connections_2:Set<NodeConnection>) {
         return true;
     }
 
 
     // @override
-    protected onConnectorConnected(connector: Node.Connector) {}
-    protected onConnectorDisconnected(connector: Node.Connector) {}
+    protected onConnectorConnected(connector: NodeConnector) {}
+    protected onConnectorDisconnected(connector: NodeConnector) {}
 
     override onShow(){
         this.updateConnectors();
@@ -535,12 +537,12 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
     // get all nodes connected to this node (parent must exist)
     // return array has an entry for each item, sorted
     // own_options: {option1: 'must be', options2: ['either a', 'or b']}
-    public getConnectedNodes<OPTIONS extends object = object>(own_options?:OPTIONS, other_options?:OPTIONS, only_first = false): {[item_index:number]: {node:Node, connection:Node.Connection}[]|undefined} {
+    public getConnectedNodes<OPTIONS extends object = object>(own_options?:OPTIONS, other_options?:OPTIONS, only_first = false): {[item_index:number]: {node:Node, connection:NodeConnection}[]|undefined} {
 
         const items = {};
         let index = 0;
         for (let item of this.options.items) {
-            let item_data: {node:Node, connection:Node.Connection}[];
+            let item_data: {node:Node, connection:NodeConnection}[];
 
             own_connectors:
             for (let connector of item.connectors) {
@@ -579,7 +581,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         return items;
     }
 
-    public getConnectedNode(own_options?:object, other_options?:object): {node:Node, connection:Node.Connection} {
+    public getConnectedNode(own_options?:object, other_options?:object): {node:Node, connection:NodeConnection} {
         return Object.values(this.getConnectedNodes(own_options, other_options, true))[0]?.[0]
     }
 
@@ -646,640 +648,571 @@ export namespace Node {
     export interface Options extends Base.Options {
         connector_visibility?: Node.CONNECTOR_VISIBILITY, // how to display connectors
         expanded?: boolean,
-        items?: {type:string, label:string, position:number, value:any, options?:object, connectors:Node.Connector[]}[] // items with content and list of connector ids/names
+        items?: {type:string, label:string, position:number, value:any, options?:object, connectors:NodeConnector[]}[] // items with content and list of connector ids/names
     }
 
-    export type item_data<V=any, O extends object=any> = {type:string, label:string, position:Node.ITEM_POSITION, value:V, options?:O, connectors:Node.Connector[]};
+    export type item_data<V=any, O extends object=any> = {type:string, label:string, position:Node.ITEM_POSITION, value:V, options?:O, connectors:NodeConnector[]};
 }
 
 
-export namespace Node {
 
-    @sync("uix:NodeConnector") export class Connector<OPTIONS extends object = any> {
+@sync("uix:NodeConnector") export class NodeConnector<OPTIONS extends object = any> {
     
-        @property position: CONNECTOR_POSITION;
-        @property align: CONNECTOR_ALIGN;
-        @property options: OPTIONS;
+    @property declare position: CONNECTOR_POSITION;
+    @property declare align: CONNECTOR_ALIGN;
+    @property declare options: OPTIONS;
+
+    active?: boolean;
+    translate?: number;
+
+    constructor(
+        position?: CONNECTOR_POSITION,
+        align?: CONNECTOR_ALIGN,
+        options?: OPTIONS
+    ){}
     
-        active: boolean;
-        translate: number;
-    
-        constructor(
-            position?: CONNECTOR_POSITION,
-            align?: CONNECTOR_ALIGN,
-            options?: OPTIONS
-        ){}
-        
-        @constructor construct(position:CONNECTOR_POSITION, align: CONNECTOR_ALIGN, options:OPTIONS) {
-            this.position = position;
-            this.align = align;
-            this.options = options;
-        }
+    @constructor construct(position:CONNECTOR_POSITION, align: CONNECTOR_ALIGN, options:OPTIONS) {
+        this.position = position;
+        this.align = align;
+        this.options = options;
     }
-    
+}
+
   
+@sync("uix:NodeConnection") export class NodeConnection {
     
-    
-    @sync("uix:Connection") export class Connection {
-    
-        #end1:string
-        #end2:string
+    #end1:string
+    #end2:string
 
-        #end1_svg:SVGGElement;
-        #end2_svg:SVGGElement;
+    #end1_svg:SVGGElement;
+    #end2_svg:SVGGElement;
 
+    
+    @property c1:NodeConnector
+    @property c2:NodeConnector
+    @property set end1(type:string) {
+        this.#end1 = type;
+        if (this.#end1) {
+            this.#end1_svg = NodeConnection.createEndSvg(this.#end1, this.options)
+            // larger offset required?
+            this.offset = Math.max(this.offset, NodeConnection.getGroupBox(this.#end1_svg)!.width, NodeConnection.getGroupBox(this.#end1_svg)!.height)
+        }
+    }
+    get end1() {return this.#end1}
+    @property set end2(type:string) {
+        this.#end2 = type;
+        if (this.#end2) {
+            this.#end2_svg = NodeConnection.createEndSvg(this.#end2, this.options)
+            // larger offset required?
+            this.offset = Math.max(this.offset, NodeConnection.getGroupBox(this.#end2_svg)!.width, NodeConnection.getGroupBox(this.#end2_svg)!.height)
+        }
+    }
+    get end2() {return this.#end2}
+    @property options:NodeConnection.Options
+
+    temp_c1:NodeConnector;
+    temp_c2:NodeConnector
+
+    protected static vertical_lines = new Map<number, _NodeConnection>(); // keep track of all vertical line positions to prevent collisions
+    protected static horizontal_lines = new Map<number, _NodeConnection>(); // keep track of all horizontal line positions to prevent collisions
+
+    public element:SVGElement
+
+    protected node_group: NodeGroup
+
+    x_start:number
+    x_end:number
+    y_start:number
+    y_end:number
+
+    get start_facing(){return this.getFacing(this.c1?.position ?? this.temp_c1?.position ?? CONNECTOR_POSITION.RIGHT)}
+    // c2 facing or temp c2 facing opposite c1 facing
+    get end_facing(){return this.c2?.position==undefined ? 
+        (this.temp_c2?.position==undefined ? {x:-this.start_facing.x, y:-this.start_facing.y} : this.getFacing(this.temp_c2.position)) :
+        this.getFacing(this.c2.position)
+    }
+ 
+    get delta_x(){return this.x_end - this.x_start}
+    get delta_y(){return this.y_end - this.y_start}
+
+    // get {x,y} from CONNECTOR_POSITION
+    private getFacing(position: CONNECTOR_POSITION): {x:number, y:number} {
+        switch (position) {
+            case CONNECTOR_POSITION.RIGHT: return {x:1, y:0};
+            case CONNECTOR_POSITION.LEFT: return {x:-1, y:0};
+            case CONNECTOR_POSITION.TOP: return {x:0, y:-1};
+            case CONNECTOR_POSITION.BOTTOM: return {x:0, y:1};
+            default: return {x:1, y:0};
+        }
+    }
+
+    // get angle in degrees in range (-180, 180)
+    private getFacingAngle(facing: {x:number, y:number}) {
+        return Math.atan2(facing.y, facing.x) * (180/Math.PI)
+    }
+    // mirror angle around axis in range (-180, 180)
+    private mirrorAngle(angle:number, axis:'x'|'y' = 'y') {
+        if (axis == 'x') return -angle;
+        else return -angle + (180*Math.sign(angle) || -180) // -180 is special case angle = 0
+    }
+
+    max_x = -Infinity
+    max_y = -Infinity
+    min_x = Infinity
+    min_y = Infinity
+
+    offset = 10;
+
+    protected clickListener = ()=>{
+        console.log("click node connection",this)
+    }
+
+    constructor(node_group:NodeGroup, c1:NodeConnector|undefined=undefined, c2:NodeConnector|undefined=undefined, end1?:string, end2?:string, options?:NodeConnection.Options) {
+        this.options = assignDefaultPrototype(NodeConnection.DEFAULT_OPTIONS, options);
+
+        this.c1 = c1;
+        this.c2 = c2;
+        this.end1 = end1;
+        this.end2 = end2;
+
+        this.node_group = node_group;
         
-        @property c1:Connector
-        @property c2:Connector
-        @property set end1(type:string) {
-            this.#end1 = type;
-            if (this.#end1) {
-                this.#end1_svg = Connection.createEndSvg(this.#end1, this.options)
-                // larger offset required?
-                this.offset = Math.max(this.offset, Connection.getGroupBox(this.#end1_svg).width, Connection.getGroupBox(this.#end1_svg).height)
-            }
-        }
-        get end1() {return this.#end1}
-        @property set end2(type:string) {
-            this.#end2 = type;
-            if (this.#end2) {
-                this.#end2_svg = Connection.createEndSvg(this.#end2, this.options)
-                // larger offset required?
-                this.offset = Math.max(this.offset, Connection.getGroupBox(this.#end2_svg).width, Connection.getGroupBox(this.#end2_svg).height)
-            }
-        }
-        get end2() {return this.#end2}
-        @property options:Connection.Options
+        // create svg
+        this.element = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        this.element.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+        this.element.setAttribute('width', '0');
+        this.element.setAttribute('height', '0');
+        this.element.style.position = "absolute";
+        this.element.style.pointerEvents = "none";
+        this.element.style.zIndex = "-1";
 
-        temp_c1:Connector;
-        temp_c2:Connector
+        this.element[Datex.DX_IGNORE] = true;
+        // create custom element
+        //this.create()
+    }
 
-        protected static vertical_lines = new Map<number, Connection>(); // keep track of all vertical line positions to prevent collisions
-        protected static horizontal_lines = new Map<number, Connection>(); // keep track of all horizontal line positions to prevent collisions
 
-        public element:SVGElement
-    
-        protected node_group: NodeGroup
-    
-        x_start:number
-        x_end:number
-        y_start:number
-        y_end:number
-    
-        get start_facing(){return this.getFacing(this.c1?.position ?? this.temp_c1?.position ?? CONNECTOR_POSITION.RIGHT)}
-        // c2 facing or temp c2 facing opposite c1 facing
-        get end_facing(){return this.c2?.position==undefined ? 
-            (this.temp_c2?.position==undefined ? {x:-this.start_facing.x, y:-this.start_facing.y} : this.getFacing(this.temp_c2.position)) :
-            this.getFacing(this.c2.position)
-        }
-     
-        get delta_x(){return this.x_end - this.x_start}
-        get delta_y(){return this.y_end - this.y_start}
-    
-        // get {x,y} from CONNECTOR_POSITION
-        private getFacing(position: CONNECTOR_POSITION): {x:number, y:number} {
-            switch (position) {
-                case CONNECTOR_POSITION.RIGHT: return {x:1, y:0};
-                case CONNECTOR_POSITION.LEFT: return {x:-1, y:0};
-                case CONNECTOR_POSITION.TOP: return {x:0, y:-1};
-                case CONNECTOR_POSITION.BOTTOM: return {x:0, y:1};
-                default: return {x:1, y:0};
-            }
+    // call to update element
+    handleUpdate(bounds:DOMRect, scale:number, mouse_e_end?:MouseEvent){
+  
+        if (this.c1 && Node.connector_dom_elements.has(this.c1)) {
+            const rect = Node.connector_dom_elements.get(this.c1)!.getBoundingClientRect();
+            const relative_x = rect.x + rect.width/2;
+            const relative_y = rect.y + rect.height/2;
+
+            this.x_start = (relative_x - bounds.x) / scale;
+            this.y_start = (relative_y - bounds.y) / scale;
         }
 
-        // get angle in degrees in range (-180, 180)
-        private getFacingAngle(facing: {x:number, y:number}) {
-            return Math.atan2(facing.y, facing.x) * (180/Math.PI)
-        }
-        // mirror angle around axis in range (-180, 180)
-        private mirrorAngle(angle:number, axis:'x'|'y' = 'y') {
-            if (axis == 'x') return -angle;
-            else return -angle + (180*Math.sign(angle) || -180) // -180 is special case angle = 0
-        }
-    
-        max_x = -Infinity
-        max_y = -Infinity
-        min_x = Infinity
-        min_y = Infinity
-    
-        offset = 10;
-    
-        protected clickListener = ()=>{
-            console.log("click node connection",this)
-        }
-    
-        constructor(node_group:NodeGroup, c1:Connector=undefined, c2:Connector=undefined, end1?:string, end2?:string, options?:Connection.Options) {
-            this.options = assignDefaultPrototype(Connection.DEFAULT_OPTIONS, options);
+        if (this.c2 && Node.connector_dom_elements.has(this.c2)) {
+            const rect = Node.connector_dom_elements.get(this.c2)!.getBoundingClientRect();
+            const relative_x = rect.x + rect.width/2;
+            const relative_y = rect.y + rect.height/2;
 
-            this.c1 = c1;
-            this.c2 = c2;
-            this.end1 = end1;
-            this.end2 = end2;
+            this.x_end = (relative_x - bounds.x) / scale;
+            this.y_end = (relative_y - bounds.y) / scale;
+        }
 
-            this.node_group = node_group;
+        // let c_out_bounds = Node.connector_dom_elements.has(this.c1) ? Node.connector_dom_elements.get(this.c1).getBoundingClientRect() : null;
+        // let c_in_bounds =  Node.connector_dom_elements.has(this.c2) ? Node.connector_dom_elements.get(this.c2).getBoundingClientRect() : null;
+
+        // if (c_out_bounds) {
+        //     this.x_start = (c_out_bounds.x - bounds.x) / scale;
+        //     this.y_start = (c_out_bounds.y - bounds.y) / scale;     
+        //     this.x_start += shift_x;
+        //     this.y_start += shift_y;
+        // }
+        // if (c_in_bounds) {
+        //     this.x_end = (c_in_bounds.x - bounds.x) / scale;
+        //     this.y_end = (c_in_bounds.y - bounds.y) / scale;
+        //     this.x_end += shift_x;
+        //     this.y_end += shift_y;
+        // }
+
+        if (mouse_e_end) {
+            this.x_end = (mouse_e_end.clientX - bounds.x) / scale;
+            this.y_end = (mouse_e_end.clientY - bounds.y) / scale;
+        }
+
+        // handle update - custom
+        this.reset();
+
+        // update if all coordinates are defined
+        if (this.x_end != undefined && this.y_end != undefined) this.update(); 
+    }
+
+    protected updateSize(new_xs:number[], new_ys:number[]) {
+
+        // update min/max
+        this.max_x = Math.max(this.max_x, ...new_xs)
+        this.min_x = Math.min(this.min_x, ...new_xs)
+
+        this.max_y = Math.max(this.max_y, ...new_ys)
+        this.min_y = Math.min(this.min_y, ...new_ys)
+
+        let w = (this.max_x-this.min_x+this.offset*2);
+        let h = (this.max_y-this.min_y+this.offset*2)
+
+        // invalid
+        if (isNaN(this.min_x) || !isFinite(this.min_x) || isNaN(this.max_x) || !isFinite(this.max_x) ||
+            isNaN(this.min_y) || !isFinite(this.min_y) || isNaN(this.max_y) || !isFinite(this.max_y)
+        ) return;
+
+        this.element.setAttribute('width', w+'px');
+        this.element.setAttribute('height', h+'px');
+        this.element.style.top = this.min_y - this.offset + 'px';
+        this.element.style.left = this.min_x - this.offset + 'px';
+    }
+
+    // x with shift
+    protected getSvgX(x:number) {
+        return (x-this.min_x+this.offset)
+    }
+    // y with shift
+    protected getSvgY(y:number) {
+        return (y-this.min_y+this.offset)
+    }
+
+    protected addDebugPoint(x:number, y:number) {
+
+        const point = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        point.setAttribute('cx',this.getSvgX(x).toString());
+        point.setAttribute('cy',this.getSvgY(y).toString());
+        point.setAttribute('r', '5');
+        point.setAttribute("fill", "var(--red)")
+        
+        this.element.append(point);
+    }
+
+   
+    // reset before update, delete content and reset params
+    protected reset(){
+        this.element.innerHTML = ""; // clear svg content
+
+        // reset min max
+        this.max_x = -Infinity
+        this.max_y = -Infinity
+        this.min_x = Infinity
+        this.min_y = Infinity
+    }
+
+    protected updateEnd(end_svg:SVGGElement, facing:{x:number, y:number}, pos: {x:number, y:number}){
+        const angle = this.getFacingAngle(facing);
+        const box = NodeConnection.getGroupBox(end_svg);
+
+        // facing up, end direction down
+        if (angle == -90) {
+            pos.y -= box.width;
+            end_svg.setAttribute("transform", `translate(${this.getSvgX(pos.x)}, ${this.getSvgY(pos.y-box.height/2)}) rotate(${this.mirrorAngle(angle, 'x')})`);  
+        }
+        // facing down, end direction up
+        if (angle == 90) {
+            pos.y += box.width;
+            end_svg.setAttribute("transform", `translate(${this.getSvgX(pos.x)}, ${this.getSvgY(pos.y-box.height/2)}) rotate(${this.mirrorAngle(angle, 'x')})`);  
+        }
+        // facing left, end direction right
+        else if (angle == -180 || angle == 180) {
+            pos.x -= box.width;
+            end_svg.setAttribute("transform", `translate(${this.getSvgX(pos.x)}, ${this.getSvgY(pos.y-box.height/2)}) rotate(${this.mirrorAngle(angle, 'y')})`);  
+        }
+        // facing right, end direction left
+        else if (angle == 0) {
+            pos.x += box.width;
+            end_svg.setAttribute("transform", `translate(${this.getSvgX(pos.x)}, ${this.getSvgY(pos.y-box.height/2)}) rotate(${this.mirrorAngle(angle, 'y')})`);  
+        }
+    }
+
+    protected update() {
+        // new min/max points?
+        this.updateSize([this.x_start, this.x_end], [this.y_start, this.y_end]);
+
+        // ends
+        if (this.#end1_svg) {
+            this.element.append(this.#end1_svg);
+            const pos = {x:this.x_start, y:this.y_start};
+            this.updateEnd(this.#end1_svg, this.start_facing, pos);
+            // update changed x y
+            this.x_start = pos.x;
+            this.y_start = pos.y;
+        }
+        if (this.#end2_svg) {
+            this.element.append(this.#end2_svg);
+            const pos = {x:this.x_end, y:this.y_end};
+            this.updateEnd(this.#end2_svg, this.end_facing, pos);
+            // update changed x y
+            this.x_end = pos.x;
+            this.y_end = pos.y;
+        }
             
-            // create svg
-            this.element = document.createElementNS('http://www.w3.org/2000/svg','svg');
-            this.element.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-            this.element.setAttribute('width', '0');
-            this.element.setAttribute('height', '0');
-            this.element.style.position = "absolute";
-            this.element.style.pointerEvents = "none";
-            this.element.style.zIndex = "-1";
-    
-            // create custom element
-            //this.create()
+        // draw different line types
+        switch (this.options.line_type) {
+            case (NodeConnection.LINE_TYPE.LINE): this.createLine(); break;
+            case (NodeConnection.LINE_TYPE.CURVE): this.createCurve(); break;
+            case (NodeConnection.LINE_TYPE.ANGULAR): this.createPath(false); break;
+            case (NodeConnection.LINE_TYPE.ROUNDED): this.createPath(true); break;
+            default: throw new Error("Invalid connection line type");
         }
-    
-    
-        // call to update element
-        handleUpdate(bounds:DOMRect, scale:number, mouse_e_end?:MouseEvent){
-      
-            if (this.c1 && Node.connector_dom_elements.has(this.c1)) {
-                const rect = Node.connector_dom_elements.get(this.c1).getBoundingClientRect();
-                let relative_x = rect.x + rect.width/2;
-                let relative_y = rect.y + rect.height/2;
 
-                this.x_start = (relative_x - bounds.x) / scale;
-                this.y_start = (relative_y - bounds.y) / scale;
-            }
-
-            if (this.c2 && Node.connector_dom_elements.has(this.c2)) {
-                const rect = Node.connector_dom_elements.get(this.c2).getBoundingClientRect();
-                let relative_x = rect.x + rect.width/2;
-                let relative_y = rect.y + rect.height/2;
-
-                this.x_end = (relative_x - bounds.x) / scale;
-                this.y_end = (relative_y - bounds.y) / scale;
-            }
-
-            // let c_out_bounds = Node.connector_dom_elements.has(this.c1) ? Node.connector_dom_elements.get(this.c1).getBoundingClientRect() : null;
-            // let c_in_bounds =  Node.connector_dom_elements.has(this.c2) ? Node.connector_dom_elements.get(this.c2).getBoundingClientRect() : null;
-    
-            // if (c_out_bounds) {
-            //     this.x_start = (c_out_bounds.x - bounds.x) / scale;
-            //     this.y_start = (c_out_bounds.y - bounds.y) / scale;     
-            //     this.x_start += shift_x;
-            //     this.y_start += shift_y;
-            // }
-            // if (c_in_bounds) {
-            //     this.x_end = (c_in_bounds.x - bounds.x) / scale;
-            //     this.y_end = (c_in_bounds.y - bounds.y) / scale;
-            //     this.x_end += shift_x;
-            //     this.y_end += shift_y;
-            // }
-    
-            if (mouse_e_end) {
-                this.x_end = (mouse_e_end.clientX - bounds.x) / scale;
-                this.y_end = (mouse_e_end.clientY - bounds.y) / scale;
-            }
-
-            // handle update - custom
-            this.reset();
-    
-            // update if all coordinates are defined
-            if (this.x_end != undefined && this.y_end != undefined) this.update(); 
-        }
-    
-        protected updateSize(new_xs:number[], new_ys:number[]) {
-    
-            // update min/max
-            this.max_x = Math.max(this.max_x, ...new_xs)
-            this.min_x = Math.min(this.min_x, ...new_xs)
-    
-            this.max_y = Math.max(this.max_y, ...new_ys)
-            this.min_y = Math.min(this.min_y, ...new_ys)
-    
-            let w = (this.max_x-this.min_x+this.offset*2);
-            let h = (this.max_y-this.min_y+this.offset*2)
-    
-            // invalid
-            if (isNaN(this.min_x) || !isFinite(this.min_x) || isNaN(this.max_x) || !isFinite(this.max_x) ||
-                isNaN(this.min_y) || !isFinite(this.min_y) || isNaN(this.max_y) || !isFinite(this.max_y)
-            ) return;
-    
-            this.element.setAttribute('width', w+'px');
-            this.element.setAttribute('height', h+'px');
-            this.element.style.top = this.min_y - this.offset + 'px';
-            this.element.style.left = this.min_x - this.offset + 'px';
-        }
-    
-        // x with shift
-        protected getSvgX(x:number) {
-            return (x-this.min_x+this.offset)
-        }
-        // y with shift
-        protected getSvgY(y:number) {
-            return (y-this.min_y+this.offset)
-        }
-    
-        protected addDebugPoint(x:number, y:number) {
-    
-            const point = document.createElementNS('http://www.w3.org/2000/svg','circle');
-            point.setAttribute('cx',this.getSvgX(x).toString());
-            point.setAttribute('cy',this.getSvgY(y).toString());
-            point.setAttribute('r', '5');
-            point.setAttribute("fill", "var(--red)")
-            
-            this.element.append(point);
-        }
-    
        
-        // reset before update, delete content and reset params
-        protected reset(){
-            this.element.innerHTML = ""; // clear svg content
-    
-            // reset min max
-            this.max_x = -Infinity
-            this.max_y = -Infinity
-            this.min_x = Infinity
-            this.min_y = Infinity
-        }
-    
-        protected updateEnd(end_svg:SVGGElement, facing:{x:number, y:number}, pos: {x:number, y:number}){
-            const angle = this.getFacingAngle(facing);
-            const box = Connection.getGroupBox(end_svg);
+    }
 
-            // facing up, end direction down
-            if (angle == -90) {
-                pos.y -= box.width;
-                end_svg.setAttribute("transform", `translate(${this.getSvgX(pos.x)}, ${this.getSvgY(pos.y-box.height/2)}) rotate(${this.mirrorAngle(angle, 'x')})`);  
-            }
-            // facing down, end direction up
-            if (angle == 90) {
-                pos.y += box.width;
-                end_svg.setAttribute("transform", `translate(${this.getSvgX(pos.x)}, ${this.getSvgY(pos.y-box.height/2)}) rotate(${this.mirrorAngle(angle, 'x')})`);  
-            }
-            // facing left, end direction right
-            else if (angle == -180 || angle == 180) {
-                pos.x -= box.width;
-                end_svg.setAttribute("transform", `translate(${this.getSvgX(pos.x)}, ${this.getSvgY(pos.y-box.height/2)}) rotate(${this.mirrorAngle(angle, 'y')})`);  
-            }
-            // facing right, end direction left
-            else if (angle == 0) {
-                pos.x += box.width;
-                end_svg.setAttribute("transform", `translate(${this.getSvgX(pos.x)}, ${this.getSvgY(pos.y-box.height/2)}) rotate(${this.mirrorAngle(angle, 'y')})`);  
-            }
-        }
-    
-        protected update() {
-            // new min/max points?
-            this.updateSize([this.x_start, this.x_end], [this.y_start, this.y_end]);
+    protected createLine(){
+        const x_start = this.getSvgX(this.x_start),
+        y_start = this.getSvgY(this.y_start),
+        x_end   = this.getSvgX(this.x_end),
+        y_end   = this.getSvgY(this.y_end);
 
-            // ends
-            if (this.#end1_svg) {
-                this.element.append(this.#end1_svg);
-                const pos = {x:this.x_start, y:this.y_start};
-                this.updateEnd(this.#end1_svg, this.start_facing, pos);
-                // update changed x y
-                this.x_start = pos.x;
-                this.y_start = pos.y;
-            }
-            if (this.#end2_svg) {
-                this.element.append(this.#end2_svg);
-                const pos = {x:this.x_end, y:this.y_end};
-                this.updateEnd(this.#end2_svg, this.end_facing, pos);
-                // update changed x y
-                this.x_end = pos.x;
-                this.y_end = pos.y;
-            }
-                
-            // draw different line types
-            switch (this.options.line_type) {
-                case (Connection.LINE_TYPE.LINE): this.createLine(); break;
-                case (Connection.LINE_TYPE.CURVE): this.createCurve(); break;
-                case (Connection.LINE_TYPE.ANGULAR): this.createPath(false); break;
-                case (Connection.LINE_TYPE.ROUNDED): this.createPath(true); break;
-                default: throw new Error("Invalid connection line type");
-            }
-
-           
-        }
-
-        protected createLine(){
-            const x_start = this.getSvgX(this.x_start),
-            y_start = this.getSvgY(this.y_start),
-            x_end   = this.getSvgX(this.x_end),
-            y_end   = this.getSvgY(this.y_end);
-
-            const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-            line.setAttribute('x1',x_start.toString());
-            line.setAttribute('y1',y_start.toString());
-            line.setAttribute('x2',x_end.toString());
-            line.setAttribute('y2',y_end.toString());
-            line.setAttribute("stroke", this.options.line_color)
-            line.setAttribute("stroke-linecap", "round");
-            line.setAttribute("stroke-width", this.options.line_width+"px")
-            if (this.options.line_style == Node.Connection.LINE_STYLE.DASHED) line.setAttribute("stroke-dasharray", "10,4")
-            else if (this.options.line_style == Node.Connection.LINE_STYLE.DOTTED) line.setAttribute("stroke-dasharray", `1,4`)
-            this.element.append(line);
-        }
+        const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1',x_start.toString());
+        line.setAttribute('y1',y_start.toString());
+        line.setAttribute('x2',x_end.toString());
+        line.setAttribute('y2',y_end.toString());
+        line.setAttribute("stroke", this.options.line_color)
+        line.setAttribute("stroke-linecap", "round");
+        line.setAttribute("stroke-width", this.options.line_width+"px")
+        if (this.options.line_style == NodeConnection.LINE_STYLE.DASHED) line.setAttribute("stroke-dasharray", "10,4")
+        else if (this.options.line_style == NodeConnection.LINE_STYLE.DOTTED) line.setAttribute("stroke-dasharray", `1,4`)
+        this.element.append(line);
+    }
 
 
-        protected createCurve(){
-            const x_start = this.getSvgX(this.x_start),
-            y_start = this.getSvgY(this.y_start),
-            x_end   = this.getSvgX(this.x_end),
-            y_end   = this.getSvgY(this.y_end);
+    protected createCurve(){
+        const x_start = this.getSvgX(this.x_start),
+        y_start = this.getSvgY(this.y_start),
+        x_end   = this.getSvgX(this.x_end),
+        y_end   = this.getSvgY(this.y_end);
 
-            const factor = 0.5;
-    
-            let p1_x    = x_end - (x_end-x_start)*factor,
-                p1_y    = y_start,
-                p2_x    = x_start + (x_end-x_start)*factor,
-                p2_y    = y_end;
+        const factor = 0.5;
 
-            let path = document.createElementNS('http://www.w3.org/2000/svg','path');
-            path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
-            path.setAttribute("stroke", this.options.line_color)
-            path.setAttribute("fill", "transparent")
-            path.setAttribute("stroke-linecap", "round");
-            path.setAttribute("stroke-width", this.options.line_width+"px")
-            if (this.options.line_style == Node.Connection.LINE_STYLE.DASHED) path.setAttribute("stroke-dasharray", "10,4")
-            else if (this.options.line_style == Node.Connection.LINE_STYLE.DOTTED) path.setAttribute("stroke-dasharray", `1,4`)
+        let p1_x    = x_end - (x_end-x_start)*factor,
+            p1_y    = y_start,
+            p2_x    = x_start + (x_end-x_start)*factor,
+            p2_y    = y_end;
 
-            this.element.append(path);
-        }
+        let path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
+        path.setAttribute("stroke", this.options.line_color)
+        path.setAttribute("fill", "transparent")
+        path.setAttribute("stroke-linecap", "round");
+        path.setAttribute("stroke-width", this.options.line_width+"px")
+        if (this.options.line_style == NodeConnection.LINE_STYLE.DASHED) path.setAttribute("stroke-dasharray", "10,4")
+        else if (this.options.line_style == NodeConnection.LINE_STYLE.DOTTED) path.setAttribute("stroke-dasharray", `1,4`)
 
-
-        // reset state 
-        public remove() {
-            if (Connection.horizontal_lines.get(this.#last_y_pos) == this) Connection.horizontal_lines.delete(this.#last_y_pos)
-            if (Connection.vertical_lines.get(this.#last_x_pos) == this) Connection.vertical_lines.delete(this.#last_x_pos)
-        }
-
-        #last_x_pos:number
-        #last_y_pos:number
-
-        // prevent collision with vertical lines
-        protected shiftCollisionX(x_pos:number): number{
-            let rounded_x_pos = Math.ceil(x_pos / 10) * 10;
-            
-            // first delete old vertical line entry
-            if (Connection.vertical_lines.get(this.#last_x_pos) == this) Connection.vertical_lines.delete(this.#last_x_pos)
-            // check if collision
-            let dir = undefined;
-            while (Connection.vertical_lines.has(rounded_x_pos)) {
-                // first decide which direction to shift (don't shift forward and backward)
-                if (dir == undefined) {
-                    let other = Connection.vertical_lines.get(rounded_x_pos);
-                    if (other.delta_y > 0) dir = -Math.min(20,Math.abs(other.y_start-this.y_start))||20; // x shift same value as y distance
-                    else dir = Math.min(20, Math.abs(other.y_start-this.y_start))||20;
-                }
-                x_pos += dir;
-                rounded_x_pos = Math.ceil(x_pos / 10) * 10;
-            }
-            Connection.vertical_lines.set(rounded_x_pos, this);
-            this.#last_x_pos = rounded_x_pos;
-            return x_pos;
-        }
-
-        protected shiftCollisionY(y_pos:number): number{
-            let rounded_y_pos = Math.ceil(y_pos / 10) * 10;
-            
-            // first delete old vertical line entry
-            if (Connection.horizontal_lines.get(this.#last_y_pos) == this) Connection.horizontal_lines.delete(this.#last_y_pos)
-            // check if collision
-            while (Connection.horizontal_lines.has(rounded_y_pos)) {
-                y_pos += 11;
-                rounded_y_pos = Math.ceil(y_pos / 10) * 10;
-            }
-            Connection.horizontal_lines.set(rounded_y_pos, this);
-            this.#last_y_pos = rounded_y_pos;
-            return y_pos;
-        }
+        this.element.append(path);
+    }
 
 
-        protected createPath(rounded = true) {
-            const points:[number, number][] = [];
-            
-            // TODO why is that required? flip flips sign to -1 if sign(delta_x) != sign(start_facing)
-            const flip_x = Math.sign(this.start_facing.x)*Math.sign(this.delta_x);
-            const flip_y = Math.sign(this.start_facing.y)*Math.sign(this.delta_y);
-    
-            // is the end facing 180° rotated to the start facing?
-            const facing_opposite = this.start_facing.x == -this.end_facing.x && this.start_facing.y == -this.end_facing.y;
-    
-            // start
-            points.push([this.x_start, this.y_start]);
-    
-            // Z shape
-            if (facing_opposite) {
-                let x_pos_1 = this.x_start+flip_x*this.start_facing.x*Math.abs(this.delta_x/2);
-                let x_pos_2 = this.x_end+flip_x*this.end_facing.x*Math.abs(this.delta_x/2);
-                let y_pos_1 = this.y_start+flip_y*this.start_facing.y*Math.abs(this.delta_y/2);
-                let y_pos_2 = this.y_end+flip_y*this.end_facing.y*Math.abs(this.delta_y/2);
+    // reset state 
+    public remove() {
+        if (NodeConnection.horizontal_lines.get(this.#last_y_pos) == this) NodeConnection.horizontal_lines.delete(this.#last_y_pos)
+        if (NodeConnection.vertical_lines.get(this.#last_x_pos) == this) NodeConnection.vertical_lines.delete(this.#last_x_pos)
+    }
 
-                // x pos should be adjusted for collisions
-                if (x_pos_1 == x_pos_2) x_pos_1 = x_pos_2 = this.shiftCollisionX(x_pos_1)
-                // y pos should be adjusted for collisions
-                //if (y_pos_1 == y_pos_2) y_pos_1 = y_pos_2 = this.shiftCollisionY(y_pos_1)
+    #last_x_pos:number
+    #last_y_pos:number
 
-                // facing from start
-                points.push([x_pos_1, y_pos_1]);
-                // facing from end
-                points.push([x_pos_2, y_pos_2]);
-            }
-    
-            // L shape
-            else {
-                // center point
-                points.push([this.x_start+flip_x*this.start_facing.x*Math.abs(this.delta_x), this.y_start+flip_y*this.start_facing.y*Math.abs(this.delta_y)]);
-            }
-           
-            // end
-            points.push([this.x_end, this.y_end]);
-    
-    
-            //console.log(points);
-    
-            // render debug points
-            //points.forEach(([x,y])=>this.addDebugPoint(x,y))
-    
-            this.createPathSVG(points, rounded);
-        }
-
-
-        protected createPathSVG(points:[number, number][], rounded = true) {
-            const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    
-            // start point
-            let path_string = `M ${this.getSvgX(points[0][0])} ${this.getSvgY(points[0][1])} `
-            let p = 1;
-    
-            for (p; p<points.length; p++) {
-                const [x,y] = points[p];
-    
-                // point afterwards?
-                if (p<points.length-1 && rounded) {
-    
-                    const x_prev_shift = Math.sign(x-points[p-1][0]) * Math.min(10, Math.abs(points[p-1][0]-x)/2)
-                    const y_prev_shift = Math.sign(y-points[p-1][1]) * Math.min(10, Math.abs(points[p-1][1]-y)/2)
-    
-                    const x_next_shift = Math.sign(points[p+1][0]-x) * Math.min(10, Math.abs(points[p+1][0]-x)/2)
-                    const y_next_shift = Math.sign(points[p+1][1]-y) * Math.min(10, Math.abs(points[p+1][1]-y)/2)
+    // prevent collision with vertical lines
+    protected shiftCollisionX(x_pos:number): number{
+        let rounded_x_pos = Math.ceil(x_pos / 10) * 10;
         
-                    path_string += `L ${this.getSvgX(x-x_prev_shift)} ${this.getSvgY(y-y_prev_shift)} `
-                    path_string += `C ${this.getSvgX(x)} ${this.getSvgY(y)} ${this.getSvgX(x)} ${this.getSvgY(y)} ${this.getSvgX(x+x_next_shift)} ${this.getSvgY(y+y_next_shift)} `
-                }
-                // last point (or no round edges)
-                else {
-                    path_string += `L ${this.getSvgX(x)} ${this.getSvgY(y)} `
-                }
-             
+        // first delete old vertical line entry
+        if (NodeConnection.vertical_lines.get(this.#last_x_pos) == this) NodeConnection.vertical_lines.delete(this.#last_x_pos)
+        // check if collision
+        let dir = undefined;
+        while (NodeConnection.vertical_lines.has(rounded_x_pos)) {
+            // first decide which direction to shift (don't shift forward and backward)
+            if (dir == undefined) {
+                let other = NodeConnection.vertical_lines.get(rounded_x_pos);
+                if (other.delta_y > 0) dir = -Math.min(20,Math.abs(other.y_start-this.y_start))||20; // x shift same value as y distance
+                else dir = Math.min(20, Math.abs(other.y_start-this.y_start))||20;
             }
-    
-            path.setAttribute('d', path_string);
-            path.setAttribute("stroke", this.options.line_color);
-            path.setAttribute("stroke-linecap", "round");
-            path.setAttribute("fill", "transparent");
-            path.setAttribute("stroke-width", this.options.line_width+"px");
-            if (this.options.line_style == Node.Connection.LINE_STYLE.DASHED) path.setAttribute("stroke-dasharray", "10,4")
-            else if (this.options.line_style == Node.Connection.LINE_STYLE.DOTTED) path.setAttribute("stroke-dasharray", `1,4`)
-    
-            this.element.append(path);
+            x_pos += dir;
+            rounded_x_pos = Math.ceil(x_pos / 10) * 10;
         }
-
-
+        NodeConnection.vertical_lines.set(rounded_x_pos, this);
+        this.#last_x_pos = rounded_x_pos;
+        return x_pos;
     }
 
-    export namespace Connection {
-
-        export enum LINE_STYLE {
-            SOLID,
-            DASHED,
-            DOTTED
+    protected shiftCollisionY(y_pos:number): number{
+        let rounded_y_pos = Math.ceil(y_pos / 10) * 10;
+        
+        // first delete old vertical line entry
+        if (NodeConnection.horizontal_lines.get(this.#last_y_pos) == this) NodeConnection.horizontal_lines.delete(this.#last_y_pos)
+        // check if collision
+        while (NodeConnection.horizontal_lines.has(rounded_y_pos)) {
+            y_pos += 11;
+            rounded_y_pos = Math.ceil(y_pos / 10) * 10;
         }
-
-        export enum LINE_TYPE {
-            LINE,
-            CURVE,
-            ANGULAR,
-            ROUNDED
-        }
-
-        export interface Options {
-            line_style?: Connection.LINE_STYLE
-            line_type?: Connection.LINE_TYPE
-            line_color?: string
-            line_width?: number
-        }
-
-        export const DEFAULT_OPTIONS:Options = {
-            line_style: Connection.LINE_STYLE.SOLID,
-            line_type: Connection.LINE_TYPE.LINE,
-            line_color: "var(--text)",
-            line_width: 2
-        }
-
-        Datex.Type.get("uixopt:LineConnection").setJSInterface({
-            prototype: DEFAULT_OPTIONS,
-            proxify_children: true,
-            is_normal_object: true,
-        })
-
-
-        const end_type_creators = new Map<string, (options:Connection.Options)=>SVGElement>()
-        const group_boxes = new WeakMap<SVGGElement, SVGRect>()
-
-        export function getGroupBox(group: SVGGElement) {
-            return group_boxes.get(group);
-        }
-
-        export function addEndType(type:string, creator:(options:Connection.Options)=>SVGElement) {
-            end_type_creators.set(type, creator);
-        }
-
-        export function createEndSvg(type: string, options:Connection.Options) {
-            if (!end_type_creators.has(type)) throw new Error("Unknown connection end type: " + type);
-
-            const group = document.createElementNS('http://www.w3.org/2000/svg','g');
-            const inner_svg = end_type_creators.get(type)(options);
-            group.appendChild(inner_svg);
-
-            // add temporarily to dom to get bounding box size
-            let tempDiv = document.createElement('div')
-            tempDiv.setAttribute('style', "position:absolute; visibility:hidden; width:0; height:0")
-            document.body.appendChild(tempDiv)
-            let tempSvg = document.createElementNS("http://www.w3.org/2000/svg", 'svg')
-            tempDiv.appendChild(tempSvg)
-            tempSvg.appendChild(group)
-            group_boxes.set(group, group.getBBox())
-            document.body.removeChild(tempDiv)
-            
-            // origin x:left, y:center
-            group.setAttribute("transform-origin", `0 ${getGroupBox(group).height/2}`);  
-
-            return group;
-        }
-
-
+        NodeConnection.horizontal_lines.set(rounded_y_pos, this);
+        this.#last_y_pos = rounded_y_pos;
+        return y_pos;
     }
 
+
+    protected createPath(rounded = true) {
+        const points:[number, number][] = [];
+        
+        // TODO why is that required? flip flips sign to -1 if sign(delta_x) != sign(start_facing)
+        const flip_x = Math.sign(this.start_facing.x)*Math.sign(this.delta_x);
+        const flip_y = Math.sign(this.start_facing.y)*Math.sign(this.delta_y);
+
+        // is the end facing 180° rotated to the start facing?
+        const facing_opposite = this.start_facing.x == -this.end_facing.x && this.start_facing.y == -this.end_facing.y;
+
+        // start
+        points.push([this.x_start, this.y_start]);
+
+        // Z shape
+        if (facing_opposite) {
+            let x_pos_1 = this.x_start+flip_x*this.start_facing.x*Math.abs(this.delta_x/2);
+            let x_pos_2 = this.x_end+flip_x*this.end_facing.x*Math.abs(this.delta_x/2);
+            let y_pos_1 = this.y_start+flip_y*this.start_facing.y*Math.abs(this.delta_y/2);
+            let y_pos_2 = this.y_end+flip_y*this.end_facing.y*Math.abs(this.delta_y/2);
+
+            // x pos should be adjusted for collisions
+            if (x_pos_1 == x_pos_2) x_pos_1 = x_pos_2 = this.shiftCollisionX(x_pos_1)
+            // y pos should be adjusted for collisions
+            //if (y_pos_1 == y_pos_2) y_pos_1 = y_pos_2 = this.shiftCollisionY(y_pos_1)
+
+            // facing from start
+            points.push([x_pos_1, y_pos_1]);
+            // facing from end
+            points.push([x_pos_2, y_pos_2]);
+        }
+
+        // L shape
+        else {
+            // center point
+            points.push([this.x_start+flip_x*this.start_facing.x*Math.abs(this.delta_x), this.y_start+flip_y*this.start_facing.y*Math.abs(this.delta_y)]);
+        }
+       
+        // end
+        points.push([this.x_end, this.y_end]);
+
+
+        //console.log(points);
+
+        // render debug points
+        //points.forEach(([x,y])=>this.addDebugPoint(x,y))
+
+        this.createPathSVG(points, rounded);
+    }
+
+
+    protected createPathSVG(points:[number, number][], rounded = true) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+
+        // start point
+        let path_string = `M ${this.getSvgX(points[0][0])} ${this.getSvgY(points[0][1])} `
+        let p = 1;
+
+        for (p; p<points.length; p++) {
+            const [x,y] = points[p];
+
+            // point afterwards?
+            if (p<points.length-1 && rounded) {
+
+                const x_prev_shift = Math.sign(x-points[p-1][0]) * Math.min(10, Math.abs(points[p-1][0]-x)/2)
+                const y_prev_shift = Math.sign(y-points[p-1][1]) * Math.min(10, Math.abs(points[p-1][1]-y)/2)
+
+                const x_next_shift = Math.sign(points[p+1][0]-x) * Math.min(10, Math.abs(points[p+1][0]-x)/2)
+                const y_next_shift = Math.sign(points[p+1][1]-y) * Math.min(10, Math.abs(points[p+1][1]-y)/2)
     
-    // @sync("uix:PathNodeConnection") export class PathConnection extends Connection {
-    //     override type = 'path'
-    
-    //     protected update() {
-    
-    //         const SEGMENT_SIZE = 140;
-    
-    //         let current_x = this.x_start,
-    //             current_y = this.y_start,
-    //             dir_x     = this.x_end - current_x,
-    //             dir_y     = this.y_end - current_y;
-    
-    //         let i = 0;
-    //         let dir = [Math.sign(dir_x),0] // tell in which direction [x,y] to move next
-    //         while(i++<6) {
-    //             // move in x direction
-    //             if (dir[0]) {
-    //                 let fits = Math.abs(dir_x)<SEGMENT_SIZE;  // hit the target x position directly
-    //                 let add_x = fits ? dir_x : dir[0]*SEGMENT_SIZE;
-    //                 if (fits || !this.node_group.hasCollision(current_x+add_x, current_y)) {
-    //                     this.addLineSegment(current_x, current_y, add_x, 0)
-    //                     current_x += add_x;
-    //                 }
-    //                 else {
-    //                     dir[0] = 0;
-    //                     dir[1] = Math.sign(dir_y);
-    //                 }
-    
-    //                 // check if distance got smaller, else change direction to y if possible
-    //                 if ( (this.x_end - current_x) >= dir_x) {
-    //                     if (!this.node_group.hasCollision(current_y, current_y+Math.sign(dir_y)*SEGMENT_SIZE)) {
-    //                         dir[0] = 0;
-    //                         dir[1] = Math.sign(dir_y);
-    //                     }
-    //                 }
-    //             }
-    //             // move in y direction
-    //             if (dir[1]) {
-    //                 let fits = Math.abs(dir_y)<SEGMENT_SIZE;  // hit the target y position directly
-    //                 let add_y = fits ? dir_y : dir[1]*SEGMENT_SIZE;
-    //                 if (fits || !this.node_group.hasCollision(current_x, current_y+add_y)) {
-    //                     this.addLineSegment(current_x, current_y, 0, add_y)
-    //                     current_y += add_y;
-    //                 }
-    //                 else {
-    //                     dir[1] = 0;
-    //                     dir[0] = Math.sign(dir_x);
-    //                 }
-    
-    //                 // check if distance got smaller, else change direction to x if possible
-    //                 if ( (this.y_end - current_y) >= dir_y) {
-    //                     if (!this.node_group.hasCollision(current_x+Math.sign(dir_x)*SEGMENT_SIZE, current_y)) {
-    //                         dir[1] = 0;
-    //                         dir[0] = Math.sign(dir_x);
-    //                     }
-    //                 }
-    //             }
-               
-    //             dir_x     = this.x_end - current_x,
-    //             dir_y     = this.y_end - current_y;
-    //         }
-    
-    //     }
-    // }
-    
+                path_string += `L ${this.getSvgX(x-x_prev_shift)} ${this.getSvgY(y-y_prev_shift)} `
+                path_string += `C ${this.getSvgX(x)} ${this.getSvgY(y)} ${this.getSvgX(x)} ${this.getSvgY(y)} ${this.getSvgX(x+x_next_shift)} ${this.getSvgY(y+y_next_shift)} `
+            }
+            // last point (or no round edges)
+            else {
+                path_string += `L ${this.getSvgX(x)} ${this.getSvgY(y)} `
+            }
+         
+        }
+
+        path.setAttribute('d', path_string);
+        path.setAttribute("stroke", this.options.line_color);
+        path.setAttribute("stroke-linecap", "round");
+        path.setAttribute("fill", "transparent");
+        path.setAttribute("stroke-width", this.options.line_width+"px");
+        if (this.options.line_style == NodeConnection.LINE_STYLE.DASHED) path.setAttribute("stroke-dasharray", "10,4")
+        else if (this.options.line_style == NodeConnection.LINE_STYLE.DOTTED) path.setAttribute("stroke-dasharray", `1,4`)
+
+        this.element.append(path);
+    }
+
+
+}
+
+export namespace NodeConnection {
+
+    export enum LINE_STYLE {
+        SOLID,
+        DASHED,
+        DOTTED
+    }
+
+    export enum LINE_TYPE {
+        LINE,
+        CURVE,
+        ANGULAR,
+        ROUNDED
+    }
+
+    export interface Options {
+        line_style?: NodeConnection.LINE_STYLE
+        line_type?: NodeConnection.LINE_TYPE
+        line_color?: string
+        line_width?: number
+    }
+
+    export const DEFAULT_OPTIONS:Options = {
+        line_style: NodeConnection.LINE_STYLE.SOLID,
+        line_type: NodeConnection.LINE_TYPE.LINE,
+        line_color: "var(--text)",
+        line_width: 2
+    }
+
+    Datex.Type.get("uixopt:LineConnection").setJSInterface({
+        prototype: DEFAULT_OPTIONS,
+        proxify_children: true,
+        is_normal_object: true,
+    })
+
+
+    const end_type_creators = new Map<string, (options:NodeConnection.Options)=>SVGElement>()
+    const group_boxes = new WeakMap<SVGGElement, SVGRect>()
+
+    export function getGroupBox(group: SVGGElement) {
+        return group_boxes.get(group);
+    }
+
+    export function addEndType(type:string, creator:(options:NodeConnection.Options)=>SVGElement) {
+        end_type_creators.set(type, creator);
+    }
+
+    export function createEndSvg(type: string, options:NodeConnection.Options) {
+        if (!end_type_creators.has(type)) throw new Error("Unknown connection end type: " + type);
+
+        const group = document.createElementNS('http://www.w3.org/2000/svg','g');
+        const inner_svg = end_type_creators.get(type)(options);
+        group.appendChild(inner_svg);
+        group[Datex.DX_IGNORE] = true;
+
+        // add temporarily to dom to get bounding box size
+        let tempDiv = document.createElement('div')
+        tempDiv.setAttribute('style', "position:absolute; visibility:hidden; width:0; height:0")
+        document.body.appendChild(tempDiv)
+        let tempSvg = document.createElementNS("http://www.w3.org/2000/svg", 'svg')
+        tempDiv.appendChild(tempSvg)
+        tempSvg.appendChild(group)
+        group_boxes.set(group, group.getBBox())
+        document.body.removeChild(tempDiv)
+        
+        // origin x:left, y:center
+        group.setAttribute("transform-origin", `0 ${getGroupBox(group).height/2}`);  
+
+        return group;
+    }
+
+
 }

@@ -10,9 +10,7 @@ import { I } from "../uix_short.ts"
 import {logger} from "../utils/global_values.ts";
 
 // import "https://mozilla.github.io/pdf.js/build/pdf.js";
-const script = document.createElement("script");
-script.src = "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/build/pdf.min.js";
-document.head.appendChild(script);
+
 
 const HTMLElement = <typeof globalThis.HTMLElement>window.HTMLElement 
 
@@ -236,7 +234,18 @@ export namespace Elements {
 			this.loadPDF();
 		}
 
+		static pdfjsLoaded = false
+
 		async loadPDF(){
+
+			if (!Document.pdfjsLoaded) {
+				const script = document.createElement("script");
+				script.src = "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/build/pdf.min.js";
+				document.head.appendChild(script);
+				Document.pdfjsLoaded = true;
+				await new Promise(resolve=>setTimeout(()=>resolve, 2000))
+			}
+			
 			const pdfjsLib = window['pdfjs-dist/build/pdf'];
 
 			if (!pdfjsLib) {

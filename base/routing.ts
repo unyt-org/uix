@@ -1,7 +1,8 @@
 // deno-lint-ignore-file no-namespace
 
+import { Path } from "unyt_node/path.ts";
 import { Logger } from "unyt_core/datex_all.ts";
-import { collapseToContent, Entrypoint, html_content_or_generator, provideError, RenderMethod, RoutingSink } from "../html/rendering.ts";
+import { resolveEntrypointRoute, Entrypoint, html_content_or_generator, provideError, RenderMethod, RoutingHandler } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
 
 /**
@@ -14,56 +15,23 @@ const logger = new Logger("UIX Routing");
 
 export namespace Routing {
 
-	export enum Prefix {
-		LOCAL_HASH = "#",
-		PATH = "/"
-	}
-
 	let frontend_entrypoint: Entrypoint|undefined
 	let backend_entrypoint: Entrypoint|undefined
-
 	let current_content: any;
 
-	// @deprecated, just use '#' directly in routes when local routing is required
-	export function setPrefix(new_prefix: never) {
-		console.warn("UIX.Routing.setPrefix is deprecated, just use '#' directly in routes when local routing is required")
-		// prefix = new_prefix;
-	}
-
 	export function getCurrentRouteFromURL() {
-		return getRouteFromURL(window.location?.href ?? import.meta.url);
-	}
-
-	export function getCurrentRouteStringFromURL() {
-		const url = new URL(window.location?.href ?? import.meta.url);
-		return "/" + url.pathname.slice(1) + url.hash
-	}
-
-	export function getRouteFromURL(url:string|URL) {
-		url = new URL(url);
-		const path = url.pathname.slice(1) + url.hash;
-		let parts = path.split("/");
-		if (parts.length == 1 && parts[0] == '') parts = []; // empty
-		return parts;
+		return Path.Route(window.location.href ?? import.meta.url);
 	}
 
 	export function setCurrentRoute(url?:string|URL, silent?: boolean):Promise<void>
 	export function setCurrentRoute(parts?:string[], silent?: boolean):Promise<void>
-	export function setCurrentRoute(parts?:string|string[]|URL, silent = false) {
+	export function setCurrentRoute(_route?:string|string[]|URL, silent = false) {
 		if (!globalThis.history) return;
-		if (JSON.stringify(getCurrentRouteFromURL()) === JSON.stringify(parts instanceof URL ? getRouteFromURL(parts) : parts)) return; // no change, ignore
+		const route = Path.Route(_route);
+		if (Path.routesAreEqual(getCurrentRouteFromURL(), route)) return; // no change, ignore
 
-		if (!parts || (parts instanceof Array && !parts.length)) history.pushState(null, "", "/");
-		else {
-			let url:URL|string;
-			if (parts instanceof URL || typeof parts == "string") url = new URL(parts);
-			else {
-				url = "/" + parts.join("/");
-				if (url.startsWith("//")) url = url.slice(1);
-			}
-			history.pushState(null, "", url)
-		}
-
+		history.pushState(null, "", route.routename);
+	
 		if (!silent) return handleCurrentURLRoute();
 	}
 
@@ -82,23 +50,26 @@ export namespace Routing {
 
 	async function initEndpointContent(entrypoint:Entrypoint) {
 		const content = await getContentFromEntrypoint(entrypoint)
-		if (content != null) setContent(content)
+		if (content != null) await setContent(content)
 		return content != null
 	}
 
-	async function getContentFromEntrypoint(entrypoint: Entrypoint, path: string = getCurrentRouteStringFromURL()) {
-		const [collapsed_content, _render_method] = <[html_content_or_generator, RenderMethod]><any> await collapseToContent(entrypoint, path, undefined, false);
+	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL()) {
+		const [collapsed_content, _render_method] = <[html_content_or_generator, RenderMethod]><any> await resolveEntrypointRoute(entrypoint, route, undefined, false);
 		return collapsed_content;
 	}
 
-	function setContent(content: html_content_or_generator, path: string = getCurrentRouteStringFromURL()) {
-		if (current_content == content) return;
-		current_content = content;
-		document.body.innerHTML = "";
-        // console.log("-->",collapsed_content)
-        HTMLUtils.append(document.body, content) // add to document
-        // loadingFinished();
-        logger.success `loaded ${path??"/"}`;
+	async function setContent(content: html_content_or_generator) {
+		if (current_content !== content) {
+			current_content = content;
+			document.body.innerHTML = "";
+			// console.log("-->",collapsed_content)
+			// TODO: 
+			if (typeof content == "object" && !(content instanceof HTMLElement)) console.warn("invalid content, cannot handle yet", content)
+			HTMLUtils.append(document.body, content) // add to document
+		}
+	
+		await update(getCurrentRouteFromURL(), false)
 	}
 
 
@@ -112,31 +83,36 @@ export namespace Routing {
 
 		// still nothing found - route could not be fully resolved on frontend, try to reload from backend
 		if (content == null) {
-			logger.warn("no content for " + getCurrentRouteStringFromURL())
+			logger.warn `no content for ${getCurrentRouteFromURL().routename}, reloading page from backend`; 
 			window.location.reload();
 		}
 
-		setContent(content);
-		await update(getCurrentRouteFromURL(), false)
+		await setContent(content);
 	}
 
 	/**
 	 * updates the current URL with the current route requested from the get_handler
 	 */
-	export async function update(compare?:string[], load_current_new = false){
+	export async function update(compare?:Path.route_representation, load_current_new = false){
 
 		// first load current route
 		if (load_current_new) await handleCurrentURLRoute();
 
-		if (typeof current_content?.getInternalRoute !== "function") return;
-		const current_route = await (<RoutingSink>current_content).getInternalRoute();
-		if (current_route.length == 1 && current_route[0] == "") current_route.shift();
+		if (typeof current_content?.getInternalRoute === "function") {
+			const current_route = Path.Route(await (<RoutingHandler>current_content).getInternalRoute());
 
-		// check of accepted route matches new calculated current_route
-		if (compare && (compare.join("/") !== current_route.join("/"))) {
-			logger.warn `new route should be "/${compare.join("/")}", but was changed to "/${current_route.join("/")}". Make sure getInternalRoute() and resolveRoute() are consistent in all components.`;
+			// check of accepted route matches new calculated current_route
+			if (compare && !Path.routesAreEqual(compare, current_route)) {
+				logger.warn `new route should be "${Path.Route(compare).routename}", but was changed to "${current_route.routename}". Make sure getInternalRoute() and onRoute() are consistent in all components.`;
+				// stop ongoing loading animation
+				window.stop()
+			}
+
+			setCurrentRoute(current_route, true); // update silently
 		}
-		setCurrentRoute(current_route, true); // update silently
+
+		logger.success `new route: ${getCurrentRouteFromURL().routename??"/"}`;
+
 	}
 
 
@@ -147,6 +123,7 @@ export namespace Routing {
 
 	// @ts-ignore
 	globalThis.navigation?.addEventListener("navigate", (e:any)=>{
+
 		if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
 		const url = new URL(e.destination.url);
 		if (url.origin != new URL(window.location.href).origin) return;
@@ -157,6 +134,7 @@ export namespace Routing {
 				await handleCurrentURLRoute();
 			}
 		})
+		e.s
 	})
 
 

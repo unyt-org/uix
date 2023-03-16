@@ -504,9 +504,10 @@ catch {
 			this.updateCheckEntrypoint();
 			const [prerendered_content, render_method] = await this.#backend?.getEntrypointHTMLContent(path, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
 
-			// serve raw content
+			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
-				await this.server.serveContent(requestEvent, <any>(<Blob>prerendered_content).type, prerendered_content, [], prerendered_content._http_status);
+				if (prerendered_content instanceof Response) requestEvent.respondWith(prerendered_content.clone());
+				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain" : <any>prerendered_content.type, prerendered_content);
 			}
 
 			// serve normal page
@@ -643,7 +644,12 @@ catch {
 				files += indent(4) `\nlet frontend_entrypoint; if (_frontend_entrypoint.default) frontend_entrypoint = _frontend_entrypoint.default\nelse if (_frontend_entrypoint && Object.getPrototypeOf(_frontend_entrypoint) != null) frontend_entrypoint = _frontend_entrypoint;`
 			}
 
-			files += `await UIX.Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint)`
+			if (backend_entrypoint && frontend_entrypoint)
+				files += `\n\nawait UIX.Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint)`
+			else if (backend_entrypoint)
+				files += `\n\nawait UIX.Routing.setEntrypoints(undefined, backend_entrypoint)`
+			else if (frontend_entrypoint)
+				files += `\n\nawait UIX.Routing.setEntrypoints(frontend_entrypoint, undefined)`
 
 			files += '\n</script>'
 

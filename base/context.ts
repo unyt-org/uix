@@ -12,6 +12,9 @@ export class ContextBuilder {
 	setRequestData(req:Deno.RequestEvent, path:string, con:Deno.Conn) {
 		this.#ctx.request = <any>{}
 		Object.assign(this.#ctx.request!, req.request)
+		// @ts-ignore headers copied from prototype?
+		this.#ctx.request!.headers = req.request.headers;
+
 		this.#ctx.request!.localAddr = con.localAddr
 		this.#ctx.request!.remoteAddr = con.remoteAddr
 		this.#ctx.request!.path = path;

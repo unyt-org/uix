@@ -21,7 +21,8 @@ import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS } from "../base/decorators.ts";
 import {Routing} from "../base/routing.ts";
 import { bindObserver } from "../html/datex_binding.ts";
 import { Path } from "unyt_node/path.ts";
-import { RoutingSink } from "../html/rendering.ts";
+import { RoutingHandler } from "../html/rendering.ts";
+import { Context } from "../base/context.ts";
 
 // deno-lint-ignore no-namespace
 export namespace Base {
@@ -98,7 +99,7 @@ export namespace Base {
 }
 
 @template("uix:component") 
-export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base implements RoutingSink {
+export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base implements RoutingHandler {
 
     static DEFAULT_OPTIONS:Base.Options = {
         bg_color: Theme.getColorReference('bg_default'),
@@ -1091,23 +1092,24 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
 
     // implements resolveRoute per default, can be overriden for more custom routing behaviour
-    public async resolveRoute(parts:string[]): Promise<string[]> {
+    public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
 
         const delegate = this.routeDelegate??this;
 
         // ignore if route is already up to date
-        if (JSON.stringify(parts)==JSON.stringify(delegate.getInternalRoute())) return parts;
+        if (Path.routesAreEqual(route, delegate.getInternalRoute())) return route;
 
-        const child = await delegate.onRoute?.(parts[0]);
+        const child = await delegate.onRoute?.(route.route[0]);
 
         if (child == false) return []; // route not valid
         else if (child instanceof Base) child.focus() // bring child to foreground
 
         // end of route reached / handled in component without redirecting to children, all ok
-        if (parts.length == 1 || !(child instanceof Base)) return parts; 
+        if (route.route.length == 1 || !(child instanceof Base)) return route; 
         // recursively follow route
         else {
-            return [parts[0], ...await child.resolveRoute(parts.slice(1))];
+            const child_route = await child.resolveRoute(Path.Route(route.route.slice(1)), context);
+            return [route.route[0], ...(child_route instanceof Path ? child_route.route : child_route)];
         }
     }
 

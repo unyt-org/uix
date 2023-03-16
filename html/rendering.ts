@@ -6,6 +6,11 @@ import { logger } from "../uix_all.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
 import { indent } from "../utils/indent.ts";
 
+import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
+const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
+const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
+
+
 /**
  * Default: Server side prerendering, content hydration over DATEX
  * @param content HTML element or text content
@@ -65,6 +70,16 @@ export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FI
 	}
 }
 
+
+export function provideResponse(content:ReadableStream | XMLHttpRequestBodyInit, type:mime_type, status = 200, cookies?:Cookie[], headers:Record<string, string> = {}, cors = false) {
+	if (cors) Object.assign(headers, {"Content-Type": type, "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*"});
+	const res = new Response(content, {headers, status});
+	if (cookies) {
+		for (const cookie of cookies) setCookie!(res.headers, cookie);
+	}
+	return res;
+}
+
 /**
  * serve a string/ArrayBuffer with a specific mime type
  * @param content 'file' content
@@ -74,8 +89,7 @@ export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FI
 export async function provideContent(content:string|ArrayBuffer, type:mime_type = "text/plain", status?:number) {
 	const blob = new Blob([content], {type});
 	await Datex.Runtime.cacheValue(blob);
-	if (status != undefined) blob._http_status = status;
-	return blob;
+	return provideResponse(blob, type, status);
 }
 
 /**
@@ -116,16 +130,16 @@ export function provideError(message: string, status = 500) {
 /**
  * handles routes internally
  */
-export interface RoutingSink {
-	resolveRoute(parts:string[]): string[]|Promise<string[]> // return part of route that could be resolved
-	getInternalRoute(): string[]|Promise<string[]> // return internal state of last resolved route
+export interface RoutingHandler {
+	resolveRoute(route:Path.Route, context:UIX.Context): Path.route_representation|Promise<Path.route_representation> // return part of route that could be resolved
+	getInternalRoute(): Path.route_representation|Promise<Path.route_representation> // return internal state of last resolved route
 }
 
 /**
  * redirects to other Entrypoints for specific routes
  */
 export interface RoutingAdapter {
-	getRoute(parts:string[]): Entrypoint|Promise<Entrypoint> // return child entrypoint for route
+	getRoute(route:Path.Route, context:UIX.Context): Entrypoint|Promise<Entrypoint> // return child entrypoint for route
 }
 
 
@@ -133,16 +147,64 @@ export class FileProvider implements RoutingAdapter {
 
 	#path: Path
 
-	constructor(path:string|URL) {
+	constructor(path:Path.representation) {
 		this.#path = new Path(path, getCallerFile());
 		if (this.#path.fs_is_dir) this.#path = this.#path.asDir()
 	}
 
-	async getRoute(parts:string[]) {
-		const path = this.#path.getChildPath(parts.join("/"));
+	getRoute(route:Path.Route, context: UIX.Context) {
+		const path = this.#path.getChildPath(route);
 		if (!path.fs_exists) return provideError("File not found", 404);
-		else return renderStatic(await datex.get<Entrypoint>(path))
+		if (!context.request) return provideError("Cannot serve file");
+		else return fileServer!.serveFile(context.request, path.pathname);
 	}
+}
+
+/**
+ * transforms entrypoint content to a new entrypoint content
+ */
+export abstract class EntrypointProxy implements RoutingAdapter {
+
+	#entrypoint: Entrypoint
+
+	constructor(entrypoint: Entrypoint) {
+		this.#entrypoint = entrypoint;
+	}
+
+	async getRoute(route:Path.Route, context: UIX.Context) {
+		let entrypoint = this.#entrypoint;
+		const intercepted = await this.intercept?.(route, context);
+		if (intercepted != null) entrypoint = intercepted;
+		const [content, render_method] = await resolveEntrypointRoute(entrypoint, route, context);
+		return this.transform?.(content, render_method, route, context) ?? content;
+	}
+
+	/**
+	 * This method is called before a route is resolved by the entrypoint
+	 * It can be used to implement a custom routing behaviour
+	 * for some or all routes, overriding the entrypoint routing
+	 * 
+	 * The returned value replaces the entrypoint, if not null
+	 * 
+	 * @param route requested route
+	 * @param context UIX context
+	 * @returns entrypoint override or null
+	 */
+	abstract intercept?(route:Path.Route, context: UIX.Context): void|Entrypoint|Promise<void|Entrypoint>
+
+	/**
+	 * This method is called after a route was resolved by the entrypoint
+	 * It can be used to override the content provided for a route by returning 
+	 * a different entrypoint value. 
+	 * When null is returned, the route content is not changed
+	 * 
+	 * @param content content as resolved by entrypoint
+	 * @param render_method render method as resolved by entrypoint
+	 * @param route the requested route
+	 * @param context UIX context
+	 * @returns entrypoint override or null
+	 */
+	abstract transform?(content: Entrypoint, render_method: RenderMethod, route:Path.Route, context: UIX.Context): void|Entrypoint|Promise<void|Entrypoint>
 }
 
 
@@ -162,8 +224,8 @@ export class RenderPreset<R extends RenderMethod,T extends html_content_or_gener
 
 
 // collapse RenderPreset, ... to HTML element or other content
-export type raw_content = Blob
-export type html_content = Datex.CompatValue<HTMLElement|string|number|boolean|bigint|Datex.Markdown|RoutingSink|RoutingAdapter>|null|raw_content;
+export type raw_content = Blob|Response
+export type html_content = Datex.CompatValue<HTMLElement|string|number|boolean|bigint|Datex.Markdown|RoutingHandler|RoutingAdapter>|null|raw_content;
 export type html_content_or_generator = html_content|((ctx:UIX.Context)=>html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>);
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
 
@@ -206,88 +268,92 @@ type get_render_method<C extends Entrypoint, Path extends string = string> =
 	)
 
 
-export async function collapseToContent<T extends Entrypoint, P extends string>(content:T|undefined, path?:P, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false): Promise<[get_content<T, P>, get_render_method<T,P>, boolean]> {
+export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false): Promise<[get_content<T>, get_render_method<T>, boolean]> {
 	
 	context ??= new UIX.Context()
+	route ??= Path.Route();
 
 	let collapsed:unknown;
 	let render_method:RenderMethod = RenderMethod.HYDRATION;
 	let loaded = false;
 
-	if (only_return_static_content && content && content.__render_method == RenderMethod.DYNAMIC) collapsed = "";
+	if (only_return_static_content && entrypoint && (<any> entrypoint).__render_method == RenderMethod.DYNAMIC) collapsed = "";
 
 	// handle generator functions
-	else if (typeof content == "function") {
+	else if (typeof entrypoint == "function") {
 		if (typeof context == "function") context = context();
-		[collapsed, render_method, loaded] = await collapseToContent(await content(context!), path, context, only_return_static_content)
+		[collapsed, render_method, loaded] = await resolveEntrypointRoute(await entrypoint(context!), route, context, only_return_static_content)
 	}
 	// handle presets
-	else if (content instanceof RenderPreset || (content && typeof content == "object" && !(content instanceof HTMLElement) && '__content' in content)) {
-		[collapsed, render_method, loaded] = await collapseToContent(<html_content_or_generator>await content.__content, path, context, only_return_static_content);
-		render_method = <RenderMethod> content.__render_method;
+	else if (entrypoint instanceof RenderPreset || (entrypoint && typeof entrypoint == "object" && !(entrypoint instanceof HTMLElement) && '__content' in entrypoint)) {
+		[collapsed, render_method, loaded] = await resolveEntrypointRoute(<html_content_or_generator>await entrypoint.__content, route, context, only_return_static_content);
+		render_method = <RenderMethod> entrypoint.__render_method;
 	}
 
 	// routing adapter TODO: better checks for interfaces? (not just 'getRoute')
-	else if (typeof content?.getRoute == "function") {
-		[collapsed, render_method, loaded] = await collapseToContent(await content.getRoute(path.replace(/^\//,'').split("/")), path, context, only_return_static_content)
+	// @ts-ignore
+	else if (typeof entrypoint?.getRoute == "function") {
+		if (typeof context == "function") context = context();
+		[collapsed, render_method, loaded] = await resolveEntrypointRoute(await (<RoutingAdapter>entrypoint).getRoute(route, context), route, context, only_return_static_content)
 	}
 	
 	// path object
-	else if (!(content instanceof HTMLElement || content instanceof Datex.Markdown) && content && typeof content == "object" && Object.getPrototypeOf(content) == Object.prototype) {
+	else if (!(entrypoint instanceof HTMLElement || entrypoint instanceof Datex.Markdown) && entrypoint && typeof entrypoint == "object" && Object.getPrototypeOf(entrypoint) == Object.prototype) {
 		// find longest matching route
-		let closest_match = null;
+		let closest_match_key:string|null = null;
+		let closest_match_route:Path.Route|null = null;
 
-		let normalized_path = path;
-		// // remove trailing /
-		// if (normalized_path?.endsWith("/")) normalized_path = normalized_path.slice(0,-1)
-		// add leading /
-		if (typeof normalized_path == "string" && !normalized_path.startsWith("/")) normalized_path = "/" + normalized_path;
+		const isBetterMatch = (potential_route: Path.Route) => {
+			// compare length of current closest_match with potential_route, ignoring *
+			if (!closest_match_route) return true;
+			return potential_route.routename.replace(/\*$/, '').length > closest_match_route.routename.replace(/\*$/, '').length
+		}
 
-		for (const route of Object.keys(content)) {
-			let normalized_route = route;
-			// remove trailing /
-			if (normalized_route?.endsWith("/")) normalized_route = normalized_route.slice(0,-1)
-			// add leading /
-			if (!normalized_route?.startsWith("/")) normalized_route = "/" + normalized_route;
-
+		for (const potential_route_key of Object.keys(entrypoint)) {
+			const potential_route = Path.Route(potential_route_key);
 
 			// match beginning
-			if (normalized_route.endsWith("*")) {
-				normalized_route = normalized_route.slice(0,-1)
-				if (normalized_path?.startsWith(normalized_route) && normalized_route.length-1 >= (closest_match?.length??-1)) closest_match = route;
-				// console.log("match?",content,path, normalized_path,normalized_route,closest_match)
+			if (potential_route.routename.endsWith("*")) {
+				if (route.routename.startsWith(potential_route.routename.slice(0,-1)) && isBetterMatch(potential_route)) {
+					closest_match_route = potential_route;
+					closest_match_key = potential_route_key;
+				}
 			}
 			// exact match
 			else {
-				if (normalized_path == normalized_route && normalized_route.length >= (closest_match?.length??-1)) closest_match = route;
+				if (Path.routesAreEqual(route, potential_route) && isBetterMatch(potential_route)) {
+					closest_match_route = potential_route;
+					closest_match_key = potential_route_key;
+				}
 			}
 		}
 		
-		if (closest_match!==null) {
+		if (closest_match_key!==null) {
 			// @ts-ignore
-			let val = <any> content.$ ? (<any>content.$)[closest_match] : (<EntrypointRouteMap>content)[closest_match];
+			let val = <any> entrypoint.$ ? (<any>entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypoint)[closest_match_key];
 			if (val instanceof Datex.Value && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
-			const new_path = path?.replace(closest_match.replace(/\*$/,""), "") || "/";
-			[collapsed, render_method, loaded] = await collapseToContent(await val, new_path, context, only_return_static_content);
+			const new_path = Path.Route(route.routename.replace(closest_match_route!.routename.replace(/\*$/,""), "") || "/");
+			[collapsed, render_method, loaded] = await resolveEntrypointRoute(await val, new_path, context, only_return_static_content);
 		} 
 	}
 
 	// collapsed content
-	else collapsed = await content;
+	else collapsed = await entrypoint;
 
 	// only load once in recursive calls when deepest level reached
 	if (!loaded) {
 		// preload in deno, TODO: better solution?
-		if (IS_HEADLESS && content instanceof HTMLElement) {
-			globalThis.document.body.append(content);
+		if (IS_HEADLESS && entrypoint instanceof HTMLElement) {
+			globalThis.document.body.append(entrypoint);
 			// wait until create lifecycle finished
-			if (content instanceof UIX.Components.Base) await content.created; 
+			if (entrypoint instanceof UIX.Components.Base) await entrypoint.created; 
 		}
 
 
 		// routing component?
-		if (path && typeof collapsed?.resolveRoute == "function") {
-			if (!await resolveRouteForRoutingSink(<RoutingSink> collapsed, path.replace(/^\//,'').split("/"))) {
+		// @ts-ignore
+		if (route && typeof collapsed?.resolveRoute == "function") {
+			if (!await resolveRouteForRoutingSink(<RoutingHandler> collapsed, route, context)) {
 				collapsed = null; // reset content, route could not be resolved
 			}
 		}
@@ -296,27 +362,22 @@ export async function collapseToContent<T extends Entrypoint, P extends string>(
 	}
 
 
-	return [<get_content<T, P>>collapsed, <any>render_method, loaded];
+	return [<get_content<T>>collapsed, <any>render_method, loaded];
 }
 
 /**
  * Resolve a route on a RoutingSink
  * @param routingSink RoutingSink impl
  * @param route array of route parts
+ * @param context UIX context
  * @returns true if the route could be fully resolved
  */
-async function resolveRouteForRoutingSink(routingSink: RoutingSink, route:string[]){
-	if (route.length) {
-
-		const valid_route_part = await routingSink.resolveRoute(route);
-
-		// route could not be fully resolved on frontend, try to reload from backend
-		if (route.join("/") !== valid_route_part.join("/")) {
-			return false;
-			// if (window.location) window.location.pathname = route.join("/")
-			// logger.warn `invalid route "/${route.join("/")}" - redirected to "/${valid_route_part.join("/")}"`;
-		}
-		return true;
+async function resolveRouteForRoutingSink(routingSink: RoutingHandler, route:Path.Route, context: UIX.Context|UIX.ContextGenerator) {
+	// routing required
+	if (route.route.length) {
+		if (typeof context == "function") context = context();
+		const valid_route_part = await routingSink.resolveRoute(route, context);
+		return Path.routesAreEqual(route, valid_route_part);
 	}
 	else return true;
 }

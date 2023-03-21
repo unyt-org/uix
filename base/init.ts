@@ -15,6 +15,9 @@ import { Debug } from "./debug.ts";
 import { UnytPen } from "./unyt_pen.ts";
 import { addStyleSheet } from "../uix_all.ts";
 
+// enable DATEX CLI
+if (globalThis.Deno) Datex.enableCLI();
+
 if (!IS_HEADLESS) {
 	window.addEventListener("keydown", (e)=>{
 		if (e.key == "Shift") {

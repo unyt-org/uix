@@ -12,23 +12,12 @@
  */
 
 import { Datex } from "https://dev.cdn.unyt.org/unyt_core/no_init.ts"; // required by getAppConfig
-import { parse } from "https://deno.land/std@0.168.0/flags/mod.ts";
 import { getAppConfig } from "./utils/config_files.ts";
 import { getExistingFile } from "./utils/file_utils.ts";
+import { command_line_options, root_path } from "./utils/args.ts";
 
-const flags = parse(Deno.args, {
-	string: ["path"],
-	boolean: ["watch", "live", "reload"],
-	alias: {
-		l: "live",
-		w: "watch",
-		p: "path",
-		r: "reload"
-	}
-});
+const reload = command_line_options.option("reload", {type:"boolean", aliases:["r"]})
 
-const watch = flags["live"] || flags["watch"]
-const root_path = new URL(flags["path"]??'./', 'file://' + Deno.cwd() + '/');
 const deno_config_path = getExistingFile(root_path, './deno.json');
 
 
@@ -55,7 +44,7 @@ const run_script_abs_url = import_map.imports?.['uix/'] + run_script_url;
 
 
 // reload cache
-if (flags.reload) {
+if (reload) {
 	const deno_lock_path = getExistingFile(root_path, './deno.lock');
 	if (deno_lock_path) {
 		await Deno.remove(deno_lock_path)
@@ -73,7 +62,7 @@ const cmd = [
 	"-q",
 ];
 
-if (flags.reload) {
+if (reload) {
 	cmd.push("--reload");
 }
 
@@ -96,7 +85,7 @@ async function run() {
 			  ...Deno.args,
 		]
 	}).status();
-	if (watch && exitStatus.code == 42) {
+	if (exitStatus.code == 42) {
 		console.log(".....");
 		await run();
 	}

@@ -7,28 +7,15 @@ import { Path } from "unyt_node/path.ts";
 import { ImportMap } from "unyt_node/importmap.ts";
 import { Server } from "unyt_node/server.ts";
 
-const logger = new Datex.Logger("UIX App");
+let live_frontend:boolean|undefined = false;
+let watch:boolean|undefined = false;
+let watch_backend:boolean|undefined = false;
 
-let live_frontend = false;
-let watch = false;
-let watch_backend = false;
-
-// command line args (--watch)
 if (globalThis.Deno) {
-    const parse = (await import("https://deno.land/std@0.168.0/flags/mod.ts")).parse;
-    const flags = parse(Deno.args, {
-        boolean: ["live", "watch", "watch-backend"],
-        alias: {
-            l: "live",
-			w: "watch",
-			b: "watch-backend"
-        },
-		default: {watch, 'watch-backend':watch_backend, live:live_frontend}
-    });
-    live_frontend = flags["live"]
-	watch = live_frontend || flags["watch"]
-	watch_backend = flags["watch-backend"]
+	({ live_frontend, watch, watch_backend } = (await import("../utils/args.ts")))
 }
+
+const logger = new Datex.Logger("UIX App");
 
 
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']

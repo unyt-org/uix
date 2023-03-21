@@ -270,6 +270,7 @@ type get_render_method<C extends Entrypoint, Path extends string = string> =
 
 export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false): Promise<[get_content<T>, get_render_method<T>, boolean]> {
 	
+
 	context ??= new UIX.Context()
 	route ??= Path.Route();
 
@@ -353,7 +354,11 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		// routing component?
 		// @ts-ignore
 		if (route && typeof collapsed?.resolveRoute == "function") {
-			if (!await resolveRouteForRoutingSink(<RoutingHandler> collapsed, route, context)) {
+
+			// wait until at least construct lifecycle finished
+			if (entrypoint instanceof UIX.Components.Base) await entrypoint.constructed
+
+			if (!await resolveRouteForRoutingHandler(<RoutingHandler> collapsed, route, context)) {
 				collapsed = null; // reset content, route could not be resolved
 			}
 		}
@@ -366,18 +371,19 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 }
 
 /**
- * Resolve a route on a RoutingSink
- * @param routingSink RoutingSink impl
+ * Resolve a route on a RoutingHandler
+ * @param routingHandler RoutingHandler impl
  * @param route array of route parts
  * @param context UIX context
  * @returns true if the route could be fully resolved
  */
-async function resolveRouteForRoutingSink(routingSink: RoutingHandler, route:Path.Route, context: UIX.Context|UIX.ContextGenerator) {
-	// routing required
-	if (route.route.length) {
-		if (typeof context == "function") context = context();
-		const valid_route_part = await routingSink.resolveRoute(route, context);
-		return Path.routesAreEqual(route, valid_route_part);
-	}
-	else return true;
+async function resolveRouteForRoutingHandler(routingHandler: RoutingHandler, route:Path.Route, context: UIX.Context|UIX.ContextGenerator) {
+	if (typeof context == "function") context = context();
+	const valid_route_part = <Path.route_representation> await Promise.race([
+		routingHandler.resolveRoute(route, context),
+		new Promise((_,reject) => setTimeout(()=>{
+			reject(new Error("Routing Handler ("+routingHandler.constructor.name+") did not resolve after 5s. There is probably a deadlock somehere. This can for example happen in a Component when awaiting defer() in the onRoute() handler."))
+		}, 5000))
+	])
+	return Path.routesAreEqual(route, valid_route_part);
 }

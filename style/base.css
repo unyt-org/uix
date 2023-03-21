@@ -19,6 +19,12 @@ body {
     scrollbar-width: none;
 }
 
+.edit-hover {
+    background-color: var(--blue)!important;
+    outline: 1px solid white!important;
+}
+
+
 div:focus {
     outline: 0;
 }

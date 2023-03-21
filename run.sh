@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# curl -s https://cdn.unyt.org/uix@dev/run.sh | sh -s -- --watch --live
-# deno run --allow-all --no-check --unstable -q --import-map=importmap.dev.json https://cdn.unyt.org/uix@dev/run.ts --watch --live
+# curl -s https://cdn.unyt.org/uix/run.sh | sh -s -- --watch --live
+# deno run -Aq --import-map=importmap.dev.json https://cdn.unyt.org/uix/run.ts -l
 
 if ! [ -x "$(command -v git)" ]; then
 	echo 'Installing deno...'

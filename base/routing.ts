@@ -19,6 +19,10 @@ export namespace Routing {
 	let backend_entrypoint: Entrypoint|undefined
 	let current_content: any;
 
+	// @deprecated
+	export const Prefix = {};
+	export function setPrefix(){}
+
 	export function getCurrentRouteFromURL() {
 		return Path.Route(window.location.href ?? import.meta.url);
 	}

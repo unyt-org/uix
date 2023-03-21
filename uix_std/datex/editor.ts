@@ -202,9 +202,9 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         })
     }
 
-    // has tests (extension test())?
+    // has tests (plugin test())?
     checkHasTests(content:string) {
-        if (content.match(/extension\s+test\s*\(/gm)) this.#testBtn.style.display = "initial"
+        if (content.match(/plugin\s+test\s*\(/gm)) this.#testBtn.style.display = "initial"
         else this.#testBtn.style.display = "none"
     }
 
@@ -280,7 +280,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
                     sid: this.settings.sid,
                     return_index: this.settings.intermediate_result ? Datex.Compiler.getNextReturnIndexForSID(this.settings.sid) : 0,
                     __v2:v2,
-                    required_extensions:extensions
+                    required_plugins:extensions
                 }
             ], this.endpoint, this.settings.sid);
             

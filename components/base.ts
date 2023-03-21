@@ -254,12 +254,48 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     #datex_lifecycle_ready_resolve?:Function
     #datex_lifecycle_ready = new Promise((resolve)=>this.#datex_lifecycle_ready_resolve = resolve)
 
-
     #create_lifecycle_ready_resolve?:Function
     #create_lifecycle_ready = new Promise((resolve)=>this.#create_lifecycle_ready_resolve = resolve)
 
+    #on_created_handlers = new Map<Function, Function>(); // handler, promise resolve
+
+    /**
+     * Promise that resolves after onConstruct is finished
+     */
+    get constructed() {
+        return this.#datex_lifecycle_ready
+    }
+
+    /**
+     * Promise that resolves after onCreate is finished
+     */
     get created() {
         return this.#create_lifecycle_ready
+    }
+
+
+    private async handleOnCreate(){
+        await new Promise((r) => setTimeout(r, 0)); // dom changes
+
+        // call handlers and defer() promise resolves
+        for (const [handler, resolve] of this.#on_created_handlers) (async ()=>{
+            await handler();
+            resolve();
+        })()
+        this.#on_created_handlers.clear();
+    }
+
+    /**
+     * Only executed after component was added to DOM and onCreate was called
+     * @param handler function to execute
+     */
+    async defer(handler:Function):Promise<void> {
+        // onCreate already called
+        if (this.#created) return handler(); 
+        // add to callback list
+        else return new Promise(resolve=>{
+            this.#on_created_handlers.set(handler, resolve)
+        })
     }
 
     // default constructor
@@ -702,23 +738,28 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         this.findModuleBoundDatexScripts();
 
-        const valid_dx_files = [];
+        const valid_dx_files:string[] = [];
         const dx_file_values = new Map<string,[any,Set<string>]>();
 
         for (const path of this._dx_files) {
             try {
-                if ((await fetch(path)).ok) {
-                    valid_dx_files.push(path);
-                    try {
-                        dx_file_values.set(path, [<any>await get(path, undefined, this._module), new Set()])
-                        logger.debug("loaded DATEX module script: " + path)    
-                    }
-                    catch (e) {
-                        throw new Error("Error loading DATEX module script '" + path + "': " + e?.stack)
-                    }
+                // deno local file
+                if (path.startsWith("file://")) {
+                    if (new Path(path).fs_exists) await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
+                }
+                // web path
+                else {
+                    if ((await fetch(path)).ok) await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
                 }
             }
-            catch (e) {}
+            catch (e) {
+                if (path.startsWith("file://")) throw e
+                
+                // TODO: weird fix, fetch again if error
+                else {
+                    await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
+                }
+            }
         }
 
 
@@ -737,8 +778,18 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this._dx_loaded_resolve?.();
     }
 
+    private static async loadDatexModuleContents(path: string, valid_dx_files:string[], dx_file_values:Map<string, [any, Set<string>]>) {
+        valid_dx_files.push(path);
+        try {
+            dx_file_values.set(path, [<any>await get(path, undefined, this._module), new Set()])
+            logger.debug("loaded DATEX module script: " + path)    
+        }
+        catch (e) {
+            throw new Error("Error loading DATEX module script '" + path + "': " + e?.stack)
+        }
+    }
+
     private static async loadDatexImports(target:object, valid_dx_files:string[], dx_file_values:Map<string,[any,Set<string>]>){
-        
         const allowed_imports:Record<string,[string, string]> = target[METADATA]?.[IMPORT_PROPS]?.public
 
         // try to resolve imports
@@ -1088,16 +1139,23 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         // this.updateResponsive(false, true);
 
         this.#create_lifecycle_ready_resolve?.();
+
+        // call on create handlers
+        this.handleOnCreate();
     }
 
+    #route_initialized = false;
 
     // implements resolveRoute per default, can be overriden for more custom routing behaviour
     public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
 
         const delegate = this.routeDelegate??this;
 
+        if (!route?.route) return []; // TODO: should not happen?
+
         // ignore if route is already up to date
-        if (Path.routesAreEqual(route, delegate.getInternalRoute())) return route;
+        if (this.#route_initialized && Path.routesAreEqual(route, delegate.getInternalRoute())) return route;
+        this.#route_initialized = true;
 
         const child = await delegate.onRoute?.(route.route[0]);
 

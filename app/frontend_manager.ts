@@ -606,7 +606,8 @@ catch {
 
 		// use js if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content
 		const use_js = (render_method == UIX.RenderMethod.DYNAMIC || render_method == UIX.RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || this.#live);
-		
+		const add_importmap = render_method != UIX.RenderMethod.STATIC_NO_JS;
+
 		//js files
 		if (use_js) {
 			files += '<script type="module">'
@@ -652,9 +653,9 @@ catch {
 				files += `\n\nawait UIX.Routing.setEntrypoints(frontend_entrypoint, undefined)`
 
 			files += '\n</script>'
-
-			if (this.#app_options.import_map) importmap = `<script type="importmap">\n${JSON.stringify(this.getRelativeImportMap(), null, 4)}\n</script>`	
 		}
+
+		if (add_importmap && this.#app_options.import_map) importmap = `<script type="importmap">\n${JSON.stringify(this.getRelativeImportMap(), null, 4)}\n</script>`;
 		
 		let global_style = '';
 		// stylesheets

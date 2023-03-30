@@ -1,10 +1,10 @@
-import { Datex, transform } from "unyt_core";
-import { content, Res, Theme, HTMLUtils } from "./uix_all.ts";
+import { Datex } from "unyt_core";
+import { Res, Theme, HTMLUtils } from "./uix_all.ts";
 
 export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
 
 /** make decorators global */
-import {content as _content, id as _id, use as _use, NoResources as _NoResources, Component as _Component} from "./uix_all.ts";
+import {content as _content, id as _id, use as _use, NoResources as _NoResources, Component as _Component, standalone as _standalone} from "./uix_all.ts";
 
 declare global {
 	const content: typeof _content;
@@ -12,7 +12,7 @@ declare global {
 	const use: typeof _use;
 	const Component: typeof _Component;
 	const NoResources: typeof _NoResources;
-
+	const standalone: typeof _standalone;
 }
 
 // @ts-ignore global
@@ -25,6 +25,8 @@ globalThis.use = _use;
 globalThis.Component = _Component;
 // @ts-ignore global
 globalThis.NoResources = _NoResources;
+// @ts-ignore global
+globalThis.standalone = _standalone;
 
 // GET STRING reference
 export function S (_s:TemplateStringsArray|string|Datex.Value<string>, ...params:string[]):Datex.Value<string> {

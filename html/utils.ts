@@ -7,7 +7,7 @@ export namespace HTMLUtils {
 
 	export function escapeHtml(str:string) {
 		if (typeof str != "string") return "";
-		return str.replace(/&/g, "&amp;").replace(/ /g, "&nbsp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+		return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 	}
 
 	// create HTMLElement from string

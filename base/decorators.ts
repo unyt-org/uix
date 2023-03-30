@@ -138,6 +138,7 @@ function _NoResources(component_class:Types.ComponentSubClass, name:context_name
 export const ID_PROPS: unique symbol = Symbol("ID_PROPS");
 export const CONTENT_PROPS: unique symbol = Symbol("CONTENT_PROPS");
 export const IMPORT_PROPS: unique symbol = Symbol("IMPORT_PROPS");
+export const STANDALONE_PROPS: unique symbol = Symbol("STANDALONE_PROPS");
 
 /** @id to automatically assign a element id to a component property */
 export function id(id?:string):any
@@ -172,6 +173,7 @@ function _content(element_class:typeof Elements.Base, name:context_name, kind:co
 }
 
 
+
 /** @UIX.use to bind static properties */
 export function use(resource?:string, export_name?:string):any
 export function use(target: any, name?: string, method?:any):any
@@ -187,6 +189,23 @@ function _use(element_class:typeof Elements.Base, name:context_name, kind:contex
 	}
 
 	setMetadata(IMPORT_PROPS, [params[0], params[1]??name]);
+}
+
+
+
+/** @standalone to declare methods that also work in a standlone context */
+export function standalone(target: any, name?: string, method?:any):any
+export function standalone(...args:any[]) {
+	return handleDecoratorArgs(args, _standalone);
+}
+
+function _standalone(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
+	if (kind != "method" || is_static) {
+		logger.error("@UIX.content has to be used on an instance method");
+		return;
+	}
+
+	setMetadata(STANDALONE_PROPS, name);
 }
 
 

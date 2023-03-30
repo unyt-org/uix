@@ -93,10 +93,10 @@ export class BackendManager {
 		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [await getOuterHTML(<HTMLElement> content.getHTML(false), {includeShadowRoots:true, rootDir:this.#base_path}), render_method];
+		if (content instanceof Datex.Markdown) return [await getOuterHTML(<HTMLElement> content.getHTML(false), {includeShadowRoots:true, rootDir:this.#base_path, injectStandaloneJS:true}), render_method];
 
 		// convert content to valid HTML string
-		if (content instanceof HTMLElement || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, rootDir:this.#base_path}), render_method];
+		if (content instanceof HTMLElement || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, rootDir:this.#base_path, injectStandaloneJS:true}), render_method];
 		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method];
 	}
 

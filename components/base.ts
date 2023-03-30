@@ -17,12 +17,13 @@ import { DEFAULT_BORDER_SIZE, IS_HEADLESS } from "../utils/constants.ts"
 import { Clipboard } from "../base/clipboard.ts"
 import type { Group } from "./group.ts"
 import { Components } from "./main.ts"
-import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS } from "../base/decorators.ts";
+import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import {Routing} from "../base/routing.ts";
 import { bindObserver } from "../html/datex_binding.ts";
 import { Path } from "unyt_node/path.ts";
 import { RoutingHandler } from "../html/rendering.ts";
 import { Context } from "../base/context.ts";
+import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../snippets/scroll_container.ts";
 
 // deno-lint-ignore no-namespace
 export namespace Base {
@@ -372,6 +373,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (this.options.scroll_content) {
             this.content.style.height = "auto"
             this.content_container.append(this.makeScrollContainer(this.content));
+            this.addStandaloneHandler(async ()=>{
+                const {enableScrollContainer} = await import("uix/snippets/scroll_container.ts");
+                enableScrollContainer(this.shadowRoot!.querySelector(".uix-scrollbar-container")!)
+            })
         }
         else this.content_container.append(this.content);
 
@@ -442,6 +447,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (this.options.style) HTMLUtils.setCSS(this, this.options.style)
 
         await (<typeof Base>this.constructor).loadModuleDatexImports();
+        (<typeof Base>this.constructor).loadStandaloneMethods();
 
         if (constructed) await this.onConstruct?.();
         await this.onInit?.() // element was constructed, not fully loaded / added to DOM!
@@ -848,6 +854,56 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
 
+    private static standalone_loaded = false;
+    private static loadStandaloneMethods() {
+        if (this.standalone_loaded) return;
+        this.standalone_loaded = true;
+        const props:Record<string, string> = this.prototype[METADATA]?.[STANDALONE_PROPS]?.public;
+        if (!props) return;
+
+        for (const name of Object.values(props)) {
+            this.addStandaloneMethod(name, this.prototype[name]);
+        }
+    }
+
+    // add methods that run in standalone mode
+    private static standalone:Record<string,Function> = {};
+    protected static addStandaloneMethod(name: string, value:Function) {
+        this.standalone[name] = value;
+    }
+
+    public static getStandaloneJS() {
+        let js_code = '{\n';
+        for (const [_name, content] of Object.entries(this.standalone)) {
+            js_code += content.toString() + ',\n';
+        }
+        if (this.prototype.onInitStandalone) js_code += this.prototype.onInitStandalone.toString() + '\n';
+        js_code += '}'
+        return js_code;
+    }
+
+    public standaloneEnabled() {
+        return Object.keys((<typeof Base>this.constructor).standalone).length || this.onInitStandalone || this.standalone_handlers.size;
+    }
+
+
+    // add function for this instance that is immediately invoked in standalone mode
+    private standalone_handlers = new Set<Function>()
+    protected addStandaloneHandler(handler:Function) {
+        this.standalone_handlers.add(handler);
+    }
+
+    // get instance specific standalone js code that is immediately executed
+    public getStandaloneJS() {
+        let js_code = '';
+        js_code += `const self = querySelectorAll("[data-ptr='${this.getAttribute("data-ptr")}']")[0];\n`
+        for (const handler of this.standalone_handlers) {
+            // workaround to always set 'this' context to UIX component, even when handler is an arrow function
+            js_code += `(function (){return (${handler.toString()})()}).apply(self);\n`;
+        }
+        return js_code;
+    }
+
     // wait until static (css) and dx module files loaded
     public static async init() {
         await this.loadModuleDatexImports();
@@ -1032,7 +1088,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         // assume next route as new initial route
         this.#route_initialized = false;
 
-        
+
         // if (this.is_skeleton) return; // ignore
 
         // const parent_is_uix = this.parentElement instanceof Base;
@@ -1411,192 +1467,26 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         return this.options.collector;
     }
 
-    #scroll_element: HTMLDivElement;
-
-    // takes element, returns scroll container element
+    #scroll_context:scrollContext
+    
     protected makeScrollContainer(element:HTMLElement, scroll_x = true, scroll_y = true) {
-
-        const container = document.createElement("div");
-        container.classList.add('uix-scrollbar-container')
-        const content = this.#scroll_element = document.createElement("div");
-        content.classList.add('uix-scrollbar-content')
-
-        content.append(element)
-        container.append(content);
-
-        const scrollbar_y = document.createElement("div");
-        scrollbar_y.classList.add('uix-scrollbar', 'y');
-        if (scroll_y) container.append(scrollbar_y)
-
-        const scrollbar_x = document.createElement("div");
-        scrollbar_x.classList.add('uix-scrollbar', 'x');
-        if (scroll_x) container.append(scrollbar_x)
-
-        const updateScrollbars = ()=>{
-            // y height
-            let heightRatioY = content.offsetHeight / content.scrollHeight;
-            if (heightRatioY > 0.99) heightRatioY = 1; // compensate pixel rounding errors
-            else if (heightRatioY < 0.05) heightRatioY = 0.05; // not too small
-
-            // y position
-            const scrollRatioY = content.scrollTop / (content.scrollHeight-content.offsetHeight); 
-            const topPercent = scrollRatioY * (1-heightRatioY);
-            // remove overflow y position from height
-            if (topPercent < 0) heightRatioY += topPercent;
-            if (topPercent+heightRatioY > 1) heightRatioY = 1 - topPercent;
-
-            scrollbar_y.style.top = Math.max(0, topPercent * 100) + "%"
-            scrollbar_y.style.height = "calc(" + (heightRatioY * 100) + "% - 10px)"
-            if (heightRatioY == 1) scrollbar_y.style.display = "none";
-            else scrollbar_y.style.display = "block";
-
-
-            // x width
-            let heightRatioX = content.offsetWidth / content.scrollWidth;
-            if (heightRatioX > 0.99) heightRatioX = 1; // compensate pixel rounding errors
-            else if (heightRatioX < 0.05) heightRatioX = 0.05; // not too small
-
-            // x position
-            const scrollRatioX = content.scrollLeft / (content.scrollWidth-content.offsetWidth); 
-            const leftPercent = scrollRatioX * (1-heightRatioX);
-            // remove overflow x position from width
-            if (leftPercent < 0) heightRatioX += leftPercent;
-            if (leftPercent+heightRatioX > 1) heightRatioX = 1 - leftPercent;
-
-            scrollbar_x.style.left = Math.max(0, leftPercent * 100) + "%"
-            scrollbar_x.style.width = "calc(" + (heightRatioX * 100) + "% - 20px)"
-            if (heightRatioX == 1) scrollbar_x.style.display = "none";
-            else scrollbar_x.style.display = "block";
-           
-            this.options._scroll_y = content.scrollTop;
-            this.options._scroll_x = content.scrollLeft;
-        }
-
-        // scroll listener
-        let ticking = false;
-
-        content.addEventListener('scroll', function(e) {          
-            if (!ticking) {
-              window.requestAnimationFrame(function() {
-                updateScrollbars();
-                ticking = false;
-              });
-              ticking = true;
-            }
-        });
-
-        // scrollbar drag listeners
-        let scrollingY:boolean;
-        let scrollYStart:number;
-        let scrollTopStart:number;
-
-        let scrollingX:boolean;
-        let scrollXStart:number;
-        let scrollLeftStart:number;
-
-        if (scroll_y) {
-            scrollingY = false;
-            scrollYStart = 0;
-            scrollTopStart = 0;
-            
-            scrollbar_y.addEventListener("mousedown", function(e) {
-                scrollbar_y.classList.add("active")
-                scrollingY = true;
-                scrollYStart = e.clientY;
-                scrollTopStart = content.scrollTop;
-            })
-        }
-       
-        if (scroll_x) {
-            scrollingX = false;
-            scrollXStart = 0;
-            scrollLeftStart = 0;
-
-            scrollbar_x.addEventListener("mousedown", function(e) {
-                scrollbar_x.classList.add("active")
-                scrollingX = true;
-                scrollXStart = e.clientX;
-                scrollLeftStart = content.scrollLeft;
-            })
-        }
-       
-
-        window.addEventListener("mousemove", (e) => {
-            if (scrollingY) {
-                let delta = e.clientY - scrollYStart;
-                let deltaPercent = delta / content.offsetHeight;
-                let scrollYRatio = deltaPercent / (1-content.offsetHeight / content.scrollHeight);
-                content.scrollTop = scrollTopStart + scrollYRatio * (content.scrollHeight-content.offsetHeight);
-            }
-            if (scrollingX) {
-                let delta = e.clientX - scrollXStart;
-                let deltaPercent = delta / content.offsetWidth;
-                let scrollXRatio = deltaPercent / (1-content.offsetWidth / content.scrollWidth);
-                content.scrollLeft = scrollLeftStart + scrollXRatio * (content.scrollWidth-content.offsetWidth);
-            }
-        })
-
-        // reset
-        document.addEventListener("mouseup", function(e) {
-            scrollingY = false;
-            scrollingX = false;
-            scrollbar_y.classList.remove("active")   
-            scrollbar_x.classList.remove("active")
-        })
-
-        let initial_scroll = (this.options._scroll_y > content.scrollHeight || this.options._scroll_x > content.scrollWidth);
-
-        if (!IS_HEADLESS) {
-            // dom content resize observers
-            new ResizeObserver(()=>{
-                if (initial_scroll) {
-                    this.updateScrollPosition();
-                    setTimeout(()=>this.updateScrollPosition(), 20);
-                    setTimeout(()=>{this.updateScrollPosition();initial_scroll = false;}, 100);
-                }
-                else updateScrollbars();
-            }).observe(content);
-
-            new ResizeObserver(()=>{
-                updateScrollbars();
-                // scroll to bottom
-                if (this.SCROLL_TO_BOTTOM) this.scrollToBottom();
-            }).observe(element);
-        }
-        
-
-        content.addEventListener("mouseup", ()=>updateScrollbars())
-        content.addEventListener("mousedown", ()=>updateScrollbars())
-
-        // move to saved scroll position
-        this.updateScrollPosition()
-
-        return container;
+        // TODO: save scroll state
+        this.#scroll_context = {};
+        return makeScrollContainer(element, scroll_x, scroll_y, this.#scroll_context);
     }
 
-
-    /** handle the scroll position update **/
+    /** handle the scroll position updates **/
 
     public updateScrollPosition(x?:number, y?:number) {
-        if (!this.#scroll_element) return;
-
-        if (x!=undefined) this.#scroll_element.scrollLeft = this.options._scroll_x = x;
-        else this.#scroll_element.scrollLeft = this.options._scroll_x;
-
-        if (y!=undefined) this.#scroll_element.scrollTop = this.options._scroll_y = y;
-        else this.#scroll_element.scrollTop = this.options._scroll_y;
+        return updateScrollPosition(this.#scroll_context, x, y);
     }
 
     public scrollToBottom(force_scroll = false){
-        if (!this.#scroll_element) return;
-        
-        //console.log("> " + (this._scroll_element.scrollTop / (this._scroll_element.scrollHeight-this._scroll_element.offsetHeight)))
-        if (force_scroll ||  this.FORCE_SCROLL_TO_BOTTOM || (this.#scroll_element.scrollHeight - this.#scroll_element.offsetHeight - this.#scroll_element.scrollTop < 200))
-            this.updateScrollPosition(null, this.#scroll_element.scrollHeight-this.#scroll_element.clientHeight)
+        return scrollToBottom(this.#scroll_context, force_scroll);
     }
 
     public scrollToTop(){
-        this.updateScrollPosition(null, 0)
+        return scrollToTop(this.#scroll_context);
     }
 
     override remove() {
@@ -2246,6 +2136,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     /** called after options loaded, element content can be created */
     protected onCreate?():void|Promise<void>
+
+    /** called in standalone mode, when content was server-side rendered */
+    protected onInitStandalone?():void|Promise<void>
 
     /** called after removed from DOM (not moved) */
     protected onRemove?():void

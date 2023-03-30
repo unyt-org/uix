@@ -7,6 +7,7 @@ import { IS_HEADLESS } from "../utils/constants.ts";
 import { indent } from "../utils/indent.ts";
 
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
+import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
 
@@ -233,7 +234,13 @@ export enum RenderMethod {
 }
 
 export class RenderPreset<R extends RenderMethod,T extends html_content_or_generator> {
-	constructor(public readonly __render_method:R, public readonly __content:T) {}
+	constructor(public readonly __render_method:R, public readonly __content:T) {
+		// don't transmit from backend to frontend via DATEX if static
+		if (this.__render_method == RenderMethod.STATIC || this.__render_method == RenderMethod.STATIC_NO_JS) {
+			// @ts-ignore
+			this[DX_IGNORE] = true;
+		}
+	}
 } 
 
 
@@ -283,25 +290,27 @@ type get_render_method<C extends Entrypoint, Path extends string = string> =
 	)
 
 
-export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false): Promise<[get_content<T>, get_render_method<T>, boolean]> {
+export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false, return_first_routing_handler = false): Promise<[get_content<T>, get_render_method<T>, boolean, Path.Route|undefined]> {
 	
 	context ??= new UIX.Context()
 	route ??= Path.Route();
 
 	let collapsed:unknown;
 	let render_method:RenderMethod = RenderMethod.HYDRATION;
+	let remaining_route:Path.Route|undefined = route;
 	let loaded = false;
+
 
 	if (only_return_static_content && entrypoint && (<any> entrypoint).__render_method == RenderMethod.DYNAMIC) collapsed = "";
 
 	// handle generator functions
 	else if (typeof entrypoint == "function") {
 		if (typeof context == "function") context = context();
-		[collapsed, render_method, loaded] = await resolveEntrypointRoute(await entrypoint(context!), route, context, only_return_static_content)
+		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await entrypoint(context!), route, context, only_return_static_content, return_first_routing_handler)
 	}
 	// handle presets
 	else if (entrypoint instanceof RenderPreset || (entrypoint && typeof entrypoint == "object" && !(entrypoint instanceof HTMLElement) && '__content' in entrypoint)) {
-		[collapsed, render_method, loaded] = await resolveEntrypointRoute(<html_content_or_generator>await entrypoint.__content, route, context, only_return_static_content);
+		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(<html_content_or_generator>await entrypoint.__content, route, context, only_return_static_content, return_first_routing_handler);
 		render_method = <RenderMethod> entrypoint.__render_method;
 	}
 
@@ -309,7 +318,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	// @ts-ignore
 	else if (typeof entrypoint?.getRoute == "function") {
 		if (typeof context == "function") context = context();
-		[collapsed, render_method, loaded] = await resolveEntrypointRoute(await (<RoutingAdapter>entrypoint).getRoute(route, context), route, context, only_return_static_content)
+		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await (<RoutingAdapter>entrypoint).getRoute(route, context), route, context, only_return_static_content, return_first_routing_handler)
 	}
 	
 	// path object
@@ -348,7 +357,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 			let val = <any> entrypoint.$ ? (<any>entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypoint)[closest_match_key];
 			if (val instanceof Datex.Value && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
 			const new_path = Path.Route(route.routename.replace(closest_match_route!.routename.replace(/\*$/,""), "") || "/");
-			[collapsed, render_method, loaded] = await resolveEntrypointRoute(await val, new_path, context, only_return_static_content);
+			[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await val, new_path, context, only_return_static_content, return_first_routing_handler);
 		} 
 	}
 
@@ -364,10 +373,14 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 			if (entrypoint instanceof UIX.Components.Base) await entrypoint.created; 
 		}
 
-
-		// routing component?
+		// routing handler?
 		// @ts-ignore
-		if (route && typeof collapsed?.resolveRoute == "function") {
+		if (return_first_routing_handler && typeof collapsed?.getInternalRoute == "function") {
+			return [<get_content<T>>collapsed, <any>render_method, loaded, remaining_route];
+		}
+
+		// @ts-ignore
+		else if (route && typeof collapsed?.resolveRoute == "function") {
 
 			// wait until at least construct lifecycle finished
 			if (entrypoint instanceof UIX.Components.Base) await entrypoint.constructed
@@ -380,7 +393,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		loaded = true;
 	}
 
-	return [<get_content<T>>collapsed, <any>render_method, loaded];
+	return [<get_content<T>>collapsed, <any>render_method, loaded, remaining_route];
 }
 
 /**
@@ -399,4 +412,29 @@ async function resolveRouteForRoutingHandler(routingHandler: RoutingHandler, rou
 		}, 5000))
 	])
 	return Path.routesAreEqual(route, valid_route_part);
+}
+
+/**
+ * gets the part of the route that is calculated without internal routing (RoutingHandler). 
+ * Recalculate the current path from the inner Routing Handler if it exists
+ * @param route 
+ * @param entrypoint 
+ * @param context 
+ * @returns 
+ */
+export async function refetchRoute(route: Path.route_representation, entrypoint: Entrypoint, context?:UIX.Context) {
+	const route_path = Path.Route(route);
+	const [routing_handler, _render_method, _loaded, remaining_route] = await resolveEntrypointRoute(entrypoint, route_path, context, false, true);
+	if (!remaining_route) throw new Error("could not reconstruct route " + route_path.routename);
+	
+	// valid part of route before potential RoutingHandler
+	const existing_route = Path.Route(route_path.routename.replace(remaining_route.routename,""));
+	
+	// resolve internal route in RoutingHandler
+	if (routing_handler?.getInternalRoute) {
+		const combined_route = <Path.Route> existing_route.getChildRoute(Path.Route(await (<RoutingHandler>routing_handler).getInternalRoute()));
+		return combined_route;
+	}
+	else return existing_route;
+	
 }

@@ -7,7 +7,7 @@ export namespace HTMLUtils {
 
 	export function escapeHtml(str:string) {
 		if (typeof str != "string") return "";
-		return str.replace(/&/g, "&amp;").replace(/ /g, "&nbsp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		return str.replace(/&/g, "&amp;").replace(/ /g, "&nbsp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 	}
 
 	// create HTMLElement from string
@@ -183,18 +183,32 @@ export namespace HTMLUtils {
 		return element;
 	}
 
-	export function setElementAttribute<T extends HTMLElement>(element:T, property:string, value:Datex.CompatValue<any>):T {
+	function formatAttributeValue(val:any, root_path?:string|URL): string {
+		if (root_path==undefined) return val?.toString?.()  ?? ""
+		else if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) return new URL(val, root_path).toString();
+		else return val?.toString?.() ?? ""
+	}
+
+	export function setElementAttribute<T extends HTMLElement>(element:T, property:string, value:Datex.CompatValue<any>|Function, root_path?:string|URL) {
 		if (!element) return;
 		// none
 		if (value == undefined) element.setAttribute(property, "");
 
 		// DatexValue
 		if (value instanceof Datex.Value) {
-			element.setAttribute(property, value.val ?? "");
-			value.observe( v => element.setAttribute(property, v ?? ""));
+			element.setAttribute(property, formatAttributeValue(value.val,root_path));
+			value.observe( v => element.setAttribute(property, formatAttributeValue(v, root_path)));
 		}
 		// default
-		else element.setAttribute(property, value);
+		else {
+			if (typeof value == "function") {
+				if (property.startsWith("on")) {
+					element.addEventListener(property.replace("on",""), value);
+				}
+				else throw new Error("Cannot set event listener for element attribute '"+property+"'")
+			}
+			else element.setAttribute(property, formatAttributeValue(value, root_path));
+		}
 	}
 
 	// remember which values are currently synced with element content - for unobserve
@@ -267,9 +281,9 @@ export namespace HTMLUtils {
 	}
 
 	// append an element or text to an element
-	export function append<T extends HTMLElement>(element:T, content:Datex.CompatValue<HTMLElement|Text|string|number|bigint|boolean>):T {
-		if (content instanceof HTMLElement || content instanceof Text) element.append(content);
-		else if (typeof content == "string" || typeof content == "number" || typeof content == "boolean" || typeof content == "bigint") element.append(content);
+	export function append<T extends HTMLElement|DocumentFragment>(element:T, content:Datex.CompatValue<Element|DocumentFragment|string|number|bigint|boolean>):T {
+		if (content instanceof Node) element.append(content);
+		else if (typeof content == "string" || typeof content == "number" || typeof content == "boolean" || typeof content == "bigint") element.append(content.toString());
 		else {
 			element.append(getTextNode(content));
 		}

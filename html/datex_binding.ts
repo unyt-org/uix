@@ -9,6 +9,29 @@ import { $$, Datex } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
 import { DX_VALUE } from "unyt_core/datex_all.ts";
 
+
+// handle htmlfragment (DocumentFragment)
+Datex.Type.get('htmlfragment').setJSInterface({
+    class: globalThis.DocumentFragment,
+
+	create_proxy(value, pointer) {
+		return value;
+	},
+
+	// called when replicating from state
+	cast_no_tuple(val, type, ctx) {
+		const fragment = new DocumentFragment();
+		for (const child of val) {
+			HTMLUtils.append(fragment, child);
+		}
+		return val;
+	},
+
+	serialize(val:DocumentFragment) {
+		return [...val.children]
+	}
+})
+
 // handles html/x and also casts from uix/x
 
 Datex.Type.get('html').setJSInterface({

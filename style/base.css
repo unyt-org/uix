@@ -47,6 +47,7 @@ img:-moz-broken {
 a {
     color: var(--accent);
     text-decoration: none;
+    text-underline-position: under;
 }
 
 a:hover {

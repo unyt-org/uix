@@ -49,6 +49,19 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
 }
 
 
+export function once<T extends html_generator>(generator: T): T {
+	let result:Awaited<ReturnType<T>>|undefined;
+	let loaded = false;
+	return <any> (async function(ctx: UIX.Context) {
+		if (loaded) return result;
+		else {
+			result = <any> await generator(ctx);
+			loaded = true;
+			return result;
+		}
+	})
+}
+
 
 /**
  * serve a value as raw content (DX, DXB, JSON format)
@@ -86,7 +99,7 @@ export function provideResponse(content:ReadableStream | XMLHttpRequestBodyInit,
  * @param type mime type
  * @returns content blob
  */
-export async function provideContent(content:string|ArrayBuffer, type:mime_type = "text/plain", status?:number) {
+export async function provideContent(content:string|ArrayBuffer, type:mime_type = "text/plain;charset=utf-8", status?:number) {
 	const blob = new Blob([content], {type});
 	await Datex.Runtime.cacheValue(blob);
 	return provideResponse(blob, type, status);
@@ -160,6 +173,7 @@ export class FileProvider implements RoutingAdapter {
 	}
 }
 
+
 /**
  * transforms entrypoint content to a new entrypoint content
  */
@@ -167,7 +181,7 @@ export abstract class EntrypointProxy implements RoutingAdapter {
 
 	#entrypoint: Entrypoint
 
-	constructor(entrypoint: Entrypoint) {
+	constructor(entrypoint: Entrypoint = null) {
 		this.#entrypoint = entrypoint;
 	}
 
@@ -176,7 +190,7 @@ export abstract class EntrypointProxy implements RoutingAdapter {
 		const intercepted = await this.intercept?.(route, context);
 		if (intercepted != null) entrypoint = intercepted;
 		const [content, render_method] = await resolveEntrypointRoute(entrypoint, route, context);
-		return this.transform?.(content, render_method, route, context) ?? content;
+		return this.transform?.(content, render_method, route, context) ?? <any> new RenderPreset<RenderMethod, html_content_or_generator>(render_method, content);
 	}
 
 	/**
@@ -226,7 +240,8 @@ export class RenderPreset<R extends RenderMethod,T extends html_content_or_gener
 // collapse RenderPreset, ... to HTML element or other content
 export type raw_content = Blob|Response
 export type html_content = Datex.CompatValue<HTMLElement|string|number|boolean|bigint|Datex.Markdown|RoutingHandler|RoutingAdapter>|null|raw_content;
-export type html_content_or_generator = html_content|((ctx:UIX.Context)=>html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>);
+export type html_generator = (ctx:UIX.Context)=>html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
+export type html_content_or_generator = html_content|html_generator;
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
 
 export type EntrypointRouteMap = {[route:string]:Entrypoint}
@@ -270,7 +285,6 @@ type get_render_method<C extends Entrypoint, Path extends string = string> =
 
 export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false): Promise<[get_content<T>, get_render_method<T>, boolean]> {
 	
-
 	context ??= new UIX.Context()
 	route ??= Path.Route();
 
@@ -365,7 +379,6 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 
 		loaded = true;
 	}
-
 
 	return [<get_content<T>>collapsed, <any>render_method, loaded];
 }

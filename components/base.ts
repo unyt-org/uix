@@ -257,7 +257,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     #create_lifecycle_ready_resolve?:Function
     #create_lifecycle_ready = new Promise((resolve)=>this.#create_lifecycle_ready_resolve = resolve)
 
-    #on_created_handlers = new Map<Function, Function>(); // handler, promise resolve
+    #anchor_lifecycle_ready_resolve?:Function
+    #anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
 
     /**
      * Promise that resolves after onConstruct is finished
@@ -267,22 +268,17 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
     /**
-     * Promise that resolves after onCreate is finished
+     * Promise that resolves after onCreate is finished (resolves immediately after component was removed and re-anchored)
      */
     get created() {
         return this.#create_lifecycle_ready
     }
 
-
-    private async handleOnCreate(){
-        await new Promise((r) => setTimeout(r, 0)); // dom changes
-
-        // call handlers and defer() promise resolves
-        for (const [handler, resolve] of this.#on_created_handlers) (async ()=>{
-            await handler();
-            resolve();
-        })()
-        this.#on_created_handlers.clear();
+    /**
+     * Promise that resolves when anchored to the DOM (can be used again after component was removed and re-anchored)
+     */
+    get anchored() {
+        return this.#anchor_lifecycle_ready
     }
 
     /**
@@ -290,12 +286,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
      * @param handler function to execute
      */
     async defer(handler:Function):Promise<void> {
-        // onCreate already called
-        if (this.#created) return handler(); 
-        // add to callback list
-        else return new Promise(resolve=>{
-            this.#on_created_handlers.set(handler, resolve)
-        })
+        await this.anchored;
+        await handler(); 
     }
 
     // default constructor
@@ -757,7 +749,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                 
                 // TODO: weird fix, fetch again if error
                 else {
-                    await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
+                    try {
+                        await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
+                    }
+                    catch {}
                 }
             }
         }
@@ -767,12 +762,12 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         await this.loadDatexImports(this.prototype, valid_dx_files, dx_file_values);
 
 
-        for (const [path, [file_val, used]] of dx_file_values) {
-            if (!file_val) continue;
-            for (const [exprt] of Datex.DatexObject.entries(file_val)) {
-                if (!used.has(<string> exprt) && !used.has('*')) logger.warn(`unused DATEX export '${exprt}' in ${path}`);
-            }
-        }
+        // for (const [path, [file_val, used]] of dx_file_values) {
+        //     if (!file_val) continue;
+        //     for (const [exprt] of Datex.DatexObject.entries(file_val)) {
+        //         if (!used.has(<string> exprt) && !used.has('*')) logger.warn(`unused DATEX export '${exprt}' in ${path}`);
+        //     }
+        // }
 
         // resolve load promise
         this._dx_loaded_resolve?.();
@@ -1030,10 +1025,18 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
 
     disconnectedCallback() {
-        if (this.is_skeleton) return; // ignore
 
-        const parent_is_uix = this.parentElement instanceof Base;
-        const prev_parent_is_uix = this.previousParent instanceof Base;
+        // reset anchor lifecycle
+        this.#anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
+        
+        // assume next route as new initial route
+        this.#route_initialized = false;
+
+        
+        // if (this.is_skeleton) return; // ignore
+
+        // const parent_is_uix = this.parentElement instanceof Base;
+        // const prev_parent_is_uix = this.previousParent instanceof Base;
 
         // TODO also ignore if previous parent was document.body (or a non uix element?!)
 
@@ -1108,11 +1111,15 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.#created = true;
 
 
+
         // call onCreate
         if (new_create) {
             try {
                 await this.onCreate?.();
             } catch (e) { logger.error("Error calling onCreate on element"); console.error(e)}
+        }
+        else {
+            await this.created;
         }
 
         // call onAnchor
@@ -1138,30 +1145,30 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     
         // this.updateResponsive(false, true);
 
+        await new Promise((r) => setTimeout(r, 0)); // dom changes
         this.#create_lifecycle_ready_resolve?.();
-
-        // call on create handlers
-        this.handleOnCreate();
+        this.#anchor_lifecycle_ready_resolve?.();
     }
 
     #route_initialized = false;
 
     // implements resolveRoute per default, can be overriden for more custom routing behaviour
     public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
-
         const delegate = this.routeDelegate??this;
 
         if (!route?.route) return []; // TODO: should not happen?
 
         // ignore if route is already up to date
         if (this.#route_initialized && Path.routesAreEqual(route, delegate.getInternalRoute())) return route;
+        const initial_route = !this.#route_initialized;
         this.#route_initialized = true;
 
-        const child = await delegate.onRoute?.(route.route[0]);
+        const child = await delegate.onRoute?.(route.route[0]??"", initial_route);
 
         if (child == false) return []; // route not valid
-        else if (child instanceof Base) child.focus() // bring child to foreground
-
+        else if (child instanceof Base) {
+            child.focus() // bring child to foreground
+        }
         // end of route reached / handled in component without redirecting to children, all ok
         if (route.route.length == 1 || !(child instanceof Base)) return route; 
         // recursively follow route
@@ -1661,7 +1668,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     override focus(){
         this.in_focus = true;
         this.classList.add("focus");
-        this.#first_focus_resolve();
+        this.#first_focus_resolve?.();
         if (this.parent) this.parent.handleChildElementFocused(this);
     }
 
@@ -1673,9 +1680,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
       
     protected showInitDialog():Promise<object> {
-        let options_list = this.requiredOptionsList();
+        const options_list = this.requiredOptionsList();
 
-        for (let [key, value] of Object.entries(options_list)) {
+        for (const [key, value] of Object.entries(options_list)) {
             if (this.options[key]) value.default = this.options[key]
         }
         logger.success `${options_list}`;
@@ -2227,7 +2234,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected onHide?():void // called when element is created with options.hidden set to true, or when hide() is called
     protected onClick?():void // called when element is clicked (options.clickable must be enabled)
 
-    protected onRoute?(identifier:string):Promise<void|Base|boolean>|void|Base|boolean // called when a route is requested from the component, return element matching the route identifier or true if route was handled
+    protected onRoute?(identifier:string, is_initial_route:boolean):Promise<void|Base|boolean>|void|Base|boolean // called when a route is requested from the component, return element matching the route identifier or true if route was handled
     protected routeDelegate?: Base; // delegate that handles all routes for this component
     getInternalRoute():string[] {return []} // called to get the current route of the component (child route)
 

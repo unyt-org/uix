@@ -47,6 +47,7 @@ const run_script_abs_url = import_map.imports?.['uix/'] + run_script_url;
 if (reload) {
 	const deno_lock_path = getExistingFile(root_path, './deno.lock');
 	if (deno_lock_path) {
+		console.log("removing " + deno_lock_path);
 		await Deno.remove(deno_lock_path)
 	}
 }

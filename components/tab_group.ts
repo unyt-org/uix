@@ -51,7 +51,7 @@ export class TabGroup<O extends TabGroup.Options = TabGroup.Options, ChildElemen
 
     protected tab_titles: HTMLElement[] = [];
 
-    private moving_tab:HTMLDivElement = null;
+    private moving_tab:HTMLDivElement|null = null;
 
     declare private no_elements_div:HTMLDivElement
 

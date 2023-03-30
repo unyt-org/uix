@@ -146,7 +146,7 @@ export namespace Actions {
         x ??= element.getBoundingClientRect().left + window.scrollX + window.screenLeft
         y ??= element.getBoundingClientRect().top + window.scrollY + window.screenTop
         console.log("opening", element);
-        const new_window = window.open("/new.html" , '_blank', `top=${y},left=${x},height=${height},width=${width}`)
+        const new_window = window.open("/@uix/window" , '_blank', `top=${y},left=${x},height=${height},width=${width}`)
         // @ts-ignore
         new_window.element_promise = Datex.Compiler.encodeValue(element,undefined,true,false,true);
     }

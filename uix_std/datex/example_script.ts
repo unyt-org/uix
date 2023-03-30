@@ -18,8 +18,6 @@ ${info[2]} https://datex.unyt.org${id ? `\n${info[3]} https://playground.unyt.or
 ##########################################################################
 
 
-use print from #std;
-
 print 'Executed on (#endpoint), initiated by (#origin)';
 print (@example :: 'Executed on (#endpoint), initiated by (#origin)');`
 /*

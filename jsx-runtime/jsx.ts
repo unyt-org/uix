@@ -1,5 +1,7 @@
+import { Path } from "unyt_node/path.ts";
 import { $$ } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
+import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 
 const jsxFragment = 'jsx.Fragment'
 const jsxTextNode = 'jsx.Text'
@@ -7,7 +9,7 @@ const jsxTextNode = 'jsx.Text'
 type jsxDOMContainer = HTMLElement | DocumentFragment | null
 type jsxDOMElement = HTMLElement | DocumentFragment | Text
 
-export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): HTMLElement {
+export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): jsxDOMElement {
 
 	let element:HTMLElement;
 	let { children = [], ...props } = config
@@ -18,7 +20,7 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 
 	if (typeof type === 'function') {
 		// class extending HTMLElement
-		if (HTMLElement.isPrototypeOf(type)) {
+		if (HTMLElement.isPrototypeOf(type) || type === DocumentFragment || DocumentFragment.isPrototypeOf(type)) {
 			element = new type(props) // uix component
 			init_attributes = false;
 		}
@@ -32,9 +34,14 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 	else element = <HTMLElement> document.createElement(type);
 
 	if (init_attributes) {
-		for (const [key,val] of Object.entries(props)) {
-			if (key == "style") HTMLUtils.setCSS(element, val);
-			else HTMLUtils.setElementAttribute(element, key, val);
+		for (let [key,val] of Object.entries(props)) {
+			if (key == "style") HTMLUtils.setCSS(element, <any> val);
+			else {
+				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) {
+					val = new Path(val, props['module'] ?? getCallerFile()).toString();
+				}
+				HTMLUtils.setElementAttribute(element, key, <any>val, props['module'] ?? getCallerFile());
+			}
 		}
 	}
 
@@ -62,13 +69,11 @@ declare global {
 	  // JSX node definition
 	  type Element = HTMLElement
 
-	  interface ElementClass extends HTMLElement {
-
-	  }
+	  type ElementClass = jsxDOMElement
     
 	  // Property that will hold the HTML attributes of the Component
 	  interface ElementAttributesProperty {
-		props: {};
+		props: Record<string,string>;
 	  }
   
 	  // Property in 'props' that will hold the children of the Component

@@ -3,29 +3,6 @@ import { Path } from "unyt_node/path.ts";
 await import("./deno_dom.ts");
 
 
-// function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRoots?:boolean, closedRoots?:any[]}) {
-// 	const html = el.innerHTML;
-// 	if (!opts || !opts.includeShadowRoots) return html;
-// 	const m = new (self.WeakMap || Map)();
-// 	for (const c of (opts.closedRoots || [])) m.set(c.host, c);
-// 	const p = [];
-// 	function walk(node:Node) {
-// 	  var c, shadow = node.shadowRoot || m.get(node);
-// 	  if (shadow) p.push(getInnerHTML(node), `<template shadowrootmode="${shadow.mode}">${getInnerHTML(shadow, opts)}</template>`);
-// 	  var c = node.firstElementChild;
-// 	  while (c) { walk(c); c = c.nextElementSibling; }
-// 	}
-// 	walk(el);
-// 	let out = '', c = 0, i = 0, o;
-// 	for (; c<p.length; c+=2) {
-// 	  o = html.indexOf(p[c], i);
-// 	  if (o < 0) continue;
-// 	  out += html.substring(i, o) + p[c+1];
-// 	  i = o;
-// 	}
-// 	return out + html.substring(i);
-// }
-
 export async function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRoots?:boolean, rootDir?:URL}) {
 	if (!opts?.includeShadowRoots) return el.innerHTML;
 
@@ -46,8 +23,16 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRo
 	return html || el.innerText || ""; // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
-export async function getOuterHTML(el:Element, opts?:{includeShadowRoots?:boolean, rootDir?:URL}) {
+export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, rootDir?:URL}):Promise<string> {
 	if (el instanceof globalThis.Text) return el.textContent ?? ""; // text node
+
+	if (el instanceof DocumentFragment) {
+		const content = [];
+		for (const child of el.children) {
+			content.push(await getOuterHTML(child, opts));
+		}
+		return content.join("\n");
+	}
 
 	if (el instanceof globalThis.Comment) {
 		return `<!--${el.textContent}-->`

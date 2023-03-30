@@ -160,11 +160,10 @@ export class FrontendManager {
 		this.server.path("/", (req, path, con)=>this.handleIndexHTML(req, path, con));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
 
-		// TODO: remap to @uix/ paths
-		this.server.path("/new.html", (req, path)=>this.handleNewHTML(req, path));
+		this.server.path("/@uix/window", (req, path)=>this.handleNewHTML(req, path));
 		if (this.#app_options.installable) this.server.path("/manifest.json", (req, path)=>this.handleManifest(req, path));
-		this.server.path("/_uix_sw.js", (req, path)=>this.handleServiceWorker(req, path));
-		this.server.path("/_uix_sw.ts", (req, path)=>this.handleServiceWorker(req, path));
+		this.server.path("/@uix/sw.js", (req, path)=>this.handleServiceWorker(req, path));
+		this.server.path("/@uix/sw.ts", (req, path)=>this.handleServiceWorker(req, path));
 
 		// handle routes (ignore /@uix/.... .dx)
 		this.server.path(/^((?!^(\/@uix\/|\/\.dx)).)*$/, (req, path, con)=>{
@@ -392,8 +391,7 @@ export class FrontendManager {
 		try {
 			const module = <any> await datex.get(path_or_specifier);
 			const is_dx = typeof path_or_specifier == "string" || path_or_specifier.hasFileExtension("dx", "dxb");
-	
-	
+		
 			// add default export for imported dx
 			const inject_default = exports.has("default") && is_dx;
 	
@@ -417,7 +415,9 @@ export class FrontendManager {
 				values.push(["default", module, true, true]); // export default wrapper object, no pointer
 			}
 		}
-		catch {}; // network error, etc.., TODO: show warning somewhere
+		catch (e) {
+			logger.error("error loading module:", e?.message??e);
+		} // network error, etc.., TODO: show warning somewhere
 		
 
 		return values;
@@ -506,8 +506,8 @@ catch {
 
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
-				if (prerendered_content instanceof Response) requestEvent.respondWith(prerendered_content.clone());
-				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain" : <any>prerendered_content.type, prerendered_content);
+				if (prerendered_content instanceof Response) await requestEvent.respondWith(prerendered_content.clone());
+				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain;charset=utf-8" : <any>prerendered_content.type, prerendered_content);
 			}
 
 			// serve normal page

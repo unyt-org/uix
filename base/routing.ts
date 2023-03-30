@@ -27,16 +27,17 @@ export namespace Routing {
 		return Path.Route(window.location.href ?? import.meta.url);
 	}
 
-	export function setCurrentRoute(url?:string|URL, silent?: boolean):Promise<void>
-	export function setCurrentRoute(parts?:string[], silent?: boolean):Promise<void>
+	export function setCurrentRoute<S extends boolean>(url?:string|URL, silent?: S): S extends true ? boolean : Promise<void>
+	export function setCurrentRoute<S extends boolean>(parts?:string[], silent?: S): S extends true ? boolean : Promise<void>
 	export function setCurrentRoute(_route?:string|string[]|URL, silent = false) {
-		if (!globalThis.history) return;
+		if (!globalThis.history) return false;
 		const route = Path.Route(_route);
-		if (Path.routesAreEqual(getCurrentRouteFromURL(), route)) return; // no change, ignore
+		if (Path.routesAreEqual(getCurrentRouteFromURL(), route)) return false; // no change, ignore
 
 		history.pushState(null, "", route.routename);
 	
 		if (!silent) return handleCurrentURLRoute();
+		else return true;
 	}
 
 
@@ -102,6 +103,8 @@ export namespace Routing {
 		// first load current route
 		if (load_current_new) await handleCurrentURLRoute();
 
+		let changed = true;
+
 		if (typeof current_content?.getInternalRoute === "function") {
 			const current_route = Path.Route(await (<RoutingHandler>current_content).getInternalRoute());
 
@@ -112,35 +115,41 @@ export namespace Routing {
 				window.stop()
 			}
 
-			setCurrentRoute(current_route, true); // update silently
+			changed = setCurrentRoute(current_route, true); // update silently
 		}
 
-		logger.success `new route: ${getCurrentRouteFromURL().routename??"/"}`;
+		if (changed) logger.success `new route: ${getCurrentRouteFromURL().routename??"/"}`;
 
 	}
 
 
 	// listen for history changes
-	// globalThis.addEventListener('popstate', (e) => {
-	// 	handleCurrentURLRoute();
-	// });
 
 	// @ts-ignore
-	globalThis.navigation?.addEventListener("navigate", (e:any)=>{
+	if (globalThis.navigation) {
+		// @ts-ignore
+		globalThis.navigation?.addEventListener("navigate", (e:any)=>{
+			if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
+			const url = new URL(e.destination.url);
+			if (url.origin != new URL(window.location.href).origin) return;
 
-		if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
-		const url = new URL(e.destination.url);
-		if (url.origin != new URL(window.location.href).origin) return;
-
-		// console.log("nav " + url, e)
-		e.intercept({
-			async handler() {
-				await handleCurrentURLRoute();
-			}
+			// console.log("nav " + url, e)
+			e.intercept({
+				handler() {
+					return handleCurrentURLRoute();
+				},
+				focusReset: 'manual',
+				scroll: 'manual'
+			})
+			e.s
 		})
-		e.s
-	})
+	}
 
-
+	// fallback if "navigate" event not supported - only works for # paths, otherwise, page is reloaded
+	else {
+		globalThis.addEventListener('popstate', (e) => {
+			handleCurrentURLRoute();
+		})
+	}
 
 }

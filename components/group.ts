@@ -139,7 +139,10 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
     // default route implementation for Group components, resolve children by id
     override onRoute(identifier:string) {
         for (const child of this.elements) {
-            if (child.identifier == identifier) return child;
+            if (child.identifier == identifier) {
+                this.active_element = child; // gets also set when focus() is called on returned child, but this group might not yet be as a parent to the child
+                return child
+            };
         }
     }
 

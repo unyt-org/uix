@@ -15,17 +15,17 @@ export const IS_HEADLESS = !!globalThis.Deno;
 // polyfills
 if (!IS_HEADLESS) await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
 
-if (!IS_HEADLESS) {
-	(function attachShadowRoots(root) {
-		document.querySelectorAll("template[shadowrootmode]").forEach((template:any) => {
-			const mode = template.getAttribute("shadowrootmode");
-			const shadowRoot = template.parentNode.attachShadow({ mode });
-			shadowRoot.appendChild(template.content);
-			template.remove();
-			attachShadowRoots(shadowRoot);
-		});
-	})(document);
-}
+// if (!IS_HEADLESS) {
+// 	(function attachShadowRoots(root) {
+// 		document.querySelectorAll("template[shadowrootmode]").forEach((template:any) => {
+// 			const mode = template.getAttribute("shadowrootmode");
+// 			const shadowRoot = template.parentNode.attachShadow({ mode });
+// 			shadowRoot.appendChild(template.content);
+// 			template.remove();
+// 			attachShadowRoots(shadowRoot);
+// 		});
+// 	})(document);
+// }
 
 let version = "0.0.0";
 try {

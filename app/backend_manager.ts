@@ -8,6 +8,7 @@ import { Routing } from "../base/routing.ts";
 import { Base } from "../components/base.ts";
 import { getOuterHTML } from "../html/render.ts";
 import { Datex } from "unyt_core/datex.ts";
+import { OPEN_GRAPH } from "../base/open_graph.ts";
 
 
 export class BackendManager {
@@ -85,19 +86,19 @@ export class BackendManager {
 	}
 
 
-	public async getEntrypointHTMLContent(path?: string, context?:ContextGenerator|Context): Promise<[content:string|raw_content, render_method:RenderMethod]> {
+	public async getEntrypointHTMLContent(path?: string, context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, open_graph_meta_tags?:OpenGraphInformation|undefined]> {
 		// extract content from provider, depending on path
-		const [content, render_method] = await resolveEntrypointRoute(this.#content_provider, Path.Route(path), context, true);
+		const [content, render_method, _0, _1] = await resolveEntrypointRoute(this.#content_provider, Path.Route(path), context, true);
 
 		// raw file content
-		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT];
+		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, content[OPEN_GRAPH]];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [await getOuterHTML(<HTMLElement> content.getHTML(false), {includeShadowRoots:true, rootDir:this.#base_path, injectStandaloneJS:true}), render_method];
+		if (content instanceof Datex.Markdown) return [await getOuterHTML(<HTMLElement> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS}), render_method, content[OPEN_GRAPH]];
 
 		// convert content to valid HTML string
-		if (content instanceof HTMLElement || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, rootDir:this.#base_path, injectStandaloneJS:true}), render_method];
-		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method];
+		if (content instanceof HTMLElement || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS}), render_method, content[OPEN_GRAPH]];
+		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method, content?.[OPEN_GRAPH]];
 	}
 
 }

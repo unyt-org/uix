@@ -149,7 +149,7 @@ export function enableScrollContainer(container:HTMLElement, scroll_x = true, sc
 
 	let initial_scroll = ((context.scroll_y??0) > content.scrollHeight || (context.scroll_x??0) > content.scrollWidth);
 
-	// if (!IS_HEADLESS) {
+	if (globalThis.ResizeObserver) {
 		// dom content resize observers
 		new ResizeObserver(()=>{
 			if (initial_scroll) {
@@ -165,7 +165,7 @@ export function enableScrollContainer(container:HTMLElement, scroll_x = true, sc
 			// scroll to bottom
 			if (context.scroll_to_bottom) scrollToBottom(context);
 		}).observe(element);
-	// }
+	}
 	
 
 	content.addEventListener("mouseup", ()=>updateScrollbars())

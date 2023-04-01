@@ -3,7 +3,14 @@
 export class PlaceholderCSSStyleDeclaration extends Array /*implements CSSStyleDeclaration*/ {
     
     public static toCamelCase(property:string) {
+        // ignore variables
+        if (property.startsWith("--")) return property;
         return property.replace(/-./g, x=>x[1].toUpperCase());
+    }
+    public static toKebabCase(property:string) {
+        // ignore variables
+        if (property.startsWith("--")) return property;
+        return property.replace(/[A-Z]/g, x => `-${x.toLowerCase()}`);
     }
 
     getPropertyPriority(property: string): string {
@@ -33,12 +40,17 @@ export class PlaceholderCSSStyleDeclaration extends Array /*implements CSSStyleD
         return this[index];
     }
 
-    private constructor(){
-        super();
+    get cssText() {
+        const css = [];
+        for (let i = 0; i < this.length; i++) {
+            const key = this.item(i);
+            css.push(`${key}: ${this[PlaceholderCSSStyleDeclaration.toCamelCase(key)]};`);
+        }
+        return css.join(" ");
     }
 
-    public static toKebabCase(property:string) {
-        return property.replace(/[A-Z]/g, x => `-${x.toLowerCase()}`);
+    private constructor(){
+        super();
     }
 
 
@@ -52,12 +64,20 @@ export class PlaceholderCSSStyleDeclaration extends Array /*implements CSSStyleD
 
                 // css properties
                 else {
-                    (<any>target)[p] = newValue;
-                    if (!target.includes(p)) target.push(PlaceholderCSSStyleDeclaration.toKebabCase(<string>p));
+                    (<any>target)[PlaceholderCSSStyleDeclaration.toCamelCase(p)] = newValue;
+                    const kebabProp = PlaceholderCSSStyleDeclaration.toKebabCase(<string>p);
+                    if (!target.includes(kebabProp)) target.push(kebabProp);
                 }
 
                 return true;
-            }
+            },
+            get(target, p, receiver) {
+                // number indices or 'length' property
+                if (p == "length" || !Number.isNaN(Number(p))) return target[p]; 
+                else {
+                    return target[PlaceholderCSSStyleDeclaration.toCamelCase(<string>p)];
+                }
+            },
         })
     }
 }

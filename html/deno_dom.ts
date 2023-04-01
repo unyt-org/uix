@@ -1,6 +1,5 @@
 import { IS_HEADLESS } from "../utils/constants.ts";
 
-// if (!globalThis.CSSStyleSheet) globalThis.CSSStyleSheet = (await import("./deno_css_style_sheet.ts")).CSSStyleSheet;
 
 if (IS_HEADLESS) {
 
@@ -22,7 +21,6 @@ if (IS_HEADLESS) {
 	globalThis.customElements = window.customElements;
 	globalThis.Text = window.Text
 	globalThis.MutationObserver = window.MutationObserver;
-	globalThis.IntersectionObserver = window.IntersectionObserver;
 	globalThis.Comment = window.Comment;
 	globalThis.Document = window.Document;
 	globalThis.NodeFilter = window.NodeFilter;
@@ -30,9 +28,30 @@ if (IS_HEADLESS) {
 
 	globalThis.Node = window.Node;
 	globalThis.NodeList = window.NodeList;
-	globalThis.requestAnimationFrame = ()=>0;
 
-	// globalThis.location = new URL(import.meta.url);
+	globalThis.requestAnimationFrame = (callback: FrameRequestCallback)=>{
+		return setTimeout(callback, 20);
+	};
+
+	globalThis.ResizeObserver = class ResizeObserver {
+		constructor() {
+			console.warn("Deno DOM: ResizeObserver has no effect");
+		}
+		observe(){}
+		unobserve(){}
+		disconnect(){}
+	};
+	globalThis.IntersectionObserver = class IntersectionObserver {
+		constructor() {
+			console.warn("Deno DOM: IntersectionObserver has no effect");
+		}
+		observe(){}
+		unobserve(){}
+		disconnect(){}
+		takeRecords(){}
+	};
+
+	globalThis.location = new URL("file://"+Deno.cwd()+"/");
 
 	globalThis.CSSStyleDeclaration = window.CSSStyleDeclaration;
 

@@ -1,4 +1,5 @@
 import { Path } from "unyt_node/path.ts";
+import { App } from "../app/app.ts";
 import { HTMLUtils } from "./utils.ts";
 
 await import("./deno_dom.ts");
@@ -22,7 +23,7 @@ const selfClosingTags = new Set([
 	"wbr"
 ])
 
-export async function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRoots?:boolean, rootDir?:URL, _injectedJsData?:injectScriptData}) {
+export async function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRoots?:boolean, _injectedJsData?:injectScriptData}) {
 	if (!opts?.includeShadowRoots) return el.innerHTML;
 
 	let html = "";
@@ -30,7 +31,7 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRo
 		html += `<template shadowrootmode="${el.shadowRoot.mode}">`
 		html += await getInnerHTML(el.shadowRoot, opts);
 
-		if (el.getRenderedStyle) html += el.getRenderedStyle(opts.rootDir);
+		if (el.getRenderedStyle) html += el.getRenderedStyle();
 
 		// is UIX component with standalone methods?
 		// @ts-ignore
@@ -41,16 +42,14 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRo
 			const name = `UIX_Standalone_${el.constructor.name}`;
 			if (!opts._injectedJsData.declare[name]) {
 				// @ts-ignore
-				opts._injectedJsData.declare[name] = `globalThis.UIX_Standalone_${el.constructor.name} = ${el.constructor.getStandaloneJS()};`
+				const standaloneJS = el.constructor.getStandaloneJS();
+				if (standaloneJS) opts._injectedJsData.declare[name] = `globalThis.UIX_Standalone_${el.constructor.name} = ${standaloneJS};`
 			}
-			html += `<script type="module">\n`
-			html += `const {querySelectorAll} = await import("uix/snippets/shadow_dom_selector.ts");\n`
-			html += `Object.assign(querySelectorAll("[data-ptr='${el.getAttribute("data-ptr")}']")[0], globalThis.UIX_Standalone_${el.constructor.name});\n`
-			// @ts-ignore
-			if (el.onInitStandalone) html += `await globalThis.UIX_Standalone_${el.constructor.name}.onInitStandalone.call(querySelectorAll("[data-ptr='${el.getAttribute("data-ptr")}']")[0]);\n`;
-			// @ts-ignore
-			if (el.getStandaloneJS) html += el.getStandaloneJS();
-			html += `</script>`
+			if (el.getStandaloneJS) {
+				html += `<script type="module">\n`
+				html += el.getStandaloneJS();
+				html += `</script>`
+			}
 		}
 
 
@@ -64,7 +63,7 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:{includeShadowRo
 	return html || HTMLUtils.escapeHtml(el.innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
-async function _getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, rootDir?:URL, _injectedJsData?:injectScriptData}):Promise<string> {
+async function _getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean,  _injectedJsData?:injectScriptData}):Promise<string> {
 	
 	if (el instanceof globalThis.Text) return HTMLUtils.escapeHtml(el.textContent ?? ""); // text node
 
@@ -95,7 +94,7 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRo
 		const attrib = el.attributes[i];
 		let val = attrib.value;
 		// relative web path (@...)
-		if (val.startsWith("file://") && opts?.rootDir) val = new Path(val).getAsRelativeFrom(opts.rootDir).replace(/^\.\//, "/@uix/src/");
+		if (val.startsWith("file://")) val = App.filePathToWebPath(val);
 		// blob -> data url
 		else if (val.startsWith("blob:")) {
 			val = await blobToBase64(val);
@@ -113,7 +112,7 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRo
 }
 
 
-export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, rootDir?:URL, injectStandaloneJS?:boolean}):Promise<string> {
+export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean}):Promise<[header_script:string, html_content:string]> {
 	const scriptData:injectScriptData = {declare:{}, init:[]};
 	if (opts?.injectStandaloneJS) opts._injectedJsData = scriptData;
 
@@ -127,9 +126,27 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 	for (const val of scriptData.init) {
 		script += val
 	}
+
+	// polyfill for browsers that don't support declarative shadow DOM
+	script += `
+	if (!HTMLTemplateElement.prototype.hasOwnProperty('shadowRootMode')) {
+		const {querySelectorAll} = await import("uix/snippets/shadow_dom_selector.ts");
+		(function attachShadowRoots(root) {
+			querySelectorAll("template[shadowrootmode]").forEach((template) => {
+				const mode = template.getAttribute("shadowrootmode");
+				if (template.parentNode) {
+					const shadowRoot = template.parentNode.attachShadow({ mode });
+					shadowRoot.appendChild(template.content);
+					template.remove();
+					attachShadowRoots(shadowRoot);
+				}
+			});
+		})(document);
+	}`
+
 	script += `</script>`
 
-	return script + html;
+	return [script, html];
 }
 
 async function blobToBase64(blobUri:string|URL) {
@@ -143,14 +160,14 @@ async function blobToBase64(blobUri:string|URL) {
 
 // https://gist.github.com/developit/54f3e3d1ce9ed0e5a171044edcd0784f
 if (!globalThis.Element.prototype.getInnerHTML) {
-	globalThis.Element.prototype.getInnerHTML = function(opts?:{includeShadowRoots?:boolean, rootDir?:URLSearchParams}) {
+	globalThis.Element.prototype.getInnerHTML = function(opts?:{includeShadowRoots?:boolean}) {
 	  return getInnerHTML(this, opts);
 	}
 }
 
 
 if (!globalThis.Element.prototype.getOuterHTML) {
-	globalThis.Element.prototype.getOuterHTML = function(opts?:{includeShadowRoots?:boolean, rootDir?:URL, injectStandaloneJS?:boolean}) {
+	globalThis.Element.prototype.getOuterHTML = function(opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean}) {
 		return getOuterHTML(this, opts);
 	}
 }

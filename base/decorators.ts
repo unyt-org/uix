@@ -200,8 +200,8 @@ export function standalone(...args:any[]) {
 }
 
 function _standalone(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
-	if (kind != "method" || is_static) {
-		logger.error("@UIX.content has to be used on an instance method");
+	if (is_static) {
+		logger.error("@UIX.standalone cannot be used on static class fields");
 		return;
 	}
 

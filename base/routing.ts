@@ -94,6 +94,11 @@ export namespace Routing {
 			content = await getContentFromEntrypoint(backend_entrypoint);
 			entrypoint = backend_entrypoint;
 		}
+		if (!frontend_entrypoint && !backend_entrypoint) {
+			await getContentFromEntrypoint(getInferredDOMEntrypoint());
+			// TODO: what to do with returned content (full entrypoint route not known)
+			return;
+		}
 
 		// still nothing found - route could not be fully resolved on frontend, try to reload from backend
 		if (content == null) {
@@ -103,6 +108,12 @@ export namespace Routing {
 
 		await setContent(content, entrypoint!);
 	}
+
+	function getInferredDOMEntrypoint(){
+		return document.body.children[0] instanceof HTMLElement ? document.body.children[0] : null
+	}
+
+	const INITIAL_LOAD = Symbol("INITIAL_LOAD")
 
 	/**
 	 * updates the current URL with the current route requested from the get_handler
@@ -117,8 +128,16 @@ export namespace Routing {
 
 		let changed = !!route_should_equal;
 
-		if (current_entrypoint && typeof current_content?.getInternalRoute === "function") {
-			const refetched_route = await refetchRoute(route, current_entrypoint);// Path.Route(await (<RoutingHandler>current_content).getInternalRoute());
+		const entrypoint = current_entrypoint ?? getInferredDOMEntrypoint();
+
+		if (entrypoint) {
+			// entrypoint was inferred but inferred entrypoint was not yet initially routed
+			if (!current_entrypoint) {
+				if (!entrypoint[INITIAL_LOAD]) await handleCurrentURLRoute();
+				entrypoint[INITIAL_LOAD] = true;
+			} 
+
+			const refetched_route = await refetchRoute(route, entrypoint);// Path.Route(await (<RoutingHandler>current_content).getInternalRoute());
 
 			// check of accepted route matches new calculated current_route
 			if (route_should_equal && !Path.routesAreEqual(route_should_equal, refetched_route)) {

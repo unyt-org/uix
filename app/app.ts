@@ -51,6 +51,7 @@ export interface normalized_app_options extends app_options {
 
 class UIXApp {
 
+	base_url?:URL
 
 	frontends = new Map<string, FrontendManager>()
 	#ready_handlers = new Set<()=>void>();
@@ -61,6 +62,11 @@ class UIXApp {
 
 	public ready = new Promise<void>(resolve=>this.onReady(()=>resolve()))
 
+	public filePathToWebPath(filePath:URL|string){
+		if (!this.base_url) throw new Error("Cannot convert file path to web path - no base file path set");
+		return new Path(filePath).getAsRelativeFrom(this.base_url).replace(/^\.\//, "/@uix/src/")
+	}
+
 	public async start(options:app_options = {}, base_url?:string|URL) {
 
 		const n_options = <normalized_app_options> {};
@@ -70,6 +76,7 @@ class UIXApp {
 		base_url ??= new Error().stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
 		if (!base_url) throw new Error("Could not determine the app base url (this should not happen)");
 		base_url = new URL(base_url.toString());
+		this.base_url = base_url;
 
 		n_options.name = options.name;
 		n_options.description = options.description;

@@ -18,6 +18,7 @@ export function generateTS(module_name:string, module_path_or_datex_get:Path|str
 		*/
 
 		import { Datex, datex, endpoint, property, meta, timeout, sync, sealed } from "unyt_core";
+		await Datex.Supranet.connect();
 		const logger = new Datex.Logger("${module_name}");\n\n`;
 
 	for (const [name, val, valid, no_pointer] of values) {

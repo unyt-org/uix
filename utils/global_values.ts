@@ -28,7 +28,6 @@ export const global_states = {
 }
 
 
-
 export const unsaved_components = new Set<Components.Base>();
 export const abstract_component_classes = new Set<Types.ComponentSubClass>(); // set including all classes marked as @UIX.Abstract
 export const component_classes = new Map<Datex.Type, Types.ComponentSubClass>();

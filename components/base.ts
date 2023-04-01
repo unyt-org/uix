@@ -24,6 +24,9 @@ import { Path } from "unyt_node/path.ts";
 import { RoutingHandler } from "../html/rendering.ts";
 import { Context } from "../base/context.ts";
 import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../snippets/scroll_container.ts";
+import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open_graph.ts";
+import { App } from "../app/app.ts";
+import { bindContentProperties } from "../snippets/bound_content_properties.ts";
 
 // deno-lint-ignore no-namespace
 export namespace Base {
@@ -41,6 +44,8 @@ export namespace Base {
         lazy_load?: boolean // don't call onCreate until element is focused
 
         enable_routes?: boolean // automatically handles url routes (for children)
+
+        generate_open_graph?: boolean, // enable auto generated open graph meta information for this component
 
         border_radius?: number;
         border_tl_radius?: number
@@ -80,6 +85,7 @@ export namespace Base {
 
         identifier?:string // unique identifier for this component
         title?:string // title, e.g. for tabs
+        description?: string, // description, e.g. used by open graph preview
         short_title?: string // shorter title
         icon?:string // icon as html
         group?:string // group identifier
@@ -148,6 +154,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected FORCE_SCROLL_TO_BOTTOM = false;
     protected CONTENT_PADDING = true;
 
+    protected openGraphImageGenerator?: OpenGraphPreviewImageGenerator; // set the custom preview image generator for open graph cards
+
     get shadow_root() {
         return this.shadowRoot ?? this.attachShadow({mode: 'open'})
     }
@@ -182,72 +190,12 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         }
     }
 
-    #id_props = new Map<string, any>()
-
     private handleIdProps(){
 
         const id_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[ID_PROPS]?.public;
         const content_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[CONTENT_PROPS]?.public;
 
-		// @UIX.id props
-		
-        if (id_props) {
-			for (const [prop,id] of Object.entries(id_props)) {
-                if (content_props[prop]) continue; // is content, ignore
-
-                const prev = this[prop];
-
-				Object.defineProperty(this, prop, {
-					get() {
-						return this.#id_props.get(prop)
-					},
-					set(el) {
-						if (el instanceof HTMLElement) el.setAttribute("id", id); // auto set id
-						this.#id_props.set(prop, el)
-					}
-				})
-
-                if (prev != undefined) this[prop] = prev; // trigger setter
-			}
-		}
-
-        // @UIX.content props
-		if (content_props) {
-			for (const [prop,id] of Object.entries(content_props)) {
-
-                if (this[prop] instanceof HTMLElement && this.shadowRoot?.contains(this[prop])) throw new Error("property '" + prop +"' cannot be used as an @content property - already part of the component")
-
-                const prev = this[prop];
-
-                const property_descriptor = Object.getOwnPropertyDescriptor(this, prop) 
-                             
-				Object.defineProperty(this, prop, {
-					get: () => {
-                        if (property_descriptor?.get) return property_descriptor.get.call(this);
-                        return this.#id_props.get(prop)
-					},
-					set: (el) => {
-                        // encapsulate in HTMLElement
-						if (!(el instanceof HTMLElement)) el = HTMLUtils.createHTMLElement('<span></span>', el);
-
-                        // add to content if it exists
-                        if (this.content) {
-                            const previous = this.content.querySelector("#"+id);
-                            if (previous == el) {/* ignore */}
-                            else if (previous) this.content.replaceChild(el, previous);
-                            else this.content.append(el);
-                        }
-
-                        el.setAttribute("id", id); // auto set id
-                        if (property_descriptor?.set) property_descriptor.set.call(this, el);
-                        this.#id_props.set(prop, el)
-                       
-					}
-				})
-
-                this[prop] = prev ?? document.createElement("div"); // trigger setter (use placeholder if not yet set)
-			}
-		}
+		bindContentProperties(this, id_props, content_props);
     
     }
 
@@ -438,11 +386,11 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         if (this.constraints.dynamic_size) this.setSizeDynamic();
 
+        this.onCreateLayout?.(); // custom layout extensions
+
         // @UIX.id
         this.handleIdProps();
 
-        
-        this.onCreateLayout?.(); // custom layout extensions
         // this.applyStyle(); // custom style
         if (this.options.style) HTMLUtils.setCSS(this, this.options.style)
 
@@ -452,9 +400,19 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (constructed) await this.onConstruct?.();
         await this.onInit?.() // element was constructed, not fully loaded / added to DOM!
 
+        if (this.options.generate_open_graph!==false) this.enableDefaultOpenGraphGenerator();
+
         //await Promise.all(loaders); // TODO: await stylesheet loading? leads to errors
     }
 
+    private enableDefaultOpenGraphGenerator() {
+        Object.defineProperty(this, OPEN_GRAPH, {
+            get() {return new OpenGraphInformation({
+                title: this.title,
+                description: this.options.description
+            }, this.openGraphImageGenerator)}
+        })
+    }
 
     // clone self as DATEX value
     public async clone(){
@@ -518,14 +476,14 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     // list of all adopted stylesheets for this element / shadow DOM
     #style_sheets:CSSStyleSheet[] = [];
-    #pseudo_style = {};
+    #pseudo_style = PlaceholderCSSStyleDeclaration.create();
     #style_sheets_urls:string[] = [];
 
     // get style_sheets_urls () {return this.#style_sheets_urls}
     // get style_sheets () {return this.#style_sheets}
 
     // return rendered HTML for stylesheets used in this component
-    public getRenderedStyle(rel_path?:Path) {
+    public getRenderedStyle() {
         let html = "";
 
         // for (let sheet of this.constructor._module_stylesheets) {
@@ -538,9 +496,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         // links
 		for (let url of this.#style_sheets_urls) {
-            if (url.toString().startsWith("file://") && rel_path) {
+            if (url.toString().startsWith("file://")) {
                 // relative web path (@...)
-                url = new Path(url).getAsRelativeFrom(rel_path).replace(/^\.\//, "/@uix/src/");
+                url = App.filePathToWebPath(url);
             }
             html += `<link rel=stylesheet href="${url}">`;
         }
@@ -564,12 +522,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             html += `<style>${this.#adopted_root_style.cssText}</style>`
         }
         else if (this.#pseudo_style) {
-            let css = "";
-            for (const [key,val] of Object.entries(this.#pseudo_style)) {
-                // key to kebab case
-                css += `${key.replace(/[A-Z]/g, x => `-${x.toLowerCase()}`)}:${val};`
-            }
-            html += `<style>:host:host{${css}}</style>`
+            html += `<style>:host:host{${this.#pseudo_style.cssText}}</style>`
         }
 
         return html;
@@ -862,28 +815,58 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (!props) return;
 
         for (const name of Object.values(props)) {
-            this.addStandaloneMethod(name, this.prototype[name]);
+            if (this.prototype[name])
+                this.addStandaloneMethod(name, this.prototype[name]);
+            else 
+                this.addStandaloneProperty(name);
         }
+    }
+
+    private static inferredStandaloneMethods:Record<string,string[]> = {
+        'onRoute': ['resolveRoute']
     }
 
     // add methods that run in standalone mode
-    private static standalone:Record<string,Function> = {};
+    private static standaloneMethods:Record<string,Function> = {};
     protected static addStandaloneMethod(name: string, value:Function) {
-        this.standalone[name] = value;
+        // make sure this class has a separate standaloneMethods object
+        if (this.standaloneMethods == Base.standaloneMethods) this.standaloneMethods = {};
+        this.standaloneMethods[name] = value;
+        // add inferred methods
+        for (const method of this.inferredStandaloneMethods[name]??[]) this.addStandaloneMethod(method, this.prototype[method]);
+    }
+
+    // add instance properties that are loaded in standalone mode
+    private static standaloneProperties:Record<string,{type:'id'|'content',id:string}> = {};
+    protected static addStandaloneProperty(name: string) {
+        // make sure this class has a separate standaloneProperties object
+        if (this.standaloneProperties == Base.standaloneProperties) this.standaloneProperties = {};
+
+        if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'id', id};
+        }
+        else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'content', id};
+        }
+
+        else throw new Error("@UIX.standalone instance properties are currently only supported in combination with @UIX.id or @UIX.content")
     }
 
     public static getStandaloneJS() {
+        if (!Object.keys(this.standaloneMethods).length) return null;
+
         let js_code = '{\n';
-        for (const [_name, content] of Object.entries(this.standalone)) {
-            js_code += content.toString() + ',\n';
+        for (const [_name, content] of Object.entries(this.standaloneMethods)) {
+            js_code += this.getStandloneMethodContentWithMappedImports(content) + ',\n';
         }
-        if (this.prototype.onInitStandalone) js_code += this.prototype.onInitStandalone.toString() + '\n';
         js_code += '}'
         return js_code;
     }
 
     public standaloneEnabled() {
-        return Object.keys((<typeof Base>this.constructor).standalone).length || this.onInitStandalone || this.standalone_handlers.size;
+        return Object.keys((<typeof Base>this.constructor).standaloneMethods).length || this.standalone_handlers.size;
     }
 
 
@@ -896,12 +879,53 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     // get instance specific standalone js code that is immediately executed
     public getStandaloneJS() {
         let js_code = '';
-        js_code += `const self = querySelectorAll("[data-ptr='${this.getAttribute("data-ptr")}']")[0];\n`
+        const pseudoClass = `globalThis.UIX_Standalone_${this.constructor.name}`;
+        const standaloneProperties = Object.entries((<typeof Base>this.constructor).standaloneProperties);
+
+        js_code += `import {querySelector} from "uix/snippets/shadow_dom_selector.ts";\n`
+        js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
+        js_code += `Object.assign(self, ${pseudoClass});\n`
+
+        // bind @id + @content properties
+        const idProps:Record<string,string> = {};
+        const contentProps:Record<string,string> = {};
+
+        for (const [name, data] of standaloneProperties) {
+            if (data.type == "id") {
+                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
+                idProps[name] = data.id;
+            }
+            else if (data.type == "content") {
+                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
+                contentProps[name] = data.id;
+            }
+        }
+        if (standaloneProperties.length) {
+            js_code += `import { bindContentProperties } from "uix/snippets/bound_content_properties.ts";\n`
+            js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, true);\n`
+        }
+
+
+        // call custom standalone handlers
         for (const handler of this.standalone_handlers) {
             // workaround to always set 'this' context to UIX component, even when handler is an arrow function
-            js_code += `(function (){return (${handler.toString()})()}).apply(self);\n`;
+            js_code += `await (function (){return (${(<typeof Base>this.constructor).getStandloneMethodContentWithMappedImports(handler)})()}).apply(self);\n`;
         }
+
+        // lifecycle event handlers
+        if ((<typeof Base>this.constructor).standaloneMethods.onDisplay) js_code += `await ${pseudoClass}.onDisplay.call(self);\n`;
+
         return js_code;
+    }
+
+    private static getStandloneMethodContentWithMappedImports(method:Function){
+        return method.toString().replace(/(import|datex\.get) *\((?:'((?:\.(\.)?\/).*)'|"((?:\.(\.)?\/).*)")\)/g, (m,g1,g2,g3,g4)=>{
+            const relImport = g2 ?? g4;
+            const absImport = new Path(relImport, this._module);
+
+            return `${g1}("${App.filePathToWebPath(absImport)}")`
+        })
+       
     }
 
     // wait until static (css) and dx module files loaded
@@ -1086,7 +1110,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.#anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
         
         // assume next route as new initial route
-        this.#route_initialized = false;
+        this.route_initialized = false;
 
 
         // if (this.is_skeleton) return; // ignore
@@ -1201,32 +1225,36 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     
         // this.updateResponsive(false, true);
 
+        if (!IS_HEADLESS) await this.onDisplay?.();
+
         await new Promise((r) => setTimeout(r, 0)); // dom changes
         this.#create_lifecycle_ready_resolve?.();
         this.#anchor_lifecycle_ready_resolve?.();
     }
 
-    #route_initialized = false;
+    private route_initialized = false;
 
     // implements resolveRoute per default, can be overriden for more custom routing behaviour
     public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
+        const {Path} = await import("unyt_node/path.ts");
+
         const delegate = this.routeDelegate??this;
 
         if (!route?.route) return []; // TODO: should not happen?
 
         // ignore if route is already up to date
-        if (this.#route_initialized && Path.routesAreEqual(route, delegate.getInternalRoute())) return route;
-        const initial_route = !this.#route_initialized;
-        this.#route_initialized = true;
+        if (this.route_initialized && Path.routesAreEqual(route, delegate.getInternalRoute())) return route;
+        const initial_route = !this.route_initialized;
+        this.route_initialized = true;
 
         const child = await delegate.onRoute?.(route.route[0]??"", initial_route);
 
         if (child == false) return []; // route not valid
-        else if (child instanceof Base) {
-            child.focus() // bring child to foreground
+        else if (typeof (<any>child)?.focus == "function") {
+            (<any>child).focus() // bring child to foreground
         }
         // end of route reached / handled in component without redirecting to children, all ok
-        if (route.route.length == 1 || !(child instanceof Base)) return route; 
+        if (route.route.length == 1 || !(child instanceof HTMLElement)) return route; 
         // recursively follow route
         else {
             const child_route = await child.resolveRoute(Path.Route(route.route.slice(1)), context);
@@ -2137,8 +2165,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     /** called after options loaded, element content can be created */
     protected onCreate?():void|Promise<void>
 
-    /** called in standalone mode, when content was server-side rendered */
-    protected onInitStandalone?():void|Promise<void>
+    /** called when anchored in a frontend environment (supports @standalone) */
+    protected onDisplay?():void|Promise<void>
 
     /** called after removed from DOM (not moved) */
     protected onRemove?():void

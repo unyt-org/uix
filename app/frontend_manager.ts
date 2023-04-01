@@ -12,6 +12,7 @@ import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.t
 import { indent } from "../utils/indent.ts";
 import { RenderPreset } from "../html/rendering.ts";
 import { logger } from "../utils/global_values.ts";
+import { OpenGraphInformation } from "../base/open_graph.ts";
 
 export class FrontendManager {
 
@@ -159,6 +160,7 @@ export class FrontendManager {
 		// handled default web paths
 		this.server.path("/", (req, path, con)=>this.handleIndexHTML(req, path, con));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
+		this.server.path("/robots.txt", (req, path)=>this.handleRobotsTXT(req, path));
 
 		this.server.path("/@uix/window", (req, path)=>this.handleNewHTML(req, path));
 		if (this.#app_options.installable) this.server.path("/manifest.json", (req, path)=>this.handleManifest(req, path));
@@ -502,7 +504,7 @@ catch {
 		const compat = Server.isSafariClient(requestEvent.request);
 		try {
 			this.updateCheckEntrypoint();
-			const [prerendered_content, render_method] = await this.#backend?.getEntrypointHTMLContent(path, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
+			const [prerendered_content, render_method, open_graph_meta_tags] = await this.#backend?.getEntrypointHTMLContent(path, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
 
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
@@ -512,7 +514,7 @@ catch {
 
 			// serve normal page
 			else {
-				await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage(<string> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css'], ['uix/style/body.css'], this.#entrypoint, this.#backend?.web_entrypoint, compat));
+				await this.server.serveContent(requestEvent, "text/html", await this.generateHTMLPage(<string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css'], ['uix/style/body.css'], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat));
 			}
 		} catch (e) {
 			console.log(e)
@@ -523,7 +525,7 @@ catch {
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
-		await this.server.serveContent(requestEvent, "text/html", this.generateHTMLPage("", UIX.RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], ['uix/style/document.css'], ['uix/style/body.css'], undefined, undefined, compat));
+		await this.server.serveContent(requestEvent, "text/html", await this.generateHTMLPage("", UIX.RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], ['uix/style/document.css'], ['uix/style/body.css'], undefined, undefined, undefined, compat));
 	}
 
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {
@@ -542,6 +544,16 @@ catch {
 			await this.server.sendError(requestEvent, 500);
 		}			
 	}
+
+	private async handleRobotsTXT(requestEvent: Deno.RequestEvent, _path:string) {
+		try {
+			await this.server.serveContent(requestEvent, "text/plain", "User-agent: *\nAllow: /");
+		} catch (e) {
+			console.log(e)
+			await this.server.sendError(requestEvent, 500);
+		}			
+	}
+	
 
 	private async handleManifest(requestEvent: Deno.RequestEvent, _path:string) {
 		try {
@@ -600,7 +612,7 @@ catch {
 	}
 
 
-	private generateHTMLPage(prerendered_content?:string, render_method:UIX.RenderMethod = UIX.RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string)[] = [], body_css_files:(URL|string)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, compat_import_map = false){
+	private async generateHTMLPage(prerendered_content?:string|[header_scripts:string, html_content:string], render_method:UIX.RenderMethod = UIX.RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string)[] = [], body_css_files:(URL|string)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false){
 		let files = '';
 		let importmap = ''
 
@@ -677,29 +689,27 @@ catch {
 		let favicon = "";
 		if (this.#app_options.icon_path) favicon = `<link rel="icon" href="${this.resolveImport(this.#app_options.icon_path, compat_import_map)}">`
 
-		let title = "";
-		if (this.#app_options.name) title = `<title>${this.#app_options.name}</title>`
-
 		return indent `
 			<!DOCTYPE html>
 			<html>
-				<meta charset="UTF-8">
-				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-				<meta name="theme-color"/>
 				<head>
-					${title}
+					<meta charset="UTF-8">
+					<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+					<meta name="theme-color"/>	
+					${await open_graph_meta_tags?.getMetaTags() ?? (this.#app_options.name ? `<title>${this.#app_options.name}</title>` : '')}
 					${favicon}
 					${this.#app_options.installable ? `<link rel="manifest" href="manifest.json">` : ''}
 					${importmap}
 					${global_style}
 					${files}
+					${prerendered_content instanceof Array ? prerendered_content[0] : ''}
 				</head>
 				<body>
 					<template shadowrootmode=open>
 						<slot id=main></slot>
 						${body_style}
 					</template>
-					${prerendered_content??''}
+					${prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')}
 				</body>
 			</html>
 		`

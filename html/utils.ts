@@ -1,3 +1,4 @@
+import "unyt_core";
 import { DX_VALUE } from "unyt_core/datex_all.ts";
 import { Datex, decimal, pointer } from "unyt_core";
 import { Theme } from "../base/theme.ts";

@@ -28,8 +28,12 @@ export namespace Elements {
 
 		protected options:O
 
+		// true if server side rendered and component class is loaded later
+		protected wasLoadedStatic = this.hasAttribute("data-static");
+
 		constructor(options?:O) {
 			super();
+
 			// set options if not explicitely disabled
 			if (options!==null) this.options = options ?? <O>{};
 
@@ -100,6 +104,7 @@ export namespace Elements {
 
 		constructor(items:form_item[]) {
 			super();
+			if (this.wasLoadedStatic) return;
 			this.style.display = "table";
 			this.style.borderSpacing = "3px";
 
@@ -151,6 +156,7 @@ export namespace Elements {
 	export class Image extends Base<Image.Options> {
 		constructor(options?: Image.Options) {
 			super(options);
+			if (this.wasLoadedStatic) return;
 
 			let content:HTMLElement;
 	
@@ -231,6 +237,7 @@ export namespace Elements {
 	export class Document extends Base<Document.Options> {
 		constructor(options?: Image.Options) {
 			super(options);
+			if (this.wasLoadedStatic) return;
 			this.loadPDF();
 		}
 
@@ -319,6 +326,7 @@ export namespace Elements {
 
 		constructor(element_data:Header.ElementData[] = [], options?: Header.Options) {
 			super(options)
+			if (this.wasLoadedStatic) return;
 
 			this.element_data = element_data;
 	
@@ -504,6 +512,7 @@ export namespace Elements {
 
 		constructor(value?:Datex.CompatValue<T>, options?:O){
 			super(options);
+			if (this.wasLoadedStatic) return;
 			if (value !== undefined) this.value = value;
 
 			this.style.width = "fit-content";
@@ -533,6 +542,7 @@ export namespace Elements {
 
 		constructor(options?:O) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			if (this.options.color) this.css('--bg-color', this.options.color);
 
@@ -624,6 +634,7 @@ export namespace Elements {
 	
 		constructor(options:Elements.ToggleButton.Options) {
 			super(options);
+			if (this.wasLoadedStatic) return;
 			this.value = this.options.checked;
 		}
 
@@ -661,6 +672,7 @@ export namespace Elements {
 
 		constructor(options?:Elements.Checkbox.Options) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			const input_id = Utils.getUniqueElementId();
 
@@ -726,6 +738,7 @@ export namespace Elements {
 
 		constructor(options?:Elements.Checkbox.Options) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			let input_id = Utils.getUniqueElementId();
 
@@ -803,6 +816,7 @@ export namespace Elements {
 
 		constructor(value:Datex.CompatValue<T>, options?:O) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 			this.value = value;
 
 			this.style.cursor = "default";
@@ -959,6 +973,8 @@ export namespace Elements {
 
 		constructor(value:Datex.CompatValue<number|bigint>, options?:Number.Options) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
+
 			this.value = value;
 		}
 
@@ -1037,7 +1053,7 @@ export namespace Elements {
 
 		constructor(value?:Datex.CompatValue<T>, type = "text", options?:O) {
 			super(undefined, options);
-
+			if (this.wasLoadedStatic) return;
 
 			this.#input.setAttribute("type", type);
 			this.#input.classList.add("input");
@@ -1137,6 +1153,7 @@ export namespace Elements {
 
 		constructor(value?:Datex.CompatValue<string>, options?:ContainerValueInput.Options) {
 			super(undefined, <O>{});
+			if (this.wasLoadedStatic) return;
 			
 			this.input = new TextInput(value, options);
 
@@ -1240,6 +1257,7 @@ export namespace Elements {
 
 		constructor(value:Datex.CompatValue<T>, options?:O) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			this.options.show_number = this.options.show_number ?? true;
 			this.options.fixed_boundaries = this.options.fixed_boundaries ?? true;
@@ -1645,6 +1663,7 @@ export namespace Elements {
 			const quantity = Datex.Value.collapseValue(value,true,true);
 			options.unit = ' ' + quantity.unit_formatted_short;
 			super(value, options);
+			if (this.wasLoadedStatic) return;
 
 			this.unit = quantity.unit;
 
@@ -1735,6 +1754,7 @@ export namespace Elements {
 
 		constructor(value:Datex.CompatValue<number|bigint>, public min:number=0, public max:number=1, public color?:Datex.CompatValue<string>) {
 			super();
+			if (this.wasLoadedStatic) return;
 
 			this.#outer = document.createElement("div");
 
@@ -1789,6 +1809,7 @@ export namespace Elements {
 
 		constructor(value: Datex.CompatValue<number>){
 			super();
+			if (this.wasLoadedStatic) return;
 
 			// own style
 			this.style.position = "relative";
@@ -1893,7 +1914,7 @@ export namespace Elements {
 
 		constructor(color:Datex.CompatValue<bigint|number|`#${string}`>) {
 			super();
-
+			if (this.wasLoadedStatic) return;
 
 			this.container.style.position = "relative"
 			this.container.style.display = "flex"
@@ -2087,6 +2108,7 @@ export namespace Elements {
 
 		constructor(list?: Datex.CompatValue<Iterable<T>>, options?: O) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 			this.value = list;
 			this.checkEmpty();
 		}
@@ -2222,6 +2244,7 @@ export namespace Elements {
 
 		constructor(options?:O){
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			this.displayed_option_name = text()
 			this.selected_option_index = this.options.selected_index instanceof Datex.Value ? this.options.selected_index : decimal(this.options.selected_index);
@@ -2308,6 +2331,7 @@ export namespace Elements {
 
 		constructor(list:Datex.CompatValue<Iterable<string|[string,any]>> = [], options?:DropdownMenu.Options){
 			super(options);
+			if (this.wasLoadedStatic) return;
 			this.init(list)
 		}
 
@@ -2429,6 +2453,7 @@ export namespace Elements {
 
 		constructor(list:Datex.CompatValue<Iterable<string|[string,any]>> = [], options?:ValueSelect.Options){
 			super(options);
+			if (this.wasLoadedStatic) return;
 			this.init(list)
 		}
 
@@ -2572,6 +2597,7 @@ export namespace Elements {
 
 		constructor(list:Datex.CompatValue<Iterable<T>>, options?:ValueList.Options, transform?:(value:T, index:number)=>(HTMLElement|string)[]){
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 			this.#transform = transform;
 
 			this.style.display = "block";

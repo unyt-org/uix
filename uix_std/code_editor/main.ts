@@ -173,7 +173,7 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
 
     }
 
-    protected renderMarkdown(content:string){
+    protected renderMarkdown(content:string, add_scroll_container = true){
         const id = UIX.Utils.getUniqueElementId();
 
         let style = `<style>
@@ -267,19 +267,25 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
         let scroll_x = this.options._scroll_x,
             scroll_y = this.options._scroll_y;
 
-        container.style.visibility = "hidden";
 
         // assign current scroll state to this container and keep track of the scrolling position
         this.content.innerHTML = "";
-        this.content.append(this.makeScrollContainer(container));
 
-        return new Promise<void>(resolve=>{
-            setTimeout(()=>{
-                this.updateScrollPosition(scroll_x,scroll_y);
-                container.style.visibility = "visible";
-                resolve();
-            }, 0);
-        })
+        if (add_scroll_container) {
+            container.style.visibility = "hidden";
+            this.content.append(this.makeScrollContainer(container));
+        }
+        else this.content.append(container);
+
+        if (add_scroll_container) {
+            return new Promise<void>(resolve=>{
+                setTimeout(()=>{
+                    this.updateScrollPosition(scroll_x,scroll_y);
+                    container.style.visibility = "visible";
+                    resolve();
+                }, 0);
+            })
+        }
         
     }
 

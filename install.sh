@@ -19,6 +19,6 @@ chmod +x "$file_path"
 # Add to the PATH variable
 echo "export PATH=$PATH:$dest_dir" >> ~/.bashrc
 # make the change effective immediately
-source ~/.bashrc
+. ~/.bashrc
 
 echo "uix was installed successfully"

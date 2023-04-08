@@ -6,6 +6,7 @@ import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { Path } from "unyt_node/path.ts";
 import { ImportMap } from "unyt_node/importmap.ts";
 import { Server } from "unyt_node/server.ts";
+import { UIX_CACHE_PATH } from "../utils/constants.ts";
 
 let live_frontend:boolean|undefined = false;
 let watch:boolean|undefined = false;
@@ -53,6 +54,8 @@ class UIXApp {
 
 	base_url?:URL
 
+	options?:normalized_app_options
+
 	frontends = new Map<string, FrontendManager>()
 	#ready_handlers = new Set<()=>void>();
 
@@ -64,7 +67,11 @@ class UIXApp {
 
 	public filePathToWebPath(filePath:URL|string){
 		if (!this.base_url) throw new Error("Cannot convert file path to web path - no base file path set");
-		return new Path(filePath).getAsRelativeFrom(this.base_url).replace(/^\.\//, "/@uix/src/")
+		const path = new Path(filePath);
+		// is /@uix/cache
+		if (path.isChildOf(UIX_CACHE_PATH)) return path.getAsRelativeFrom(UIX_CACHE_PATH).replace(/^\.\//, "/@uix/cache/");
+		// is /@uix/src
+		else return path.getAsRelativeFrom(this.base_url).replace(/^\.\//, "/@uix/src/")
 	}
 
 	public async start(options:app_options = {}, base_url?:string|URL) {
@@ -100,7 +107,7 @@ class UIXApp {
 		n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new Path(p,base_url)) : (new Path(options.frontend??'./frontend/', base_url).fs_exists ? [new Path(options.frontend??'./frontend/', base_url)] : []);
 		n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new Path(p,base_url)) :  (new Path(options.backend??'./backend/', base_url).fs_exists ? [new Path(options.backend??'./backend/', base_url)] : []);
 		n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new Path(p,base_url)) :   (new Path(options.common??'./common/', base_url).fs_exists ? [new Path(options.common??'./common/', base_url)] : []);
-
+		this.options = n_options;
 
 		if (!n_options.frontend.length) {
 			// try to find the frontend dir

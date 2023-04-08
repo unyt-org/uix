@@ -406,6 +406,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
     private enableDefaultOpenGraphGenerator() {
+        if (this[OPEN_GRAPH]) return; // already overridden
         Object.defineProperty(this, OPEN_GRAPH, {
             get() {return new OpenGraphInformation({
                 title: this.title,
@@ -503,6 +504,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             html += `<link rel=stylesheet href="${url}">`;
         }
 
+        // noscript fallback style
+        html += `<noscript><link rel="stylesheet" href="https://dev.cdn.unyt.org/uix/style/noscript.css"></noscript>`
         // stylesheets
         // for (const sheet of this.#style_sheets) {
         //     // workaround for server side stylesheet
@@ -524,6 +527,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         else if (this.#pseudo_style) {
             html += `<style>:host:host{${this.#pseudo_style.cssText}}</style>`
         }
+
+        // add theme classes
+        html += `<style>${UIX.Theme.getDarkThemesCSS().replaceAll("\n","")+'\n'+UIX.Theme.getLightThemesCSS().replaceAll("\n","")}</style>`
 
         return html;
     }
@@ -1228,6 +1234,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (!IS_HEADLESS) await this.onDisplay?.();
 
         await new Promise((r) => setTimeout(r, 0)); // dom changes
+
         this.#create_lifecycle_ready_resolve?.();
         this.#anchor_lifecycle_ready_resolve?.();
     }
@@ -1254,7 +1261,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             (<any>child).focus() // bring child to foreground
         }
         // end of route reached / handled in component without redirecting to children, all ok
-        if (route.route.length == 1 || !(child instanceof HTMLElement)) return route; 
+        if (route.route.length == 1 || !(child instanceof HTMLElement) || (typeof child?.resolveRoute !== "function")) return route; 
         // recursively follow route
         else {
             const child_route = await child.resolveRoute(Path.Route(route.route.slice(1)), context);

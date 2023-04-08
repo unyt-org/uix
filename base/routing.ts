@@ -49,10 +49,9 @@ export namespace Routing {
 		const frontend_available = frontend_entrypoint ? await initEndpointContent(frontend_entrypoint) : false;
 		// no content for path found after initial loading
 		if (!frontend_available && !backend_available) {
-			document.body.innerHTML = await (await provideError("Page not found on frontend")).text();
+			document.body.innerHTML = await (await provideError("No content for this path")).text();
 		}
 	}
-
 
 	async function initEndpointContent(entrypoint:Entrypoint) {
 		const content = await getContentFromEntrypoint(entrypoint)
@@ -80,7 +79,7 @@ export namespace Routing {
 	}
 
 
-	async function handleCurrentURLRoute(){
+	async function handleCurrentURLRoute(allowReload=true){
 		let content:any;
 		let entrypoint:Entrypoint|undefined;
 
@@ -95,18 +94,28 @@ export namespace Routing {
 			entrypoint = backend_entrypoint;
 		}
 		if (!frontend_entrypoint && !backend_entrypoint) {
-			await getContentFromEntrypoint(getInferredDOMEntrypoint());
+			const inferred_entrypoint = getInferredDOMEntrypoint();
+			const _content = await getContentFromEntrypoint(inferred_entrypoint);
+			const refetched_route = await refetchRoute(getCurrentRouteFromURL(), inferred_entrypoint);
+			// check of accepted route matches new calculated current_route
+			if (!Path.routesAreEqual(getCurrentRouteFromURL(), refetched_route)) {
+				logger.warn `invalid route from inferred frontend entrypoint, reloading page from backend`; 
+				if (allowReload) window.location.reload()
+				return false
+			}
+			return true;
 			// TODO: what to do with returned content (full entrypoint route not known)
-			return;
 		}
 
 		// still nothing found - route could not be fully resolved on frontend, try to reload from backend
 		if (content == null) {
 			logger.warn `no content for ${getCurrentRouteFromURL().routename}, reloading page from backend`; 
-			window.location.reload();
+			if (allowReload) window.location.reload()
+			return false;
 		}
 
 		await setContent(content, entrypoint!);
+		return true;
 	}
 
 	function getInferredDOMEntrypoint(){
@@ -128,13 +137,15 @@ export namespace Routing {
 
 		let changed = !!route_should_equal;
 
+		const usingInferredEntrypoint = !current_entrypoint; // reconstructing entrypoint from DOM. Probable reason: content was server side rendered
 		const entrypoint = current_entrypoint ?? getInferredDOMEntrypoint();
 
 		if (entrypoint) {
 			// entrypoint was inferred but inferred entrypoint was not yet initially routed
-			if (!current_entrypoint) {
-				if (!entrypoint[INITIAL_LOAD]) await handleCurrentURLRoute();
+			if (usingInferredEntrypoint) {
+				const loadedInitial = entrypoint[INITIAL_LOAD];
 				entrypoint[INITIAL_LOAD] = true;
+				if (!loadedInitial) await handleCurrentURLRoute();
 			} 
 
 			const refetched_route = await refetchRoute(route, entrypoint);// Path.Route(await (<RoutingHandler>current_content).getInternalRoute());
@@ -144,6 +155,8 @@ export namespace Routing {
 				logger.warn `new route should be "${Path.Route(route_should_equal).routename}", but was changed to "${refetched_route.routename}". Make sure getInternalRoute() and onRoute() are consistent in all components.`;
 				// stop ongoing loading animation
 				window.stop()
+				// something is wrong, content was server side rendered, routes might not be resolved correctly, better reload to get server routing
+				if (usingInferredEntrypoint) window.location.href = Path.Route(route_should_equal).routename; 
 			}
 
 			// must be updated to new
@@ -167,10 +180,10 @@ export namespace Routing {
 			const url = new URL(e.destination.url);
 			if (url.origin != new URL(window.location.href).origin) return;
 
-			// console.log("nav " + url, e)
+			// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)
 			e.intercept({
-				handler() {
-					return handleCurrentURLRoute();
+				async handler() {
+					await handleCurrentURLRoute();
 				},
 				focusReset: 'manual',
 				scroll: 'manual'

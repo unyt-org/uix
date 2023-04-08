@@ -8,9 +8,9 @@ import { indent } from "../utils/indent.ts";
 
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
+import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
-
 
 /**
  * Default: Server side prerendering, content hydration over DATEX
@@ -20,6 +20,19 @@ export function renderWithHydration<T extends html_content_or_generator>(content
 	if (!IS_HEADLESS) logger.warn("render methods have no effects for components created on the client side (renderWithHydration)")
 	return new RenderPreset(RenderMethod.HYDRATION, content)
 }
+
+/**
+ * Default: Server side prerendering, replacing with content on frontend
+ * @param content HTML element or text content
+ */
+export function renderPreview<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYDRATION, T> {
+	if (!IS_HEADLESS) logger.warn("render methods have no effects for components created on the client side (renderPreview)")
+	const preset = new RenderPreset(RenderMethod.HYDRATION, content)
+	// @ts-ignore
+	preset[DX_IGNORE] = true;
+	return preset
+}
+
 
 /**
  * Just serve static HTML pages to the frontend, + some frontend JS for functionality,
@@ -243,6 +256,21 @@ export class RenderPreset<R extends RenderMethod,T extends html_content_or_gener
 	}
 } 
 
+/**
+ * Render the current state of the element as HTML and cache for SSR
+ * @param content
+ * @param render_method 
+ * @returns 
+ */
+export async function createSnapshot<T extends HTMLElement|DocumentFragment>(content:T, render_method = RenderMethod.HYDRATION):Promise<T> {
+	await preloadElementOnBackend(content);
+	// TODO: better solution to wait for component to load
+	await sleep(4000);
+	// @ts-ignore
+	content[CACHED_CONTENT] = await getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
+	return content;
+}
+
 
 // collapse RenderPreset, ... to HTML element or other content
 export type raw_content = Blob|Response
@@ -368,9 +396,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	if (!loaded) {
 		// preload in deno, TODO: better solution?
 		if (IS_HEADLESS && entrypoint instanceof HTMLElement) {
-			globalThis.document.body.append(entrypoint);
-			// wait until create lifecycle finished
-			if (entrypoint instanceof UIX.Components.Base) await entrypoint.created; 
+			await preloadElementOnBackend(entrypoint);
 		}
 
 		// routing handler?
@@ -394,6 +420,18 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	}
 
 	return [<get_content<T>>collapsed, <any>render_method, loaded, remaining_route];
+}
+
+
+export async function preloadElementOnBackend(entrypoint:HTMLElement|DocumentFragment){
+	// preload in deno, TODO: better solution?
+	if (IS_HEADLESS) {
+		globalThis.document.body.append(entrypoint);
+		// wait until create lifecycle finished
+		if (entrypoint instanceof UIX.Components.Base) {
+			await entrypoint.created;
+		}		
+	}
 }
 
 /**

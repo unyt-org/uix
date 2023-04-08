@@ -40,6 +40,8 @@ import "unyt_core/datex.ts";
 import * as UIX from "./uix_all.ts";
 export {UIX};
 
+// UIX.Theme.setMode("dark")
+
 // shortcut methods
 export * from "./uix_short.ts";
 

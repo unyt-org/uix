@@ -86,6 +86,7 @@ declare global {
 		class?: string
 		id?: string,
 		name?: string,
+		style?: string|Record<string,string>,
 
 		[key: string]: any
 	  }

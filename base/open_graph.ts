@@ -1,3 +1,5 @@
+import { App } from "../app/app.ts";
+
 export const OPEN_GRAPH = Symbol("OPEN_GRAPH");
 
 export interface OpenGraphData {
@@ -9,7 +11,7 @@ export interface OpenGraphData {
  * Can be implemented to generate a custom preview image
  */
 export interface OpenGraphPreviewImageGenerator {
-	getImageURL(data: OpenGraphData): Promise<string>|string
+	getImageURL(data: OpenGraphData): Promise<string|URL>|string|URL
 }
 
 
@@ -21,9 +23,10 @@ export class OpenGraphInformation {
 
 	async getMetaTags() {
 		if (!this.#meta_tags) {
-			const image_url = this.image_generator ? await this.image_generator.getImageURL(this.data) : null;
+			const image_url = this.image_generator ? App.filePathToWebPath(await this.image_generator.getImageURL(this.data)) : null;
 			this.#meta_tags = `
 <title>${this.data.title}</title>
+${this.data.description?`<meta name="description" content="${this.data.description}">`:''}
 <meta property="og:title" content="${this.data.title}">
 ${this.data.description?`<meta property="og:description" content="${this.data.description}">`:''}
 ${image_url?`<meta property="og:image" content="${image_url}">`:''}

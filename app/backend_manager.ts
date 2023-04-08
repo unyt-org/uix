@@ -86,7 +86,7 @@ export class BackendManager {
 	}
 
 
-	public async getEntrypointHTMLContent(path?: string, context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, open_graph_meta_tags?:OpenGraphInformation|undefined]> {
+	public async getEntrypointHTMLContent(path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, open_graph_meta_tags?:OpenGraphInformation|undefined]> {
 		// extract content from provider, depending on path
 		const [content, render_method, _0, _1] = await resolveEntrypointRoute(this.#content_provider, Path.Route(path), context, true);
 
@@ -94,10 +94,10 @@ export class BackendManager {
 		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, content[OPEN_GRAPH]];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [await getOuterHTML(<HTMLElement> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS}), render_method, content[OPEN_GRAPH]];
+		if (content instanceof Datex.Markdown) return [await getOuterHTML(<HTMLElement> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, content[OPEN_GRAPH]];
 
 		// convert content to valid HTML string
-		if (content instanceof HTMLElement || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS}), render_method, content[OPEN_GRAPH]];
+		if (content instanceof HTMLElement || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, content[OPEN_GRAPH]];
 		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method, content?.[OPEN_GRAPH]];
 	}
 

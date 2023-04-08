@@ -56,30 +56,29 @@ pre code:hover::before {
     margin-top: 10px;
 }
 
-.docs-code h2 {
+/* .docs-code h2 {
     margin-left: 42px;
-}
+} */
 
 .docs-code h2 {
     counter-increment: line-number;
     padding: 5px;
     border-radius: 8px;
     cursor: pointer;
-    padding-left: 12px;
+    padding-left: 0px;
     position: relative;
     color: var(--accent);
 }
 
-.docs-code h2::before {
+/* .docs-code h2::before {
     content: "#" counter(line-number) " ";
     position: absolute;
     left: -48px;
     cursor: pointer;
-    /*background: #1c1c28aa;*/
     padding: 5px;
     top: 0px;
     border-radius: 8px;
-}
+} */
 
 .multiline-span {
     word-break: break-all;

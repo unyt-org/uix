@@ -36,9 +36,59 @@ There are multiple options for the transfer process:
 
 ## 3. Backend and Frontend Entrypoints
 When entrypoint exports for both the frontend and the backend are available, they are automatically merged.
-This Configuration normally only makes senses in combination with [Entrypoint Routes](#routes).
+This Configuration normally only makes senses in combination with [Entrypoint Routes](#route-handlers).
 
 # Entrypoint Values
 
+## HTML Elements
+HTML Elements are directly appended to the document body. The can be created with
+normal DOM APIs (`document.createElement()`) or with JSX syntax:
+```tsx
+export default <div>Content</div> satisfies UIX.Entrypoint
+```
 
-# Routes
+Like other entrypoint values, HTML Elements are DATEX compatible and their content can be synchronized.
+Keep in mind that the content is not updated when it is provided with `UIX.renderStatic`.
+```tsx
+const counter = $$(0);
+setInterval(()=>counter.val++,1000);
+
+export default <div>Count: {counter}</div> satisfies UIX.Entrypoint
+```
+
+## Strings
+Strings are displayed as plain text (color and background color depends on the current App theme).
+
+Example:
+```typescript
+export default "Hi World" satisfies UIX.Entrypoint
+```
+
+## Blobs
+Blobs are directly displayed as files in the browser.
+
+Example:
+```typescript
+export default datex.get('./image.png') satisfies UIX.Entrypoint
+```
+
+## Route Maps
+
+Example:
+```tsx
+export default {
+	'/home': <div>Home</div>,
+	'/articles:' {
+		'/first': 'First Article...',
+		'/second': 'Second Article...'
+	}
+} satisfies UIX.Entrypoint
+```
+
+## Route Handlers
+Example:
+```tsx
+export default (ctx: UIX.Context) => {
+	return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`
+} satisfies UIX.Entrypoint
+```

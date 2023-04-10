@@ -149,15 +149,17 @@ export namespace HTMLUtils {
 	export function getElementSize(element:HTMLElement): Datex.Value<{x:number, y:number}>
 	export function getElementSize(element:HTMLElement, dimension?:'x'|'y'): Datex.Value<number> | Datex.Value<{x:number, y:number}>{
 		const value = dimension ? decimal() : pointer({x:0,y:0}); 
-		const resizeObserver = new ResizeObserver((entries) => {
-			const size = entries[0].borderBoxSize?.[0] ?? entries[0].contentBoxSize?.[0] ?? {inlineSize:entries[0].contentRect.width,blockSize:entries[0].contentRect.height};
-			if (value instanceof Datex.DecimalRef) value.val = size[dimension == 'x' ? 'inlineSize' : 'blockSize']
-			else {
-				value.x = size.inlineSize;
-				value.y = size.blockSize;
-			}
-		})
-		resizeObserver.observe(element);
+		if (!globalThis.Deno) {
+			const resizeObserver = new ResizeObserver((entries) => {
+				const size = entries[0].borderBoxSize?.[0] ?? entries[0].contentBoxSize?.[0] ?? {inlineSize:entries[0].contentRect.width,blockSize:entries[0].contentRect.height};
+				if (value instanceof Datex.DecimalRef) value.val = size[dimension == 'x' ? 'inlineSize' : 'blockSize']
+				else {
+					value.x = size.inlineSize;
+					value.y = size.blockSize;
+				}
+			})
+			resizeObserver.observe(element);
+		}
 		return Datex.Pointer.pointerifyValue(value);
 	}
 

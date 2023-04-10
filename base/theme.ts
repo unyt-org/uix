@@ -132,8 +132,8 @@ export class Theme  {
 
 	static #current_style = "flat";
 	static #style_handlers:Map<string,(element:HTMLElement)=>void> = new Map();
-	static #auto_mode = static_pointer(true, Datex.LOCAL_ENDPOINT, 1238, "$uix_auto_mode"); //eternal ?? $$(true);
-	static #current_mode:Datex.Pointer<"dark"|"light"> = static_pointer(document.body.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light"), Datex.LOCAL_ENDPOINT, 1239, "$uix_mode"); // eternal ?? $$(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") as Datex.Pointer<"dark"|"light">;// 
+	static #auto_mode = eternalVar('auto_mode') ?? $$(true); // static_pointer(true, Datex.LOCAL_ENDPOINT, 1238, "$uix_auto_mode");
+	static #current_mode:Datex.Pointer<"dark"|"light"> = eternalVar('current_mode') ?? $$(document.body.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light")); // static_pointer(document.body.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light"), Datex.LOCAL_ENDPOINT, 1239, "$uix_mode"); // eternal ?? $$(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") as Datex.Pointer<"dark"|"light">;// 
 	static #transition_mode:Datex.Pointer<"dark"|"light">|undefined;
 	static #current_light_theme:ThemeProperties = this.LIGHT;
 	static #current_dark_theme:ThemeProperties = this.DARK;
@@ -173,6 +173,7 @@ export class Theme  {
 
 	// (force) update theme to dark or light mode
 	public static setMode(_mode:Datex.CompatValue<"dark"|"light">, force_update = false, persist = true) {
+		console.log("SET",_mode,force_update,persist)
 		const mode = Datex.Value.collapseValue(_mode, true, true);
 		if (!force_update && this.#current_mode.val == mode) return;
 		else {
@@ -383,4 +384,5 @@ for (const sheet of <CSSStyleSheet[]><any>document.styleSheets??[]) {
 	}
 }
 
+console.log("m",Theme.mode.idString(),Theme.mode.val)
 Theme.setMode(Theme.mode, true, false)

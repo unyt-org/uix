@@ -173,7 +173,6 @@ export class Theme  {
 
 	// (force) update theme to dark or light mode
 	public static setMode(_mode:Datex.CompatValue<"dark"|"light">, force_update = false, persist = true) {
-		console.log("SET",_mode,force_update,persist)
 		const mode = Datex.Value.collapseValue(_mode, true, true);
 		if (!force_update && this.#current_mode.val == mode) return;
 		else {
@@ -340,7 +339,6 @@ export class Theme  {
 	}
 
 	static setColor(name:keyof ThemeProperties|string, value:string) {
-		console.log("set theme property " + name +" to:", value);
 		this.#colors[name] = value;
 		document.documentElement.style.setProperty('--'+name, value);
 	}
@@ -384,5 +382,4 @@ for (const sheet of <CSSStyleSheet[]><any>document.styleSheets??[]) {
 	}
 }
 
-console.log("m",Theme.mode.idString(),Theme.mode.val)
 Theme.setMode(Theme.mode, true, false)

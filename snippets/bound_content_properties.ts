@@ -1,14 +1,24 @@
 import { HTMLUtils } from "../html/utils.ts";
 
+
+// TODO: reenable
 const PROPS_MAP = Symbol("PROPS_MAP");
+
+function _get_PROPS_MAP() {
+	// @ts-ignore
+	if (!globalThis.uix_bound_PROPS_MAP) globalThis.uix_bound_PROPS_MAP = Symbol("PROPS_MAP");
+	// @ts-ignore
+	return globalThis.uix_bound_PROPS_MAP;
+}
 
 export function bindContentProperties(element: HTMLElement & {[key:string|symbol]:any}, id_props:Record<string,string>, content_props:Record<string,string>, allow_existing = false){
 
-	// const id_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[ID_PROPS]?.public;
-	// const content_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[CONTENT_PROPS]?.public;
+	// TODO: fix
+	// SaFaRi: ReferenceError: Cannot access uninitialized variable??!?
+	const PROPS_MAP = _get_PROPS_MAP()  
+
 
 	// @UIX.id props
-
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
 	const props_map = element[PROPS_MAP];
 	

@@ -1,11 +1,12 @@
 const { deleteCookie, setCookie, getCookies }  = globalThis.Deno ? await import("https://deno.land/std/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
 
-export type RequestData = Request & {address:string, path:string}
+export type RequestData = Request & {address:string}
 
 export class Context {
 	request?: RequestData
-	language = "en";
-}
+	path!: string
+	match?: URLPatternResult
+	language = "en";}
 
 export class ContextBuilder {
 
@@ -17,6 +18,7 @@ export class ContextBuilder {
 
 	setRequestData(req:Deno.RequestEvent, path:string, con:Deno.Conn) {
 		this.#ctx.request = <RequestData> req.request//<any>{}
+		this.#ctx.path = path;
 		// Object.assign(this.#ctx.request!, req.request)
 		// // @ts-ignore headers copied from prototype?
 		// this.#ctx.request!.headers = req.request.headers;
@@ -26,6 +28,7 @@ export class ContextBuilder {
 		this.#ctx.request!.address = req.request.headers?.get("x-real-ip") ??
 				req.request.headers?.get("x-forwarded-for") ?? 
 				(con.remoteAddr as Deno.NetAddr)?.hostname;
+		// TODO: remove
 		this.#ctx.request!.path = path;
 
 		this.#ctx.language = ContextBuilder.getRequestLanguage(req.request);

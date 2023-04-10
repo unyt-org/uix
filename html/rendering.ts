@@ -12,6 +12,14 @@ import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
 
+
+// URLPattern polyfill
+// @ts-ignore
+if (!globalThis.URLPattern) { 
+	await import("../lib/urlpattern-polyfill/index.js");
+}
+
+
 /**
  * Default: Server side prerendering, content hydration over DATEX
  * @param content HTML element or text content
@@ -317,10 +325,37 @@ type get_render_method<C extends Entrypoint, Path extends string = string> =
 		)
 	)
 
+function reconstructMatchedURLPart(input:string, partResult:URLPatternComponentResult) {
+	for (const [name,val] of Object.entries(partResult.groups)) {
+		input = input.replace(':'+name, val);
+	}
+	return input
+}
+
+/**
+ * replaces ':name' parts of url pattern with matched values to reconstruct a valid url (keeps *)
+ * @param input 
+ * @param match 
+ * @returns 
+ */
+function reconstructMatchedURL(input:string, match:URLPatternResult) {
+	input = reconstructMatchedURLPart(input, match.protocol);
+	input = reconstructMatchedURLPart(input, match.username);
+	input = reconstructMatchedURLPart(input, match.password);
+	input = reconstructMatchedURLPart(input, match.hostname);
+	input = reconstructMatchedURLPart(input, match.pathname);
+	input = reconstructMatchedURLPart(input, match.hash);
+	input = reconstructMatchedURLPart(input, match.search);
+	return input
+}
+
 
 export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false, return_first_routing_handler = false): Promise<[get_content<T>, get_render_method<T>, boolean, Path.Route|undefined]> {
 	
-	context ??= new UIX.Context()
+	if (!context) {
+		context = new UIX.Context()
+		if (route) context.path = route.routename
+	}
 	route ??= Path.Route();
 
 	let collapsed:unknown;
@@ -329,7 +364,10 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	let loaded = false;
 
 
-	if (only_return_static_content && entrypoint && (<any> entrypoint).__render_method == RenderMethod.DYNAMIC) collapsed = "";
+	if (only_return_static_content && entrypoint && (<any> entrypoint).__render_method == RenderMethod.DYNAMIC) {
+		remaining_route = Path.Route("/");
+		collapsed = "";
+	}
 
 	// handle generator functions
 	else if (typeof entrypoint == "function") {
@@ -355,42 +393,76 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		let closest_match_key:string|null = null;
 		let closest_match_route:Path.Route|null = null;
 
-		const isBetterMatch = (potential_route: Path.Route) => {
+		const isBetterMatch = (potential_route_key: string) => {
 			// compare length of current closest_match with potential_route, ignoring *
 			if (!closest_match_route) return true;
-			return potential_route.routename.replace(/\*$/, '').length > closest_match_route.routename.replace(/\*$/, '').length
+			return potential_route_key.replace(/\*$/, '').length > closest_match_route.routename.replace(/\*$/, '').length
 		}
+		// if true, the remaing '*' child routes are resolved in the next layer
+		let handle_children_separately = false;
 
 		for (const potential_route_key of Object.keys(entrypoint)) {
-			const potential_route = Path.Route(potential_route_key);
 
-			// match beginning
-			if (potential_route.routename.endsWith("*")) {
-				if (route.routename.startsWith(potential_route.routename.slice(0,-1)) && isBetterMatch(potential_route)) {
-					closest_match_route = potential_route;
-					closest_match_key = potential_route_key;
-				}
+			let matchWith = route;
+
+			let urlPattern:URLPattern;
+			// url with http - match with base origin
+			if (potential_route_key.startsWith("http://") || potential_route_key.startsWith("https://")) {
+				urlPattern = new URLPattern(potential_route_key);
+				matchWith = new Path(route.routename, globalThis.location?.href??'http:///unknown')
 			}
-			// exact match
+			// just match a generic route
 			else {
-				if (Path.routesAreEqual(route, potential_route) && isBetterMatch(potential_route)) {
-					closest_match_route = potential_route;
-					closest_match_key = potential_route_key;
-				}
+				const [pathname, hash] = potential_route_key.split("#");
+				urlPattern = new URLPattern({pathname, hash})
 			}
+			
+			let match:URLPatternResult|null;
+			if ((match=urlPattern.exec(matchWith.toString())) && isBetterMatch(potential_route_key)) {
+				if (typeof context == "function") context = context();
+				closest_match_key = potential_route_key;
+				closest_match_route = Path.Route(reconstructMatchedURL(potential_route_key, match));
+				// route ends with * -> allow child routes
+				handle_children_separately = potential_route_key.endsWith("*");
+		
+				context.match = match;	
+			}
+
+			// const potential_route = Path.Route(potential_route_key);
+
+			// // match beginning
+			// if (potential_route.routename.endsWith("*")) {
+			// 	if (route.routename.startsWith(potential_route.routename.slice(0,-1)) && isBetterMatch(potential_route)) {
+			// 		closest_match_route = potential_route;
+			// 		closest_match_key = potential_route_key;
+			// 	}
+			// }
+			// // exact match
+			// else {
+			// 	if (Path.routesAreEqual(route, potential_route) && isBetterMatch(potential_route)) {
+			// 		closest_match_route = potential_route;
+			// 		closest_match_key = potential_route_key;
+			// 	}
+			// }
 		}
 		
 		if (closest_match_key!==null) {
 			// @ts-ignore
 			let val = <any> entrypoint.$ ? (<any>entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypoint)[closest_match_key];
 			if (val instanceof Datex.Value && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
-			const new_path = Path.Route(route.routename.replace(closest_match_route!.routename.replace(/\*$/,""), "") || "/");
+			const new_path = closest_match_route ? Path.Route(route.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");
 			[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await val, new_path, context, only_return_static_content, return_first_routing_handler);
+			if (!handle_children_separately) remaining_route = Path.Route("/");
 		} 
 	}
 
 	// collapsed content
-	else collapsed = await entrypoint;
+	else {
+		// non routing handler content
+		collapsed = await entrypoint;
+		// @ts-ignore
+		if (typeof collapsed?.resolveRoute !== "function") remaining_route = Path.Route("/");
+	}
 
 	// only load once in recursive calls when deepest level reached
 	if (!loaded) {
@@ -467,6 +539,7 @@ export async function refetchRoute(route: Path.route_representation, entrypoint:
 	
 	// valid part of route before potential RoutingHandler
 	const existing_route = Path.Route(route_path.routename.replace(remaining_route.routename,""));
+	console.log("eixsting for " + route + ": " + existing_route)
 	
 	// resolve internal route in RoutingHandler
 	if (routing_handler?.getInternalRoute) {

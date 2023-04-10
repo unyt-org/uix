@@ -149,7 +149,7 @@ export function enableScrollContainer(container:HTMLElement, scroll_x = true, sc
 
 	let initial_scroll = ((context.scroll_y??0) > content.scrollHeight || (context.scroll_x??0) > content.scrollWidth);
 
-	if (globalThis.ResizeObserver) {
+	if (globalThis.ResizeObserver && !globalThis.Deno) {
 		// dom content resize observers
 		new ResizeObserver(()=>{
 			if (initial_scroll) {

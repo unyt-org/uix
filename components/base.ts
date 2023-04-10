@@ -888,6 +888,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         const pseudoClass = `globalThis.UIX_Standalone_${this.constructor.name}`;
         const standaloneProperties = Object.entries((<typeof Base>this.constructor).standaloneProperties);
 
+
         js_code += `import {querySelector} from "uix/snippets/shadow_dom_selector.ts";\n`
         js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
         js_code += `Object.assign(self, ${pseudoClass});\n`
@@ -919,7 +920,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         }
 
         // lifecycle event handlers
-        if ((<typeof Base>this.constructor).standaloneMethods.onDisplay) js_code += `await ${pseudoClass}.onDisplay.call(self);\n`;
+        if ((<typeof Base>this.constructor).standaloneMethods.onDisplay) js_code += `await self.onDisplay()\n`;
 
         return js_code;
     }

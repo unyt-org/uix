@@ -2,7 +2,7 @@
 
 ## Importing backend modules from the frontend
 
-Modules in the frontend directory of a UIX App can import values from modules in the backend directory, as if they are running on the same device in the same process:
+Modules in the frontend directory of a UIX App can import exported values from modules in the backend directory, as if they are running on the same device in the same process:
 
 ```typescript
 // file: backend/public.ts

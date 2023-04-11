@@ -2,7 +2,7 @@
 
 import { Path } from "unyt_node/path.ts";
 import { Logger } from "unyt_core/datex_all.ts";
-import { resolveEntrypointRoute, Entrypoint, html_content_or_generator, provideError, RenderMethod, RoutingHandler, refetchRoute } from "../html/rendering.ts";
+import { resolveEntrypointRoute, Entrypoint, html_content_or_generator, provideError, RenderMethod, refetchRoute } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
 
 /**
@@ -148,7 +148,7 @@ export namespace Routing {
 				if (!loadedInitial) await handleCurrentURLRoute();
 			} 
 
-			const refetched_route = await refetchRoute(route, entrypoint);// Path.Route(await (<RoutingHandler>current_content).getInternalRoute());
+			const refetched_route = await refetchRoute(route, entrypoint);// Path.Route(await (<RouteManager>current_content).getInternalRoute());
 
 			// check of accepted route matches new calculated current_route
 			if (route_should_equal && !Path.routesAreEqual(route_should_equal, refetched_route)) {

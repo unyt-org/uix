@@ -165,7 +165,7 @@ export function provideError(message: string, status = 500) {
 /**
  * handles routes internally
  */
-export interface RoutingHandler {
+export interface RouteManager {
 	resolveRoute(route:Path.Route, context:UIX.Context): Path.route_representation|Promise<Path.route_representation> // return part of route that could be resolved
 	getInternalRoute(): Path.route_representation|Promise<Path.route_representation> // return internal state of last resolved route
 }
@@ -173,12 +173,12 @@ export interface RoutingHandler {
 /**
  * redirects to other Entrypoints for specific routes
  */
-export interface RoutingAdapter {
+export interface RouteHandler {
 	getRoute(route:Path.Route, context:UIX.Context): Entrypoint|Promise<Entrypoint> // return child entrypoint for route
 }
 
 
-export class FileProvider implements RoutingAdapter {
+export class FileProvider implements RouteHandler {
 
 	#path: Path
 
@@ -199,7 +199,7 @@ export class FileProvider implements RoutingAdapter {
 /**
  * transforms entrypoint content to a new entrypoint content
  */
-export abstract class EntrypointProxy implements RoutingAdapter {
+export abstract class EntrypointProxy implements RouteHandler {
 
 	#entrypoint: Entrypoint
 
@@ -282,7 +282,7 @@ export async function createSnapshot<T extends HTMLElement|DocumentFragment>(con
 
 // collapse RenderPreset, ... to HTML element or other content
 export type raw_content = Blob|Response
-export type html_content = Datex.CompatValue<HTMLElement|string|number|boolean|bigint|Datex.Markdown|RoutingHandler|RoutingAdapter>|null|raw_content;
+export type html_content = Datex.CompatValue<HTMLElement|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|raw_content;
 export type html_generator = (ctx:UIX.Context)=>html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 export type html_content_or_generator = html_content|html_generator;
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
@@ -384,7 +384,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	// @ts-ignore
 	else if (typeof entrypoint?.getRoute == "function") {
 		if (typeof context == "function") context = context();
-		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await (<RoutingAdapter>entrypoint).getRoute(route, context), route, context, only_return_static_content, return_first_routing_handler)
+		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await (<RouteHandler>entrypoint).getRoute(route, context), route, context, only_return_static_content, return_first_routing_handler)
 	}
 	
 	// path object
@@ -483,7 +483,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 			// wait until at least construct lifecycle finished
 			if (entrypoint instanceof UIX.Components.Base) await entrypoint.constructed
 
-			if (!await resolveRouteForRoutingHandler(<RoutingHandler> collapsed, route, context)) {
+			if (!await resolveRouteForRouteManager(<RouteManager> collapsed, route, context)) {
 				collapsed = null; // reset content, route could not be resolved
 			}
 		}
@@ -507,25 +507,25 @@ export async function preloadElementOnBackend(entrypoint:HTMLElement|DocumentFra
 }
 
 /**
- * Resolve a route on a RoutingHandler
- * @param routingHandler RoutingHandler impl
+ * Resolve a route on a RouteManager
+ * @param routeManager RouteManager impl
  * @param route array of route parts
  * @param context UIX context
  * @returns true if the route could be fully resolved
  */
-async function resolveRouteForRoutingHandler(routingHandler: RoutingHandler, route:Path.Route, context: UIX.Context|UIX.ContextGenerator) {
+async function resolveRouteForRouteManager(routeManager: RouteManager, route:Path.Route, context: UIX.Context|UIX.ContextGenerator) {
 	if (typeof context == "function") context = context();
 	const valid_route_part = <Path.route_representation> await Promise.race([
-		routingHandler.resolveRoute(route, context),
+		routeManager.resolveRoute(route, context),
 		new Promise((_,reject) => setTimeout(()=>{
-			reject(new Error("Routing Handler ("+routingHandler.constructor.name+") did not resolve after 5s. There is probably a deadlock somehere. This can for example happen in a Component when awaiting defer() in the onRoute() handler."))
+			reject(new Error("Route Manager ("+routeManager.constructor.name+") did not resolve after 5s. There is probably a deadlock somehere. This can for example happen in a Component when awaiting defer() in the onRoute() handler."))
 		}, 5000))
 	])
 	return Path.routesAreEqual(route, valid_route_part);
 }
 
 /**
- * gets the part of the route that is calculated without internal routing (RoutingHandler). 
+ * gets the part of the route that is calculated without internal routing (RouteManager). 
  * Recalculate the current path from the inner Routing Handler if it exists
  * @param route 
  * @param entrypoint 
@@ -537,13 +537,12 @@ export async function refetchRoute(route: Path.route_representation, entrypoint:
 	const [routing_handler, _render_method, _loaded, remaining_route] = await resolveEntrypointRoute(entrypoint, route_path, context, false, true);
 	if (!remaining_route) throw new Error("could not reconstruct route " + route_path.routename);
 	
-	// valid part of route before potential RoutingHandler
+	// valid part of route before potential RouteManager
 	const existing_route = Path.Route(route_path.routename.replace(remaining_route.routename,""));
-	console.log("eixsting for " + route + ": " + existing_route)
 	
-	// resolve internal route in RoutingHandler
+	// resolve internal route in RouteManager
 	if (routing_handler?.getInternalRoute) {
-		const combined_route = <Path.Route> existing_route.getChildRoute(Path.Route(await (<RoutingHandler>routing_handler).getInternalRoute()));
+		const combined_route = <Path.Route> existing_route.getChildRoute(Path.Route(await (<RouteManager>routing_handler).getInternalRoute()));
 		return combined_route;
 	}
 	else return existing_route;

@@ -21,7 +21,7 @@ import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, STANDALONE_PROPS } from "../base
 import {Routing} from "../base/routing.ts";
 import { bindObserver } from "../html/datex_binding.ts";
 import { Path } from "unyt_node/path.ts";
-import { RoutingHandler } from "../html/rendering.ts";
+import { RouteManager } from "../html/rendering.ts";
 import { Context } from "../base/context.ts";
 import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../snippets/scroll_container.ts";
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open_graph.ts";
@@ -106,7 +106,7 @@ export namespace Base {
 }
 
 @template("uix:component") 
-export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base implements RoutingHandler {
+export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base implements RouteManager {
 
     static DEFAULT_OPTIONS:Base.Options = {
         bg_color: Theme.getColorReference('bg_default'),

@@ -29,6 +29,14 @@ In the background, this is accomplished via DATEX exchange between the frontend 
 Because network requests are asynchronous, imported functions always return a Promise that must be awaited.
 You should keep in mind that value updates are also propageted asynchronously between the endpoints.
 
+### Security
+
+Only values that are explicitly imported from frontend modules are publicly exposed from the backend.
+Other exports are still only accessible within the backend context.
+
+Even if values are exported from the backend because they are required on the frontend, the backend module
+code is never publicly exposed - only the exported values are accessible.
+
 ## Importing common modules
 
-Modules from te common directory can be imported from both the backend and frontend.
+Modules from the common directory can be imported from both the backend and frontend.

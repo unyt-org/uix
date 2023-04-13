@@ -11,7 +11,7 @@ Files in the `common` directory are accessible from the frontend and backend.
 # ✏️ Creating a new UIX Project
 
 ## Option 1: Using the UIX Project Template
-You can clone the UIX Base Project from `https://github.com/unyt-org/uix-base-project`.
+You can clone the UIX Base Project from https://github.com/unyt-org/uix-base-project.
 
 ## Option 2: Creating a new UIX Project from Scratch
 

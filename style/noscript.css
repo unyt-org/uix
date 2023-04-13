@@ -1,0 +1,26 @@
+/*
+	display all hidden content
+*/
+* div {
+	opacity: 1!important;
+	visibility: visible!important;
+}
+
+/*
+	show native scrollbar
+*/
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background: transparent;
+    display: block;
+}
+* {
+    -ms-overflow-style: revert;
+    scrollbar-width: 10px;
+}
+.uix-scrollbar {
+	display: none!important;
+}

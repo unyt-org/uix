@@ -173,7 +173,7 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
 
     }
 
-    protected renderMarkdown(content:string){
+    protected renderMarkdown(content:string, add_scroll_container = true){
         const id = UIX.Utils.getUniqueElementId();
 
         let style = `<style>
@@ -218,7 +218,7 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
 
         content = style + content;
 
-        const container = UIX.Utils.createHTMLElement(`<div class='docs-code' id='${id}' style='font-size: 17px;max-width:1200px;user-select:text;padding:20px;padding-top:35px;padding-left:30px;padding-right:30px;width: calc(100% - 60px)'></div>`)
+        const container = UIX.HTMLUtils.createHTMLElement(`<div class='docs-code' id='${id}' style='font-size: 17px;max-width:1200px;user-select:text;padding:20px;padding-top:35px;padding-left:30px;padding-right:30px;width: calc(100% - 60px)'></div>`)
         
         if (!content) {
             content = ""
@@ -232,9 +232,10 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
             // format code  
             let current_lang; // current inline lang
             container.querySelectorAll("code").forEach(async c=>{
-                let text = c.innerText;
+                let text = c.innerText;+
+                console.log("md",text,c)
                 // inline language?
-                let _inline_lang = text.match(/^([a-zA-Z0-9_-]+)!/);
+                let _inline_lang = text?.match(/^([a-zA-Z0-9_-]+)!/);
                 let _attr_lang = c.getAttribute("class")?.replace("language-", "");
                 // code block language?
                 if (_inline_lang) {
@@ -266,19 +267,25 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
         let scroll_x = this.options._scroll_x,
             scroll_y = this.options._scroll_y;
 
-        container.style.visibility = "hidden";
 
         // assign current scroll state to this container and keep track of the scrolling position
         this.content.innerHTML = "";
-        this.content.append(this.makeScrollContainer(container));
 
-        return new Promise<void>(resolve=>{
-            setTimeout(()=>{
-                this.updateScrollPosition(scroll_x,scroll_y);
-                container.style.visibility = "visible";
-                resolve();
-            }, 0);
-        })
+        if (add_scroll_container) {
+            container.style.visibility = "hidden";
+            this.content.append(this.makeScrollContainer(container));
+        }
+        else this.content.append(container);
+
+        if (add_scroll_container) {
+            return new Promise<void>(resolve=>{
+                setTimeout(()=>{
+                    this.updateScrollPosition(scroll_x,scroll_y);
+                    container.style.visibility = "visible";
+                    resolve();
+                }, 0);
+            })
+        }
         
     }
 

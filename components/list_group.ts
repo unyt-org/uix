@@ -1,7 +1,7 @@
 import { Component, NoResources, Group as UIXGroup } from "../base/decorators.ts"
 import { Base } from "./base.ts";
 import { Datex } from "unyt_core";
-import { Utils } from "../base/utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 
 import { I, S } from "../uix_short.ts";
 import { Theme } from "../base/theme.ts";
@@ -40,12 +40,12 @@ import { Element } from "../base/decorators.ts";
         menu_entry.style.margin = '2px';
         menu_entry.style.backgroundColor = 'transparent';
 
-        const icon_div = Utils.createHTMLElement(`<div style="font-size:24px;margin-bottom:5px"></div>`);
-        Utils.setElementHTML(icon_div, element.icon_dx)
+        const icon_div = HTMLUtils.createHTMLElement(`<div style="font-size:24px;margin-bottom:5px"></div>`);
+        HTMLUtils.setElementHTML(icon_div, element.icon_dx)
 
-        menu_entry.append(Utils.createHTMLElement(`<div style='width:100%;height:100%;display:flex;flex-direction:column;align-items:center'></div>`, [
+        menu_entry.append(HTMLUtils.createHTMLElement(`<div style='width:100%;height:100%;display:flex;flex-direction:column;align-items:center'></div>`, [
             icon_div,
-            Utils.createHTMLElement(`<div style="font-size:12px"></div>`, element.short_title_dx),
+            HTMLUtils.createHTMLElement(`<div style="font-size:12px"></div>`, element.short_title_dx),
         ]));
 
         // set selected entry
@@ -102,7 +102,7 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
     expanded = false;
 
     protected override onTabSelected(index:number, element:Base) {
-        if (this.nav_title) Utils.setElementHTML(this.nav_title, element.options.$$.title);
+        if (this.nav_title) HTMLUtils.setElementHTML(this.nav_title, element.options.$$.title);
         if (!this.portrait_mode.val) return;
         this.collapseMenu();
     }
@@ -135,7 +135,7 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
         
         this.menu.style.setProperty('display','flex');
         this.menu.style.setProperty('flex-direction','column');
-        Utils.setCSSProperty(this.menu, 'background', this.options.$$.menu_background);
+        HTMLUtils.setCSSProperty(this.menu, 'background', this.options.$$.menu_background);
         this.menu.style.setProperty('border',border ? border+'px solid var(--border_color)' : 'none');
         this.menu.style.setProperty('border-radius','10px');
         this.menu.style.setProperty('left','0px');
@@ -145,7 +145,7 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
         this.menu.style.setProperty('transform','translateX(-40px)');
 
         // fixed default width
-        if (!this.options.dynamic_header_size) this.menu.style.width = offset + 'px';
+        // if (!this.options.dynamic_header_size) this.menu.style.width = offset + 'px';
 
         this.header_element = document.createElement("div");
         this.header_element.style.paddingTop = '8px';
@@ -170,11 +170,13 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
         this.header_element.style.flexDirection = 'column';
 
         // assemble
+        const scroll = this.makeScrollContainer(this.header_element);
+        scroll.style.minWidth = "250px";
 
-        this.menu.append(this.makeScrollContainer(this.header_element));
+        this.menu.append(scroll);
 
-        this.content_container.append(this.menu)
-        this.content_container.append(this.slot_element)
+        this.content_container.prepend(this.menu)
+        // this.content_container.append(this.slot_element)
 
         this.addEventListener("click", e=>{
             if (this.options.editable) TabGroup.setLastActiveGroup(this)
@@ -191,9 +193,9 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
 
         // default (top menu)
         else {
-            let nav_content = Utils.setCSS(document.createElement("div"), {display:'flex', 'flex-direction': 'row', 'align-items':'center'});
-            let nav_icon = Utils.setElementHTML(document.createElement("div"), I('fa-bars'));
-            this.nav_title = Utils.setCSS(document.createElement("div"), {'margin-left':'8px'});
+            let nav_content = HTMLUtils.setCSS(document.createElement("div"), {display:'flex', 'flex-direction': 'row', 'align-items':'center'});
+            let nav_icon = HTMLUtils.setElementHTML(document.createElement("div"), I('fa-bars'));
+            this.nav_title = HTMLUtils.setCSS(document.createElement("div"), {'margin-left':'8px'});
             nav_content.append(nav_icon)
             nav_content.append(this.nav_title)
     
@@ -201,7 +203,7 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
             this.nav_button.style.marginBottom = "5px";
             this.nav_button.style.display = "none";
 
-            Utils.setCSSProperty(this.nav_button, 'background', this.options.$$.menu_background);
+            HTMLUtils.setCSSProperty(this.nav_button, 'background', this.options.$$.menu_background);
             this.shadow_root.insertBefore(this.nav_button, this.content_container)
 
         }
@@ -232,12 +234,12 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
         this.style.flexDirection = "row"
 
         this.menu.style.setProperty('display', 'flex');
-        this.menu.style.setProperty('width', 300 + 'px');
         this.menu.style.setProperty('height','calc(100% - 40px)');
         this.menu.style.setProperty('margin-top','20px');
         this.menu.style.setProperty('margin-right','-40px');
         this.menu.style.setProperty('transform','translateX(-40px)');
         this.menu.style.setProperty('position','relative');
+        this.menu.style.setProperty('width','');
 
         this.content_container.style.display = 'flex';
         this.content_container.style.width = "calc(100% - 40px)";
@@ -337,12 +339,12 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
 
         const title_div = document.createElement("div");
         if (this.options.header_type!='small') title_div.style.minHeight = '27px';
-        Utils.setElementHTML(title_div, element.options.$$.title);
+        HTMLUtils.setElementHTML(title_div, element.options.$$.title);
 
         const icon_div = document.createElement("div");
         // icon_div.style.marginRight = '12px';
         if (element.icon) icon_div.style.width = '1.8em';
-        Utils.setElementHTML(icon_div, element.options.$$.icon);
+        HTMLUtils.setElementHTML(icon_div, element.options.$$.icon);
 
         const state_div = document.createElement("div");
         state_div.style.marginRight = '4px';
@@ -370,7 +372,7 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
         t.classList.add("list-item");
         t.append(inner_container);
 
-        Utils.setCSSProperty(t, "--accent-color", element.options.accent_color ?? Theme.getColorReference('accent'))
+        HTMLUtils.setCSSProperty(t, "--accent-color", element.options.accent_color ?? Theme.getColorReference('accent'))
 
         // click listeners
         t.addEventListener("mousedown", ()=>{
@@ -408,15 +410,15 @@ export class ListGroup<O extends ListGroup.Options = ListGroup.Options, ChildEle
             const group = element.options.group;// instanceof Datex.Value ? element.options.group.val : element.options.group;
             // create group dom
             if (!this.tab_group_elements.has(group)) {
-                const dom = Utils.setCSS(document.createElement("div"), {'margin-left':'10px', 'margin-right':'10px'});
+                const dom = HTMLUtils.setCSS(document.createElement("div"), {'margin-left':'10px', 'margin-right':'10px'});
                 const header = document.createElement("div")
-                const body = Utils.setCSS(document.createElement("div"), {'margin-left': '15px', 'margin-bottom': '10px'})
+                const body = HTMLUtils.setCSS(document.createElement("div"), {'margin-left': '15px', 'margin-bottom': '10px'})
                 
-                const down_title = Utils.createHTMLElement("<h4 style='margin:0'></h4>", <Datex.Value<string>>element.options.$.group);
-                const up_title = Utils.createHTMLElement("<h4 style='margin:0'></h4>", <Datex.Value<string>>element.options.$.group);
+                const down_title = HTMLUtils.createHTMLElement("<h4 style='margin:0'></h4>", <Datex.Value<string>>element.options.$.group);
+                const up_title = HTMLUtils.createHTMLElement("<h4 style='margin:0'></h4>", <Datex.Value<string>>element.options.$.group);
 
-                const down = Utils.createHTMLElement(`<div style='margin:0px;display:flex;align-items:center;text-align:left'><div style='width:16px; height:16px'>${I('fa-chevron-down')}</div>&nbsp;&nbsp;</div>`, [down_title]),
-                      up   = Utils.createHTMLElement(`<div style='margin:0px;display:flex;align-items:center;text-align:left'><div style='width:16px; height:16px'>${I('fa-chevron-right')}</div>&nbsp;&nbsp;</div>`, [up_title])
+                const down = HTMLUtils.createHTMLElement(`<div style='margin:0px;display:flex;align-items:center;text-align:left'><div style='width:16px; height:16px'>${I('fa-chevron-down')}</div>&nbsp;&nbsp;</div>`, [down_title]),
+                      up   = HTMLUtils.createHTMLElement(`<div style='margin:0px;display:flex;align-items:center;text-align:left'><div style='width:16px; height:16px'>${I('fa-chevron-right')}</div>&nbsp;&nbsp;</div>`, [up_title])
                 let collapsed = this.options._collapsed_groups.includes(group);
                 
                 const collapse_update = ()=>{

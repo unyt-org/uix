@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-namespace
 import { Datex } from "unyt_core";
 import { UIX, I, S, SVAL } from "uix";
+import "./main.ts";
 import { Resource } from "../../utils/resources.ts";
 import MonacoHandler from "../code_editor/monaco.ts";
 

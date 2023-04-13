@@ -21,12 +21,12 @@ export class ScrollGroup<O extends ScrollGroup.Options = ScrollGroup.Options> ex
         // this.slot_element.style.display = 'block';
         // this.slot_element.style.overflowY = 'scroll';
 
-        const outer = this.makeScrollContainer(this.slot_element);
+        const outer = this.makeScrollContainer(this.content);
 
         if (this.options.scroll_background) {
-            this.slot_element.style.background = this.options.scroll_background;
-            this.slot_element.style.backgroundAttachment = "local";
-            this.slot_element.style.display = "block";
+            this.content.style.background = this.options.scroll_background;
+            this.content.style.backgroundAttachment = "local";
+            this.content.style.display = "block";
         }
         
         this.content_container.append(outer);

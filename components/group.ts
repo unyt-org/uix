@@ -47,7 +47,7 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
 
     protected elements_by_id: Map<string, ChildElement> = new Map();
 
-    protected slot_element:HTMLSlotElement = document.createElement("slot"); // has to be addded to DOM
+    protected slot_element:HTMLSlotElement = this.content // document.createElement("slot"); // has to be addded to DOM
     
     protected focus_next?: HTMLElement
 
@@ -139,14 +139,17 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
     // default route implementation for Group components, resolve children by id
     override onRoute(identifier:string) {
         for (const child of this.elements) {
-            if (child.identifier == identifier) return child;
+            if (child.identifier == identifier) {
+                this.active_element = child; // gets also set when focus() is called on returned child, but this group might not yet be as a parent to the child
+                return child
+            };
         }
     }
 
     // return the current route of the group
-    override getCurrentRoute() {
+    override getInternalRoute() {
         if (!this.active_element) return [];
-        return [this.active_element.identifier, ...this.active_element.getCurrentRoute()]
+        return [this.active_element.identifier, ...this.active_element.getInternalRoute()]
     }
 
     handleChildElementFocused(element:ChildElement) {
@@ -260,11 +263,6 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
     }
 
 
-    override generateSkeletonChildren(){
-        const children_skeletons = [];
-        for (const c of this.elements) children_skeletons.push(c.getSkeleton())
-        return children_skeletons;
-    }
 
 
     public enableEditProtectors(){

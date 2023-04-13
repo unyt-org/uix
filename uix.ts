@@ -33,6 +33,9 @@
  ╚═════════════════════════════════════════╩════════════════════════════════════════════╝
 */
 
+// make sure datex is loaded
+import "unyt_core/datex.ts";
+
 // all UIX.*
 import * as UIX from "./uix_all.ts";
 export {UIX};

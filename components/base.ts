@@ -3,9 +3,10 @@ import { constructor, Datex, property, props, replicator, template, boolean, get
 import { Elements } from "../elements/main.ts"
 import { Theme } from "../base/theme.ts"
 import { Types } from "../utils/global_types.ts"
-import { global_states, logger, root_container, unsaved_components } from "../utils/global_values.ts"
+import { global_states, logger, unsaved_components } from "../utils/global_values.ts"
 import { addStyleSheet as addStyleSheetLink, PlaceholderCSSStyleDeclaration } from "../utils/css_style_compat.ts"
 import { assignDefaultPrototype } from "../utils/utils.ts"
+import { HTMLUtils } from "../html/utils.ts"
 import { Utils } from "../base/utils.ts"
 import { Actions } from "../base/actions.ts"
 import { Handlers } from "../base/handlers.ts"
@@ -16,8 +17,16 @@ import { DEFAULT_BORDER_SIZE, IS_HEADLESS } from "../utils/constants.ts"
 import { Clipboard } from "../base/clipboard.ts"
 import type { Group } from "./group.ts"
 import { Components } from "./main.ts"
-import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS } from "../base/decorators.ts";
+import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import {Routing} from "../base/routing.ts";
+import { bindObserver } from "../html/datex_binding.ts";
+import { Path } from "unyt_node/path.ts";
+import { RouteManager } from "../html/rendering.ts";
+import { Context } from "../base/context.ts";
+import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../snippets/scroll_container.ts";
+import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open_graph.ts";
+import { App } from "../app/app.ts";
+import { bindContentProperties } from "../snippets/bound_content_properties.ts";
 
 // deno-lint-ignore no-namespace
 export namespace Base {
@@ -36,6 +45,8 @@ export namespace Base {
 
         enable_routes?: boolean // automatically handles url routes (for children)
 
+        generate_open_graph?: boolean, // enable auto generated open graph meta information for this component
+
         border_radius?: number;
         border_tl_radius?: number
         border_tr_radius?: number
@@ -45,7 +56,7 @@ export namespace Base {
         fill_border?: boolean // allow children to extend over onto the border
         fill_content?: boolean // html_element 100% height, 100%width
 
-        style?:string // override global style with custom style variant (e.g. neum)
+        style?:string|Record<string,string|number> // style attribute
 
         bg_color?: string // background color
         background?: string // general background
@@ -73,7 +84,8 @@ export namespace Base {
         scroll_content?: boolean, // create content as scroll container
 
         identifier?:string // unique identifier for this component
-        title:string // title, e.g. for tabs
+        title?:string // title, e.g. for tabs
+        description?: string, // description, e.g. used by open graph preview
         short_title?: string // shorter title
         icon?:string // icon as html
         group?:string // group identifier
@@ -94,7 +106,7 @@ export namespace Base {
 }
 
 @template("uix:component") 
-export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base {
+export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base implements RouteManager {
 
     static DEFAULT_OPTIONS:Base.Options = {
         bg_color: Theme.getColorReference('bg_default'),
@@ -130,6 +142,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     @property declare options:Datex.JSValueWith$<O>; // uses element.DEFAULT_OPTIONS as default options (also for all child elements)
     @property constraints!:Datex.JSValueWith$<Types.component_constraints>
 
+    declare public props: O
+
     declare $:Datex.Proxy$<this> // reference to value (might generate pointer property, if no underlying pointer reference)
     declare $$:Datex.PropertyProxy$<this> // always returns a pointer property reference
 
@@ -140,7 +154,12 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected FORCE_SCROLL_TO_BOTTOM = false;
     protected CONTENT_PADDING = true;
 
-    protected shadow_root:ShadowRoot // outer element
+    protected openGraphImageGenerator?: OpenGraphPreviewImageGenerator; // set the custom preview image generator for open graph cards
+
+    get shadow_root() {
+        return this.shadowRoot ?? this.attachShadow({mode: 'open'})
+    }
+
     content_container:HTMLElement; // inner container for element specific and custom content
     content:HTMLElement; // all content goes here
     get html_element() {return this.content} // legacy backwards compatibility TODO remove at some point
@@ -151,17 +170,17 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     constructor(options?:Datex.DatexObjectInit<O>, constraints?:Datex.DatexObjectInit<Types.component_constraints>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super(null)
-
+        
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
             if (!this.constructor[Datex.DX_TYPE]) {
                 logger.error("cannot construct UIX element from DOM because DATEX type could not be found")
                 return;
             }
-            // ignore skeleton here
-            if (this.hasAttribute("skeleton")) {
+            // ignore if currently hydrating static element
+            if (this.hasAttribute("data-static")) {
                 this.is_skeleton = true;
-                // logger.debug("skeleton component " + this.constructor[Datex.DX_TYPE]);
+                logger.debug("hydrating component " + this.constructor[Datex.DX_TYPE]);
             }
             else {
                 // logger.debug("creating " + this.constructor[Datex.DX_TYPE] + " component from DOM");
@@ -171,78 +190,54 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         }
     }
 
-    #id_props = new Map<string, any>()
-
     private handleIdProps(){
 
         const id_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[ID_PROPS]?.public;
         const content_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[CONTENT_PROPS]?.public;
 
-		// @UIX.id props
-		
-        if (id_props) {
-			for (const [prop,id] of Object.entries(id_props)) {
-                if (content_props[prop]) continue; // is content, ignore
-
-                const prev = this[prop];
-
-				Object.defineProperty(this, prop, {
-					get() {
-						return this.#id_props.get(prop)
-					},
-					set(el) {
-						if (el instanceof HTMLElement) el.setAttribute("id", id); // auto set id
-						this.#id_props.set(prop, el)
-					}
-				})
-
-                if (prev != undefined) this[prop] = prev; // trigger setter
-			}
-		}
-
-        // @UIX.content props
-		if (content_props) {
-			for (const [prop,id] of Object.entries(content_props)) {
-
-                if (this[prop] instanceof HTMLElement && this.shadowRoot?.contains(this[prop])) throw new Error("property '" + prop +"' cannot be used as an @content property - already part of the component")
-
-                const prev = this[prop];
-
-                const property_descriptor = Object.getOwnPropertyDescriptor(this, prop) 
-                             
-				Object.defineProperty(this, prop, {
-					get: () => {
-                        if (property_descriptor?.get) return property_descriptor.get.call(this);
-                        return this.#id_props.get(prop)
-					},
-					set: (el) => {
-                        // encapsulate in HTMLElement
-						if (!(el instanceof HTMLElement)) el = Utils.createHTMLElement('<span></span>', el);
-
-                        // add to content if it exists
-                        if (this.content) {
-                            const previous = this.content.querySelector("#"+id);
-                            if (previous == el) {/* ignore */}
-                            else if (previous) this.content.replaceChild(el, previous);
-                            else this.content.append(el);
-                        }
-
-                        el.setAttribute("id", id); // auto set id
-                        if (property_descriptor?.set) property_descriptor.set.call(this, el);
-                        this.#id_props.set(prop, el)
-                       
-					}
-				})
-
-                this[prop] = prev ?? document.createElement("div"); // trigger setter (use placeholder if not yet set)
-			}
-		}
+		bindContentProperties(this, id_props, content_props);
     
     }
 
 
-    #datex_lifecycle_ready_resolve:Function
+    #datex_lifecycle_ready_resolve?:Function
     #datex_lifecycle_ready = new Promise((resolve)=>this.#datex_lifecycle_ready_resolve = resolve)
+
+    #create_lifecycle_ready_resolve?:Function
+    #create_lifecycle_ready = new Promise((resolve)=>this.#create_lifecycle_ready_resolve = resolve)
+
+    #anchor_lifecycle_ready_resolve?:Function
+    #anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
+
+    /**
+     * Promise that resolves after onConstruct is finished
+     */
+    get constructed() {
+        return this.#datex_lifecycle_ready
+    }
+
+    /**
+     * Promise that resolves after onCreate is finished (resolves immediately after component was removed and re-anchored)
+     */
+    get created() {
+        return this.#create_lifecycle_ready
+    }
+
+    /**
+     * Promise that resolves when anchored to the DOM (can be used again after component was removed and re-anchored)
+     */
+    get anchored() {
+        return this.#anchor_lifecycle_ready
+    }
+
+    /**
+     * Only executed after component was added to DOM and onCreate was called
+     * @param handler function to execute
+     */
+    async defer(handler:Function):Promise<void> {
+        await this.anchored;
+        await handler(); 
+    }
 
     // default constructor
     @constructor async construct(options?:Datex.DatexObjectInit<O>, constraints?:Types.component_constraints): Promise<void>|void{
@@ -276,24 +271,28 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         
         await this.init(true);
         await this.onConstructed?.();
-        this.#datex_lifecycle_ready_resolve(); // onCreate can be called (required because of async)
+        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
 
     // called when created from saved state
     @replicator async replicate():Promise<void>|void{
         await this.init();
-        this.#datex_lifecycle_ready_resolve(); // onCreate can be called (required because of async)
+        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
 
 
     // init for base element (and every element)
     private async init(constructed = false) {
 
+        Datex.Pointer.onPointerForValueCreated(this, ()=>{
+            bindObserver(this)
+        })
+
         this.options_props = <Datex.ObjectWithDatexValues<O>> props(this.options); // TODO typescript correct types
         this.constraints_props = <Datex.ObjectWithDatexValues<Types.component_constraints>> props(this.constraints); 
 
         // create dom (shadow_root)
-        this.shadow_root = this.shadowRoot ?? this.attachShadow({mode: 'open'});
+        // this.shadow_root = this.shadowRoot ?? this.attachShadow({mode: 'open'});
         
         // Component style sheets
         const loaders = []
@@ -308,7 +307,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.content_container.style.justifyContent = this.options.vertical_align||"";
         this.content_container.style.alignItems = this.options.horizontal_align||"";
 
-        this.content = document.createElement('div');
+        this.content = document.createElement('slot');
         this.content.classList.add("content");
         this.content.id = "content";
 
@@ -322,6 +321,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (this.options.scroll_content) {
             this.content.style.height = "auto"
             this.content_container.append(this.makeScrollContainer(this.content));
+            this.addStandaloneHandler(async ()=>{
+                const {enableScrollContainer} = await import("uix/snippets/scroll_container.ts");
+                enableScrollContainer(this.shadowRoot!.querySelector(".uix-scrollbar-container")!)
+            })
         }
         else this.content_container.append(this.content);
 
@@ -332,12 +335,12 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.observeOptions(['padding', 'padding_left', 'padding_right', 'padding_right', 'padding_bottom'], this.updatePadding)
         this.observeConstraints(['margin', 'margin_left', 'margin_right', 'margin_right', 'margin_bottom'], this.updateMargin)
 
-        Utils.setCSSProperty(this.content_container, 'background', this.options.background ? this.options.$$.background : this.options.$$.bg_color)
-        Utils.setCSSProperty(this.content_container, 'color', this.options.$$.text_color)
+        HTMLUtils.setCSSProperty(this.content_container, 'background', this.options.background ? this.options.$$.background : this.options.$$.bg_color)
+        HTMLUtils.setCSSProperty(this.content_container, 'color', this.options.$$.text_color)
 
-        Utils.setCSSProperty(this.content_container, '--current_text_color', this.options.$$.text_color)
-        Utils.setCSSProperty(this.content_container, '--current_text_color_highlight', this.options.$$.text_color_highlight)
-        Utils.setCSSProperty(this.content_container, '--current_text_color_light', this.options.$$.text_color_light)
+        HTMLUtils.setCSSProperty(this.content_container, '--current_text_color', this.options.$$.text_color)
+        HTMLUtils.setCSSProperty(this.content_container, '--current_text_color_highlight', this.options.$$.text_color_highlight)
+        HTMLUtils.setCSSProperty(this.content_container, '--current_text_color_light', this.options.$$.text_color_light)
 
 
         // listeners & observers
@@ -383,21 +386,34 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         if (this.constraints.dynamic_size) this.setSizeDynamic();
 
+        this.onCreateLayout?.(); // custom layout extensions
+
         // @UIX.id
         this.handleIdProps();
 
-        
-        this.onCreateLayout?.(); // custom layout extensions
-        this.applyStyle(); // custom style
+        // this.applyStyle(); // custom style
+        if (this.options.style) HTMLUtils.setCSS(this, this.options.style)
 
         await (<typeof Base>this.constructor).loadModuleDatexImports();
+        (<typeof Base>this.constructor).loadStandaloneMethods();
 
         if (constructed) await this.onConstruct?.();
         await this.onInit?.() // element was constructed, not fully loaded / added to DOM!
 
+        if (this.options.generate_open_graph!==false) this.enableDefaultOpenGraphGenerator();
+
         //await Promise.all(loaders); // TODO: await stylesheet loading? leads to errors
     }
 
+    private enableDefaultOpenGraphGenerator() {
+        if (this[OPEN_GRAPH]) return; // already overridden
+        Object.defineProperty(this, OPEN_GRAPH, {
+            get() {return new OpenGraphInformation({
+                title: this.title,
+                description: this.options.description
+            }, this.openGraphImageGenerator)}
+        })
+    }
 
     // clone self as DATEX value
     public async clone(){
@@ -461,8 +477,63 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     // list of all adopted stylesheets for this element / shadow DOM
     #style_sheets:CSSStyleSheet[] = [];
-    #pseudo_style = {};
+    #pseudo_style = PlaceholderCSSStyleDeclaration.create();
     #style_sheets_urls:string[] = [];
+
+    // get style_sheets_urls () {return this.#style_sheets_urls}
+    // get style_sheets () {return this.#style_sheets}
+
+    // return rendered HTML for stylesheets used in this component
+    public getRenderedStyle() {
+        let html = "";
+
+        // for (let sheet of this.constructor._module_stylesheets) {
+        //     if (sheet.toString().startsWith("file://") && rel_path) {
+        //         // relative web path (@...)
+        //         sheet = new Path(sheet).getAsRelativeFrom(rel_path).replace(/^\.\//, "/@");
+        //     }
+        //     html += `<link rel=stylesheet href="${sheet}">`;
+        // }
+
+        // links
+		for (let url of this.#style_sheets_urls) {
+            if (url.toString().startsWith("file://")) {
+                // relative web path (@...)
+                url = App.filePathToWebPath(url);
+            }
+            html += `<link rel=stylesheet href="${url}">`;
+        }
+
+        // noscript fallback style
+        html += `<noscript><link rel="stylesheet" href="https://dev.cdn.unyt.org/uix/style/noscript.css"></noscript>`
+        // stylesheets
+        // for (const sheet of this.#style_sheets) {
+        //     // workaround for server side stylesheet
+        //     if (sheet._cached_css) html += `<style>${sheet._cached_css}</style>`
+        //     // normal impl
+        //     else {
+        //         html += `<style>`
+        //         for (const rule of sheet.cssRules) {
+        //             html += rule.cssText;
+        //         }
+        //         html += `</style>`
+        //     }
+        //     break; // only add first style (:host:host style)
+        // }
+
+        if (this.#adopted_root_style) {
+            html += `<style>${this.#adopted_root_style.cssText}</style>`
+        }
+        else if (this.#pseudo_style) {
+            html += `<style>:host:host{${this.#pseudo_style.cssText}}</style>`
+        }
+
+        // add theme classes
+        html += `<style>${UIX.Theme.getDarkThemesCSS().replaceAll("\n","")+'\n'+UIX.Theme.getLightThemesCSS().replaceAll("\n","")}</style>`
+
+        return html;
+    }
+
 
     // // adopted constructed stylesheet for shadow root
     #adopted_root_style?:CSSStyleDeclaration 
@@ -596,7 +667,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (this._use_resources) {
             const css_url = this._module.replace(/\.m?(ts|js)x?$/, '.css');
             this._module_stylesheets = [...this._module_stylesheets]; // create new module stylesheets are for this class
-            this._module_stylesheets.push(css_url); // remmeber as module stylesheets
+            this._module_stylesheets.push(css_url); // remember as module stylesheets
             const url_string = new URL(css_url).toString();
             if (!this.stylesheets.includes(url_string)) this.stylesheets.push(url_string) // add to normal stylesheets
         }
@@ -624,23 +695,31 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         this.findModuleBoundDatexScripts();
 
-        const valid_dx_files = [];
+        const valid_dx_files:string[] = [];
         const dx_file_values = new Map<string,[any,Set<string>]>();
 
         for (const path of this._dx_files) {
             try {
-                if ((await fetch(path)).ok) {
-                    valid_dx_files.push(path);
-                    try {
-                        dx_file_values.set(path, [<any>await get(path, this._module), new Set()])
-                        logger.debug("loaded DATEX module script: " + path)    
-                    }
-                    catch (e) {
-                        throw new Error("Error loading DATEX module script '" + path + "': " + e?.stack)
-                    }
+                // deno local file
+                if (path.startsWith("file://")) {
+                    if (new Path(path).fs_exists) await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
+                }
+                // web path
+                else {
+                    if ((await fetch(path)).ok) await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
                 }
             }
-            catch (e) {}
+            catch (e) {
+                if (path.startsWith("file://")) throw e
+                
+                // TODO: weird fix, fetch again if error
+                else {
+                    try {
+                        await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
+                    }
+                    catch {}
+                }
+            }
         }
 
 
@@ -648,18 +727,29 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         await this.loadDatexImports(this.prototype, valid_dx_files, dx_file_values);
 
 
-        for (const [path, [file_val, used]] of dx_file_values) {
-            for (const [exprt] of Datex.DatexObject.entries(file_val)) {
-                if (!used.has(<string> exprt) && !used.has('*')) logger.warn(`unused DATEX export '${exprt}' in ${path}`);
-            }
-        }
+        // for (const [path, [file_val, used]] of dx_file_values) {
+        //     if (!file_val) continue;
+        //     for (const [exprt] of Datex.DatexObject.entries(file_val)) {
+        //         if (!used.has(<string> exprt) && !used.has('*')) logger.warn(`unused DATEX export '${exprt}' in ${path}`);
+        //     }
+        // }
 
         // resolve load promise
         this._dx_loaded_resolve?.();
     }
 
+    private static async loadDatexModuleContents(path: string, valid_dx_files:string[], dx_file_values:Map<string, [any, Set<string>]>) {
+        valid_dx_files.push(path);
+        try {
+            dx_file_values.set(path, [<any>await get(path, undefined, this._module), new Set()])
+            logger.debug("loaded DATEX module script: " + path)    
+        }
+        catch (e) {
+            throw new Error("Error loading DATEX module script '" + path + "': " + e?.stack)
+        }
+    }
+
     private static async loadDatexImports(target:object, valid_dx_files:string[], dx_file_values:Map<string,[any,Set<string>]>){
-        
         const allowed_imports:Record<string,[string, string]> = target[METADATA]?.[IMPORT_PROPS]?.public
 
         // try to resolve imports
@@ -699,7 +789,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             else {
                 let err:Error|undefined;
                 try {
-                    const res = await get(location, this._module);
+                    const res = await get(location, undefined, this._module);
                     if (exprt == "*") {
                         target[prop] = res;
                     }
@@ -722,6 +812,128 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         }
     }
 
+
+    private static standalone_loaded = false;
+    private static loadStandaloneMethods() {
+        if (this.standalone_loaded) return;
+        this.standalone_loaded = true;
+        const props:Record<string, string> = this.prototype[METADATA]?.[STANDALONE_PROPS]?.public;
+        if (!props) return;
+
+        for (const name of Object.values(props)) {
+            if (this.prototype[name])
+                this.addStandaloneMethod(name, this.prototype[name]);
+            else 
+                this.addStandaloneProperty(name);
+        }
+    }
+
+    private static inferredStandaloneMethods:Record<string,string[]> = {
+        'onRoute': ['resolveRoute']
+    }
+
+    // add methods that run in standalone mode
+    private static standaloneMethods:Record<string,Function> = {};
+    protected static addStandaloneMethod(name: string, value:Function) {
+        // make sure this class has a separate standaloneMethods object
+        if (this.standaloneMethods == Base.standaloneMethods) this.standaloneMethods = {};
+        this.standaloneMethods[name] = value;
+        // add inferred methods
+        for (const method of this.inferredStandaloneMethods[name]??[]) this.addStandaloneMethod(method, this.prototype[method]);
+    }
+
+    // add instance properties that are loaded in standalone mode
+    private static standaloneProperties:Record<string,{type:'id'|'content',id:string}> = {};
+    protected static addStandaloneProperty(name: string) {
+        // make sure this class has a separate standaloneProperties object
+        if (this.standaloneProperties == Base.standaloneProperties) this.standaloneProperties = {};
+
+        if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'id', id};
+        }
+        else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'content', id};
+        }
+
+        else throw new Error("@UIX.standalone instance properties are currently only supported in combination with @UIX.id or @UIX.content")
+    }
+
+    public static getStandaloneJS() {
+        if (!Object.keys(this.standaloneMethods).length) return null;
+
+        let js_code = '{\n';
+        for (const [_name, content] of Object.entries(this.standaloneMethods)) {
+            js_code += this.getStandloneMethodContentWithMappedImports(content) + ',\n';
+        }
+        js_code += '}'
+        return js_code;
+    }
+
+    public standaloneEnabled() {
+        return Object.keys((<typeof Base>this.constructor).standaloneMethods).length || this.standalone_handlers.size;
+    }
+
+
+    // add function for this instance that is immediately invoked in standalone mode
+    private standalone_handlers = new Set<Function>()
+    protected addStandaloneHandler(handler:Function) {
+        this.standalone_handlers.add(handler);
+    }
+
+    // get instance specific standalone js code that is immediately executed
+    public getStandaloneJS() {
+        let js_code = '';
+        const pseudoClass = `globalThis.UIX_Standalone_${this.constructor.name}`;
+        const standaloneProperties = Object.entries((<typeof Base>this.constructor).standaloneProperties);
+
+
+        js_code += `import {querySelector} from "uix/snippets/shadow_dom_selector.ts";\n`
+        js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
+        js_code += `Object.assign(self, ${pseudoClass});\n`
+
+        // bind @id + @content properties
+        const idProps:Record<string,string> = {};
+        const contentProps:Record<string,string> = {};
+
+        for (const [name, data] of standaloneProperties) {
+            if (data.type == "id") {
+                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
+                idProps[name] = data.id;
+            }
+            else if (data.type == "content") {
+                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
+                contentProps[name] = data.id;
+            }
+        }
+        if (standaloneProperties.length) {
+            js_code += `import { bindContentProperties } from "uix/snippets/bound_content_properties.ts";\n`
+            js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, true);\n`
+        }
+
+
+        // call custom standalone handlers
+        for (const handler of this.standalone_handlers) {
+            // workaround to always set 'this' context to UIX component, even when handler is an arrow function
+            js_code += `await (function (){return (${(<typeof Base>this.constructor).getStandloneMethodContentWithMappedImports(handler)})()}).apply(self);\n`;
+        }
+
+        // lifecycle event handlers
+        if ((<typeof Base>this.constructor).standaloneMethods.onDisplay) js_code += `await self.onDisplay()\n`;
+
+        return js_code;
+    }
+
+    private static getStandloneMethodContentWithMappedImports(method:Function){
+        return method.toString().replace(/(import|datex\.get) *\((?:'((?:\.(\.)?\/).*)'|"((?:\.(\.)?\/).*)")\)/g, (m,g1,g2,g3,g4)=>{
+            const relImport = g2 ?? g4;
+            const absImport = new Path(relImport, this._module);
+
+            return `${g1}("${App.filePathToWebPath(absImport)}")`
+        })
+       
+    }
 
     // wait until static (css) and dx module files loaded
     public static async init() {
@@ -756,6 +968,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.adoptStyle(":host:host {}", true); // use ':host:host' for higher specificity (should behave like inline style)
     }
 
+    public get _original_style() {
+        return super.style;
+    }
 
     // returns style of this element, if shadow_root not yet attached to a document (styleSheets not available, see https://github.com/WICG/webcomponents/issues/526)
     public override get style():CSSStyleDeclaration {
@@ -766,6 +981,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
             // is using polyfill which does not correctly propagate updates -> propagate updates via proxy
             // @ts-ignore CSSStyleSheet
+
+            // safari compat
             if (window.CSSStyleSheet.name == "ConstructedStyleSheet") {
                 this.#adopted_root_style = new Proxy((<CSSStyleRule>stylesheet.cssRules[0]).style, {
                     set(target, p, value) {
@@ -788,6 +1005,13 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                     }
                 })
             }
+
+            // deno server compat, just use normal CSSStyleDeclaration
+            else if (window.CSSStyleSheet.IS_COMPAT) {
+                this.#adopted_root_style = new CSSStyleDeclaration();
+            }
+
+            // normal
             else this.#adopted_root_style = (<CSSStyleRule>stylesheet.cssRules[0]).style;
         }
 
@@ -809,7 +1033,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     // is element the current top parent (root) element
     public get is_root_element(){
-        return this.parentElement == root_container || this.parent?.isChildPseudoRootElement(this);
+        return this.parentElement == document.body || this.parent?.isChildPseudoRootElement(this);
     }
     
 
@@ -860,70 +1084,21 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     /************/
 
-    // convert file:// or https:// url to url relative to uix lib
-    private urlToRelativeUrl(url:string){
-        return 'uix/components/' + url.replace(new URL(".", import.meta.url).toString(), "");
-    }
-
-    // skeleton generator
-    public getSkeleton():string {
-
-        const id = Datex.Pointer.getByValue(this)?.id;
-
-        let style = "";
-        // pseudo style if CSSStylesheet not working
-        for (let [key,value] of Object.entries(this.#pseudo_style)) {
-            style += `${PlaceholderCSSStyleDeclaration.toKebabCase(key)}: ${value};`
-        }
-
-        let skeleton = `<${this.tagName.toLowerCase()} skeleton id="${id}" style="${style}">`
-
-        // // stylesheets
-        // for (let stylesheet of this.#style_sheets) {
-        //     skeleton += "<style>"
-        //     for (let rule of stylesheet.cssRules) {
-        //         skeleton += rule.cssText;
-        //     }
-        //     skeleton += "</style>"
-        // }
-        
-
-        // // shadow root
-        // skeleton += `<template shadowroot="open">`
-        // // inject style sheet urls
-        // for (let url of this.#style_sheets_urls) {
-        //     skeleton += `<link rel="stylesheet" href="${this.urlToRelativeUrl(url)}">`   
-        // }
-        // skeleton += this.content_container.outerHTML;
-        // skeleton += `</template>`
-
-        let children = this.generateSkeletonChildren();
-        for (let c of children) skeleton += ('\n' + c).replace(/\n/g, "\n  "); // inset
-
-        //if (children.length == 0) skeleton += "x";
-
-        skeleton += `</${this.tagName.toLowerCase()}>`;
-        return skeleton;
-    }
-
-    // @override
-    protected generateSkeletonChildren():string[]{
-        return [];
-    }
-
 
     // component becomes full-featured uix component, no longer a skeleton
-    public async unSkeletonize() {
+    public unSkeletonize() {
         if (!this.is_skeleton) return;
 
         this.is_skeleton = false;
-        this.removeAttribute("skeleton");
-        // this.removeAttribute("id");
-        this.setAttribute("restored", "");
+        this.removeAttribute("data-static");
 
         // continue component lifecycle
-        await this.replicate();
-    
+        const type = Datex.Type.ofValue(this);
+        type.initProperties(this, {options:$$({}), constraints:$$({})});
+        // trigger UIX lifecycle (onReplicate)
+        type.construct(this, undefined, false, true);
+
+        // await this.replicate();
         //this.updateResponsive();
 
         // if (this instanceof Group) {
@@ -937,10 +1112,18 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
 
     disconnectedCallback() {
-        if (this.is_skeleton) return; // ignore
 
-        const parent_is_uix = this.parentElement instanceof Base;
-        const prev_parent_is_uix = this.previousParent instanceof Base;
+        // reset anchor lifecycle
+        this.#anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
+        
+        // assume next route as new initial route
+        this.route_initialized = false;
+
+
+        // if (this.is_skeleton) return; // ignore
+
+        // const parent_is_uix = this.parentElement instanceof Base;
+        // const prev_parent_is_uix = this.previousParent instanceof Base;
 
         // TODO also ignore if previous parent was document.body (or a non uix element?!)
 
@@ -1015,11 +1198,15 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.#created = true;
 
 
+
         // call onCreate
         if (new_create) {
             try {
                 await this.onCreate?.();
             } catch (e) { logger.error("Error calling onCreate on element"); console.error(e)}
+        }
+        else {
+            await this.created;
         }
 
         // call onAnchor
@@ -1045,29 +1232,41 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     
         // this.updateResponsive(false, true);
 
-        if (this.parentElement == root_container) this.useAsRoutingBase(); // automatically enable routing of root element
+        if (!IS_HEADLESS) await this.onDisplay?.();
+
+        await new Promise((r) => setTimeout(r, 0)); // dom changes
+
+        this.#create_lifecycle_ready_resolve?.();
+        this.#anchor_lifecycle_ready_resolve?.();
     }
 
-    public useAsRoutingBase(){
-        Routing.setHandler((parts)=>this.handleRoute(parts), ()=>this.getCurrentRoute()); // handle route updates
-    }
+    private route_initialized = false;
 
-    // implements onRoute per default, can be overriden for more custom routing behaviour
-    protected handleRoute(parts:string[]): string[] {
+    // implements resolveRoute per default, can be overriden for more custom routing behaviour
+    public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
+        const {Path} = await import("unyt_node/path.ts");
+
+        const delegate = this.routeDelegate??this;
+
+        if (!route?.route) return []; // TODO: should not happen?
 
         // ignore if route is already up to date
-        if (JSON.stringify(parts)==JSON.stringify(this.getCurrentRoute())) return parts;
+        if (this.route_initialized && Path.routesAreEqual(route, delegate.getInternalRoute())) return route;
+        const initial_route = !this.route_initialized;
+        this.route_initialized = true;
 
-        const child = this.onRoute?.(parts[0]);
+        const child = await delegate.onRoute?.(route.route[0]??"", initial_route);
 
-        if (!child) return []; // route not valid
-        else child.focus(); // bring child to foreground
-
-        // end of route reached, all ok
-        if (parts.length == 1) return parts; 
+        if (child == false) return []; // route not valid
+        else if (typeof (<any>child)?.focus == "function") {
+            (<any>child).focus() // bring child to foreground
+        }
+        // end of route reached / handled in component without redirecting to children, all ok
+        if (route.route.length == 1 || !(child instanceof HTMLElement) || (typeof child?.resolveRoute !== "function")) return route; 
         // recursively follow route
         else {
-            return [parts[0], ...child.handleRoute(parts.slice(1))];
+            const child_route = await child.resolveRoute(Path.Route(route.route.slice(1)), context);
+            return [route.route[0], ...(child_route instanceof Path ? child_route.route : child_route)];
         }
     }
 
@@ -1075,7 +1274,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     // anchor, if no parent_element is specfied, it is appended to the body
     public anchor(parent_element?:HTMLElement) {  
         // add to body if no parent element provided
-        if (parent_element==null) parent_element = root_container;
+        if (parent_element==null) parent_element = document.body;
         parent_element.append(this);
     }
 
@@ -1304,192 +1503,26 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         return this.options.collector;
     }
 
-    #scroll_element: HTMLDivElement;
-
-    // takes element, returns scroll container element
+    #scroll_context:scrollContext
+    
     protected makeScrollContainer(element:HTMLElement, scroll_x = true, scroll_y = true) {
-
-        const container = document.createElement("div");
-        container.classList.add('uix-scrollbar-container')
-        const content = this.#scroll_element = document.createElement("div");
-        content.classList.add('uix-scrollbar-content')
-
-        content.append(element)
-        container.append(content);
-
-        const scrollbar_y = document.createElement("div");
-        scrollbar_y.classList.add('uix-scrollbar', 'y');
-        if (scroll_y) container.append(scrollbar_y)
-
-        const scrollbar_x = document.createElement("div");
-        scrollbar_x.classList.add('uix-scrollbar', 'x');
-        if (scroll_x) container.append(scrollbar_x)
-
-        const updateScrollbars = ()=>{
-            // y height
-            let heightRatioY = content.offsetHeight / content.scrollHeight;
-            if (heightRatioY > 0.99) heightRatioY = 1; // compensate pixel rounding errors
-            else if (heightRatioY < 0.05) heightRatioY = 0.05; // not too small
-
-            // y position
-            const scrollRatioY = content.scrollTop / (content.scrollHeight-content.offsetHeight); 
-            const topPercent = scrollRatioY * (1-heightRatioY);
-            // remove overflow y position from height
-            if (topPercent < 0) heightRatioY += topPercent;
-            if (topPercent+heightRatioY > 1) heightRatioY = 1 - topPercent;
-
-            scrollbar_y.style.top = Math.max(0, topPercent * 100) + "%"
-            scrollbar_y.style.height = "calc(" + (heightRatioY * 100) + "% - 10px)"
-            if (heightRatioY == 1) scrollbar_y.style.display = "none";
-            else scrollbar_y.style.display = "block";
-
-
-            // x width
-            let heightRatioX = content.offsetWidth / content.scrollWidth;
-            if (heightRatioX > 0.99) heightRatioX = 1; // compensate pixel rounding errors
-            else if (heightRatioX < 0.05) heightRatioX = 0.05; // not too small
-
-            // x position
-            const scrollRatioX = content.scrollLeft / (content.scrollWidth-content.offsetWidth); 
-            const leftPercent = scrollRatioX * (1-heightRatioX);
-            // remove overflow x position from width
-            if (leftPercent < 0) heightRatioX += leftPercent;
-            if (leftPercent+heightRatioX > 1) heightRatioX = 1 - leftPercent;
-
-            scrollbar_x.style.left = Math.max(0, leftPercent * 100) + "%"
-            scrollbar_x.style.width = "calc(" + (heightRatioX * 100) + "% - 20px)"
-            if (heightRatioX == 1) scrollbar_x.style.display = "none";
-            else scrollbar_x.style.display = "block";
-           
-            this.options._scroll_y = content.scrollTop;
-            this.options._scroll_x = content.scrollLeft;
-        }
-
-        // scroll listener
-        let ticking = false;
-
-        content.addEventListener('scroll', function(e) {          
-            if (!ticking) {
-              window.requestAnimationFrame(function() {
-                updateScrollbars();
-                ticking = false;
-              });
-              ticking = true;
-            }
-        });
-
-        // scrollbar drag listeners
-        let scrollingY:boolean;
-        let scrollYStart:number;
-        let scrollTopStart:number;
-
-        let scrollingX:boolean;
-        let scrollXStart:number;
-        let scrollLeftStart:number;
-
-        if (scroll_y) {
-            scrollingY = false;
-            scrollYStart = 0;
-            scrollTopStart = 0;
-            
-            scrollbar_y.addEventListener("mousedown", function(e) {
-                scrollbar_y.classList.add("active")
-                scrollingY = true;
-                scrollYStart = e.clientY;
-                scrollTopStart = content.scrollTop;
-            })
-        }
-       
-        if (scroll_x) {
-            scrollingX = false;
-            scrollXStart = 0;
-            scrollLeftStart = 0;
-
-            scrollbar_x.addEventListener("mousedown", function(e) {
-                scrollbar_x.classList.add("active")
-                scrollingX = true;
-                scrollXStart = e.clientX;
-                scrollLeftStart = content.scrollLeft;
-            })
-        }
-       
-
-        window.addEventListener("mousemove", (e) => {
-            if (scrollingY) {
-                let delta = e.clientY - scrollYStart;
-                let deltaPercent = delta / content.offsetHeight;
-                let scrollYRatio = deltaPercent / (1-content.offsetHeight / content.scrollHeight);
-                content.scrollTop = scrollTopStart + scrollYRatio * (content.scrollHeight-content.offsetHeight);
-            }
-            if (scrollingX) {
-                let delta = e.clientX - scrollXStart;
-                let deltaPercent = delta / content.offsetWidth;
-                let scrollXRatio = deltaPercent / (1-content.offsetWidth / content.scrollWidth);
-                content.scrollLeft = scrollLeftStart + scrollXRatio * (content.scrollWidth-content.offsetWidth);
-            }
-        })
-
-        // reset
-        document.addEventListener("mouseup", function(e) {
-            scrollingY = false;
-            scrollingX = false;
-            scrollbar_y.classList.remove("active")   
-            scrollbar_x.classList.remove("active")
-        })
-
-        let initial_scroll = (this.options._scroll_y > content.scrollHeight || this.options._scroll_x > content.scrollWidth);
-
-        if (!IS_HEADLESS) {
-            // dom content resize observers
-            new ResizeObserver(()=>{
-                if (initial_scroll) {
-                    this.updateScrollPosition();
-                    setTimeout(()=>this.updateScrollPosition(), 20);
-                    setTimeout(()=>{this.updateScrollPosition();initial_scroll = false;}, 100);
-                }
-                else updateScrollbars();
-            }).observe(content);
-
-            new ResizeObserver(()=>{
-                updateScrollbars();
-                // scroll to bottom
-                if (this.SCROLL_TO_BOTTOM) this.scrollToBottom();
-            }).observe(element);
-        }
-        
-
-        content.addEventListener("mouseup", ()=>updateScrollbars())
-        content.addEventListener("mousedown", ()=>updateScrollbars())
-
-        // move to saved scroll position
-        this.updateScrollPosition()
-
-        return container;
+        // TODO: save scroll state
+        this.#scroll_context = {};
+        return makeScrollContainer(element, scroll_x, scroll_y, this.#scroll_context);
     }
 
-
-    /** handle the scroll position update **/
+    /** handle the scroll position updates **/
 
     public updateScrollPosition(x?:number, y?:number) {
-        if (!this.#scroll_element) return;
-
-        if (x!=undefined) this.#scroll_element.scrollLeft = this.options._scroll_x = x;
-        else this.#scroll_element.scrollLeft = this.options._scroll_x;
-
-        if (y!=undefined) this.#scroll_element.scrollTop = this.options._scroll_y = y;
-        else this.#scroll_element.scrollTop = this.options._scroll_y;
+        return updateScrollPosition(this.#scroll_context, x, y);
     }
 
     public scrollToBottom(force_scroll = false){
-        if (!this.#scroll_element) return;
-        
-        //console.log("> " + (this._scroll_element.scrollTop / (this._scroll_element.scrollHeight-this._scroll_element.offsetHeight)))
-        if (force_scroll ||  this.FORCE_SCROLL_TO_BOTTOM || (this.#scroll_element.scrollHeight - this.#scroll_element.offsetHeight - this.#scroll_element.scrollTop < 200))
-            this.updateScrollPosition(null, this.#scroll_element.scrollHeight-this.#scroll_element.clientHeight)
+        return scrollToBottom(this.#scroll_context, force_scroll);
     }
 
     public scrollToTop(){
-        this.updateScrollPosition(null, 0)
+        return scrollToTop(this.#scroll_context);
     }
 
     override remove() {
@@ -1561,7 +1594,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     override focus(){
         this.in_focus = true;
         this.classList.add("focus");
-        this.#first_focus_resolve();
+        this.#first_focus_resolve?.();
         if (this.parent) this.parent.handleChildElementFocused(this);
     }
 
@@ -1573,9 +1606,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
       
     protected showInitDialog():Promise<object> {
-        let options_list = this.requiredOptionsList();
+        const options_list = this.requiredOptionsList();
 
-        for (let [key, value] of Object.entries(options_list)) {
+        for (const [key, value] of Object.entries(options_list)) {
             if (this.options[key]) value.default = this.options[key]
         }
         logger.success `${options_list}`;
@@ -1641,13 +1674,13 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         // has border color TODO also update
         if (this.options.border_color) {
-            this.current_border_color = Utils.getCSSProperty(this.options.border_color);
+            this.current_border_color = HTMLUtils.getCSSProperty(this.options.border_color);
         }
         // calculate color from background (dynamic)
-        else if (this.options.bg_color&&Utils.getCSSProperty(this.options.bg_color, false)!="transparent") {
+        else if (this.options.bg_color&&HTMLUtils.getCSSProperty(this.options.bg_color, false)!="transparent") {
             this.current_border_color = Theme.mode.val == "dark" ? 
-                    Utils.lightenDarkenColor(<`#${string}`>Utils.getCSSProperty(this.options.bg_color, false), 35) :  
-                    Utils.lightenDarkenColor(<`#${string}`>Utils.getCSSProperty(this.options.bg_color, false), -30);
+                    Utils.lightenDarkenColor(<`#${string}`>HTMLUtils.getCSSProperty(this.options.bg_color, false), 35) :  
+                    Utils.lightenDarkenColor(<`#${string}`>HTMLUtils.getCSSProperty(this.options.bg_color, false), -30);
         }
         else this.current_border_color = 'var(--border)'   
     }
@@ -1672,7 +1705,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     protected floatingMenu(el:HTMLElement|string) {
         const menu = document.createElement("div");
-		Utils.setCSS(menu, {
+		HTMLUtils.setCSS(menu, {
             position: 'absolute',
             right: '15px',
             top: '15px',
@@ -1753,7 +1786,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             Handlers.handleDrop(this, {drop:(v)=>this.onDrop(v)}, this, false);
         }
         else {
-            Utils.addEventListener(this, "drop dragenter dragover dragleave", e=>{e.preventDefault();e.stopPropagation();return false})
+            HTMLUtils.addEventListener(this, "drop dragenter dragover dragleave", e=>{e.preventDefault();e.stopPropagation();return false})
         }
     }
 
@@ -1819,7 +1852,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         if (this.edit_areas[type]) return;
 
         // create edit area
-        const edit_area = Utils.createHTMLElement(`<div class="edit-overlay ${type}"></div>`);
+        const edit_area = HTMLUtils.createHTMLElement(`<div class="edit-overlay ${type}"></div>`);
         this.edit_areas[type] = edit_area;
         this.shadow_root.append(edit_area);
 
@@ -1943,9 +1976,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     public get top(): number {return this.offsetTop}
 
     // get colors
-    public get text_color(): string {return Utils.getCSSProperty(this.options.text_color) || 'var(--text)'}
-    public get text_color_light(): string {return Utils.getCSSProperty(this.options.text_color_light) || 'var(--text_light)'}
-    public get text_color_highlight(): string {return Utils.getCSSProperty(this.options.text_color_highlight) || 'var(--text_highlight)'}
+    public get text_color(): string {return HTMLUtils.getCSSProperty(this.options.text_color) || 'var(--text)'}
+    public get text_color_light(): string {return HTMLUtils.getCSSProperty(this.options.text_color_light) || 'var(--text_light)'}
+    public get text_color_highlight(): string {return HTMLUtils.getCSSProperty(this.options.text_color_highlight) || 'var(--text_highlight)'}
    
 
     // paddings
@@ -1984,7 +2017,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     public get margin_bottom() {return ((this.constraints.margin_bottom != null)  ? this.constraints.margin_bottom  : this.constraints.margin) || 0}
 
     // border
-    public get border_color() {return Utils.getCSSProperty(this.options.border_color)}
+    public get border_color() {return HTMLUtils.getCSSProperty(this.options.border_color)}
     public set border_color(color:string) {
         this.options.border_color = color;
         this.updateBorders();
@@ -2009,7 +2042,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
     public get bg_color(){
-        return Utils.getCSSProperty(this.options.bg_color, false);
+        return HTMLUtils.getCSSProperty(this.options.bg_color, false);
     }
 
     // grid positioning
@@ -2127,8 +2160,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected onHide?():void // called when element is created with options.hidden set to true, or when hide() is called
     protected onClick?():void // called when element is clicked (options.clickable must be enabled)
 
-    protected onRoute?(identifier:string):void|Base // called when a route is requested from the component, return element matching the route identifier
-    getCurrentRoute():string[] {return []} // called to get the current route of the component (child route)
+    protected onRoute?(identifier:string, is_initial_route:boolean):Promise<void|Base|boolean>|void|Base|boolean // called when a route is requested from the component, return element matching the route identifier or true if route was handled
+    protected routeDelegate?: Base; // delegate that handles all routes for this component
+    getInternalRoute():string[] {return []} // called to get the current route of the component (child route)
 
     // called when element size or position changed
     protected onConstraintsChanged() {}
@@ -2138,6 +2172,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     /** called after options loaded, element content can be created */
     protected onCreate?():void|Promise<void>
+
+    /** called when anchored in a frontend environment (supports @standalone) */
+    protected onDisplay?():void|Promise<void>
 
     /** called after removed from DOM (not moved) */
     protected onRemove?():void

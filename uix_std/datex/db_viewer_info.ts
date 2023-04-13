@@ -65,12 +65,12 @@ export class DXBViewerInfo extends UIX.Components.Base {
     private reset(){
         this.outer.innerHTML = ""
         this.title_el.style.color = 'var(--border_color)'
-        UIX.Utils.setElementText(this.title_el, S('no_dxb'))
+        UIX.HTMLUtils.setElementText(this.title_el, S('no_dxb'))
         this.content.innerHTML = "";
     }
 
     public async showHeader(header:Datex.dxb_header) {
-        UIX.Utils.setElementText(this.title_el, "HEADER")
+        UIX.HTMLUtils.setElementText(this.title_el, "HEADER")
         this.content.innerHTML = "";
         this.content.append(this.outer);
         this.outer.innerHTML = ""
@@ -87,7 +87,7 @@ export class DXBViewerInfo extends UIX.Components.Base {
 
     public showBody(decompiled:[colored: string, plain:string], encrypted=false) {
         this.decompiled = decompiled[1];
-        UIX.Utils.setElementText(this.title_el, "BODY" + (encrypted?' (encrypted)': ''))
+        UIX.HTMLUtils.setElementText(this.title_el, "BODY" + (encrypted?' (encrypted)': ''))
         this.content.innerHTML = "";
         this.content.append(this.outer);
 
@@ -117,11 +117,11 @@ export class DXBViewerInfo extends UIX.Components.Base {
 
     public showInfo(section:dxb_section) {
         
-        const div = UIX.Utils.createHTMLElement("<div style='width:100%;height:100%;'></div>");
-        const content = UIX.Utils.createHTMLElement("<div style='overflow-y: scroll;width:100%;height: calc(100% - 50px);padding-bottom:20px;position:absolute'></div>");
+        const div = UIX.HTMLUtils.createHTMLElement("<div style='width:100%;height:100%;'></div>");
+        const content = UIX.HTMLUtils.createHTMLElement("<div style='overflow-y: scroll;width:100%;height: calc(100% - 50px);padding-bottom:20px;position:absolute'></div>");
 
         const {header} = UIX.Snippets.Header(section[3], section[2]);
-        const info = UIX.Utils.createHTMLElement(`<div style="margin-top:20px"></div>`);
+        const info = UIX.HTMLUtils.createHTMLElement(`<div style="margin-top:20px"></div>`);
 
         const size = section[1]-section[0];
         info.innerHTML = `
@@ -132,7 +132,7 @@ export class DXBViewerInfo extends UIX.Components.Base {
             </table>
         `;
 
-        const utf8 = UIX.Utils.createHTMLElement(`<div style="user-select:text;margin-top:20px;background: var(--bg_code);border-radius: 5px; width: calc(100% - 10px);overflow-wrap: break-word;padding: 5px;"></div>`);
+        const utf8 = UIX.HTMLUtils.createHTMLElement(`<div style="user-select:text;margin-top:20px;background: var(--bg_code);border-radius: 5px; width: calc(100% - 10px);overflow-wrap: break-word;padding: 5px;"></div>`);
 
         utf8.innerHTML = `${section[7]}`
         

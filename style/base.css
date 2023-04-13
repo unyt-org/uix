@@ -14,10 +14,16 @@ body {
     display: none;
     -webkit-appearance: none;
 }
-* {
+/* * {
     -ms-overflow-style: none;
     scrollbar-width: none;
+} */
+
+.edit-hover {
+    background-color: var(--blue)!important;
+    /* outline: 1px solid white!important; */
 }
+
 
 div:focus {
     outline: 0;
@@ -41,6 +47,7 @@ img:-moz-broken {
 a {
     color: var(--accent);
     text-decoration: none;
+    text-underline-position: under;
 }
 
 a:hover {
@@ -225,30 +232,30 @@ pre code:hover::before {
     margin-top: 10px;
 }
 
-.docs-code h2 {
+/* .docs-code h2 {
     margin-left: 42px;
-}
+} */
 
 .docs-code h2 {
     counter-increment: line-number;
     padding: 5px;
     border-radius: 8px;
     cursor: pointer;
-    padding-left: 12px;
+    padding-left: 0px;
     position: relative;
     color: var(--accent);
 }
 
-.docs-code h2::before {
+
+/* .docs-code h2::before {
     content: "#" counter(line-number) " ";
     position: absolute;
     left: -48px;
     cursor: pointer;
-    /*background: #1c1c28aa;*/
     padding: 5px;
     top: 0px;
     border-radius: 8px;
-}
+} */
 
 .multiline-span {
     word-break: break-all;
@@ -275,4 +282,16 @@ pre code:hover::before {
     text-underline-position: under;
     /* text-decoration-color: var(--text_highlight); */
     text-decoration-thickness: 1.5px;
+}
+
+
+.error-page {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 1.5em;
+    color: var(--text_highlight);
 }

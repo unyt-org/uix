@@ -1,15 +1,17 @@
 // deno-lint-ignore-file no-namespace
-import { datex, Datex, pointer, eternal } from "unyt_core";
-import { root_container, logger } from "../utils/global_values.ts";
+import { datex, Datex, pointer, $$ } from "unyt_core";
+import { logger } from "../utils/global_values.ts";
 import { Components} from "../components/main.ts";
 import { ServiceWorker } from "../sw/sw_installer.ts";
 
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { displayInit } from "unyt_core/runtime/display.ts";
+import { resolveEntrypointRoute, html_content, html_content_or_generator_or_preset } from "../html/rendering.ts";
+import { HTMLUtils } from "../html/utils.ts";
 
 let current_uix_state_name = 'default';
 
-const version = await eternal(()=>"unknown");
+const version = eternal ?? $$("unknown");
 
 
 export namespace State {
@@ -64,7 +66,7 @@ export namespace State {
 
     export function _setMetadata(meta:app_meta){
         Object.assign(APP_META, meta);
-        Datex.Unyt.setApp(meta.name, meta.version, meta.stage, meta.backend)
+        Datex.Unyt.setAppInfo(meta)
         
         if (meta.version) {
             const prev_version = version.val;
@@ -128,30 +130,13 @@ export namespace State {
         if (progress_bar) progress_bar.style.width = (current_progress*100)+"%"
     }
 
-    export async function loadingFinished(){
+    export function loadingFinished(){
         setLoadingProgress(1);
         document.querySelector("#loader")?.remove();
     }
 
 
-    export function saveSkeleton(skeleton:string)
-    export function saveSkeleton(component:Components.Base<any>)
-    export function saveSkeleton(skeleton:string|Components.Base<any>) {
-        if (typeof skeleton == "string") localStorage.setItem('uix_skeleton', skeleton);
-        else if (skeleton instanceof Components.Base) localStorage.setItem('uix_skeleton', skeleton.getSkeleton());
-        //else throw new Error("Invalid type for skeleton") TODO:
-    }
-
-    export function getSkeleton() {
-        return localStorage.getItem("uix_skeleton")
-    }
-
-    export function renderSkeleton(skeleton:string) {
-        logger.info("rendering skeleton")//, skeleton)
-        root_container.innerHTML = skeleton;
-    }
-
-    let current_state: Components.Base;
+    let current_state: html_content;
 
     // completely reset current uix state
     export async function reset(){
@@ -177,11 +162,10 @@ export namespace State {
                 // outer component contraints
                 const constraints = await Datex.Storage.getItem('uix_constraints_'+current_uix_state_name);
                 if (constraints && current_state instanceof Components.Base) current_state.constraints = constraints;
-                root_container.append(current_state); // add to document
+                document.body.append(current_state); // add to document
 
                 loadingFinished();
                 logger.success("app state restored");
-                saveSkeleton(current_state);
                 setLoadingProgress(0.8);
                 return current_state;
             } 
@@ -203,24 +187,12 @@ export namespace State {
                 current_state.constraints = pointer(current_state.constraints);
                 await Datex.Storage.setItem('uix_constraints_'+current_uix_state_name, current_state.constraints);
             }
-            root_container.append(<Components.Base>current_state); // add to document
+            document.body.append(<Components.Base>current_state); // add to document
             loadingFinished();
-            logger.success("app loaded");
-            saveSkeleton(current_state);
+            logger.success("state loaded");
             setLoadingProgress(0.8);
             return current_state;
         }
-        // else if (typeof load_new_state == "object") {
-        //     setLoadingProgress(0.1);
-        //     current_state = new UIXAppInstance(undefined, load_new_state);
-        //     await Datex.Storage.setItem('uix_state_'+current_uix_state_name, current_state)
-        //     root_container.append(current_state); // add to document
-        //     loadingFinished();
-        //     logger.success("app loaded");
-        //     saveSkeleton(current_state);
-        //     setLoadingProgress(0.8);
-        //     return current_state;
-        // }
         else {
             throw Error("Invalid state, must be a function")
         } 
@@ -228,31 +200,55 @@ export namespace State {
     }
 
     // use instead of State.saved
-    export function set(component:Components.Base) {
-        current_state = component;
-        root_container.append(component); // add to document
+    export async function set(content:html_content_or_generator_or_preset, path = window.location.pathname) {
+        const [collapsed_content, _render_method] = await resolveEntrypointRoute(content, path, undefined, false);
+        if (collapsed_content == null) return; // no change, ignore
+
+        current_state = collapsed_content;
+        document.body.innerHTML = "";
+        // console.log("-->",collapsed_content)
+        HTMLUtils.append(document.body, collapsed_content) // add to document
         loadingFinished();
-        logger.success("app loaded");
-        saveSkeleton(component);
+        logger.success("state loaded");
+        // saveSkeleton(collapsed_content);
     }
 
     export function exportState(uix_component = current_state){
-        return Datex.Decompiler.decompile(Datex.Compiler.encodeValue(uix_component, undefined,true,true), false, false, false, false)
+        return Datex.Runtime.valueToDatexStringExperimental(uix_component, false, false, true, true, false);
     }
+
+    export function exportStateBase64(uix_component = current_state){
+        return Datex.Compiler.encodeValueBase64(uix_component, undefined, true, true, true);
+    }
+
 
     export async function importState(dx:string){
 
-        const state = await datex(dx);
-        if (state instanceof Components.Base) {
-            root_container.append(state);
+        const state = <any> await datex(dx);
+        if (state instanceof HTMLElement) {
+            document.body.append(state);
         }
         else {
-            logger.error("could not import state, not a UIX element");
+            logger.error("could not import state, not an HTML element");
         }
         current_state = state;
 	}
 
+    export async function importStateBase64(dx:string){
 
+        const state = await Datex.Runtime.decodeValueBase64(dx);
+        if (state instanceof HTMLElement) {
+            document.body.append(state);
+        }
+        else {
+            logger.error("could not import state, not an HTML element");
+        }
+        current_state = state;
+	}
+
+    export function getCurrentState(){
+        return current_state;
+    }
 
     /** reset methods */
     export const resetPage = globalThis.reset = async ()=>{
@@ -272,5 +268,3 @@ export namespace State {
     }
 
 }
-
-document.body.append(root_container);

@@ -77,12 +77,6 @@ export class UIXAppInstance extends Elements.Base {
         return this.getPage(this.current_section)
     }
 
-
-    // TODO:
-    getSkeleton() {
-        return `<${this.tagName.toLowerCase()}></${this.tagName.toLowerCase()}>`
-    }
-
 }
 
 window.customElements.define("uix-app", UIXAppInstance) // set original _App class as component

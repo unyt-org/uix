@@ -4,25 +4,25 @@ import { Datex } from "unyt_core";
 import { I } from "../uix_short.ts";
 import { Res } from "./res.ts";
 import { UnytPenPad } from "./unyt_pen.ts";
-import { Utils } from "./utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 
 export namespace Snippets {
 
 	/** creates list item div (like context menu items) */
 	export function ListItem(text:Datex.CompatValue<string>, icon:string, extra?:string|UnytPenPad, has_sub_menu:boolean = false, disabled:boolean = false) {
-		const el = Utils.createHTMLElement(`<div class="contextmenu-item ${disabled ? "disabled" :""} ${has_sub_menu ? " sub_menu_header": ""}">
+		const el = HTMLUtils.createHTMLElement(`<div class="contextmenu-item ${disabled ? "disabled" :""} ${has_sub_menu ? " sub_menu_header": ""}">
 			<div style="padding-left:0.4em; display:inline-block;opacity:0.5;width:1.6em">${icon ? I(icon) : ""}</div><span style="display:inline-block;"></span>
 			<div class="contextmenu-extra" style="padding-right:0.4em; ${has_sub_menu ? "" : "opacity:0.3;"} text-align:right; min-width:50px; display:block;flex-grow:1">
 				${has_sub_menu ? I`fa-chevron-right` : (typeof extra == "string" ? Res.getShortcutFormatted(extra) : "")}
 			</div> 
 		</div>`);
 
-		Utils.setElementText(<HTMLSpanElement>el.children[1], text)
+		HTMLUtils.setElementText(<HTMLSpanElement>el.children[1], text)
 		
 		// add unyt pen  pad
 		if (extra instanceof UnytPenPad) {
 			const html = extra.getHTMLElement();
-			Utils.setCSS(html, {float:'right', height:'18px', 'margin-top':'2px'});
+			HTMLUtils.setCSS(html, {float:'right', height:'18px', 'margin-top':'2px'});
 		
 			el.querySelector(".contextmenu-extra").append(html);
 		}
@@ -32,18 +32,18 @@ export namespace Snippets {
 
 	/** creates a header element with title and functions */
 	export function Header(title?:string, title_color?:string, left_elements?:HTMLElement[], right_elements?:HTMLElement[], expanded_elements?:HTMLElement[], absolute=false, margin_top?:string, margin_bottom:string="10px", expanded = false):{header:HTMLElement,title_el:HTMLElement,top_element:HTMLElement,expanded_element:HTMLElement} {
-		let header = Utils.createHTMLElement(`<div style="position:relative;margin-bottom:${margin_bottom};align-items:center;width:100%"></div>`)
+		let header = HTMLUtils.createHTMLElement(`<div style="position:relative;margin-bottom:${margin_bottom};align-items:center;width:100%"></div>`)
 
-		let left_element  = Utils.createHTMLElement(`<div style="margin-right:10px;flex-grow:1; display: flex;justify-content: flex-start;white-space:nowrap;"></div>`);
-		let right_element = Utils.createHTMLElement(`<div style="flex-grow:1; display: flex;justify-content: flex-end;white-space:nowrap;"></div>`);
-		let top_element = Utils.createHTMLElement(`<div style="display:flex;flex-wrap: wrap;margin-bottom:10px;align-items:center;width:100%"></div>`)
+		let left_element  = HTMLUtils.createHTMLElement(`<div style="margin-right:10px;flex-grow:1; display: flex;justify-content: flex-start;white-space:nowrap;"></div>`);
+		let right_element = HTMLUtils.createHTMLElement(`<div style="flex-grow:1; display: flex;justify-content: flex-end;white-space:nowrap;"></div>`);
+		let top_element = HTMLUtils.createHTMLElement(`<div style="display:flex;flex-wrap: wrap;margin-bottom:10px;align-items:center;width:100%"></div>`)
 		
-		let expanded_element = Utils.createHTMLElement(`<div class="expand" style="flex-grow:1; display: flex;justify-content: flex-start;align-items:center;white-space:nowrap;margin-left:30px;"></div>`);
+		let expanded_element = HTMLUtils.createHTMLElement(`<div class="expand" style="flex-grow:1; display: flex;justify-content: flex-start;align-items:center;white-space:nowrap;margin-left:30px;"></div>`);
 		
 		// display top_element absolute on top of parent
 		if (absolute) {
 			header.style.display = "inline"
-			Utils.setCSS(top_element, {
+			HTMLUtils.setCSS(top_element, {
 				position: "absolute",
 				'z-index': "1",
 				'pointer-events': "none"
@@ -53,7 +53,7 @@ export namespace Snippets {
 			}
 		}
 		else {
-			Utils.setCSS(header, {
+			HTMLUtils.setCSS(header, {
 				display: "flex",
 				'flex-wrap': "wrap",
 				'padding-bottom': "5px;",
@@ -66,7 +66,7 @@ export namespace Snippets {
 
 		let title_el:HTMLElement;
 		if (title!=null) {
-			title_el = Utils.createHTMLElement(`<h3 style="margin:0px;${title_color?"color:"+title_color:""}">${title}</h3>`);
+			title_el = HTMLUtils.createHTMLElement(`<h3 style="margin:0px;${title_color?"color:"+title_color:""}">${title}</h3>`);
 			left_element.append(title_el) // first add title left
 		}
 

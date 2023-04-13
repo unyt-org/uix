@@ -58,7 +58,7 @@ export class DatexStorageSectionViewer extends UIX.Components.List<DatexStorageS
 
         const key_colorized = is_pointer ? (await MonacoHandler.colorize("$"+key, "datex")) : key;
 
-        const value_colorized = UIX.Utils.createHTMLElement('<span style="user-select:text"></span>');
+        const value_colorized = UIX.HTMLUtils.createHTMLElement('<span style="user-select:text"></span>');
         value_colorized.append(convertANSIWithDATEXToHTML(value));
         this.addEntry({
             id: key,

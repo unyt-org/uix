@@ -197,13 +197,13 @@ export class ConsoleView<O extends ConsoleView.CONSOLE_OPTIONS = ConsoleView.CON
 
         if (origin!=null && tag!=null) {
             let color = tag; // TODO LOG_COLORS[tag];
-            let content = UIX.Utils.createHTMLElement(`<div>${(typeof data[0] == "string" &&  data[0]?.startsWith("$")) ? "" :`<span style="margin-right: 7px; position: relative;float:left;color: ${color[0]}">[${this.escapeHtml(origin)}]</span>`}</div>`);
+            let content = UIX.HTMLUtils.createHTMLElement(`<div>${(typeof data[0] == "string" &&  data[0]?.startsWith("$")) ? "" :`<span style="margin-right: 7px; position: relative;float:left;color: ${color[0]}">[${this.escapeHtml(origin)}]</span>`}</div>`);
             content.append(message_div);
-            html_entry = <HTMLDivElement> UIX.Utils.createHTMLElement(`<div style="display:flex;flex-direction:row;color: ${color[1]}">${time_info}</div>`);
+            html_entry = <HTMLDivElement> UIX.HTMLUtils.createHTMLElement(`<div style="display:flex;flex-direction:row;color: ${color[1]}">${time_info}</div>`);
             html_entry.append(content);
         }
         else {
-            html_entry = <HTMLDivElement> UIX.Utils.createHTMLElement(`<div style="display:flex;flex-direction:row;color: ${meta.color ? meta.color: "#aaa"}">${time_info}</div>`);
+            html_entry = <HTMLDivElement> UIX.HTMLUtils.createHTMLElement(`<div style="display:flex;flex-direction:row;color: ${meta.color ? meta.color: "#aaa"}">${time_info}</div>`);
             for (let d=0; d<(read_mode ? 1 :data?.length);d++) {
                 const formatted = await this.formatLog(data[d], d, meta.format);
                 if (typeof formatted == "string") html_entry.insertAdjacentHTML('beforeend', formatted);
@@ -214,7 +214,7 @@ export class ConsoleView<O extends ConsoleView.CONSOLE_OPTIONS = ConsoleView.CON
         let p:Promise<any>;
 
         if (read_mode) {
-            let reader = UIX.Utils.createHTMLElement(`<div contenteditable=true style="min-width: 10px;background-color:#1f1f1f"></div>`);
+            let reader = UIX.HTMLUtils.createHTMLElement(`<div contenteditable=true style="min-width: 10px;background-color:#1f1f1f"></div>`);
             html_entry.append(reader)
             if (data[1]!==undefined) {
                 // closing text after input area
@@ -332,8 +332,8 @@ export class ConsoleView<O extends ConsoleView.CONSOLE_OPTIONS = ConsoleView.CON
     }
 
     public onInit() {
-        this.container = UIX.Utils.createHTMLElement(`<div class="console-view"></div>`);  // custom option handling (=>create span text element)
-        this.console_header = this.options.header ? UIX.Utils.createHTMLElement(`<div class="console-header"><div style="visibility: hidden">x</div></div>`) : UIX.Utils.createHTMLElement(`<div>`);
+        this.container = UIX.HTMLUtils.createHTMLElement(`<div class="console-view"></div>`);  // custom option handling (=>create span text element)
+        this.console_header = this.options.header ? UIX.HTMLUtils.createHTMLElement(`<div class="console-header"><div style="visibility: hidden">x</div></div>`) : UIX.HTMLUtils.createHTMLElement(`<div>`);
         this.console_body = document.createElement("div");
         this.console_body.classList.add('console-body');
         this.container.append(this.console_header)

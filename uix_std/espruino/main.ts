@@ -65,11 +65,11 @@ export class MCUConnectionHandler extends UIX.Components.Base {
 
     override onCreate() {
 
-        let bl_connect_btn = UIX.Utils.createHTMLElement(`<input type="button" value="${S`connect_bl`}"/>`)
-        let usb_connect_btn= UIX.Utils.createHTMLElement(`<input style="margin-top: 10px" type="button" value="${S`connect_usb`}"/>`)
-        let connection_info = UIX.Utils.createHTMLElement(`<div style="color:#139055; width:100%; text-align:center; margin-top: 10px"></div>`)
+        let bl_connect_btn = UIX.HTMLUtils.createHTMLElement(`<input type="button" value="${S`connect_bl`}"/>`)
+        let usb_connect_btn= UIX.HTMLUtils.createHTMLElement(`<input style="margin-top: 10px" type="button" value="${S`connect_usb`}"/>`)
+        let connection_info = UIX.HTMLUtils.createHTMLElement(`<div style="color:#139055; width:100%; text-align:center; margin-top: 10px"></div>`)
 
-        let container = UIX.Utils.createHTMLElement(`<div style="display: flex; flex-direction: column"></div>`);
+        let container = UIX.HTMLUtils.createHTMLElement(`<div style="display: flex; flex-direction: column"></div>`);
         container.append(bl_connect_btn);
         container.append(usb_connect_btn);
         container.append(connection_info);
@@ -106,12 +106,12 @@ export class MCUConnectionHandler extends UIX.Components.Base {
 
 
 function SNIPPET_MCU_upload(code_path:string){
-    let main_el = UIX.Utils.createHTMLElement("<div class='additional disabled' style='opacity:1!important;width: 100%; display: inline;justify-content: center;'></div>")
+    let main_el = UIX.HTMLUtils.createHTMLElement("<div class='additional disabled' style='opacity:1!important;width: 100%; display: inline;justify-content: center;'></div>")
 
-    let upload_btn = UIX.Utils.createHTMLElement(`<div ${espruino.available_devices.size ? "" : "disabled"}  class="sqr-button additional ${espruino.available_devices.size ? "" : "disabled"}">${I`fa-play-circle`}</div>`);
-    let stop_btn = UIX.Utils.createHTMLElement(`<div ${espruino.available_devices.size ? "" : "disabled"}  class="sqr-button additional ${espruino.available_devices.size ? "" : "disabled"}">${I`fa-stop-circle`}</div>`);
+    let upload_btn = UIX.HTMLUtils.createHTMLElement(`<div ${espruino.available_devices.size ? "" : "disabled"}  class="sqr-button additional ${espruino.available_devices.size ? "" : "disabled"}">${I`fa-play-circle`}</div>`);
+    let stop_btn = UIX.HTMLUtils.createHTMLElement(`<div ${espruino.available_devices.size ? "" : "disabled"}  class="sqr-button additional ${espruino.available_devices.size ? "" : "disabled"}">${I`fa-stop-circle`}</div>`);
 
-    let settings_btn = UIX.Utils.createHTMLElement(`<div class="sqr-button additional">${I`fa-cog`}</div>`);
+    let settings_btn = UIX.HTMLUtils.createHTMLElement(`<div class="sqr-button additional">${I`fa-cog`}</div>`);
     main_el.append(upload_btn);
     main_el.append(stop_btn);
     main_el.append(settings_btn);

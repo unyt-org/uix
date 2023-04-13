@@ -1,6 +1,7 @@
 import { Datex, $$,  f, static_pointer } from "unyt_core"
-import { logger } from "../utils/global_values.ts"
 import { IS_HEADLESS } from "../utils/constants.ts"
+
+const logger = new Datex.Logger("uix theme");
 
 interface ThemeProperties {
 	__name?:string,
@@ -127,21 +128,24 @@ export class Theme  {
 		accent: "#4FA9E8"
 	}
 
-	static #colors:{[key:string]:string} = <{[key:string]:string}>static_pointer({}, f('@@000000000000000000000000'), 1234, "$uix_colors"); // label("$uix_colors", {});
+	static #colors:{[key:string]:string} = <{[key:string]:string}>static_pointer({}, Datex.LOCAL_ENDPOINT, 1234, "$uix_colors"); // label("$uix_colors", {});
 
 	static #current_style = "flat";
 	static #style_handlers:Map<string,(element:HTMLElement)=>void> = new Map();
-	static #current_mode:Datex.Pointer<"dark"|"light"> = static_pointer(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light", f('@@000000000000000000000000'), 1236, "$uix_mode");
+	static #auto_mode = eternalVar('auto_mode') ?? $$(true); // static_pointer(true, Datex.LOCAL_ENDPOINT, 1238, "$uix_auto_mode");
+	static #current_mode:Datex.Pointer<"dark"|"light"> = eternalVar('current_mode') ?? $$(document.body.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light")); // static_pointer(document.body.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light"), Datex.LOCAL_ENDPOINT, 1239, "$uix_mode"); // eternal ?? $$(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") as Datex.Pointer<"dark"|"light">;// 
 	static #transition_mode:Datex.Pointer<"dark"|"light">|undefined;
 	static #current_light_theme:ThemeProperties = this.LIGHT;
 	static #current_dark_theme:ThemeProperties = this.DARK;
-	static #auto_mode = true;
 
-	static #current_theme_style_sheet = new window.CSSStyleSheet();
+	static readonly #current_theme_style_sheet = new window.CSSStyleSheet();
 	static #current_theme_style_sheet_added = false;
 
 	static #global_style_sheet = new window.CSSStyleSheet();
 	static #global_style_sheet_added = false;
+
+	static #dark_themes = new Map<string, string>()
+	static #light_themes = new Map<string, string>()
 
 	static get stylesheet() {return this.#global_style_sheet}
 
@@ -150,20 +154,20 @@ export class Theme  {
 
 	static get colors() {return this.#colors}
 
-	static get auto_mode() {return this.#auto_mode}
-	static set auto_mode(auto_mode:boolean) {this.#auto_mode = auto_mode}
+	static get auto_mode() {return this.#auto_mode.val}
+	static set auto_mode(auto_mode:boolean) {this.#auto_mode.val = auto_mode}
 
 	// add a new light theme (updates immediately if current mode is light)
 	public static setLightTheme(theme:{[key:string]:any}) {
 		this.#current_light_theme = theme
-		if (theme.__name) this.addGlobalThemeClass(theme.__name, theme);
+		if (theme.__name) this.addGlobalThemeClass(theme.__name, theme, "light");
 		if (this.#current_mode.val == "light") this.update(this.#current_light_theme, "light");
 	}
 
-	// add a new light theme (updates immediately if current mode is dark)
+	// add a new dark theme (updates immediately if current mode is dark)
 	public static setDarkTheme(theme:{[key:string]:any}) {
 		this.#current_dark_theme = theme
-		if (theme.__name) this.addGlobalThemeClass(theme.__name, theme);
+		if (theme.__name) this.addGlobalThemeClass(theme.__name, theme, "dark");
 		if (this.#current_mode.val == "dark") this.update(this.#current_dark_theme, "dark");
 	}
 
@@ -172,12 +176,15 @@ export class Theme  {
 		const mode = Datex.Value.collapseValue(_mode, true, true);
 		if (!force_update && this.#current_mode.val == mode) return;
 		else {
-			if (persist) this.#auto_mode = false; // keep theme even if os changes theme
-			logger.info("mode changed to " + mode);
+			if (persist) this.#auto_mode.val = false; // keep theme even if os changes theme
+			logger.debug("mode changed to " + mode);
 			this.update(mode == "dark" ? this.#current_dark_theme : this.#current_light_theme, mode);
 
 			// css global color scheme
-			if (!IS_HEADLESS) document.body.style.colorScheme = mode;
+			if (!IS_HEADLESS) {
+				document.body.style.colorScheme = mode;
+				document.body.dataset.colorScheme = mode;
+			}
 		}
 	}
 
@@ -187,19 +194,30 @@ export class Theme  {
 
 	// update style
 	public static setStyle(style:string) {
-		logger.info("style changed to " + Theme.mode);
+		logger.debug("style changed to " + Theme.mode);
 		this.#current_style = style;
 	}
 
 	// apply style to a component
 	public static applyStyle(element:HTMLElement, style=this.style) {
 		if (this.#style_handlers.has(style)) {
-			this.#style_handlers.get(style)(element);
+			this.#style_handlers.get(style)!(element);
 		}
 	}
 
 	static #current_theme_css_text = ""
-	static #global_themes_css_text = ""
+
+	static getCurrentThemeCSS(){
+		return this.#current_theme_css_text;
+	}
+
+	static getDarkThemesCSS(){
+		return [...this.#dark_themes.values()].join("\n");
+	}
+
+	static getLightThemesCSS(){
+		return [...this.#light_themes.values()].join("\n");
+	}
 
 	// update the current theme (changes immediately)
 	private static update(theme:ThemeProperties, mode:"dark"|"light") {
@@ -213,7 +231,10 @@ export class Theme  {
 			for (const [key, value] of Object.entries(o)) {
 				if (added_properties.has(key)) continue;
 				added_properties.add(key);
-				if (key == '__name') continue;
+				if (key == '__name') {
+					logger.debug(`using theme "${value}"`)
+					continue;
+				}
 				this.#colors[key] = value;
 				text += `--${key}: ${value};` // TODO escape?
 			}
@@ -231,7 +252,7 @@ export class Theme  {
 		for (const observer of this.mode_change_observers) observer(mode);
 	}
 
-	private static addGlobalThemeClass(name:string, theme:ThemeProperties) {
+	static addGlobalThemeClass(name:string, theme:ThemeProperties, mode:"light"|"dark") {
 		let text = `.theme-${name} {`;
 		// iterate over all properties (also from inherited prototypes)
 		// TODO only iterate over allowed properties?
@@ -241,15 +262,23 @@ export class Theme  {
 				if (added_properties.has(key)) continue;
 				added_properties.add(key);
 				if (key == '__name') continue;
-				text += `--${key}: ${value};` // TODO escape?
+				text += `--${key}: ${value};` // TODO escape?				
 			}
 		}
 
+		// update default current text colors
+		text += `--current_text_color: var(--text);`
+		text += `--current_text_color_highlight: var(--text_highlight);`
+		text += `color: var(--current_text_color);`
+		// set color scheme
+		text += `color-scheme: ${mode}`
+
 		text += "}";
 
-		this.#global_themes_css_text += text;
+		if (mode == "dark") this.#dark_themes.set(name, text);
+		else this.#light_themes.set(name, text);
 
-		this.updateGlobalThemeStyle()
+		this.updateGlobalThemeStyle(name)
 	}
 
 	private static updateCurrentThemeStyle(){
@@ -262,13 +291,40 @@ export class Theme  {
 		}
 	}
 
-	private static updateGlobalThemeStyle(){
-		this.#global_style_sheet.replaceSync?.(this.#global_themes_css_text);
+	private static updateGlobalThemeStyle(name:string){
+		// seta all current style classes global style
+		let global_style = "";
+		for (const style of this.#dark_themes.values()) {
+			global_style += style + '\n';
+		}
+		for (const style of this.#light_themes.values()) {
+			global_style += style + '\n';
+		}
+		this.#global_style_sheet.replaceSync?.(global_style);
 
 		// add to document
 		if (!this.#global_style_sheet_added) {
 			if (!IS_HEADLESS) document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
 			this.#global_style_sheet_added = true;
+		}
+	}
+
+	static addThemeFromParsedStylesheet(sheet:CSSStyleSheet, mode:'dark'|'light') {
+		for (const rule of <CSSStyleRule[]><any>sheet.cssRules) {
+			const name = rule.selectorText.replace(".theme-","")
+			const styleData:Record<string,string> = {};
+			for (let i = 0; i < rule.style.length; i++) {
+				const prop = rule.style.item(i);
+				if (!prop.startsWith("--")) continue;
+				if (prop === "--current_text_color" || prop === "--current_text_color_highlight") continue;
+				const key = prop.replace("--","");
+				const val = rule.style.getPropertyValue(prop);
+				styleData[key] = val;
+			}
+			styleData.__name = name;
+
+			if (mode == "dark")	Theme.setDarkTheme(styleData);
+			else Theme.setLightTheme(styleData);
 		}
 	}
 
@@ -283,7 +339,6 @@ export class Theme  {
 	}
 
 	static setColor(name:keyof ThemeProperties|string, value:string) {
-		console.log("set theme property " + name +" to:", value);
 		this.#colors[name] = value;
 		document.documentElement.style.setProperty('--'+name, value);
 	}
@@ -311,7 +366,20 @@ export class Theme  {
 	}
 }
 
-Theme.addGlobalThemeClass(Theme.DARK.__name, Theme.DARK);
-Theme.addGlobalThemeClass(Theme.LIGHT.__name, Theme.LIGHT);
+// add default themes
+Theme.addGlobalThemeClass(Theme.DARK.__name, Theme.DARK, "dark");
+Theme.addGlobalThemeClass(Theme.LIGHT.__name, Theme.LIGHT, "light");
+
+// load themes from embedded style
+for (const sheet of <CSSStyleSheet[]><any>document.styleSheets??[]) {
+	// light themes
+	if ((<HTMLStyleElement>sheet.ownerNode)?.classList?.contains("uix-light-themes")) {
+		Theme.addThemeFromParsedStylesheet(sheet, "light")
+	}
+	// dark themes
+	else if ((<HTMLStyleElement>sheet.ownerNode)?.classList?.contains("uix-dark-themes")) {
+		Theme.addThemeFromParsedStylesheet(sheet, "dark")
+	}
+}
 
 Theme.setMode(Theme.mode, true, false)

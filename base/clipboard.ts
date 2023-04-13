@@ -1,6 +1,6 @@
 import { Datex } from "unyt_core";
 import { arrayBufferToBase64, base64ToArrayBuffer } from "unyt_core/datex_all.ts";
-import { Utils } from "./utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 
 
 export namespace Clipboard {
@@ -72,7 +72,7 @@ export namespace Clipboard {
 			return text;
 		},
 		'text/html': async function (blob:Blob, text:string) {
-			return Utils.createHTMLElement(`<div>${text}</div>`)
+			return HTMLUtils.createHTMLElement(`<div>${text}</div>`)
 		},
 		'image/png': async function (blob:Blob) {
 			let objectURL = URL.createObjectURL(blob);

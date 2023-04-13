@@ -9,6 +9,8 @@
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "uix",
 		"lib": ["deno.window", "dom"]
 	}
 }

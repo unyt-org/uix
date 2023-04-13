@@ -24,6 +24,7 @@
 .content {
 	position: relative;
 	overflow: hidden; /* make visible, but overflow problemns in content container with header*/
+    display: block;
 }
 .content.fill {
 	width: 100%;

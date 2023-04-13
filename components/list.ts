@@ -2,7 +2,7 @@
 import { Component, NoResources } from "../base/decorators.ts"
 import { Base } from "./base.ts";
 import { Datex } from "unyt_core";
-import { Utils } from "../base/utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 
 import { I, S } from "../uix_short.ts";
 import { Elements } from "../elements/main.ts";
@@ -65,7 +65,7 @@ export class List<O extends List.Options = List.Options> extends Base<O> {
                 {element:new Elements.Button({content: I`fa-trash`, onClick:()=>this.clear()})},
                 {element:new Elements.TextInput(undefined, {placeholder:"Filter"}), align:'end'},
             ];
-            if (this.options.show_title) entries.unshift({element:Utils.createHTMLElement(`<h4 style='font-size: 1.2em;color: var(--text_highlight);margin: 0;line-height: 1.4em;'>${this.options.title??""}</h4>`)})
+            if (this.options.show_title) entries.unshift({element:HTMLUtils.createHTMLElement(`<h4 style='font-size: 1.2em;color: var(--text_highlight);margin: 0;line-height: 1.4em;'>${this.options.title??""}</h4>`)})
             this.header = new Elements.Header(entries, {margin_bottom:true, seperator:true, gaps:4})
         }
 

@@ -2,16 +2,15 @@
 import { Datex, datex, decimal, text, transform } from "unyt_core";
 import { Quantity, Time, Unit, unit, ValueError } from "unyt_core/datex_all.ts";
 import { Element } from "../base/decorators.ts";
-import { Utils } from "../base/utils.ts"
+import { Utils } from "../base/utils.ts";
+import { HTMLUtils } from "../html/utils.ts";
 import { Theme } from "../base/theme.ts"
 import { PLEEASE_FIREFOX } from "../uix_all.ts";
 import { I } from "../uix_short.ts"
 import {logger} from "../utils/global_values.ts";
 
 // import "https://mozilla.github.io/pdf.js/build/pdf.js";
-const script = document.createElement("script");
-script.src = "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/build/pdf.min.js";
-document.head.appendChild(script);
+
 
 const HTMLElement = <typeof globalThis.HTMLElement>window.HTMLElement 
 
@@ -29,8 +28,12 @@ export namespace Elements {
 
 		protected options:O
 
+		// true if server side rendered and component class is loaded later
+		protected wasLoadedStatic = this.hasAttribute("data-static");
+
 		constructor(options?:O) {
 			super();
+
 			// set options if not explicitely disabled
 			if (options!==null) this.options = options ?? <O>{};
 
@@ -43,15 +46,15 @@ export namespace Elements {
 		public css(property:string, value?:Datex.CompatValue<string|number>):this
 		public css(properties:{[property:string]:Datex.CompatValue<string|number>}):this
 		public css(properties_object_or_property:{[property:string]:Datex.CompatValue<string|number>}|string, value?:Datex.CompatValue<string|number>):this {
-			if (typeof properties_object_or_property == "string") return Utils.setCSS(this, properties_object_or_property, value)
-			else return Utils.setCSS(this, properties_object_or_property)
+			if (typeof properties_object_or_property == "string") return HTMLUtils.setCSS(this, properties_object_or_property, value)
+			else return HTMLUtils.setCSS(this, properties_object_or_property)
 		}
 
 		// add css classes
 		public cssClass(classes:Datex.CompatValue<string[]>):this
 		public cssClass(...classes:string[]):this
 		public cssClass(...classes:(Datex.CompatValue<string[]>|string)[]):this {
-			return Utils.setCssClass(this, ...<string[]>classes);
+			return HTMLUtils.setCssClass(this, ...<string[]>classes);
 		}
 
 	}
@@ -101,6 +104,7 @@ export namespace Elements {
 
 		constructor(items:form_item[]) {
 			super();
+			if (this.wasLoadedStatic) return;
 			this.style.display = "table";
 			this.style.borderSpacing = "3px";
 
@@ -152,6 +156,7 @@ export namespace Elements {
 	export class Image extends Base<Image.Options> {
 		constructor(options?: Image.Options) {
 			super(options);
+			if (this.wasLoadedStatic) return;
 
 			let content:HTMLElement;
 	
@@ -161,7 +166,7 @@ export namespace Elements {
 			}
 
 			else if (this.options.src) {
-				content = new globalThis.Image();
+				content = document.createElement("img")
 				content.src = this.options.src.toString();
 				content.style.width = "100%"
 			}
@@ -198,7 +203,7 @@ export namespace Elements {
 			`
 			console.log("url: ", url.toString(), this);
 
-			const content = new globalThis.Image();
+			const content = document.createElement("img")
 			content.src = url.toString();
 			content.style.width = "100%"
 			this.formatContent(content)
@@ -232,10 +237,22 @@ export namespace Elements {
 	export class Document extends Base<Document.Options> {
 		constructor(options?: Image.Options) {
 			super(options);
+			if (this.wasLoadedStatic) return;
 			this.loadPDF();
 		}
 
+		static pdfjsLoaded = false
+
 		async loadPDF(){
+
+			if (!Document.pdfjsLoaded) {
+				const script = document.createElement("script");
+				script.src = "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/build/pdf.min.js";
+				document.head.appendChild(script);
+				Document.pdfjsLoaded = true;
+				await new Promise(resolve=>setTimeout(()=>resolve, 2000))
+			}
+			
 			const pdfjsLib = window['pdfjs-dist/build/pdf'];
 
 			if (!pdfjsLib) {
@@ -309,10 +326,11 @@ export namespace Elements {
 
 		constructor(element_data:Header.ElementData[] = [], options?: Header.Options) {
 			super(options)
+			if (this.wasLoadedStatic) return;
 
 			this.element_data = element_data;
 	
-			this.container = Utils.createHTMLElement("<div style='display:flex;align-items:center;width:100%'></div>");
+			this.container = HTMLUtils.createHTMLElement("<div style='display:flex;align-items:center;width:100%'></div>");
 	
 			let end_elements:HTMLElement[] = [];
 
@@ -322,7 +340,7 @@ export namespace Elements {
 			}
 			
 			// to drag window with menu bar
-			this.drag_el = Utils.createHTMLElement(`<div style="app-region:drag;flex:1;height:100%;"></div>`);
+			this.drag_el = HTMLUtils.createHTMLElement(`<div style="app-region:drag;flex:1;height:100%;"></div>`);
 			this.container.append(this.drag_el);
 
 			for (let data of end_elements) {
@@ -373,7 +391,7 @@ export namespace Elements {
 				element.style.margin = "0";
 				element.style.paddingRight = "5px";
 				element.style.fontSize = "var(--hsize)";
-				Utils.setElementText(element, data.text);
+				HTMLUtils.setElementText(element, data.text);
 			}
 
 			this.elements.push(element!);
@@ -494,6 +512,7 @@ export namespace Elements {
 
 		constructor(value?:Datex.CompatValue<T>, options?:O){
 			super(options);
+			if (this.wasLoadedStatic) return;
 			if (value !== undefined) this.value = value;
 
 			this.style.width = "fit-content";
@@ -523,6 +542,7 @@ export namespace Elements {
 
 		constructor(options?:O) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			if (this.options.color) this.css('--bg-color', this.options.color);
 
@@ -535,16 +555,16 @@ export namespace Elements {
 			if (this.options.icon) {
 				const icon = document.createElement("span");
 				icon.style.marginRight = "5px";
-				if (typeof this.options.icon == "string") Utils.setElementText(icon, this.options.icon);
-				else Utils.setElementHTML(icon, this.options.icon);
+				if (typeof this.options.icon == "string") HTMLUtils.setElementText(icon, this.options.icon);
+				else HTMLUtils.setElementHTML(icon, this.options.icon);
 
 				content = document.createElement("span");
 				this.append(icon);
 				this.append(content);
 			}
 
-			if (this.options.text) Utils.setElementText(content, this.options.text);
-			if (this.options.content) Utils.setElementHTML(content, this.options.content);
+			if (this.options.text) HTMLUtils.setElementText(content, this.options.text);
+			if (this.options.content) HTMLUtils.setElementHTML(content, this.options.content);
 			
 			// handle disabled state
 			if (this.options.disabled) {
@@ -577,7 +597,7 @@ export namespace Elements {
 
 		protected enableShadow(){
 			// TODO use css 5 color() to add dynamic alpha to --bg-color 
-			if (this.options.glow) this.css('--bg-color-shadow', Utils.addAlphaToColor(<`#${string}`>Utils.getCSSProperty(this.options.color, false), 20));
+			if (this.options.glow) this.css('--bg-color-shadow', Utils.addAlphaToColor(<`#${string}`>HTMLUtils.getCSSProperty(this.options.color, false), 20));
 		}
 		protected disableShadow(){
 			this.css('--bg-color-shadow', 'transparent');
@@ -614,6 +634,7 @@ export namespace Elements {
 	
 		constructor(options:Elements.ToggleButton.Options) {
 			super(options);
+			if (this.wasLoadedStatic) return;
 			this.value = this.options.checked;
 		}
 
@@ -651,6 +672,7 @@ export namespace Elements {
 
 		constructor(options?:Elements.Checkbox.Options) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			const input_id = Utils.getUniqueElementId();
 
@@ -667,10 +689,10 @@ export namespace Elements {
 			label.setAttribute("for", input_id)
 
 			if (this.options.label){
-				Utils.setElementText(label, this.options.label, this.options.markdown);
+				HTMLUtils.setElementText(label, this.options.label, this.options.markdown);
 				group.classList.add("withlabel")
 			}
-			Utils.setCSSProperty(label, "--checked-color", this.options.checked_color ?? Theme.getColorReference('accent'))
+			HTMLUtils.setCSSProperty(label, "--checked-color", this.options.checked_color ?? Theme.getColorReference('accent'))
 
 			this.#input.addEventListener("click", ()=>{
 				this.#internal_update = false;
@@ -716,6 +738,7 @@ export namespace Elements {
 
 		constructor(options?:Elements.Checkbox.Options) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			let input_id = Utils.getUniqueElementId();
 
@@ -736,8 +759,8 @@ export namespace Elements {
 			label.style.marginLeft = "5px";
 			label.setAttribute("for", input_id)
 
-			if (this.options.label) Utils.setElementText(label, this.options.label);
-			Utils.setCSSProperty(outer, "--checked-color", this.options.checked_color ?? Theme.getColorReference('accent'))
+			if (this.options.label) HTMLUtils.setElementText(label, this.options.label);
+			HTMLUtils.setCSSProperty(outer, "--checked-color", this.options.checked_color ?? Theme.getColorReference('accent'))
 
 			this.#input.addEventListener("click", ()=>{
 				this.#internal_update = false;
@@ -793,6 +816,7 @@ export namespace Elements {
 
 		constructor(value:Datex.CompatValue<T>, options?:O) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 			this.value = value;
 
 			this.style.cursor = "default";
@@ -815,9 +839,9 @@ export namespace Elements {
 			if (this.options.editable != undefined) {
 				this.style.outline = "0px solid transparent"; // override focus outline
 
-				Utils.setCSSProperty(this, "cursor", transform([this.options.editable], v=>v?'text':'default'));
+				HTMLUtils.setCSSProperty(this, "cursor", transform([this.options.editable], v=>v?'text':'default'));
 				const plaintext_only = PLEEASE_FIREFOX ? 'true' : 'plaintext-only';
-				Utils.setElementAttribute(this, "contenteditable", transform([this.options.editable], v=>v?plaintext_only:'false'));
+				HTMLUtils.setElementAttribute(this, "contenteditable", transform([this.options.editable], v=>v?plaintext_only:'false'));
 				this.addEventListener("input", async e => {
 					//if (Datex.Value.collapseValue(this.options.new_lines) && e.keyCode == "Enter") 
 					this.#internal_update = true;
@@ -840,10 +864,10 @@ export namespace Elements {
 
 				if (this.options.edit_bg_color) {
 					this.addEventListener("focus", ()=>{
-						Utils.setCSSProperty(this, 'background-color', this.options.edit_bg_color)
+						HTMLUtils.setCSSProperty(this, 'background-color', this.options.edit_bg_color)
 					})
 					this.addEventListener("blur", ()=>{
-						Utils.setCSSProperty(this, 'background-color', '')
+						HTMLUtils.setCSSProperty(this, 'background-color', '')
 					})
 				}
 
@@ -873,7 +897,7 @@ export namespace Elements {
 				})
 			}
 			if (this.options.spellcheck != undefined) {
-				Utils.setElementAttribute(this, "spellcheck", this.options.spellcheck);
+				HTMLUtils.setElementAttribute(this, "spellcheck", this.options.spellcheck);
 			}
 		}
 
@@ -949,6 +973,8 @@ export namespace Elements {
 
 		constructor(value:Datex.CompatValue<number|bigint>, options?:Number.Options) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
+
 			this.value = value;
 		}
 
@@ -1027,7 +1053,7 @@ export namespace Elements {
 
 		constructor(value?:Datex.CompatValue<T>, type = "text", options?:O) {
 			super(undefined, options);
-
+			if (this.wasLoadedStatic) return;
 
 			this.#input.setAttribute("type", type);
 			this.#input.classList.add("input");
@@ -1042,7 +1068,7 @@ export namespace Elements {
 
 			this.value = value;
 
-			if (this.options.placeholder) Utils.setElementAttribute(this.#input, "placeholder", this.options.placeholder);
+			if (this.options.placeholder) HTMLUtils.setElementAttribute(this.#input, "placeholder", this.options.placeholder);
 
 			if ('valid' in this.options) {
 				Datex.Value.observeAndInit(this.options.valid, (valid:boolean)=> {
@@ -1127,17 +1153,18 @@ export namespace Elements {
 
 		constructor(value?:Datex.CompatValue<string>, options?:ContainerValueInput.Options) {
 			super(undefined, <O>{});
+			if (this.wasLoadedStatic) return;
 			
 			this.input = new TextInput(value, options);
 
 			this.input.style.width = '-webkit-fill-available'
 			
 			this.input.setInputType(options?.type);
-			const container = Utils.setCSS(Utils.createHTMLElement("<div></div>"), {
+			const container = HTMLUtils.setCSS(HTMLUtils.createHTMLElement("<div></div>"), {
 				display: "flex",
 				position: "relative"
 			});
-			this.toggleVisibilityButton =  Utils.setCSS(Utils.createHTMLElement(I`fa-eye-slash`), {
+			this.toggleVisibilityButton =  HTMLUtils.setCSS(HTMLUtils.createHTMLElement(I`fa-eye-slash`), {
 				position: "absolute",
 				display: "flex",
 				"align-items": "center",
@@ -1230,6 +1257,7 @@ export namespace Elements {
 
 		constructor(value:Datex.CompatValue<T>, options?:O) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			this.options.show_number = this.options.show_number ?? true;
 			this.options.fixed_boundaries = this.options.fixed_boundaries ?? true;
@@ -1263,7 +1291,7 @@ export namespace Elements {
 				this.#slider.style.height = "100%";
 				//this.#slider.style.width = "50%";
 				this.#slider.style.zIndex = "-1";
-				if (this.options.slider_color) Utils.setCSSProperty(this.#slider, 'background-color', this.options.slider_color);
+				if (this.options.slider_color) HTMLUtils.setCSSProperty(this.#slider, 'background-color', this.options.slider_color);
 			}
 
 			let careting = false;
@@ -1275,7 +1303,7 @@ export namespace Elements {
 				this.#caret_left.style.alignItems = "center"
 				this.#caret_left.style.cursor = "default"
 				if (this.options.slider_color) this.#caret_left.style.mixBlendMode = "difference"
-				if (this.options.label_color) Utils.setCSSProperty(this.#caret_left, 'color', this.options.label_color);
+				if (this.options.label_color) HTMLUtils.setCSSProperty(this.#caret_left, 'color', this.options.label_color);
 				this.#caret_left.innerHTML = I('fas-caret-left')
 				
 				let left_interval:number;
@@ -1297,7 +1325,7 @@ export namespace Elements {
 				this.#caret_right.style.alignItems = "center"
 				this.#caret_right.style.cursor = "default"
 				if (this.options.slider_color) this.#caret_right.style.mixBlendMode = "difference"
-				if (this.options.label_color) Utils.setCSSProperty(this.#caret_right, 'color', this.options.label_color);
+				if (this.options.label_color) HTMLUtils.setCSSProperty(this.#caret_right, 'color', this.options.label_color);
 				this.#caret_right.innerHTML = I('fas-caret-right')
 				
 				let right_interval:number;
@@ -1328,8 +1356,8 @@ export namespace Elements {
 
 			this.#slider_label.style.marginLeft = "5px";
 			if (this.options.slider_color) this.#slider_label.style.mixBlendMode = "difference" //this.options.slider_color == this.options.label_color ? "difference" : "plus-lighter";
-			Utils.setElementText(this.#slider_label, this.options.label ?? "?");
-			if (this.options.label_color) Utils.setCSSProperty(this.#slider_label, 'color', this.options.label_color);
+			HTMLUtils.setElementText(this.#slider_label, this.options.label ?? "?");
+			if (this.options.label_color) HTMLUtils.setCSSProperty(this.#slider_label, 'color', this.options.label_color);
 			if (!this.options.label) this.#slider_label.style.visibility = "hidden";
 			this.#slider_text.append(this.#slider_label);
 
@@ -1346,7 +1374,7 @@ export namespace Elements {
 
 				this.#slider_number.style.fontFamily = 'Menlo, Monaco, "Courier New", monospace';
 				if (this.options.slider_color) this.#slider_number.style.mixBlendMode = "difference";
-				if (this.options.number_color) Utils.setCSSProperty(this.#slider_number, 'color', this.options.number_color);
+				if (this.options.number_color) HTMLUtils.setCSSProperty(this.#slider_number, 'color', this.options.number_color);
 
 	
 				this.#input.style.position = "absolute";
@@ -1358,7 +1386,7 @@ export namespace Elements {
 				this.#input.style.visibility = "hidden"
 				this.#input.style.fontFamily = 'Menlo, Monaco, "Courier New", monospace';
 				this.#input.style.textAlign = "right";
-				if (this.options.number_color) Utils.setCSSProperty(this.#input, 'color', this.options.number_color);
+				if (this.options.number_color) HTMLUtils.setCSSProperty(this.#input, 'color', this.options.number_color);
 
 				if (this.options.decimals == 0) this.#input.setAttribute("inputmode", "numeric")
 				else this.#input.setAttribute("inputmode", "decimal")
@@ -1635,6 +1663,7 @@ export namespace Elements {
 			const quantity = Datex.Value.collapseValue(value,true,true);
 			options.unit = ' ' + quantity.unit_formatted_short;
 			super(value, options);
+			if (this.wasLoadedStatic) return;
 
 			this.unit = quantity.unit;
 
@@ -1725,6 +1754,7 @@ export namespace Elements {
 
 		constructor(value:Datex.CompatValue<number|bigint>, public min:number=0, public max:number=1, public color?:Datex.CompatValue<string>) {
 			super();
+			if (this.wasLoadedStatic) return;
 
 			this.#outer = document.createElement("div");
 
@@ -1759,7 +1789,7 @@ export namespace Elements {
 		protected onValueChanged(value: number | bigint): void {
 			const percent = Math.max(0, Math.min(1, (globalThis.Number(value)-this.min) / (this.max-this.min)));
 			this.#percentage.style.width = (100 * percent) + "%";
-			Utils.setCSSProperty(this.#percentage, 'background-color', this.color);
+			HTMLUtils.setCSSProperty(this.#percentage, 'background-color', this.color);
 		}
 	}
 
@@ -1779,6 +1809,7 @@ export namespace Elements {
 
 		constructor(value: Datex.CompatValue<number>){
 			super();
+			if (this.wasLoadedStatic) return;
 
 			// own style
 			this.style.position = "relative";
@@ -1883,7 +1914,7 @@ export namespace Elements {
 
 		constructor(color:Datex.CompatValue<bigint|number|`#${string}`>) {
 			super();
-
+			if (this.wasLoadedStatic) return;
 
 			this.container.style.position = "relative"
 			this.container.style.display = "flex"
@@ -2077,6 +2108,7 @@ export namespace Elements {
 
 		constructor(list?: Datex.CompatValue<Iterable<T>>, options?: O) {
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 			this.value = list;
 			this.checkEmpty();
 		}
@@ -2212,6 +2244,7 @@ export namespace Elements {
 
 		constructor(options?:O){
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 
 			this.displayed_option_name = text()
 			this.selected_option_index = this.options.selected_index instanceof Datex.Value ? this.options.selected_index : decimal(this.options.selected_index);
@@ -2298,6 +2331,7 @@ export namespace Elements {
 
 		constructor(list:Datex.CompatValue<Iterable<string|[string,any]>> = [], options?:DropdownMenu.Options){
 			super(options);
+			if (this.wasLoadedStatic) return;
 			this.init(list)
 		}
 
@@ -2305,28 +2339,28 @@ export namespace Elements {
 
 			this.options_container = document.createElement("div");
 			this.options_container.classList.add("dropdown-expand")
-			Utils.setCSSProperty(this.options_container, "--accent-color", this.options.accent_color ?? Theme.getColorReference('accent'))
+			HTMLUtils.setCSSProperty(this.options_container, "--accent-color", this.options.accent_color ?? Theme.getColorReference('accent'))
 			this.options_container.style.visibility = "hidden";
 
-			this.#outer_div = Utils.setCSS(document.createElement("div"), {position:'relative'});
-			this.#selected_div = Utils.setCSS(document.createElement("span"), {'text-align':'center', width:'100%', 'margin-left':'4px', 'white-space':'nowrap'})
+			this.#outer_div = HTMLUtils.setCSS(document.createElement("div"), {position:'relative'});
+			this.#selected_div = HTMLUtils.setCSS(document.createElement("span"), {'text-align':'center', width:'100%', 'margin-left':'4px', 'white-space':'nowrap'})
 
 			const title_container = document.createElement("div");
 			title_container.classList.add("dropdown");
 			title_container.style.pointerEvents = "all";
 			this.#title_el = document.createElement("span");
 			this.#title_el.style.whiteSpace = "nowrap";
-			Utils.setElementText(this.#title_el, this.options.title??' ');
+			HTMLUtils.setElementText(this.#title_el, this.options.title??' ');
 			title_container.append(this.#title_el);
 			if (this.options.title?.toString().length) title_container.append(":")
 			title_container.append(this.#selected_div);
-			this.#icon = Utils.setCSS(Utils.createHTMLElement(I`fa-caret-down`), {overflow: 'visible', 'margin-left': '5px', padding: '4px'});
+			this.#icon = HTMLUtils.setCSS(HTMLUtils.createHTMLElement(I`fa-caret-down`), {overflow: 'visible', 'margin-left': '5px', padding: '4px'});
 			title_container.append(this.#icon);
 
 			this.#outer_div.append(title_container);
 
-			Utils.setElementText(this.#selected_div, this.displayed_option_name)
-			Utils.setCSSProperty(this.#selected_div, "color", this.options.accent_color ?? Theme.getColorReference('accent'))
+			HTMLUtils.setElementText(this.#selected_div, this.displayed_option_name)
+			HTMLUtils.setCSSProperty(this.#selected_div, "color", this.options.accent_color ?? Theme.getColorReference('accent'))
 
 			this.append(this.#outer_div);
 			document.body.append(this.options_container);
@@ -2371,9 +2405,9 @@ export namespace Elements {
 			});
 
 			// get current title_el size to resize expanded entries
-			this.#title_size = transform([Utils.getElementSize(this.#title_el, 'x')], x=>`${x+35}px`);
+			this.#title_size = transform([HTMLUtils.getElementSize(this.#title_el, 'x')], x=>`${x+35}px`);
 			// get current expanded entries size to set title_container size
-			Utils.setCSSProperty(title_container, 'width', transform([Utils.getElementSize(this.options_container, 'x')], x=>`${x}px`))
+			HTMLUtils.setCSSProperty(title_container, 'width', transform([HTMLUtils.getElementSize(this.options_container, 'x')], x=>`${x}px`))
 
 		}
 
@@ -2381,8 +2415,8 @@ export namespace Elements {
 
 			let option_div = document.createElement("div");
 			option_div.classList.add("dropdown-item")
-			Utils.setCSSProperty(option_div, "padding-right", this.#title_size);
-			Utils.setElementText(option_div, entry);
+			HTMLUtils.setCSSProperty(option_div, "padding-right", this.#title_size);
+			HTMLUtils.setElementText(option_div, entry);
 
 			// temporarily display current entry name
 			option_div.addEventListener("mouseenter", ()=>{
@@ -2419,13 +2453,14 @@ export namespace Elements {
 
 		constructor(list:Datex.CompatValue<Iterable<string|[string,any]>> = [], options?:ValueSelect.Options){
 			super(options);
+			if (this.wasLoadedStatic) return;
 			this.init(list)
 		}
 
 		createLayout(){
 
 			this.options_container = document.createElement("div");
-			Utils.setCSSProperty(this.options_container, "--accent-color", this.options.accent_color ?? Theme.getColorReference('accent'))
+			HTMLUtils.setCSSProperty(this.options_container, "--accent-color", this.options.accent_color ?? Theme.getColorReference('accent'))
 			
 			this.append(this.options_container)
 		}
@@ -2442,7 +2477,7 @@ export namespace Elements {
 
 			const label = document.createElement("label"); 
 			label.setAttribute("for", id);
-			Utils.setElementText(label, entry);
+			HTMLUtils.setElementText(label, entry);
 
 			div.append(input)
 			div.append(label)
@@ -2519,10 +2554,10 @@ export namespace Elements {
 				const val = Datex.Value.collapseValue(e,true,true);
 				if (val instanceof HTMLElement) {
 					const div = document.createElement("div");
-					Utils.setElementHTML(container, <Datex.CompatValue<HTMLElement>>e)
+					HTMLUtils.setElementHTML(container, <Datex.CompatValue<HTMLElement>>e)
 					container.append(div);
 				}
-				else if (typeof val == "string") Utils.setElementText(container, <Datex.CompatValue<string>>e)
+				else if (typeof val == "string") HTMLUtils.setElementText(container, <Datex.CompatValue<string>>e)
 
 				if (this.options.column_widths&&this.options.column_widths[i]) container.style.width = this.options.column_widths[i];
 
@@ -2562,6 +2597,7 @@ export namespace Elements {
 
 		constructor(list:Datex.CompatValue<Iterable<T>>, options?:ValueList.Options, transform?:(value:T, index:number)=>(HTMLElement|string)[]){
 			super(undefined, options);
+			if (this.wasLoadedStatic) return;
 			this.#transform = transform;
 
 			this.style.display = "block";

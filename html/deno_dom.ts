@@ -1,6 +1,5 @@
 import { IS_HEADLESS } from "../utils/constants.ts";
 
-// if (!globalThis.CSSStyleSheet) globalThis.CSSStyleSheet = (await import("./deno_css_style_sheet.ts")).CSSStyleSheet;
 
 if (IS_HEADLESS) {
 
@@ -17,10 +16,47 @@ if (IS_HEADLESS) {
 
 	globalThis.document = window.document;
 	globalThis.HTMLElement = window.HTMLElement;
+	globalThis.Element = window.Element;
+	globalThis.DocumentFragment = window.DocumentFragment;
 	globalThis.customElements = window.customElements;
 	globalThis.Text = window.Text
 	globalThis.MutationObserver = window.MutationObserver;
+	globalThis.Comment = window.Comment;
+	globalThis.Document = window.Document;
+	globalThis.NodeFilter = window.NodeFilter;
+	globalThis.NodeIterator = window.NodeIterator;
+
+	globalThis.Node = window.Node;
+	globalThis.NodeList = window.NodeList;
+
+	globalThis.requestAnimationFrame = (callback: FrameRequestCallback)=>{
+		return setTimeout(callback, 20);
+	};
+
+	globalThis.ResizeObserver = class ResizeObserver {
+		constructor() {
+			console.warn("Deno DOM: ResizeObserver has no effect");
+		}
+		observe(){}
+		unobserve(){}
+		disconnect(){}
+	};
+	globalThis.IntersectionObserver = class IntersectionObserver {
+		constructor() {
+			console.warn("Deno DOM: IntersectionObserver has no effect");
+		}
+		observe(){}
+		unobserve(){}
+		disconnect(){}
+		takeRecords(){}
+	};
+
+	globalThis.location = new URL("file://"+Deno.cwd()+"/");
+
+	globalThis.CSSStyleDeclaration = window.CSSStyleDeclaration;
 
 	globalThis.CSSStyleSheet = (await import("./deno_css_style_sheet.ts")).CSSStyleSheet;
 
+	// globalThis.CSSStyleSheet = window.CSSStyleSheet;
+	// await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
 }

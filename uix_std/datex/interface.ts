@@ -1,11 +1,12 @@
 // deno-lint-ignore-file no-namespace
-import { Datex } from "unyt_core";
+import { $$, Datex, f } from "unyt_core";
 import { UIX, I, S, SVAL } from "uix";
 import MonacoHandler from "../code_editor/monaco.ts";
-import { DatexEditor, getExampleScript } from "./editor.ts";
+import { DatexEditor } from "./editor.ts";
 import { DatexConsoleView } from "./console_view.ts";
 import { logger } from "../../utils/global_values.ts";
 import { DXBViewer } from "./dxb_viewer.ts";
+import { getExampleScript } from "./example_script.ts";
 
 export namespace DatexInterface {
 	export interface Options extends UIX.Components.GridGroup.Options {
@@ -16,7 +17,9 @@ export namespace DatexInterface {
 	}
 }
 
-@endpoint("@dx_playground") class SharedScripts {
+export const sharedScriptEndpoint = $$(Datex.LOCAL_ENDPOINT);
+
+@endpoint(sharedScriptEndpoint) class SharedScripts {
     @property static get(id:string, lang?:string, content?:string):Datex.Return<Datex.CompatValue<string>> {}
     @property static getNewId():Datex.Return<string> {}
 }
@@ -76,11 +79,12 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
         
     }
     
-    override getCurrentRoute(): string[] {
+    override getInternalRoute(): string[] {
         return [this.content_id]
     }
 
     override onRoute(identifier: string) {
+        console.log("on route",identifier)
         this.setContent(identifier);
         return undefined;
     }

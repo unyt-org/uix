@@ -18,30 +18,30 @@ You can clone the UIX Base Project from https://github.com/unyt-org/uix-base-pro
 A UIX Project requires at least three files:
 
  *  An `app.dx` or `app.json` config file that contains information about the app.
-	All properties in this config file are optional, but we recommend to set at least an app name:
-	```datex
-	name: "My cool new app"
-	description: "This is my cool new app"
-	```
+    All properties in this config file are optional, but we recommend to set at least an app name:
+    ```datex
+    name: "My cool new app"
+    description: "This is my cool new app"
+    ```
  *	A `deno.json` file containing an import map and JSX settings:
- 	```json
-	{
-		"imports": {
-			"uix": "https://cdn.unyt.org/uix/uix.ts",
-			"uix/": "https://cdn.unyt.org/uix/",
-			"uix_std/": "https://cdn.unyt.org/uix/uix_std/",
-			"uix/jsx-runtime": "https://cdn.unyt.org/uix/jsx-runtime/jsx.ts",
-			
-			"unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
-			"unyt_core/": "https://cdn.unyt.org/unyt_core/",
-		},
-		
-		"compilerOptions": {
-			"jsx": "react-jsx",
-			"jsxImportSource": "uix",
-		}
-	}
-	```
+    ```json
+    {
+        "imports": {
+            "uix": "https://cdn.unyt.org/uix/uix.ts",
+            "uix/": "https://cdn.unyt.org/uix/",
+            "uix_std/": "https://cdn.unyt.org/uix/uix_std/",
+            "uix/jsx-runtime": "https://cdn.unyt.org/uix/jsx-runtime/jsx.ts",
+            
+            "unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
+            "unyt_core/": "https://cdn.unyt.org/unyt_core/",
+        },
+        
+        "compilerOptions": {
+            "jsx": "react-jsx",
+            "jsxImportSource": "uix",
+        }
+    }
+    ```
  *  An `entrypoint.ts` file, located in the `backend/` or `frontend/` directory.
 
 
@@ -72,22 +72,22 @@ To resolve imports correctly, you need to add an import map to your HTML page.
 
 ```html
 <html>
-	<head>
-		<script type="importmap">
-			{
-				"imports": {
-					"uix": "https://cdn.unyt.org/uix/uix.ts",
-					"uix/": "https://cdn.unyt.org/uix/",
-					"uix_std/": "https://cdn.unyt.org/uix/uix_std/",
-					"uix/jsx-runtime": "https://cdn.unyt.org/uix/jsx-runtime/jsx.ts",
-					
-					"unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
-					"unyt_core/": "https://cdn.unyt.org/unyt_core/",
-				}
-			}
-		</script>
-		<script type="module" src="./main.ts"></script>
-	</head>
+    <head>
+        <script type="importmap">
+            {
+                "imports": {
+                    "uix": "https://cdn.unyt.org/uix/uix.ts",
+                    "uix/": "https://cdn.unyt.org/uix/",
+                    "uix_std/": "https://cdn.unyt.org/uix/uix_std/",
+                    "uix/jsx-runtime": "https://cdn.unyt.org/uix/jsx-runtime/jsx.ts",
+                    
+                    "unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
+                    "unyt_core/": "https://cdn.unyt.org/unyt_core/",
+                }
+            }
+        </script>
+        <script type="module" src="./main.ts"></script>
+    </head>
 </html>
 ```
 

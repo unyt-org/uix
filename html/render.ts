@@ -187,7 +187,7 @@ if (!globalThis.Element.prototype.getOuterHTML) {
 
 
 
-export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:UIX.RenderMethod = UIX.RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string)[] = [], body_css_files:(URL|string)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en"){
+export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:UIX.RenderMethod = UIX.RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en"){
 	let files = '';
 	let importmap = ''
 
@@ -247,6 +247,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	let global_style = '';
 	// stylesheets
 	for (const stylesheet of global_css_files) {
+		if (!stylesheet) continue;
 		global_style += `<link rel="stylesheet" href="${provider.resolveImport(stylesheet, true)}">\n`;
 	}
 
@@ -268,6 +269,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	let body_style = ''
 	// stylesheets
 	for (const stylesheet of body_css_files) {
+		if (!stylesheet) continue;
 		body_style += `<link rel="stylesheet" href="${provider.resolveImport(stylesheet, true)}">\n`;
 	}
 

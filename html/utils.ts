@@ -54,7 +54,7 @@ export namespace HTMLUtils {
 	}
 
 	// set css property, updated if DatexValue
-	export function setCSSProperty<T extends HTMLElement>(element:T, property:string, value:Datex.CompatValue<any>):T{
+	export function setCSSProperty<T extends HTMLElement>(element:T, property:string, value:Datex.CompatValue<string|number|undefined>):T{
 
 		// convert camelCase to kebab-case
 		property = property?.replace(/[A-Z]/g, x => `-${x.toLowerCase()}`);
@@ -125,20 +125,23 @@ export namespace HTMLUtils {
 	};
 
 	// convert DatexCompatValue to css property
-	export function getCSSProperty(value:Datex.CompatValue<any>, use_css_variables = true):string {
+	export function getCSSProperty(value:Datex.CompatValue<number|string>, use_css_variables = true):string {
 		// UIX color value
 		if (use_css_variables && value instanceof Datex.PointerProperty && value.pointer.val == Theme.colors) {
 			value = `var(--${value.key})`; // autmatically updated css variable
 		}
 
-		if (use_css_variables) return value?.toString() ?? '';
+		// number value to px
+		if (typeof value == "number") return value.toString() + "px";
+
+		else if (use_css_variables) return value?.toString() ?? '';
 		// try to collapse value
-		else if (value) {
+		else if (value!=undefined) {
 			// css variable
 			if (value.toString().startsWith('var(--')) return getComputedStyle(document.documentElement).getPropertyValue(value?.toString().replace('var(','').replace(')','')).trim();
 			// css color name
 			else if (!value.toString().startsWith("#")) return color_names[value.toString().toLowerCase()] ?? ''
-			// normal hex value
+			// normal string value
 			else return value.toString()
 		}
 		else return '';
@@ -192,26 +195,28 @@ export namespace HTMLUtils {
 		else return val?.toString?.() ?? ""
 	}
 
+	function setAttribute(element: HTMLElement, property:string, val:unknown, root_path?:string|URL) {
+		if (val === false) element.removeAttribute(property);
+		else if (val === true || val === undefined) element.setAttribute(property,"");
+		else if (typeof val == "function") {
+			if (property.startsWith("on")) {
+				element.addEventListener(<keyof HTMLElementEventMap>property.replace("on","").toLowerCase(), <any>val);
+			}
+			else throw new Error("Cannot set event listener for element attribute '"+property+"'")
+		}
+		else element.setAttribute(property, formatAttributeValue(val,root_path));
+	}
+
 	export function setElementAttribute<T extends HTMLElement>(element:T, property:string, value:Datex.CompatValue<any>|Function, root_path?:string|URL) {
 		if (!element) return;
-		// none
-		if (value == undefined) element.setAttribute(property, "");
-
+	
 		// DatexValue
 		if (value instanceof Datex.Value) {
-			element.setAttribute(property, formatAttributeValue(value.val,root_path));
-			value.observe( v => element.setAttribute(property, formatAttributeValue(v, root_path)));
+			setAttribute(element, property, value.val, root_path)
+			value.observe(v => setAttribute(element, property, v, root_path));
 		}
 		// default
-		else {
-			if (typeof value == "function") {
-				if (property.startsWith("on")) {
-					element.addEventListener(property.replace("on",""), value);
-				}
-				else throw new Error("Cannot set event listener for element attribute '"+property+"'")
-			}
-			else element.setAttribute(property, formatAttributeValue(value, root_path));
-		}
+		else setAttribute(element, property, value, root_path)
 	}
 
 	// remember which values are currently synced with element content - for unobserve

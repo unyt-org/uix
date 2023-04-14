@@ -11,9 +11,9 @@ Since UIX components are normal DATEX JS template classes, additional DATEX-expo
 @UIX.Component class CustomComponent extends UIX.Components.Base {
 
     // declare custom restorable properties
-    @property custom1 = 'default value'
-    @property custom1 = new Map<number,Set<number>>()
-    @property textView: UIX.Components.TextView
+    @property someText = 'default value'
+    @property someMap = new Map<number,Set<number>>()
+    @property textView!: UIX.Components.TextView
 
 	onConstruct() {
 	    this.textView = new UIX.Components.TextView({text:'Hi'}); // the this.textView property is restored when the component recreated
@@ -35,12 +35,12 @@ const counter = eternal ?? $$(0);
 counter.val ++; // counter gets incremented every time the page is reloaded
 ```
 
-## Page state
+The saved UIX page state can also be created/restored by using `eternal` DATEX Values (use `lazyEternal` to make sure the type definitions are loaded):
 
-The saved UIX page state can be created/restored by using `eternal` DATEX Values:
-```typescript
-export default await lazyEternal ?? $$(new UIX.Components.TextView({text:"Hi"}))
-```
 ```typescript
 export default await lazyEternal ?? $$(<div>Content</div>)
+```
+
+```typescript
+export default await lazyEternal ?? $$(new UIX.Components.TextView({text:"Hi"}))
 ```

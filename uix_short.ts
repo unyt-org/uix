@@ -4,11 +4,13 @@ import { Res, Theme, HTMLUtils } from "./uix_all.ts";
 export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
 
 /** make decorators global */
-import {content as _content, id as _id, use as _use, NoResources as _NoResources, Component as _Component, standalone as _standalone} from "./uix_all.ts";
+import {content as _content, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, Component as _Component, standalone as _standalone} from "./uix_all.ts";
 
 declare global {
 	const content: typeof _content;
 	const id: typeof _id;
+	const layout: typeof _layout;
+	const child: typeof _child;
 	const use: typeof _use;
 	const Component: typeof _Component;
 	const NoResources: typeof _NoResources;
@@ -21,6 +23,10 @@ globalThis.content = _content;
 globalThis.id = _id;
 // @ts-ignore global
 globalThis.use = _use;
+// @ts-ignore global
+globalThis.child = _child;
+// @ts-ignore global
+globalThis.layout = _layout;
 // @ts-ignore global
 globalThis.Component = _Component;
 // @ts-ignore global

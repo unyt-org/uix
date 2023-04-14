@@ -137,6 +137,8 @@ function _NoResources(component_class:Types.ComponentSubClass, name:context_name
 
 export const ID_PROPS: unique symbol = Symbol("ID_PROPS");
 export const CONTENT_PROPS: unique symbol = Symbol("CONTENT_PROPS");
+export const CHILD_PROPS: unique symbol = Symbol("CHILD_PROPS");
+export const LAYOUT_PROPS: unique symbol = Symbol("LAYOUT_PROPS");
 export const IMPORT_PROPS: unique symbol = Symbol("IMPORT_PROPS");
 export const STANDALONE_PROPS: unique symbol = Symbol("STANDALONE_PROPS");
 
@@ -156,7 +158,7 @@ function _id(element_class:typeof Elements.Base, name:context_name, kind:context
 	setMetadata(ID_PROPS, params[0]??name);
 }
 
-/** @content to automatically assign a element id to a component property and add element to component content */
+/** @content to automatically assign a element id to a component property and add element to component content (#content) */
 export function content(id?:string):any
 export function content(target: any, name?: string, method?:any):any
 export function content(...args:any[]) {
@@ -172,6 +174,37 @@ function _content(element_class:typeof Elements.Base, name:context_name, kind:co
 	setMetadata(CONTENT_PROPS, params[0]??name);
 }
 
+/** @layout to automatically assign a element id to a component property and add element to component content container layout (#layout) */
+export function layout(id?:string):any
+export function layout(target: any, name?: string, method?:any):any
+export function layout(...args:any[]) {
+	return handleDecoratorArgs(args, _layout);
+}
+
+function _layout(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
+	if (kind != "field") {
+		logger.error("@UIX.layout has to be used on a field");
+		return;
+	}
+
+	setMetadata(LAYOUT_PROPS, params[0]??name);
+}
+
+/** @child to automatically assign a element id to a component property and add element as a component child */
+export function child(id?:string):any
+export function child(target: any, name?: string, method?:any):any
+export function child(...args:any[]) {
+	return handleDecoratorArgs(args, _child);
+}
+
+function _child(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
+	if (kind != "field") {
+		logger.error("@UIX.child has to be used on a field");
+		return;
+	}
+
+	setMetadata(CHILD_PROPS, params[0]??name);
+}
 
 
 /** @UIX.use to bind static properties */

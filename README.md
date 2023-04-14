@@ -2,7 +2,7 @@
 
 ## What is UIX?
 
-With UIX, you can create reactive, responsive web apps with restorable and shared state. UIX supports single- and multi page architectures and uses modern web app features.
+With UIX, you can create reactive, responsive web apps with restorable and shared state. UIX focuses on single page applications and supports modern web app features.
 
 There are four main ways to design UIX components and create UIX applications:
  * using the **TypeScript/JavaScript UIX Library** (focus of the documentation)
@@ -37,6 +37,7 @@ However, the saved state of a UIX Component should not contain web-specfic conte
 3. [Imports](./docs/3_Imports.md)
 4. [Components](./docs/4_Components.md)
 5. [States](./docs/5_States.md)
+6. [JSX](./docs/6_JSX.md)
 
 
 ## How to Develop

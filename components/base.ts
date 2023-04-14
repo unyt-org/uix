@@ -196,7 +196,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         const layout_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[LAYOUT_PROPS]?.public;
         // only add children when constructing component, otherwise they are added twice
         const child_props:Record<string,string> = constructed ? Object.getPrototypeOf(this)[METADATA]?.[CHILD_PROPS]?.public : undefined;
-
 		bindContentProperties(this, id_props, content_props, layout_props, child_props);
     }
 

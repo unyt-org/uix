@@ -88,7 +88,9 @@ declare global {
 		name?: Datex.CompatValue<string>,
 		style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number>>>,
 
-		[key: string]: Datex.CompatValue<string|number|Function|Record<string,Datex.CompatValue<string|number>>|undefined>
+		children?: any,
+
+		[key: string]: any// HTMLElement|HTMLElement[]|Datex.CompatValue<string|number|Function|Record<string,Datex.CompatValue<string|number>>|undefined>
 	  }
   
 	  // Common attributes of the UIX components only

@@ -3,7 +3,7 @@ import { constructor, Datex, property, props, replicator, template, boolean, get
 import { Elements } from "../elements/main.ts"
 import { Theme } from "../base/theme.ts"
 import { Types } from "../utils/global_types.ts"
-import { global_states, logger, unsaved_components } from "../utils/global_values.ts"
+import { logger, unsaved_components } from "../utils/global_values.ts"
 import { addStyleSheet as addStyleSheetLink, PlaceholderCSSStyleDeclaration } from "../utils/css_style_compat.ts"
 import { assignDefaultPrototype } from "../utils/utils.ts"
 import { HTMLUtils } from "../html/utils.ts"
@@ -17,8 +17,7 @@ import { DEFAULT_BORDER_SIZE, IS_HEADLESS } from "../utils/constants.ts"
 import { Clipboard } from "../base/clipboard.ts"
 import type { Group } from "./group.ts"
 import { Components } from "./main.ts"
-import { CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
-import {Routing} from "../base/routing.ts";
+import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import { bindObserver } from "../html/datex_binding.ts";
 import { Path } from "unyt_node/path.ts";
 import { RouteManager } from "../html/rendering.ts";
@@ -190,13 +189,15 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         }
     }
 
-    private handleIdProps(){
+    private handleIdProps(constructed=false){
 
         const id_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[ID_PROPS]?.public;
         const content_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[CONTENT_PROPS]?.public;
+        const layout_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[LAYOUT_PROPS]?.public;
+        // only add children when constructing component, otherwise they are added twice
+        const child_props:Record<string,string> = constructed ? Object.getPrototypeOf(this)[METADATA]?.[CHILD_PROPS]?.public : undefined;
 
-		bindContentProperties(this, id_props, content_props);
-    
+		bindContentProperties(this, id_props, content_props, layout_props, child_props);
     }
 
 
@@ -389,7 +390,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         this.onCreateLayout?.(); // custom layout extensions
 
         // @UIX.id
-        this.handleIdProps();
+        this.handleIdProps(constructed);
 
         // this.applyStyle(); // custom style
         if (this.options.style) HTMLUtils.setCSS(this, this.options.style)
@@ -843,18 +844,26 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
     // add instance properties that are loaded in standalone mode
-    private static standaloneProperties:Record<string,{type:'id'|'content',id:string}> = {};
+    private static standaloneProperties:Record<string,{type:'id'|'content'|'layout'|'child',id:string}> = {};
     protected static addStandaloneProperty(name: string) {
         // make sure this class has a separate standaloneProperties object
         if (this.standaloneProperties == Base.standaloneProperties) this.standaloneProperties = {};
 
         if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'id', id};
         }
         else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'content', id};
+        }
+        else if (name in (this.prototype[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'layout', id};
+        }
+        else if (name in (this.prototype[METADATA]?.[CHILD_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[CHILD_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'child', id};
         }
 
         else throw new Error("@UIX.standalone instance properties are currently only supported in combination with @UIX.id or @UIX.content")
@@ -896,6 +905,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         // bind @id + @content properties
         const idProps:Record<string,string> = {};
         const contentProps:Record<string,string> = {};
+        const layoutProps:Record<string,string> = {};
+        const childProps:Record<string,string> = {};
 
         for (const [name, data] of standaloneProperties) {
             if (data.type == "id") {
@@ -906,10 +917,18 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                 js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
                 contentProps[name] = data.id;
             }
+            else if (data.type == "layout") {
+                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
+                layoutProps[name] = data.id;
+            }
+            else if (data.type == "child") {
+                js_code += `self["${name}"] = self.querySelector("#${data.id}");\n`;
+                childProps[name] = data.id;
+            }
         }
         if (standaloneProperties.length) {
             js_code += `import { bindContentProperties } from "uix/snippets/bound_content_properties.ts";\n`
-            js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, true);\n`
+            js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, ${JSON.stringify(layoutProps)}, ${JSON.stringify(childProps)}, true);\n`
         }
 
 

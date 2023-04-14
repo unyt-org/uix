@@ -1,5 +1,5 @@
 import { Path } from "unyt_node/path.ts";
-import { $$ } from "unyt_core";
+import { $$, Datex } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 
@@ -83,12 +83,12 @@ declare global {
   
 	  // Common attributes of the standard HTML elements and JSX components
 	  interface IntrinsicAttributes {
-		class?: string
-		id?: string,
-		name?: string,
-		style?: string|Record<string,string>,
+		class?: Datex.CompatValue<string>,
+		id?: Datex.CompatValue<string>,
+		name?: Datex.CompatValue<string>,
+		style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number>>>,
 
-		[key: string]: any
+		[key: string]: Datex.CompatValue<string|number|Function|Record<string,Datex.CompatValue<string|number>>|undefined>
 	  }
   
 	  // Common attributes of the UIX components only

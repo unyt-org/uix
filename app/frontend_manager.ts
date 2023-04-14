@@ -115,6 +115,11 @@ export class FrontendManager extends HTMLProvider {
 	}
 
 
+	getEntrypointCSS(){
+		const entrypoint_css_path = getExistingFileExclusive(this.scope, "entrypoint.css");
+		return entrypoint_css_path ? this.#web_path.getChildPath(new Path(entrypoint_css_path).name) : undefined;
+	}
+
 	#BLANK_PAGE_URL = 'uix/base/blank.ts';
 
 	server!: Server
@@ -500,6 +505,8 @@ catch {
 		const lang = UIX.ContextBuilder.getRequestLanguage(requestEvent.request);
 		try {
 			this.updateCheckEntrypoint();
+			const entrypoint_css = this.getEntrypointCSS();
+
 			// TODO:
 			// Datex.Runtime.ENV.LANG = lang;
 			// await Datex.Runtime.ENV.$.LANG.setVal(lang);
@@ -515,7 +522,7 @@ catch {
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
-					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css'], ['uix/style/body.css'], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
+					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css', entrypoint_css], ['uix/style/body.css', entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
 					undefined, undefined,
 					{
 						'content-language': lang

@@ -400,7 +400,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         super()
 
         // @ts-ignore [INIT_PROPS]
-        if (options[INIT_PROPS]) options[INIT_PROPS](this);
+        if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
         // pre-init options before other DATEX state is initialized 
         // (this should not happen when reconstructing, because options are undefined or have [INIT_PROPS])
         else if (options) this.initOptions(options);

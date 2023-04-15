@@ -44,7 +44,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 
 	// @UIX.content props
 	if (content_props) {
-		const container = ()=>element.shadowRoot?.querySelector("#content")
+		const container = ()=>element.shadowRoot?.querySelector("#content")??element
 		for (const [prop,id] of Object.entries(content_props)) {
 			if (!allow_existing && element[prop] instanceof HTMLElement && element.shadowRoot?.contains(element[prop])) throw new Error("property '" + prop +"' cannot be used as an @content property - already part of the component")
 			bindContent(element, container, prop, id)
@@ -53,7 +53,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 
 	// @UIX.layout props
 	if (layout_props) {
-		const container = ()=>element.shadowRoot?.querySelector("#content_container")??element.shadowRoot
+		const container = ()=>element.shadowRoot?.querySelector("#content_container")??element.shadowRoot??element
 		for (const [prop,id] of Object.entries(layout_props)) bindContent(element, container, prop, id)
 	}
 

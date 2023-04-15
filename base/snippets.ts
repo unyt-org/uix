@@ -1,5 +1,5 @@
 // Snippets (generate predefined HTML)
-
+// deprecated - TODO: remove
 import { Datex } from "unyt_core";
 import { I } from "../uix_short.ts";
 import { Res } from "./res.ts";

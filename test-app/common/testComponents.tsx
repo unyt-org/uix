@@ -1,4 +1,4 @@
-import { TextInput } from "../uix/components/TextInput.tsx";
+import { ValueInput } from "../uix/components/ValueInput.tsx";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -11,8 +11,10 @@ import { TextInput } from "../uix/components/TextInput.tsx";
  * (e.g. /textInput/frontend)
  */
 
-const div = <div></div> as HTMLButtonElement;
 
 export const testComponents = {
-	textInput: <TextInput/>
+	textInput: <div>
+		<ValueInput placeholder="... 1"/>
+		<ValueInput placeholder="... 2"/>
+	</div>
 }

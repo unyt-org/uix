@@ -13,7 +13,7 @@ import { Actions } from "./actions.ts";
 import { Components } from "../components/main.ts";
 import { Debug } from "./debug.ts";
 import { UnytPen } from "./unyt_pen.ts";
-import { addStyleSheet } from "../uix_all.ts";
+import { addStyleSheetLink } from "../uix_all.ts";
 
 // enable DATEX CLI
 if (globalThis.Deno) Datex.enableCLI();
@@ -102,8 +102,8 @@ if (!IS_HEADLESS) {
 	const body_style_url = new URL("../style/body.css", import.meta.url).toString();
 	const document_style_url = new URL("../style/document.css", import.meta.url).toString();
 
-	if (!IS_HEADLESS && !document.head.querySelector("link[href='"+document_style_url+"']")) addStyleSheet(document.head, document_style_url);
-	if (!IS_HEADLESS && document.body.shadowRoot && !document.body.shadowRoot.querySelector("link[href='"+body_style_url+"']")) addStyleSheet(document.body.shadowRoot, body_style_url);
+	if (!IS_HEADLESS && !document.head.querySelector("link[href='"+document_style_url+"']")) addStyleSheetLink(document.head, document_style_url);
+	if (!IS_HEADLESS && document.body.shadowRoot && !document.body.shadowRoot.querySelector("link[href='"+body_style_url+"']")) addStyleSheetLink(document.body.shadowRoot, body_style_url);
 }
 
 @scope("uix") class UIXDatexScope {

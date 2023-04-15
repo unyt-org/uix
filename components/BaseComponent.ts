@@ -1,8 +1,6 @@
 // deno-lint-ignore-file no-async-promise-executor
 import { constructor, Datex, property, replicator, template, get} from "unyt_core"
-import { Theme } from "../base/theme.ts"
 import { logger } from "../utils/global_values.ts"
-import { addStyleSheet as addStyleSheetLink, PlaceholderCSSStyleDeclaration } from "../utils/css_style_compat.ts"
 import { assignDefaultPrototype } from "../utils/utils.ts"
 import { HTMLUtils } from "../html/utils.ts"
 import { Actions } from "../base/actions.ts"
@@ -17,6 +15,11 @@ import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, update
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open_graph.ts";
 import { App } from "../app/app.ts";
 import { bindContentProperties } from "../snippets/bound_content_properties.ts";
+import { INIT_PROPS } from "unyt_core/runtime/constants.ts"
+import { addGlobalStyleSheetLink } from "../utils/css_style_compat.ts";
+
+
+export type standaloneProperties = Record<string,{type:'id'|'content'|'layout'|'child',id:string}>;
 
 // deno-lint-ignore no-namespace
 export namespace BaseComponent {
@@ -31,134 +34,22 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     /************************************ STATIC ***************************************/
 
+    protected static stylesheets:string[] =  []
+
     static DEFAULT_OPTIONS:BaseComponent.Options = {};
     static CLONE_OPTION_KEYS: Set<string> // list of all default option keys that need to be cloned when options are initialized (non-primitive options)
 
     // guessing module stylesheets, get added to normal stylesheets array after successful fetch
-    private static _module_stylesheets:string[] = []
     private static _dx_files:string[] = []
 
-    private static stylesheets:string[] =  [
-        // global base style
-        new URL('../style/elements.css', import.meta.url).toString(),
-        new URL('../style/base.css', import.meta.url).toString(),
-        new URL('../style/fontawesome.css', import.meta.url).toString(),
 
-        // components style
-        new URL('./base.css', import.meta.url).toString()
-    ]
-
-    private static style_sheets_by_url = new Map<string, CSSStyleSheet|false>()
-    private static style_sheets_loaders = new Map<string, Promise<CSSStyleSheet|false>>()
-
-    private static _module:string
-    private static _use_resources: boolean;
+    protected static _module:string
+    protected static _use_resources: boolean;
 
     declare static [METADATA]:any
     declare static [Datex.DX_TYPE]?: Datex.Type
 
-    /**
-     * Get a stylesheet from an url or from cache
-     * @param url URL or url string to css file
-     * @returns the created stylesheet
-     */
-    private static getURLStyleSheet(url:string|URL, allow_fail = false):Promise<CSSStyleSheet|false>|CSSStyleSheet|false {
-        const url_string = url.toString();
-
-        // already loaded
-        if (BaseComponent.style_sheets_by_url.has(url_string)) {
-            return BaseComponent.style_sheets_by_url.get(url_string)!;
-        } 
-        // there's already an active loader - await
-        else if (BaseComponent.style_sheets_loaders.has(url_string)) {
-            return BaseComponent.style_sheets_loaders.get(url_string)!;
-        }
-        // create new (fetch stylesheet)
-        else {
-            const loader = new Promise<CSSStyleSheet|false>(async resolve=>{
-                const stylesheet = await BaseComponent.loadURLStyleSheet(url_string, allow_fail);
-                resolve(stylesheet);
-                BaseComponent.style_sheets_loaders.delete(url_string); // remove loader
-            })
-            BaseComponent.style_sheets_loaders.set(url_string, loader);
-            return loader;
-        }
-    }
-
-    /**
-     * Load a stylesheet URL to a CSSStyleSheet and save in Component class cache
-     * @param url css file url
-     * @returns the constructed stylesheet
-     */
-     private static async loadURLStyleSheet(url:string, allow_fail = false){
-
-        let res:Response;
-        try {
-            res = await fetch(url);
-        } 
-        catch (e) {
-            if (!allow_fail) logger.error("could not load css stylesheet: " + url);
-            return false;
-        }
-
-        // response was okay
-        if (res.ok) {
-            const stylesheet = <CSSStyleSheet> new window.CSSStyleSheet();
-            const style = await res.text();
-            await stylesheet.replace(style);
     
-            BaseComponent.style_sheets_by_url.set(url, stylesheet) // save
-            logger.debug("css stylesheet loaded: " + url)
-
-            return stylesheet;
-        }
-
-        else {
-            BaseComponent.style_sheets_by_url.set(url, false) // save invalid stylesheet
-            if (!allow_fail) {
-                logger.error("could not load css stylesheet: " + url);
-            }
-            return false;
-        }
-
-    }
-
-    /**
-     * Preload the required stylesheets for this component (fetch URLs and save in cache as CSSStyleSheets)
-     * @returns all CSSStyleSheets
-     */
-    public static preloadStylesheets():Promise<(CSSStyleSheet|false)[]> {
-        // clone this.stylesheets for current class if not already cloned
-        this.stylesheets = [...this.stylesheets];
-        // find matching .css and .dx files by name
-        this.findModuleBoundStylesheets(); 
-        
-
-        const loaders:Promise<CSSStyleSheet|false>[] = [];
-
-        for (const url of this.stylesheets) {
-            // add to loaders if not already loading/loaded
-            if (!BaseComponent.style_sheets_by_url.has(url) && !BaseComponent.style_sheets_loaders.has(url)) {
-                loaders.push(<Promise<CSSStyleSheet|false>>BaseComponent.getURLStyleSheet(url, this._module_stylesheets.includes(url)))
-            }
-        }
-
-        return Promise.all(loaders)
-    }
-
-    /**
-     * find the x.css file matching the x.ts module file of this component (if specified)
-     */
-    private static findModuleBoundStylesheets(){
-        if (this._use_resources) {
-            const css_url = this._module.replace(/\.m?(ts|js)x?$/, '.css');
-            this._module_stylesheets = [...this._module_stylesheets]; // create new module stylesheets are for this class
-            this._module_stylesheets.push(css_url); // remember as module stylesheets
-            const url_string = new URL(css_url).toString();
-            if (!this.stylesheets.includes(url_string)) this.stylesheets.push(url_string) // add to normal stylesheets
-        }
-    }
-
     /**
      * find the x.dx file matching the x.ts module file of this component (if specified)
      */
@@ -291,7 +182,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
 
     private static standalone_loaded = false;
-    private static loadStandaloneMethods() {
+    private static loadStandaloneProps() {
         if (this.standalone_loaded) return;
         this.standalone_loaded = true;
         const props:Record<string, string> = this.prototype[METADATA]?.[STANDALONE_PROPS]?.public;
@@ -320,7 +211,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     }
 
     // add instance properties that are loaded in standalone mode
-    private static standaloneProperties:Record<string,{type:'id'|'content'|'layout'|'child',id:string}> = {};
+    private static standaloneProperties:standaloneProperties = {};
     protected static addStandaloneProperty(name: string) {
         // make sure this class has a separate standaloneProperties object
         if (this.standaloneProperties == BaseComponent.standaloneProperties) this.standaloneProperties = {};
@@ -372,6 +263,117 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         await this.loadModuleDatexImports();
     }
 
+
+    private static module_stylesheets:string[] = []
+    private static style_sheets_by_url = new Map<string, CSSStyleSheet|false>()
+    private static style_sheets_loaders = new Map<string, Promise<CSSStyleSheet|false>>()
+
+    /**
+     * Get a stylesheet from an url or from cache
+     * @param url URL or url string to css file
+     * @returns the created stylesheet
+     */
+    private static getURLStyleSheet(url:string|URL, allow_fail = false):Promise<CSSStyleSheet|false>|CSSStyleSheet|false {
+        const url_string = url.toString();
+
+        // already loaded
+        if (this.style_sheets_by_url.has(url_string)) {
+            return this.style_sheets_by_url.get(url_string)!;
+        } 
+        // there's already an active loader - await
+        else if (this.style_sheets_loaders.has(url_string)) {
+            return this.style_sheets_loaders.get(url_string)!;
+        }
+        // create new (fetch stylesheet)
+        else {
+            const loader = new Promise<CSSStyleSheet|false>(async resolve=>{
+                const stylesheet = await this.loadURLStyleSheet(url_string, allow_fail);
+                resolve(stylesheet);
+                this.style_sheets_loaders.delete(url_string); // remove loader
+            })
+            this.style_sheets_loaders.set(url_string, loader);
+            return loader;
+        }
+    }
+
+    /**
+     * Load a stylesheet URL to a CSSStyleSheet and save in Component class cache
+     * @param url css file url
+     * @returns the constructed stylesheet
+     */
+     private static async loadURLStyleSheet(url:string, allow_fail = false){
+
+        let res:Response;
+        try {
+            res = await fetch(url);
+        } 
+        catch (e) {
+            if (!allow_fail) logger.error("could not load css stylesheet: " + url);
+            return false;
+        }
+
+        // response was okay
+        if (res.ok) {
+            const stylesheet = <CSSStyleSheet> new window.CSSStyleSheet();
+            const style = await res.text();
+            await stylesheet.replace(style);
+    
+            this.style_sheets_by_url.set(url, stylesheet) // save
+            logger.debug("css stylesheet loaded: " + url)
+
+            return stylesheet;
+        }
+
+        else {
+            this.style_sheets_by_url.set(url, false) // save invalid stylesheet
+            if (!allow_fail) {
+                logger.error("could not load css stylesheet: " + url);
+            }
+            return false;
+        }
+
+    }
+
+    /**
+     * Preload the required stylesheets for this component (fetch URLs and save in cache as CSSStyleSheets)
+     * @returns all CSSStyleSheets
+     */
+    public static preloadStylesheets():Promise<(CSSStyleSheet|false)[]> {
+        // clone this.stylesheets for current class if not already cloned
+        this.stylesheets = [...this.stylesheets];
+        // find matching .css and .dx files by name
+        this.findModuleBoundStylesheets(); 
+        
+
+        const loaders:Promise<CSSStyleSheet|false>[] = [];
+
+        for (const url of this.stylesheets) {
+            // add to loaders if not already loading/loaded
+            if (!this.style_sheets_by_url.has(url) && !this.style_sheets_loaders.has(url)) {
+                loaders.push(<Promise<CSSStyleSheet|false>>this.getURLStyleSheet(url, this.module_stylesheets.includes(url)))
+            }
+        }
+
+        return Promise.all(loaders)
+    }
+
+    /**
+     * find the x.css file matching the x.ts module file of this component (if specified)
+     */
+    private static findModuleBoundStylesheets(){
+        if (this._use_resources) {
+            const css_url = this._module.replace(/\.m?(ts|js)x?$/, '.css');
+            this.module_stylesheets = [...this.module_stylesheets]; // create new module stylesheets are for this class
+            this.module_stylesheets.push(css_url); // remember as module stylesheets
+            const url_string = new URL(css_url).toString();
+            if (!this.stylesheets.includes(url_string)) this.stylesheets.push(url_string) // add to normal stylesheets
+        }
+    }
+
+
+
+
+
     /************************************ END STATIC ***************************************/
 
     // options
@@ -391,19 +393,18 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     protected openGraphImageGenerator?: OpenGraphPreviewImageGenerator; // set the custom preview image generator for open graph cards
 
-    get shadow_root() {
-        return this.shadowRoot ?? this.attachShadow({mode: 'open'})
-    }
-
-    content!:HTMLElement; // all content goes here
-    get html_element() {return this.content} // legacy backwards compatibility TODO remove at some point
-
     protected is_skeleton = false // true if component not yet fully initialized, still displayed as skeleton and not associated with DATEX object
 
     constructor(options?:Datex.DatexObjectInit<O>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
-        
+
+        // @ts-ignore [INIT_PROPS]
+        if (options[INIT_PROPS]) options[INIT_PROPS](this);
+        // pre-init options before other DATEX state is initialized 
+        // (this should not happen when reconstructing, because options are undefined or have [INIT_PROPS])
+        else if (options) this.initOptions(options);
+
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
             if (!(<typeof BaseComponent>this.constructor)[Datex.DX_TYPE]) {
@@ -419,8 +420,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
                 // logger.debug("creating " + this.constructor[Datex.DX_TYPE] + " component from DOM");
                 return (<Datex.Type>(<typeof BaseComponent>this.constructor)[Datex.DX_TYPE]).construct(this, [], true, true);
             }
-
         }
+
     }
 
     // apply css properties to this element
@@ -491,11 +492,30 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     // default constructor
     @constructor async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
 
+        // this.initOptions(options);
+        
+        await this.init(true);
+        await this.onConstructed?.();
+        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
+    }
+
+    // called when created from saved state
+    @replicator async replicate() {
+        await this.init();
+        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
+    }
+
+    private initOptions(options?: Datex.DatexObjectInit<O>){
+        if (this.options) {
+            console.log("alread option");
+            return;
+        }
         const default_options = (<any>this.constructor).DEFAULT_OPTIONS;
         const clone_option_keys = (<any>this.constructor).CLONE_OPTION_KEYS;
 
         // get options from html attributes
-        if (!options) options = <O>{};            
+        if (!options) options = <O>{}; 
+        options = <Datex.DatexObjectInit<O>> $$(options);           
         for (let i=0;i < this.attributes.length; i++) {
             const name = this.attributes[i].name;
             // don't override provided options object
@@ -513,39 +533,20 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
         // assign default options as prototype
         this.options = assignDefaultPrototype(default_options, options, clone_option_keys);
-
-        await this.init(true);
-        await this.onConstructed?.();
-        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
-    }
-
-    // called when created from saved state
-    @replicator async replicate() {
-        await this.init();
-        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
 
 
     // init for base element (and every element)
-    private async init(constructed = false) {
+    protected async init(constructed = false) {
+
+        // Component style sheets
+        const loaders = []
+        for (const url of (<typeof BaseComponent>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
+     
 
         Datex.Pointer.onPointerForValueCreated(this, ()=>{
             bindObserver(this)
         })
-
-        // create dom (shadow_root)
-        // this.shadow_root = this.shadowRoot ?? this.attachShadow({mode: 'open'});
-        
-        // Component style sheets
-        const loaders = []
-        for (const url of (<typeof BaseComponent>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
-
-        this.addStyleSheet(Theme.stylesheet);
-        
-        this.content = document.createElement('slot');
-        this.content.classList.add("content");
-        this.content.id = "content";
-        this.shadow_root.append(this.content);
 
         this.onCreateLayout?.(); // custom layout extensions
 
@@ -553,7 +554,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         this.handleIdProps(constructed);
    
         await (<typeof BaseComponent>this.constructor).loadModuleDatexImports();
-        (<typeof BaseComponent>this.constructor).loadStandaloneMethods();
+        // @standlone props only relevant for backend
+        if (IS_HEADLESS) (<typeof BaseComponent>this.constructor).loadStandaloneProps();
 
         if (constructed) await this.onConstruct?.();
         await this.onInit?.() // element was constructed, not fully loaded / added to DOM!
@@ -578,110 +580,13 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         return await Datex.Runtime.deepCloneValue(this);
     }
 
-    public appendContent(...elements:(HTMLElement|string)[]) {
-        this.content.append(...elements)
-    }
-
-    // list of all adopted stylesheets for this element / shadow DOM
-    #style_sheets:CSSStyleSheet[] = [];
-    #pseudo_style = PlaceholderCSSStyleDeclaration.create();
-    #style_sheets_urls:string[] = [];
-
-    // get style_sheets_urls () {return this.#style_sheets_urls}
-    // get style_sheets () {return this.#style_sheets}
-
-    // return rendered HTML for stylesheets used in this component
-    public getRenderedStyle() {
-        let html = "";
-
-        // for (let sheet of this.constructor._module_stylesheets) {
-        //     if (sheet.toString().startsWith("file://") && rel_path) {
-        //         // relative web path (@...)
-        //         sheet = new Path(sheet).getAsRelativeFrom(rel_path).replace(/^\.\//, "/@");
-        //     }
-        //     html += `<link rel=stylesheet href="${sheet}">`;
-        // }
-
-        // links
-		for (let url of this.#style_sheets_urls) {
-            if (url.toString().startsWith("file://")) {
-                // relative web path (@...)
-                url = App.filePathToWebPath(url);
-            }
-            html += `<link rel=stylesheet href="${url}">`;
-        }
-
-        // noscript fallback style
-        html += `<noscript><link rel="stylesheet" href="https://dev.cdn.unyt.org/uix/style/noscript.css"></noscript>`
-        // stylesheets
-        // for (const sheet of this.#style_sheets) {
-        //     // workaround for server side stylesheet
-        //     if (sheet._cached_css) html += `<style>${sheet._cached_css}</style>`
-        //     // normal impl
-        //     else {
-        //         html += `<style>`
-        //         for (const rule of sheet.cssRules) {
-        //             html += rule.cssText;
-        //         }
-        //         html += `</style>`
-        //     }
-        //     break; // only add first style (:host:host style)
-        // }
-
-        if (this.#adopted_root_style) {
-            html += `<style>${this.#adopted_root_style.cssText}</style>`
-        }
-        else if (this.#pseudo_style) {
-            html += `<style>:host:host{${this.#pseudo_style.cssText}}</style>`
-        }
-
-        // add theme classes
-        html += `<style>${Theme.getDarkThemesCSS().replaceAll("\n","")+'\n'+Theme.getLightThemesCSS().replaceAll("\n","")}</style>`
-
-        return html;
-    }
-
-
-    // // adopted constructed stylesheet for shadow root
-    #adopted_root_style?:CSSStyleDeclaration 
-
-    /**
-     * add a custom stylesheet as a <link> or adopted stylesheet to this component
-     * @param url_or_style_sheet url to css file, css text or CSSStyleSheet
-     * @param adopt if true, the style is added to the shadow root adoptedStyleSheets, otherwise (if an url is provided), the style is added as a <link>
-     */
-    public addStyleSheet(url:string|URL, adopt?:boolean):Promise<void>|void
-    public addStyleSheet(style_sheet:CSSStyleSheet):Promise<void>|void
-    public addStyleSheet(url_or_style_sheet:string|CSSStyleSheet|URL, adopt = true):Promise<void>|void {
-
-        if (typeof url_or_style_sheet == "string" || url_or_style_sheet instanceof URL) {
-            url_or_style_sheet = new URL(url_or_style_sheet, (<typeof BaseComponent>this.constructor)._module);
-            this.#style_sheets_urls.push(url_or_style_sheet.toString());
-            
-            // adopt CSSStylesheet (works if css does not use @import)
-            if (adopt) {
-                const stylesheet = BaseComponent.getURLStyleSheet(url_or_style_sheet, (<typeof BaseComponent>this.constructor)._module_stylesheets.includes(url_or_style_sheet.toString()));
-                // is sync
-                if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) this.adoptStyle(stylesheet)
-                else if (stylesheet) return new Promise<void>(async resolve=>{
-                    const s = await stylesheet;
-                    if (s) this.adoptStyle(s);
-                    resolve();
-                })
-                // stylesheet might be false, no stylesheet, ignore (error is logged)
-            }
-            // insert <link>
-            else return addStyleSheetLink(this.shadow_root, url_or_style_sheet);
-        }
-
-        else if (url_or_style_sheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet){
-            this.adoptStyle(url_or_style_sheet)
-        }
-    }
-
 
     public standaloneEnabled() {
-        return Object.keys((<typeof BaseComponent>this.constructor).standaloneMethods).length || this.standalone_handlers.size;
+        return !! (
+            Object.keys((<typeof BaseComponent>this.constructor).standaloneMethods).length || 
+            Object.keys((<typeof BaseComponent>this.constructor).standaloneProperties).length || 
+            this.standalone_handlers.size
+        );
     }
 
 
@@ -695,7 +600,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     public getStandaloneJS() {
         let js_code = '';
         const pseudoClass = `globalThis.UIX_Standalone_${this.constructor.name}`;
-        const standaloneProperties = Object.entries((<typeof BaseComponent>this.constructor).standaloneProperties);
+        const standaloneProperties = (<typeof BaseComponent>this.constructor).standaloneProperties;
 
 
         js_code += `import {querySelector} from "uix/snippets/shadow_dom_selector.ts";\n`
@@ -708,29 +613,18 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         const layoutProps:Record<string,string> = {};
         const childProps:Record<string,string> = {};
 
-        for (const [name, data] of standaloneProperties) {
-            if (data.type == "id") {
-                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
-                idProps[name] = data.id;
-            }
-            else if (data.type == "content") {
-                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
-                contentProps[name] = data.id;
-            }
-            else if (data.type == "layout") {
-                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
-                layoutProps[name] = data.id;
-            }
-            else if (data.type == "child") {
-                js_code += `self["${name}"] = self.querySelector("#${data.id}");\n`;
-                childProps[name] = data.id;
-            }
+        js_code += this.generatePropertySelectorCode(standaloneProperties)
+
+        for (const [name, data] of Object.entries(standaloneProperties)) {
+            if (data.type == "id") idProps[name] = data.id;
+            else if (data.type == "content") contentProps[name] = data.id;
+            else if (data.type == "layout")layoutProps[name] = data.id;
+            else if (data.type == "child") childProps[name] = data.id;
         }
-        if (standaloneProperties.length) {
+        if (Object.keys(standaloneProperties).length) {
             js_code += `import { bindContentProperties } from "uix/snippets/bound_content_properties.ts";\n`
             js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, ${JSON.stringify(layoutProps)}, ${JSON.stringify(childProps)}, true);\n`
         }
-
 
         // call custom standalone handlers
         for (const handler of this.standalone_handlers) {
@@ -744,82 +638,15 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         return js_code;
     }
 
-
-    /**
-     * Add a style to the shadow root adoptedStyleSheets
-     * @param style style text or CSSStyleSheet
-     */
-    protected adoptStyle(style:string|CSSStyleSheet, __pass_through = false) {
-        // first add base style (this.style)
-        if (!__pass_through && !this.#style_sheets.length) this.addBaseStyle();
-        
-        let stylesheet:CSSStyleSheet;
-
-        if (style instanceof window.CSSStyleSheet) stylesheet = style;
-        else {
-            stylesheet = new window.CSSStyleSheet();
-            stylesheet.replaceSync(style);
+    protected generatePropertySelectorCode(standaloneProperties:standaloneProperties) {
+        let js_code = "";
+        for (const [name, data] of Object.entries(standaloneProperties)) {
+            // no difference between @id, @content, @child, @layout
+            js_code += `self["${name}"] = self.querySelector("#${data.id}");\n`;
         }
-        this.#style_sheets.push(stylesheet);
-        this.shadow_root.adoptedStyleSheets = [...this.#style_sheets]; // this.#style_sheets
-
-        return stylesheet;
+        return js_code;
     }
 
-    /**
-     * add a default adopted CSSStyleSheet which is referenced by this.shadowStyle
-     */
-    protected addBaseStyle(){
-        this.adoptStyle(":host:host {}", true); // use ':host:host' for higher specificity (should behave like inline style)
-    }
-
-    // returns style of this element, if shadow_root not yet attached to a document (styleSheets not available, see https://github.com/WICG/webcomponents/issues/526)
-    public get shadowStyle(): CSSStyleDeclaration {
-        if (!this.#style_sheets.length) this.addBaseStyle();
-        // init this.#adopted_root_style after style was adopted
-        if (!this.#adopted_root_style && (<CSSStyleRule>this.#style_sheets[0]?.cssRules?.[0])?.style) {
-            const stylesheet = this.#style_sheets[0];
-
-            // is using polyfill which does not correctly propagate updates -> propagate updates via proxy
-            // @ts-ignore CSSStyleSheet
-
-            // safari compat
-            if (window.CSSStyleSheet.name == "ConstructedStyleSheet") {
-                this.#adopted_root_style = new Proxy((<CSSStyleRule>stylesheet.cssRules[0]).style, {
-                    set(target, p, value) {
-                        (<any>target)[p] = value;
-                        // refresh style
-                        stylesheet.replaceSync(`:host:host {${target.cssText}}`); // stylesheet.cssRules[0].cssText not working?
-                        return true;
-                    },
-                    // for correct binding of getProperty/setProperty
-                    get: (target, prop) => {
-                        if (prop in target && (<string>prop)[0] !== '_') {
-                            if (typeof (<any>target)[prop] === 'function') {
-                                return (<any>target)[prop].bind(target);
-                            } else {
-                                return (<any>target)[prop];
-                            }
-                        } else {
-                            throw new Error('problem');
-                        }
-                    }
-                })
-            }
-
-            // deno server compat, just use normal CSSStyleDeclaration
-            // @ts-ignore
-            else if (window.CSSStyleSheet.IS_COMPAT) {
-                this.#adopted_root_style = new CSSStyleDeclaration();
-            }
-
-            // normal
-            else this.#adopted_root_style = (<CSSStyleRule>stylesheet.cssRules[0]).style;
-        }
-
-        // return adopted_root_style or pseudo style placeholder
-        return this.#adopted_root_style ?? <CSSStyleDeclaration>this.#pseudo_style;
-    }
 
     #focusable = false;
 
@@ -1030,6 +857,56 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     public observeOptions(keys:(keyof O)[], handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
         for (const key of keys) this.observeOption(key, handler);
     }
+
+    protected style_sheets_urls:string[] = [];
+
+    /**
+     * add a custom stylesheet as a <link> or adopted stylesheet to this component
+     * @param url_or_style_sheet url to css file, css text or CSSStyleSheet
+     * @param adopt if true, the style is added to the shadow root adoptedStyleSheets, otherwise (if an url is provided), the style is added as a <link>
+     */
+    public addStyleSheet(url:string|URL, adopt?:boolean):Promise<void>|void
+    public addStyleSheet(style_sheet:CSSStyleSheet):Promise<void>|void
+    public addStyleSheet(url_or_style_sheet:string|CSSStyleSheet|URL, adopt = true):Promise<void>|void {
+
+        if (typeof url_or_style_sheet == "string" || url_or_style_sheet instanceof URL) {
+            url_or_style_sheet = new URL(url_or_style_sheet, (<typeof BaseComponent>this.constructor)._module);
+            this.style_sheets_urls.push(url_or_style_sheet.toString());
+            
+            // adopt CSSStylesheet (works if css does not use @import and shadowRoot exists, otherwise use <link>)
+            if (adopt && this.shadowRoot) {
+                const stylesheet = BaseComponent.getURLStyleSheet(url_or_style_sheet, (<typeof BaseComponent>this.constructor).module_stylesheets.includes(url_or_style_sheet.toString()));
+                // is sync
+                if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) this.adoptStyle(stylesheet)
+                else if (stylesheet) return new Promise<void>(async resolve=>{
+                    const s = await stylesheet;
+                    if (s) this.adoptStyle(s);
+                    resolve();
+                })
+                // stylesheet might be false, no stylesheet, ignore (error is logged)
+            }
+            // insert <link>
+            else return this.insertStyleSheetLink(url_or_style_sheet);
+        }
+
+        else if (url_or_style_sheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet){
+            this.adoptStyle(url_or_style_sheet)
+        }
+    }
+
+    /**
+     * Add a style to the shadow root adoptedStyleSheets
+     * @param style style text or CSSStyleSheet
+     */
+    protected adoptStyle(style:string|CSSStyleSheet, __pass_through = false) {
+        console.log("adtop",style)
+        throw new Error("Cannot adopt style on UIX.BaseComponent - no shadow root")
+    }
+
+    protected insertStyleSheetLink(url:URL) {
+        addGlobalStyleSheetLink(url);
+    }
+
 
     // @implement child is on top edge of parent, let header behave as if child was actual root element
     protected isChildPseudoRootElement(child: ChildElement){

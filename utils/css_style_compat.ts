@@ -1,3 +1,4 @@
+import { IS_HEADLESS } from "./constants.ts";
 
 // fake CSSStyleDeclaration element with proxy to update css property names
 export class PlaceholderCSSStyleDeclaration extends Array /*implements CSSStyleDeclaration*/ {
@@ -141,14 +142,33 @@ export class PlaceholderCSSStyleDeclaration extends Array /*implements CSSStyleD
 // new CSSStyleSheet(); stylesheet.replace(...)
 
 
-export function addStyleSheet(element:HTMLElement|ShadowRoot, url:string|URL) {
-    return new Promise<void>((resolve, reject)=>{
+export function addStyleSheetLink(element:HTMLElement|ShadowRoot, url:string|URL) {
+    return new Promise<HTMLLinkElement>((resolve, reject)=>{
         const link = document.createElement("link");
         link.rel = "stylesheet";
-        link.onload = ()=>resolve();
+        link.onload = ()=>resolve(link);
         link.onerror = ()=>reject();
         link.href = url.toString();
-        element.appendChild(link)
+        element.appendChild(link);
+        // onload not working with JSDom
+        if (IS_HEADLESS) resolve(link);
     })
+}
 
+const globalStyleSheets = new Set<string>();
+
+export async function addGlobalStyleSheetLink(url:URL) {
+    if (document.head.querySelector('link[href="'+url+'"]') || globalStyleSheets.has(url.toString())) return;
+    const link = await addStyleSheetLink(document.head, url);
+    link.classList.add("global-style");
+    globalStyleSheets.add(url.toString())
+}
+
+export function getGlobalStyleSheetLinks() {
+	// global stylesheets
+    const urls = new Set<string>([...globalStyleSheets]);
+	document.head.querySelectorAll(".global-style").forEach(el=>{
+        if (el instanceof HTMLLinkElement) urls.add(el.href)
+    })
+    return urls;
 }

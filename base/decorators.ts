@@ -52,7 +52,7 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 		if (!Object.hasOwn(component_class, '_use_resources')) component_class._use_resources = true;
 
 		// preload css files
-		component_class.preloadStylesheets();
+		component_class.preloadStylesheets?.();
 
 		const name = String(component_class.name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // convert from CamelCase to snake-case
 

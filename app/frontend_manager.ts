@@ -15,6 +15,7 @@ import { HTMLProvider } from "../html/html_provider.ts";
 const {serveDir} = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
 import { UIX_CACHE_PATH } from "../utils/constants.ts";
+import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
 
 export class FrontendManager extends HTMLProvider {
 
@@ -522,7 +523,7 @@ catch {
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
-					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css', entrypoint_css], ['uix/style/body.css', entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
+					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css', entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
 					undefined, undefined,
 					{
 						'content-language': lang
@@ -538,12 +539,13 @@ catch {
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
-		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage(this, "", UIX.RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], ['uix/style/document.css'], ['uix/style/body.css'], undefined, undefined, undefined, compat));
+		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage(this, "", UIX.RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], ['uix/style/document.css', ...getGlobalStyleSheetLinks()], ['uix/style/body.css'], undefined, undefined, undefined, compat));
 	}
 
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {
 		try {
-			await this.server.serveContent(requestEvent, "text/javascript", await (await fetch(this.resolveImport('uix/sw/sw.ts', true /** must be resolved to URL */))).text());
+			const path = new Path(this.resolveImport('uix/sw/sw.ts', true, false), this.base_path);
+			await this.server.serveContent(requestEvent, "text/javascript", await path.getTextContent());
 		} catch {
 			await this.server.sendError(requestEvent, 500);
 		}			
@@ -551,7 +553,8 @@ catch {
 
 	private async handleFavicon(requestEvent: Deno.RequestEvent, _path:string) {
 		try {
-			await this.server.serveContent(requestEvent, "image/*", await (await fetch(this.resolveImport(this.app_options.icon_path, true /** must be resolved to URL */))).text());
+			const path = new Path(this.resolveImport(this.app_options.icon_path, true, false), this.base_path);
+			await this.server.serveContent(requestEvent, "image/*", await path.getTextContent());
 		} catch (e) {
 			console.log(e)
 			await this.server.sendError(requestEvent, 500);

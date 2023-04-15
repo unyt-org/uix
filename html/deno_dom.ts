@@ -16,6 +16,7 @@ if (IS_HEADLESS) {
 
 	globalThis.document = window.document;
 	globalThis.HTMLElement = window.HTMLElement;
+	globalThis.HTMLLinkElement = window.HTMLLinkElement;
 	globalThis.Element = window.Element;
 	globalThis.DocumentFragment = window.DocumentFragment;
 	globalThis.customElements = window.customElements;

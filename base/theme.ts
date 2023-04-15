@@ -364,6 +364,7 @@ export class Theme  {
 	static onModeChange(observer:(theme:"dark"|"light")=>void) {
 		this.mode_change_observers.add(observer);
 	}
+
 }
 
 // add default themes

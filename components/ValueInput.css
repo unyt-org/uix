@@ -1,0 +1,27 @@
+.value-input {
+	display: inline-block;
+    border: 2px solid transparent;
+    color: inherit;
+    border-radius: 5px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    background-color: var(--bg_button);
+    min-width: 27px;
+    max-width: 100%;
+}
+
+.value-input.invalid {
+    border: 2px solid var(--red)!important;
+}
+
+.value-input.invalid #input::placeholder {
+    color: var(--red);
+}
+
+.value-input #input {
+	width: -webkit-fill-available;
+	height: -webkit-fill-available;
+	padding: 3.5px;
+	border: none;
+	background: transparent;
+}

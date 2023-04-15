@@ -16,6 +16,7 @@ if (IS_HEADLESS) {
 
 	globalThis.document = window.document;
 	globalThis.HTMLElement = window.HTMLElement;
+	globalThis.HTMLLinkElement = window.HTMLLinkElement;
 	globalThis.Element = window.Element;
 	globalThis.DocumentFragment = window.DocumentFragment;
 	globalThis.customElements = window.customElements;
@@ -25,6 +26,7 @@ if (IS_HEADLESS) {
 	globalThis.Document = window.Document;
 	globalThis.NodeFilter = window.NodeFilter;
 	globalThis.NodeIterator = window.NodeIterator;
+	globalThis.ShadowRoot = window.ShadowRoot;
 
 	globalThis.Node = window.Node;
 	globalThis.NodeList = window.NodeList;

@@ -1,1 +1,5 @@
-name: "UIX demo"
+name: "UIX demo",
+common: (
+	./uix/, 
+	./common/
+)

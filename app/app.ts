@@ -65,9 +65,20 @@ class UIXApp {
 
 	public ready = new Promise<void>(resolve=>this.onReady(()=>resolve()))
 
+	/**
+	 * resolves file paths to web paths, keep everything else (web urls, import aliases)
+	 * @param filePath file path (e.g. "file://", "./xy", "/xy")
+	 * @returns web path (e.g. "/@uix/src/xy")
+	 */
 	public filePathToWebPath(filePath:URL|string){
+		// keep import aliases
+		if (typeof filePath == "string" && !(filePath.startsWith("./")||filePath.startsWith("../")||filePath.startsWith("/")||filePath.startsWith("file://"))) return filePath;
+
+		// already a web path
+		if (Path.pathIsURL(filePath) && new Path(filePath).is_web) return filePath.toString();
+
 		if (!this.base_url) throw new Error("Cannot convert file path to web path - no base file path set");
-		const path = new Path(filePath);
+		const path = new Path(filePath, this.base_url);
 		// is /@uix/cache
 		if (path.isChildOf(UIX_CACHE_PATH)) return path.getAsRelativeFrom(UIX_CACHE_PATH).replace(/^\.\//, "/@uix/cache/");
 		// is /@uix/src

@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-namespace
 import { Datex } from "unyt_core";
 import { arrayBufferToBase64, base64ToArrayBuffer } from "unyt_core/datex_all.ts";
 import { HTMLUtils } from "../html/utils.ts";

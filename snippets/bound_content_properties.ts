@@ -44,7 +44,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 
 	// @UIX.content props
 	if (content_props) {
-		const container = ()=>element.shadowRoot?.querySelector("#content")
+		const container = ()=>element.shadowRoot?.querySelector("#content")??element
 		for (const [prop,id] of Object.entries(content_props)) {
 			if (!allow_existing && element[prop] instanceof HTMLElement && element.shadowRoot?.contains(element[prop])) throw new Error("property '" + prop +"' cannot be used as an @content property - already part of the component")
 			bindContent(element, container, prop, id)
@@ -53,7 +53,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 
 	// @UIX.layout props
 	if (layout_props) {
-		const container = ()=>element.shadowRoot?.querySelector("#content_container")
+		const container = ()=>element.shadowRoot?.querySelector("#content_container")??element.shadowRoot??element
 		for (const [prop,id] of Object.entries(layout_props)) bindContent(element, container, prop, id)
 	}
 
@@ -66,7 +66,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 }
 
 
-function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:()=>Element|null|undefined, prop:string, id:string) {
+function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:()=>Element|ShadowRoot|null|undefined, prop:string, id:string) {
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
 	const props_map = element[PROPS_MAP]!;
 
@@ -96,7 +96,7 @@ function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:
 				if (previous == el) {/* ignore */}
 				else if (previous) content.replaceChild(el, previous);
 				else {
-					const contentSlot = content.id=="content_container" && content.querySelector("#content");
+					const contentSlot = (content instanceof ShadowRoot || content.id=="content_container") && content.querySelector("#content");
 					// insert before #content slot in #content_container
 					if (contentSlot) content.insertBefore(el, contentSlot);
 					else content.append(el);

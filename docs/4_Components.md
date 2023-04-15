@@ -29,15 +29,15 @@ export default
 
 ## Creating custom component classes
 
-You can create custom UIX components by extending `UIX.Components.Base` or another UIX Component class and register it by decorating the class with `@UIX.Component`.
+You can create custom UIX components by extending `UIX.BaseComponent` or another UIX Component class and register it by decorating the class with `@Component`.
 
 
 ```typescript
 // register the component and set default options
-@UIX.Component
-class MyCustomComponent extends UIX.Components.Base {
+@Component
+class MyCustomComponent extends UIX.BaseComponent {
 
-    @UIX.content helloText = "Hello from my custom component"
+    @content helloText = "Hello from my custom component"
 
 }
 ```
@@ -49,26 +49,26 @@ A UIX Component also inherits the default options from its parent class.
 
 ## Defining custom options 
 
-The `UIX.Components.Base.Options` interface can also be extended for custom Component options. 
+The `UIX.BaseComponent.Options` interface can also be extended for custom Component options. 
 The interface and any related classes or variables should be put in the namespace of the component class:
 
 
 ```typescript
 // component namespace
 namespace MyCustomComponent {
-    export interface Options extends UIX.Components.Base.Options {
+    export interface Options extends UIX.BaseComponent.Options {
         strings:string[]
     }
 }
 
 // register the component and set default options
-@UIX.Component<MyCustomComponent.Options>({
+@Component<MyCustomComponent.Options>({
     border_radius: 20,
     strings: ['a string', 'morestring']
 })
-class MyCustomComponent extends UIX.Components.Base<MyCustomComponent.Options> {
+class MyCustomComponent extends UIX.BaseComponent<MyCustomComponent.Options> {
 
-    @UIX.content helloText = "Hello from my custom component"
+    @content helloText = "Hello from my custom component"
 
 }
 ```
@@ -93,7 +93,7 @@ const comp2 =
 Children can also be directly bound to a component with the `@child` decorator:
 ```tsx
 @Component
-class ParentComponent extends UIX.Components.Base {
+class ParentComponent extends UIX.BaseComponent {
     // statically defined children
     @child child1 = <div>Child 1</div>
     @child child2 = <div>Child 2</div>
@@ -109,24 +109,22 @@ const parent =
 Component children are part of the component state and are restored when the component is recreated.
 
 
-## Internal component layout (Shadow DOM)
+## Internal component layout (Shadow DOM with UIX.ShadowDomComponent)
 
-A UIX Component has the following structure:
+Components extending `UIX.ShadowDomComponent` have the following structure:
 ```html
 <uix-component>
 
     <!--Shadow DOM-->
     #shadow-root
-        <div id="content_container">
-            <!--internal layout-->
-            <div>Internal Layout</div>
-            <!--content slot-->
-            <slot id="content">
-                <!--virtual children-->
-                <div>child 1</div>
-                <div>child 2</div>
-            <slot>
-        </div>
+        <!--internal layout-->
+        <div>Internal Layout</div>
+        <!--content slot-->
+        <slot id="content">
+            <!--virtual children-->
+            <div>child 1</div>
+            <div>child 2</div>
+        <slot>
 
     <!--children-->
     <div>child 1</div>
@@ -144,7 +142,7 @@ For most use cases, it makes sense to initialize the content when the component 
 
 ```tsx
 @Component
-class ParentComponent extends UIX.Components.Base {
+class ParentComponent extends UIX.ShadowDomComponent {
     // add layout content to the shadow dom
     // + elements automatically get assigned an id
     @layout componentTitle = <div>Component Title</div>
@@ -172,7 +170,7 @@ Also, it is not possible to use the `@content` decorator *and* append children t
 
 ```tsx
 @Component
-class ParentComponent extends UIX.Components.Base {
+class ParentComponent extends UIX.ShadowDomComponent {
     @layout componentTitle = <div>Component Title</div>
     @content customContent = <div>Content</div>
 }
@@ -186,7 +184,7 @@ export default <ParentComponent/>
 
 
 ```typescript
-@Component class CustomComponent extends UIX.Components.Base {
+@Component class CustomComponent extends UIX.BaseComponent {
 
     // called when component is constructed
     onConstruct() {}
@@ -210,6 +208,11 @@ export default <ParentComponent/>
 ## CSS styles
 
 To apply css styles to a component in a module `my_component.ts`, you can create a file next to the module file, called `my_component.css`. 
-The styles declared in this file are automatically applied to instances of the component.
 
-For global css styles, you can add a `entrypoint.css` file next to the `entrypoint.ts` file.
+If the component extends `UIX.ShadowDomComponent`, the styles declared in this file are automatically adopted for all instances of the component and are not exposed
+to other components.
+
+For components that don't extend `UIX.ShadowDomComponent`, the styles from `my_component.css` are added as to the global style declaration. In this
+case it is your responsibility to make sure that your style declarations don't have any side effects for other components.
+
+For general global styles, you can add an `entrypoint.css` file next to the `entrypoint.ts` file.

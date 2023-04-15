@@ -31,38 +31,53 @@ const selfClosingTags = new Set([
 	"wbr"
 ])
 
+
+function generateStandaloneJS(el:Element|ShadowRoot, opts?:_renderOptions){
+	let html = "";
+	// is UIX component with standalone methods?
+	// @ts-ignore
+	if (opts?._injectedJsData && el.standaloneEnabled?.() && el.constructor.getStandaloneJS) {
+		if (!opts._injectedJsData.declare) opts._injectedJsData.declare = {};
+		if (!opts._injectedJsData.init) opts._injectedJsData.init = [];
+
+		const name = `UIX_Standalone_${el.constructor.name}`;
+		if (!opts._injectedJsData.declare[name]) {
+			// @ts-ignore
+			const standaloneJS = el.constructor.getStandaloneJS();
+			if (standaloneJS) opts._injectedJsData.declare[name] = `globalThis.UIX_Standalone_${el.constructor.name} = ${standaloneJS};`
+		}
+		// @ts-ignore
+		if (el.getStandaloneJS) {
+			html += `<script type="module">\n`
+			// @ts-ignore
+			html += el.getStandaloneJS();
+			html += `</script>`
+		}
+	}
+	return html;
+}
+
 export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions) {
 	if (!opts?.includeShadowRoots) return el.innerHTML;
 
 	let html = "";
+
+	// add shadow root
 	if (el instanceof globalThis.Element && el.shadowRoot) {
 		html += `<template shadowrootmode="${el.shadowRoot.mode}">`
 		html += await getInnerHTML(el.shadowRoot, opts);
 
+		// @ts-ignore
 		if (el.getRenderedStyle) html += el.getRenderedStyle();
 
 		// is UIX component with standalone methods?
-		// @ts-ignore
-		if (opts?._injectedJsData && el.standaloneEnabled?.() && el.constructor.getStandaloneJS) {
-			if (!opts._injectedJsData.declare) opts._injectedJsData.declare = {};
-			if (!opts._injectedJsData.init) opts._injectedJsData.init = [];
-
-			const name = `UIX_Standalone_${el.constructor.name}`;
-			if (!opts._injectedJsData.declare[name]) {
-				// @ts-ignore
-				const standaloneJS = el.constructor.getStandaloneJS();
-				if (standaloneJS) opts._injectedJsData.declare[name] = `globalThis.UIX_Standalone_${el.constructor.name} = ${standaloneJS};`
-			}
-			if (el.getStandaloneJS) {
-				html += `<script type="module">\n`
-				html += el.getStandaloneJS();
-				html += `</script>`
-			}
-		}
-
+		html += generateStandaloneJS(el, opts);
 
 		html += '</template>'
 	}
+
+	// standalone methods outside shadow DOM - TODO: improve
+	else html += generateStandaloneJS(el, opts);
 
 	for (const child of el.childNodes) {
 		html += await _getOuterHTML(child, opts);
@@ -255,7 +270,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	global_style += "<style>"
 	global_style += UIX.Theme.getCurrentThemeCSS().replaceAll("\n","");
 	global_style += "</style>"
-
+	
 	// dark themes
 	global_style += `<style class="uix-light-themes">`
 	global_style += UIX.Theme.getLightThemesCSS().replaceAll("\n","");

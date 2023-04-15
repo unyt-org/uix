@@ -134,11 +134,11 @@ When a Component is encountered in the route chain, the `onRoute` method is call
 
 
 ```typescript
-class UIX.Components.Base {
+class UIX.BaseComponent {
 	// return the child element to which the route is resolved
 	// if the route contains more sections, onRoute is called on this child element with the next route
 	// section as the identifier
-	onRoute(identifier:string, is_initial_route:boolean):UIX.Components.Base|boolean|void
+	onRoute(identifier:string, is_initial_route:boolean):UIX.BaseComponent|boolean|void
 	// return internal state of last resolved route
 	getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
 }
@@ -147,7 +147,7 @@ class UIX.Components.Base {
 ### Example
 Component Routing can be used to display or focus on different child components depending on the route.
 ```tsx
-class Parent extends UIX.Components.Base {
+class Parent extends UIX.BaseComponent {
 	#activeChild?: HTMLElement
 
 	override onRoute(identifier:string) {

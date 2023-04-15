@@ -7,7 +7,7 @@ import "./render.ts";
 
 import { $$, Datex } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
-import { DX_VALUE } from "unyt_core/datex_all.ts";
+import { DX_VALUE, INIT_PROPS } from "unyt_core/datex_all.ts";
 
 
 // handle htmlfragment (DocumentFragment)
@@ -48,9 +48,11 @@ Datex.Type.get('html').setJSInterface({
 		const is_uix = type.name == "uix";
 		if (!is_uix && !type.variation) throw new Error("cannot create HTMLElement without concrete type")
 		
+		const propertyInitializer = is_uix ? type.getPropertyInitializer(val.p) : null;
+
 		// create HTMLElement / UIX component
 		const el = is_uix ?
-			type.newJSInstance(false) :  // call js constructor, but don't handle as constructor in lifecycle 
+			type.newJSInstance(false, undefined, propertyInitializer!) :  // call js constructor, but don't handle as constructor in lifecycle 
 			document.createElement(type.variation); // create normal HTMLElement, no UIX lifecycle
 
 		// set attrs, style, content from object
@@ -85,7 +87,7 @@ Datex.Type.get('html').setJSInterface({
 		// uix
 		if (is_uix) {
 			// set 'p' properties (contains options, other properties)
-			if (val.p) type.initProperties(el, val.p);
+			propertyInitializer![INIT_PROPS](el);
 			// trigger UIX lifecycle (onReplicate)
 			type.construct(el, undefined, false, true);
 		}

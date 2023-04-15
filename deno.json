@@ -12,5 +12,8 @@
 		"jsx": "react-jsx",
 		"jsxImportSource": "uix",
 		"lib": ["deno.window", "dom"]
+	},
+	"tasks": {
+		"test-app": "cd test-app && deno run -Aq ../run.ts -w"
 	}
 }

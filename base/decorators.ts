@@ -7,6 +7,7 @@ import { Components} from "../components/main.ts";
 import { Elements} from "../elements/main.ts";
 import { Files } from "./files.ts";
 import "../html/datex_binding.ts";
+import { BaseComponent } from "../components/BaseComponent.ts";
 
 //export const customElements = <typeof globalThis.customElements> globalThis.customElements ? globalThis.customElements : {define:()=>null};
 
@@ -29,8 +30,8 @@ function _Element(element_class:typeof Elements.Base, name:context_name, kind:co
 /**
  * @Component decorators for custom new elements and default elements
  */
-export function Component<T extends Components.Base.Options> (default_options:Partial<Datex.DatexObjectInit<T>>, initial_constraints:Partial<Datex.DatexObjectInit<Types.component_constraints>>):any
-export function Component<T extends Components.Base.Options> (default_options:Partial<Datex.DatexObjectInit<T>>):any
+export function Component<T extends Components.Base.Options|BaseComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>, initial_constraints:Partial<Datex.DatexObjectPartialInit<Types.component_constraints>>):any
+export function Component<T extends Components.Base.Options|BaseComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>):any
 export function Component():any
 export function Component<C>(target: Function & { prototype: C }):any
 export function Component<C>(...args:any[]):any {
@@ -43,7 +44,7 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 	const url = new Error().stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
 	if (!url) throw new Error("Could not get the location of a UIX component. This should not happen");
 
-	if (component_class.prototype instanceof Components.Base) {
+	if (component_class.prototype instanceof Components.Base || component_class.prototype instanceof BaseComponent) {
 
 		// set auto module (url from stack trace), not if module === null => resources was disabled with @NoResources
 		if (url && component_class._module !== null) component_class._module = url;
@@ -51,7 +52,7 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 		if (!Object.hasOwn(component_class, '_use_resources')) component_class._use_resources = true;
 
 		// preload css files
-		component_class.preloadStylesheets();
+		component_class.preloadStylesheets?.();
 
 		const name = String(component_class.name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // convert from CamelCase to snake-case
 
@@ -110,11 +111,12 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 		})
 
 		// define custom DOM element after everything is initialized
-		window.customElements.define("uix-" + name, component_class)
+		if (component_class.prototype instanceof BaseComponent) window.customElements.define("uix2-" + name, component_class)
+		else window.customElements.define("uix-" + name, component_class)
 		
 		return new_class //element_class
 	}
-	else throw new Error("Invalid @UIX.Component - class must extend Components.Base")
+	else throw new Error("Invalid @UIX.Component - class must extend UIX.Components.Base or UIX.BaseComponent")
 }
 
 /**

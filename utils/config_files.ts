@@ -46,6 +46,6 @@ export async function getAppConfig(root_path:URL) {
 
 	// todo: fix
 	if (!config.import_map_path) throw '"import_map_path" in app.dx or "importMap" in deno.json required';
-
+	
 	return config
 }

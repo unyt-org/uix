@@ -841,8 +841,12 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         for (const method of this.inferredStandaloneMethods[name]??[]) this.addStandaloneMethod(method, this.prototype[method]);
     }
 
+    protected isStandaloneProperty(name:string) {
+        return !! ((<any>this)[METADATA]?.[STANDALONE_PROPS]?.public?.[name])
+    }
+
     // add instance properties that are loaded in standalone mode
-    private static standaloneProperties:Record<string,{type:'id'|'content'|'layout'|'child',id:string}> = {};
+    protected static standaloneProperties:Record<string,{type:'id'|'content'|'layout'|'child',id:string}> = {};
     protected static addStandaloneProperty(name: string) {
         // make sure this class has a separate standaloneProperties object
         if (this.standaloneProperties == Base.standaloneProperties) this.standaloneProperties = {};

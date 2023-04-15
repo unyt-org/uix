@@ -2,6 +2,8 @@ import "unyt_core";
 import { DX_VALUE } from "unyt_core/datex_all.ts";
 import { Datex, decimal, pointer } from "unyt_core";
 import { Theme } from "../base/theme.ts";
+import { defaultElementAttributes, elementEventHandlerAttributes, elementAttributes } from "./attributes.ts";
+
 
 // deno-lint-ignore no-namespace
 export namespace HTMLUtils {
@@ -44,8 +46,11 @@ export namespace HTMLUtils {
 	export function setCSS<T extends HTMLElement>(element:T, properties_object_or_property:{[property:string]:Datex.CompatValue<string|number>}|Datex.CompatValue<string>, value?:Datex.CompatValue<string|number>):T {
 		let properties:{[property:string]:Datex.CompatValue<string|number|undefined>};
 		if (typeof properties_object_or_property == "string" && value != undefined) properties = {[properties_object_or_property]:value};
-		else if (typeof properties_object_or_property == "string" || (properties_object_or_property instanceof Datex.Value && Datex.Type.ofValue(properties_object_or_property) == Datex.Type.std.text)) return setElementAttribute(element, "style", properties_object_or_property);
-		else properties = properties_object_or_property;
+		else if (typeof properties_object_or_property == "string" || (properties_object_or_property instanceof Datex.Value && Datex.Type.ofValue(properties_object_or_property) == Datex.Type.std.text)) {
+			setElementAttribute(element, "style", properties_object_or_property)
+			return element;
+		}
+		else properties = Datex.Value.collapseValue(properties_object_or_property,true,true) as {[property:string]:Datex.CompatValue<string|number|undefined>};
 
 		for (const [property, value] of Object.entries(properties)) {
 			setCSSProperty(element, property, value);
@@ -62,12 +67,14 @@ export namespace HTMLUtils {
 		// none
 		if (value == undefined) {
 			if (element.style.removeProperty) element.style.removeProperty(property);
+			// @ts-ignore style property access
 			else delete element.style[property];
 		}
 
 		// UIX color
 		else if (value instanceof Datex.PointerProperty && value.pointer.val == Theme.colors) {
 			if (element.style.setProperty) element.style.setProperty(property, `var(--${value.key})`); // autmatically updated css variable
+			// @ts-ignore style property access
 			else element.style[property] = `var(--${value.key})`
 		}
 		// other Datex CompatValue
@@ -75,10 +82,12 @@ export namespace HTMLUtils {
 			Datex.Value.observeAndInit(value, (v,k,t) => {
 				if (v == undefined) {
 					if (element.style.removeProperty) element.style.removeProperty(property);
+					// @ts-ignore style property access
 					else delete element.style[property];
 				}
 				else {
-					if (element.style.setProperty) element.style.setProperty(property, getCSSProperty(v))
+					if (element.style.setProperty) element.style.setProperty(property, getCSSProperty(<string>v))
+					// @ts-ignore style property access
 					else element.style[property] = getCSSProperty(v);
 				}
 			}, undefined, undefined);
@@ -88,6 +97,7 @@ export namespace HTMLUtils {
 
 	export function getTextNode(content:any) {
 		const textNode = document.createTextNode("");
+		// @ts-ignore DX_VALUE
 		textNode[DX_VALUE] = content;
 
 		Datex.Value.observeAndInit(content, (v,k,t) => {
@@ -140,7 +150,7 @@ export namespace HTMLUtils {
 			// css variable
 			if (value.toString().startsWith('var(--')) return getComputedStyle(document.documentElement).getPropertyValue(value?.toString().replace('var(','').replace(')','')).trim();
 			// css color name
-			else if (!value.toString().startsWith("#")) return color_names[value.toString().toLowerCase()] ?? ''
+			else if (!value.toString().startsWith("#")) return color_names[<keyof typeof color_names>value.toString().toLowerCase()] ?? ''
 			// normal string value
 			else return value.toString()
 		}
@@ -195,12 +205,32 @@ export namespace HTMLUtils {
 		else return val?.toString?.() ?? ""
 	}
 
+	export const EVENT_LISTENERS: unique symbol = Symbol("EVENT_LISTENERS");
+	export type elWithEventListeners = HTMLElement & {[EVENT_LISTENERS]:Map<keyof HTMLElementEventMap, Set<Function>>}
+
 	function setAttribute(element: HTMLElement, property:string, val:unknown, root_path?:string|URL) {
+		// not an HTML attribute - set property
+		if (!(
+			property.startsWith("data-") ||
+			property.startsWith("aria-") ||
+			defaultElementAttributes.includes(<typeof defaultElementAttributes[number]>property) || 
+			elementEventHandlerAttributes.includes(<typeof elementEventHandlerAttributes[number]>property) ||
+			(<readonly string[]>elementAttributes[<keyof typeof elementAttributes>element.tagName.toLowerCase()])?.includes(<typeof elementAttributes[keyof typeof elementAttributes][number]>property))) {
+				// @ts-ignore element property name
+				element[property] = Datex.Value.collapseValue(val, true, true);
+			return;
+		}
+
+		// normal attribute
 		if (val === false) element.removeAttribute(property);
 		else if (val === true || val === undefined) element.setAttribute(property,"");
 		else if (typeof val == "function") {
 			if (property.startsWith("on")) {
-				element.addEventListener(<keyof HTMLElementEventMap>property.replace("on","").toLowerCase(), <any>val);
+				const eventName = <keyof HTMLElementEventMap>property.replace("on","").toLowerCase();
+				element.addEventListener(eventName, <any>val);
+				// save in [EVENT_LISTENERS]
+				if (!(<elWithEventListeners>element)[EVENT_LISTENERS]) (<elWithEventListeners>element)[EVENT_LISTENERS] = new Map<keyof HTMLElementEventMap, Set<Function>>().setAutoDefault(Set);
+				(<elWithEventListeners>element)[EVENT_LISTENERS].getAuto(eventName).add(val);
 			}
 			else throw new Error("Cannot set event listener for element attribute '"+property+"'")
 		}
@@ -235,10 +265,11 @@ export namespace HTMLUtils {
 		if (this instanceof Datex.Value) console.warn("update text invalid", this, text)
 		
 		if (text instanceof Datex.Markdown) {
-			this.innerHTML = text.getHTML().children[0].innerHTML;
+			this.innerHTML = (text.getHTML() as HTMLElement).children[0].innerHTML;
 		}
+		// @ts-ignore _use_markdown
 		else if (this._use_markdown && typeof text == "string") {
-			this.innerHTML = new Datex.Markdown(text).getHTML().children[0].innerHTML;
+			this.innerHTML = (new Datex.Markdown(text).getHTML() as HTMLElement).children[0].innerHTML;
 		}
 		else this.innerText = ((<any>text)?.toString()) ?? ''
 	}
@@ -255,6 +286,7 @@ export namespace HTMLUtils {
 		if (html instanceof Datex.Value) {
 			updateElementHTML.call(element, html.val);
 
+			// @ts-ignore: TODO: fix?
 			html.observe(updateElementHTML, element);
 			element_bound_html_values.set(element, html);
 		}
@@ -269,7 +301,7 @@ export namespace HTMLUtils {
 		element_bound_html_values.get(element)?.unobserve(element);
 		element_bound_text_values.get(element)?.unobserve(element);
 		
-		// markdown flag
+		// @ts-ignore markdown flag
 		element._use_markdown = markdown;
 
 		// none
@@ -316,7 +348,7 @@ export namespace HTMLUtils {
 	export function addDelegatedEventListener<E extends HTMLElement>(target:E, events:string, selector:string,  listener: (this: HTMLElement, ev: Event) => any, options?: boolean | AddEventListenerOptions){
 		for (const event of events.split(" ")){
 			target.addEventListener(event.trim(), function (event) {
-				if (event.target && event.target instanceof Element && event.target.closest(selector)) {
+				if (event.target && event.target instanceof HTMLElement && event.target.closest(selector)) {
 					listener.call(event.target, event)
 				}
 			}, options);

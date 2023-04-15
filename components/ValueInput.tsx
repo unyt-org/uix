@@ -1,24 +1,18 @@
 // deno-lint-ignore-file no-namespace
-import {BaseComponent} from "./BaseComponent.ts"
+import { customAttributeValues } from "../html/attributes.ts"
+import { BaseComponent } from "./BaseComponent.ts"
 
 export namespace ValueInput {
 	export interface Options extends BaseComponent.Options {
-		type?: string,
+		type?: customAttributeValues['input']['type'],
 		placeholder?: string
 	}
 }
 
 @Component<ValueInput.Options>({
+	class: "value-input",
 	type: "text"
 })
-export class ValueInput extends BaseComponent<ValueInput.Options, HTMLButtonElement> {
-	@child input = <input type={this.options.type} placeholder={this.options.placeholder}/>
-
-	protected override onConstruct() {
-		this.classList.add("value-input")
-	}
-}
-
-function x () {
-	const x = <ValueInput/>
+export class ValueInput extends BaseComponent<ValueInput.Options, never> {
+	@standalone @layout input = <input onclick={e => console.log("click",e)} type={this.options.type} placeholder={this.options.placeholder}/>
 }

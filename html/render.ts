@@ -5,6 +5,7 @@ import { UIX } from "../uix.ts";
 import { indent } from "../utils/indent.ts";
 import type { HTMLProvider } from "./html_provider.ts";
 import { HTMLUtils } from "./utils.ts";
+import { COMPONENT_CONTEXT, STANDALONE } from "../snippets/bound_content_properties.ts";
 
 await import("./deno_dom.ts");
 
@@ -112,6 +113,7 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
 
+	const dataPtr = el.attributes.getNamedItem("data-ptr")?.value;
 
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];
@@ -125,6 +127,17 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 		attrs.push(`${attrib.name}="${val}"`) // TODO escape
 	}
 	attrs.push("data-static");
+
+	// inject event listeners
+	if ((<any>el)[STANDALONE] && dataPtr && opts?._injectedJsData && (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
+		const contextPtr = (<HTMLElement|undefined>(<any>el)[COMPONENT_CONTEXT])?.attributes.getNamedItem("data-ptr")?.value;
+		let script = `{const el = querySelector('[data-ptr="${dataPtr}"]'); const ctx = querySelector('[data-ptr="${contextPtr}"]');`
+		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
+			for (const listener of listeners) script += `el.addEventListener("${event}", (function (...args){return (${listener})(...args)}).bind(ctx));`
+		}
+		script += `}`
+		opts._injectedJsData.init.push(script);
+	}
 
 	if (selfClosingTags.has(tag)) return `<${tag} ${attrs.join(" ")}/>`;
 	else return `<${tag} ${attrs.join(" ")}>${inner}</${tag}>`
@@ -144,7 +157,7 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 	const html = await _getOuterHTML(el, opts);
 
 	let script = `<script type="module">`
-
+	script += `import {querySelector, querySelectorAll} from "uix/snippets/shadow_dom_selector.ts";`
 
 	// global utils
 	for (const val of Object.values(scriptData.declare)) {
@@ -157,7 +170,6 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 	// polyfill for browsers that don't support declarative shadow DOM
 	script += `
 	if (!HTMLTemplateElement.prototype.hasOwnProperty('shadowRootMode')) {
-		const {querySelectorAll} = await import("uix/snippets/shadow_dom_selector.ts");
 		(function attachShadowRoots(root) {
 			querySelectorAll("template[shadowrootmode]").forEach((template) => {
 				const mode = template.getAttribute("shadowrootmode");

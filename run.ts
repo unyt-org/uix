@@ -55,15 +55,16 @@ if (reload) {
 }
 
 if (deno_config_path) {
-	config_params.push("--config", deno_config_path instanceof URL ? deno_config_path.pathname : deno_config_path)
+	config_params.push("--config", deno_config_path instanceof URL && deno_config_path.protocol=="file:" ? deno_config_path.pathname : deno_config_path.toString())
 }
 if (config.import_map_path) {
-	config_params.push("--import-map", config.import_map_path instanceof URL ? config.import_map_path.pathname : <string> config.import_map_path)
+	config_params.push("--import-map", config.import_map_path instanceof URL && config.import_map_path.protocol=="file:" ? config.import_map_path.pathname : config.import_map_path.toString())
 }
 
 await run();
 
 async function run() {
+
 	const exitStatus = await Deno.run({
 		cmd: [
 			...cmd,

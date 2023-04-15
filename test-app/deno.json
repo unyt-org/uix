@@ -1,5 +1,5 @@
 {
-	"importMap": "./importmap.json",
+	"importMap": "./importmap.dev.json",
 	"compilerOptions": {
 		"module": "esnext",
 		"target": "es2022",

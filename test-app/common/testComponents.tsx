@@ -1,4 +1,4 @@
-import { ValueInput } from "../uix/components/ValueInput.tsx";
+import { ValueInput } from "uix/components/ValueInput.tsx";
 
 /**
  * Put examples for all components in the testComponents object.

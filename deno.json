@@ -14,6 +14,7 @@
 		"lib": ["deno.window", "dom"]
 	},
 	"tasks": {
-		"test-app": "cd test-app && deno run -Aq ../run.ts -w --port 4200"
+		"expose-uix": "deno run -Aq https://dev.cdn.unyt.org/unyt_node/file_server.ts -w --port 4200",
+		"run-test-app": "cd test-app && deno run -Aq ../run.ts -rw --import-map http://localhost:4200/importmap.uixdev.json --port 4201"
 	}
 }

@@ -24,7 +24,7 @@ export type standaloneProperties = Record<string,{type:'id'|'content'|'layout'|'
 // deno-lint-ignore no-namespace
 export namespace BaseComponent {
     export interface Options {
-
+        class?: string
     }
 }
 
@@ -210,8 +210,12 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         for (const method of this.inferredStandaloneMethods[name]??[]) this.addStandaloneMethod(method, this.prototype[<keyof typeof this.prototype>method]);
     }
 
+    protected isStandaloneProperty(name:string) {
+        return !! (this[METADATA]?.[STANDALONE_PROPS]?.public?.[name])
+    }
+
     // add instance properties that are loaded in standalone mode
-    private static standaloneProperties:standaloneProperties = {};
+    protected static standaloneProperties:standaloneProperties = {};
     protected static addStandaloneProperty(name: string) {
         // make sure this class has a separate standaloneProperties object
         if (this.standaloneProperties == BaseComponent.standaloneProperties) this.standaloneProperties = {};
@@ -490,9 +494,11 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     // default constructor
     @constructor async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
-
-        // this.initOptions(options);
+        // options already handled in constructor
         
+        // handle default component options (class, ...)
+        if (this.options.class) HTMLUtils.setElementAttribute(this, "class", this.options.$.class);
+
         await this.init(true);
         await this.onConstructed?.();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)

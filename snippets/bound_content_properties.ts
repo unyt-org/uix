@@ -1,22 +1,48 @@
 import { HTMLUtils } from "../html/utils.ts";
 
+// @ts-ignore sfgafari workaround
+export const COMPONENT_CONTEXT: unique symbol = globalThis.uix_COMPONENT_CONTEXT ??= Symbol("COMPONENT_CONTEXT");
+// @ts-ignore sfgafari workaround
+export const STANDALONE: unique symbol = globalThis.uix_STANDALONE ??= Symbol("STANDALONE");
 
-// TODO: reenable
-const PROPS_MAP = Symbol("PROPS_MAP");
+// @ts-ignore TODO: reenable
+const PROPS_MAP = globalThis.uix_PROPS_MAP ??= Symbol("PROPS_MAP");
 
-function _get_PROPS_MAP() {
+// ... all for safari workaround ...
+function _PROPS_MAP() {
+	try {
+		return PROPS_MAP;
+	} catch {}
 	// @ts-ignore
-	if (!globalThis.uix_bound_PROPS_MAP) globalThis.uix_bound_PROPS_MAP = Symbol("PROPS_MAP");
+	if (!globalThis.uix_PROPS_MAP) globalThis.uix_PROPS_MAP = Symbol("PROPS_MAP");
 	// @ts-ignore
-	return globalThis.uix_bound_PROPS_MAP;
+	return globalThis.uix_PROPS_MAP;
 }
+function _COMPONENT_CONTEXT() {
+	try {
+		return COMPONENT_CONTEXT;
+	} catch {}
+	// @ts-ignore
+	if (!globalThis.uix_COMPONENT_CONTEXT) globalThis.uix_COMPONENT_CONTEXT = Symbol("COMPONENT_CONTEXT");
+	// @ts-ignore
+	return globalThis.uix_COMPONENT_CONTEXT;
+}
+function _STANDALONE() {
+	try {
+		return STANDALONE;
+	} catch {}
+	// @ts-ignore
+	if (!globalThis.uix_STANDALONE) globalThis.uix_STANDALONE = Symbol("STANDALONE");
+	// @ts-ignore
+	return globalThis.uix_STANDALONE;
+}
+
 
 export function bindContentProperties(element: HTMLElement & {[key:string|symbol]:any}, id_props:Record<string,string>, content_props:Record<string,string>, layout_props:Record<string,string>, child_props:Record<string,string>, allow_existing = false){
 
 	// TODO: fix
 	// SaFaRi: ReferenceError: Cannot access uninitialized variable??!?
-	const PROPS_MAP = _get_PROPS_MAP()  
-
+	const PROPS_MAP = _PROPS_MAP()  
 
 	// @UIX.id props
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
@@ -70,7 +96,9 @@ function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:
 	
 	// TODO: fix
 	// SaFaRi: ReferenceError: Cannot access uninitialized variable??!?
-	const PROPS_MAP = _get_PROPS_MAP()  
+	const PROPS_MAP = _PROPS_MAP()  
+	const COMPONENT_CONTEXT = _COMPONENT_CONTEXT();
+	const STANDALONE = _STANDALONE();
 
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
 	const props_map = element[PROPS_MAP]!;
@@ -93,6 +121,11 @@ function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:
 			}
 			// encapsulate in HTMLElement
 			if (!(el instanceof HTMLElement)) el = HTMLUtils.createHTMLElement('<span></span>', el);
+
+			// set outer element as [COMPONENT_CONTEXT]
+			el[COMPONENT_CONTEXT] = element;
+			// set [STANDALONE]
+			if (element.isStandaloneProperty?.(prop)) el[STANDALONE]  = true;
 
 			// add to content if it exists
 			const content = container();

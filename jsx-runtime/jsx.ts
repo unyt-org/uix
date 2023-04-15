@@ -3,6 +3,7 @@ import { $$, Datex } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import { BaseComponent } from "../components/BaseComponent.ts";
+import { validElementAttrs, validHTMLElementAttrs } from "../html/attributes.ts";
 
 const jsxFragment = 'jsx.Fragment'
 const jsxTextNode = 'jsx.Text'
@@ -39,9 +40,9 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 			if (key == "style") HTMLUtils.setCSS(element, <any> val);
 			else {
 				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) {
-					val = new Path(val, (<Record<string,any>>props)['module'] ?? getCallerFile()).toString();
+					val = new Path(val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile()).toString();
 				}
-				HTMLUtils.setElementAttribute(element, key, <any>val, (<Record<string,any>>props)['module'] ?? getCallerFile());
+				HTMLUtils.setElementAttribute(element, key, <any>val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile());
 			}
 		}
 	}
@@ -84,13 +85,12 @@ declare global {
 
 		type child = Datex.CompatValue<HTMLElement|string|number|boolean|bigint|null|child[]>
 
-		type htmlAttrs<T extends HTMLElement> = DatexValueObject<Omit<Partial<T>, 'children'|'style'>>
+		type htmlAttrs<T extends Record<string,unknown>> = DatexValueObject<Omit<Partial<T>, 'children'|'style'>>
 
 		// Common attributes of the standard HTML elements and JSX components
 		type IntrinsicAttributes = {
 			style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number>>>,
-			class?: Datex.CompatValue<string>
-		} & htmlAttrs<HTMLElement>
+		} & htmlAttrs<validHTMLElementAttrs>
 
 		// Common attributes of the UIX components only
 		interface IntrinsicClassAttributes<C extends BaseComponent> {}
@@ -101,7 +101,7 @@ declare global {
 		
 		// HTML elements allowed in JSX, and their attributes definitions
 		type IntrinsicElements = {
-			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: child} & htmlAttrs<HTMLElementTagNameMap[key]>
+			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: child} & htmlAttrs<validElementAttrs<key>>
 		}
 	}
   }

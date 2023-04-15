@@ -3,18 +3,18 @@ import { ValueInput } from "../uix/components/ValueInput.tsx";
 /**
  * Put examples for all components in the testComponents object.
  * Every component can be displayed under the paths:
- *   /[key]/frontend
- *   /[key]/backend+static
- *   /[key]/backend+dynamic
+ *   /[key]/frontend 		(Fully rendered on the frontend)
+ *   /[key]/backend+static 	(Fully server side rendered)
+ *   /[key]/backend+dynamic (Loaded from the backend via DATEX)
  *   /[key]/backend+hydrated
  * 
- * (e.g. /textInput/frontend)
+ * (e.g. http://localhost/textInput/backend+static )
  */
 
 
 export const testComponents = {
-	textInput: <div>
-		<ValueInput placeholder="... 1"/>
-		<ValueInput placeholder="... 2"/>
+	textInput: <div style={{display:"flex", gap:5, margin:5}}>
+		<ValueInput placeholder="text 1..."/>
+		<ValueInput placeholder="text 2..."/>
 	</div>
 }

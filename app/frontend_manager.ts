@@ -502,6 +502,8 @@ catch {
 
 
 	private async handleIndexHTML(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn) {
+		const url = new Path(requestEvent.request.url);
+		const pathAndQueryParameters = url.pathname + url.search;
 		const compat = Server.isSafariClient(requestEvent.request);
 		const lang = UIX.ContextBuilder.getRequestLanguage(requestEvent.request);
 		try {
@@ -511,7 +513,7 @@ catch {
 			// TODO:
 			// Datex.Runtime.ENV.LANG = lang;
 			// await Datex.Runtime.ENV.$.LANG.setVal(lang);
-			const [prerendered_content, render_method, open_graph_meta_tags] = await this.#backend?.getEntrypointHTMLContent(path, lang, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
+			const [prerendered_content, render_method, open_graph_meta_tags] = await this.#backend?.getEntrypointHTMLContent(pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
 				if (prerendered_content instanceof Response) await requestEvent.respondWith(prerendered_content.clone());

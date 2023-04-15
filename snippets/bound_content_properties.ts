@@ -67,6 +67,11 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 
 
 function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:()=>Element|ShadowRoot|null|undefined, prop:string, id:string) {
+	
+	// TODO: fix
+	// SaFaRi: ReferenceError: Cannot access uninitialized variable??!?
+	const PROPS_MAP = _get_PROPS_MAP()  
+
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
 	const props_map = element[PROPS_MAP]!;
 

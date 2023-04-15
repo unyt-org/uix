@@ -398,7 +398,6 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     constructor(options?:Datex.DatexObjectInit<O>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
-
         // @ts-ignore [INIT_PROPS]
         if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
         // pre-init options before other DATEX state is initialized 
@@ -601,8 +600,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         let js_code = '';
         const pseudoClass = `globalThis.UIX_Standalone_${this.constructor.name}`;
         const standaloneProperties = (<typeof BaseComponent>this.constructor).standaloneProperties;
-
-
+            
+        
         js_code += `import {querySelector} from "uix/snippets/shadow_dom_selector.ts";\n`
         js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
         js_code += `Object.assign(self, ${pseudoClass});\n`

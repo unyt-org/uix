@@ -11,10 +11,14 @@ export namespace ValueInput {
 @Component<ValueInput.Options>({
 	type: "text"
 })
-export class ValueInput extends BaseComponent<ValueInput.Options, never> {
-	@layout input = <input type={this.options.type} placeholder={this.options.placeholder}/>
+export class ValueInput extends BaseComponent<ValueInput.Options, HTMLButtonElement> {
+	@child input = <input type={this.options.type} placeholder={this.options.placeholder}/>
 
 	protected override onConstruct() {
 		this.classList.add("value-input")
 	}
+}
+
+function x () {
+	const x = <ValueInput/>
 }

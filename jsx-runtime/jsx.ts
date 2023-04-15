@@ -89,6 +89,7 @@ declare global {
 		// Common attributes of the standard HTML elements and JSX components
 		type IntrinsicAttributes = {
 			style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number>>>,
+			class?: Datex.CompatValue<string>
 		} & htmlAttrs<HTMLElement>
 
 		// Common attributes of the UIX components only

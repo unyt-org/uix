@@ -4,8 +4,6 @@ import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.t
 import { resolveEntrypointRoute, html_content, html_content_or_generator_or_preset, RenderMethod, RenderPreset, raw_content } from "../html/rendering.ts";
 import { logger } from "../utils/global_values.ts";
 import { Context, ContextGenerator, HTMLUtils } from "../uix_all.ts";
-import { Routing } from "../base/routing.ts";
-import { Base } from "../components/base.ts";
 import { getOuterHTML } from "../html/render.ts";
 import { Datex } from "unyt_core/datex.ts";
 import { OPEN_GRAPH } from "../base/open_graph.ts";

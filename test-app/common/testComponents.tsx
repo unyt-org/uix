@@ -8,9 +8,8 @@ import { ValueInput } from "../uix/components/ValueInput.tsx";
  *   /[key]/backend+dynamic (Loaded from the backend via DATEX)
  *   /[key]/backend+hydrated
  * 
- * (e.g. http://localhost/textInput/backend+static )
+ * (e.g. http://localhost:4200/textInput/backend+static )
  */
-
 
 export const testComponents = {
 	textInput: <div style={{display:"flex", gap:5, margin:5}}>

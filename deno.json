@@ -14,6 +14,6 @@
 		"lib": ["deno.window", "dom"]
 	},
 	"tasks": {
-		"test-app": "cd test-app && deno run -Aq ../run.ts -w"
+		"test-app": "cd test-app && deno run -Aq ../run.ts -w --port 4200"
 	}
 }

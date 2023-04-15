@@ -38,7 +38,7 @@ export class FrontendManager extends HTMLProvider {
 			handle_out_of_scope_path: (path: Path|string, from:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects, compat)
 		});
 
-		super(scopePath, app_options, import_resolver, live)
+		super(scopePath, app_options, import_resolver, live, basePath)
 
 		this.#base_path = basePath;
 		this.#web_path = new Path(`uix://${this.srcPrefix}${this.scope.name}/`);

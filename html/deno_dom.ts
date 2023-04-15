@@ -25,6 +25,7 @@ if (IS_HEADLESS) {
 	globalThis.Document = window.Document;
 	globalThis.NodeFilter = window.NodeFilter;
 	globalThis.NodeIterator = window.NodeIterator;
+	globalThis.ShadowRoot = window.ShadowRoot;
 
 	globalThis.Node = window.Node;
 	globalThis.NodeList = window.NodeList;

@@ -28,8 +28,8 @@ export namespace Routing {
 		return Path.Route(window.location.href ?? import.meta.url);
 	}
 
-	export function setCurrentRoute<S extends boolean>(url?:string|URL, silent?: S): S extends true ? boolean : Promise<void>
-	export function setCurrentRoute<S extends boolean>(parts?:string[], silent?: S): S extends true ? boolean : Promise<void>
+	export function setCurrentRoute<S extends boolean>(url?:string|URL, silent?: S): S extends true ? boolean : Promise<boolean>
+	export function setCurrentRoute<S extends boolean>(parts?:string[], silent?: S): S extends true ? boolean : Promise<boolean>
 	export function setCurrentRoute(_route?:string|string[]|URL, silent = false) {
 		if (!globalThis.history) return false;
 		const route = Path.Route(_route);

@@ -180,7 +180,6 @@ export namespace State {
         if (typeof load_new_state == "function") {
             setLoadingProgress(0.1);
             current_state = <any>await load_new_state();
-            // if (!(current_state instanceof Components.Base) && typeof current_state == "object") current_state = new UIXAppInstance(undefined, current_state);
             await Datex.Storage.setItem('uix_state_'+current_uix_state_name, current_state)
             // save constraints for outer component
             if (current_state instanceof Components.Base) {

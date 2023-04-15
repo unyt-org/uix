@@ -31,6 +31,7 @@ export * from "./base/context.ts"
 export * from "./sw/sw_installer.ts"
 
 // components
+export * from "./components/BaseComponent.ts"
 export * from "./components/main.ts"
 
 // elements

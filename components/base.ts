@@ -11,7 +11,6 @@ import { Utils } from "../base/utils.ts"
 import { Actions } from "../base/actions.ts"
 import { Handlers } from "../base/handlers.ts"
 import { Class, Logger, METADATA, ValueError } from "unyt_core/datex_all.ts"
-import { UIXAppInstance } from "../base/app.ts"
 import { I, S } from "../uix_short.ts"
 import { DEFAULT_BORDER_SIZE, IS_HEADLESS } from "../utils/constants.ts"
 import { Clipboard } from "../base/clipboard.ts"
@@ -1178,9 +1177,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         // is root element?
         this.updateRootLayout();
 
-        // has app parent?
-        if (this.parentElement instanceof UIXAppInstance) this.parentElement.handleNewPage(this);
-
         // call onAnchor, init with options dialog, etc.; async
         return this.connectedCallbackAsync();
     }
@@ -2158,10 +2154,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected showIfActive(){
         // parent is Component
         if (this.parent instanceof Base) this.parent.showChildIfActive(this);
-        // parent is app
-        else if (this.parentElement instanceof UIXAppInstance) {
-            if ((<UIXAppInstance>this.parentElement).getActivePage() == this) this.style.display = "flex";
-        }
         // no known parent
         else this.style.display = "flex";
     }

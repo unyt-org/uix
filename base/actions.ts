@@ -7,6 +7,7 @@ import { HTMLUtils } from "../html/utils.ts";
 import { Components } from "../components/main.ts";
 import { Types } from "../utils/global_types.ts";
 import { UIX } from "../uix.ts";
+import { BaseComponent } from "../uix_all.ts";
 
 
 type alert_button = {color?:string, dark_text?:boolean, text:Datex.CompatValue<string>, onClick?:()=>void}
@@ -20,7 +21,7 @@ export namespace Actions {
     let active_fullscreen_el_original_parent: Components.Base;
     let current_address_bar_path = "";
 
-    export async function toggleFullscreen(elem?:Components.Base, actual_full_screen = true):Promise<boolean > {
+    export async function toggleFullscreen(elem?:Components.Base|BaseComponent, actual_full_screen = true):Promise<boolean > {
         if (is_full_screen) {await exitFullscreen(); return false}
         else {await goFullscreen(elem, actual_full_screen); return true}
     }
@@ -30,7 +31,7 @@ export namespace Actions {
         if (!document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) exitFullscreen();
     });
 
-    export async function goFullscreen(elem?:Components.Base, actual_full_screen = true): Promise<void>{
+    export async function goFullscreen(elem?:Components.Base|BaseComponent, actual_full_screen = true): Promise<void>{
         if (!elem) return;
         if (is_full_screen) await exitFullscreen();
 
@@ -64,7 +65,7 @@ export namespace Actions {
 
     }
 
-    export function exitFullscreen():Promise<void> {
+    export function exitFullscreen() {
         if(!active_fullscreen_el) {
             logger.error("no active fullscreen element");
             return;

@@ -133,7 +133,14 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 		const contextPtr = (<HTMLElement|undefined>(<any>el)[COMPONENT_CONTEXT])?.attributes.getNamedItem("data-ptr")?.value;
 		let script = `{const el = querySelector('[data-ptr="${dataPtr}"]'); const ctx = querySelector('[data-ptr="${contextPtr}"]');`
 		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
-			for (const listener of listeners) script += `el.addEventListener("${event}", (function (...args){return (${listener})(...args)}).bind(ctx));`
+			for (const listener of listeners) {
+				// normal function with own 'this' context
+				if (isNormalFunction(listener)) script += `el.addEventListener("${event}", ${listener});`
+				// object methods not supported
+				else if (isObjectMethod(listener)) throw new Error("Invalid event handler for standalone mode: must be a function or arrow function ("+listener.name+")");	
+				// context wrapper for arrow function or object method
+				else script += `el.addEventListener("${event}", (function (...args){return (${listener})(...args)}).bind(ctx));`
+			}
 		}
 		script += `}`
 		opts._injectedJsData.init.push(script);
@@ -146,6 +153,23 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 	// const end = outer.match(/<\/[A-Za-z0-9-_ ]+>$/)?.[0] ?? ""; // might not have an end tag
 	// return start + inner + end;
 }
+
+// const isArrowFn = (fn:Function) => 
+//   (typeof fn === 'function') &&
+//   !/^(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*\s*(?:(?:(?:async\s(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*\s*)?function|class)(?:\s|(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*)|(?:[_$\w][\w0-9_$]*\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*\()|(?:\[\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*(?:(?:['][^']+['])|(?:["][^"]+["]))\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*\]\())/.test(fn.toString());
+
+const isObjectMethod = (fn:Function) => {
+	if (typeof fn !== 'function') return false;
+	return fn.toString().match(/^(async\s+)?[^\s(]+(\(|\*)/)
+}
+ 
+
+const isNormalFunction = (fn:Function) => {
+	if (typeof fn !== 'function') return false;
+	return fn.toString().match(/^(async\s+)?function(\(| |\*)/)
+}
+ 
+
 
 
 export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, lang?:string}):Promise<[header_script:string, html_content:string]> {

@@ -38,5 +38,6 @@ However, the saved state of a UIX Component should not contain web-specfic conte
 4. [Components](./docs/4_Components.md)
 5. [States](./docs/5_States.md)
 6. [JSX](./docs/6_JSX.md)
+6. [Component Standalone Mode](./docs/7_Standalone_Mode.md)
 
 ## [Development Guidelines](./DEVELOP.md)

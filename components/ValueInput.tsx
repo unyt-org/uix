@@ -14,5 +14,8 @@ export namespace ValueInput {
 	type: "text"
 })
 export class ValueInput extends BaseComponent<ValueInput.Options, never> {
-	@standalone @layout input = <input onclick={e => console.log("click",e)} type={this.options.type} placeholder={this.options.placeholder}/>
-}
+
+	@standalone @layout 
+	input = <input onclick={()=>console.log("click",this)} type={this.options?.type} placeholder={this.options?.placeholder}/>
+
+ }

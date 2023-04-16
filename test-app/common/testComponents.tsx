@@ -1,4 +1,5 @@
 import { ValueInput } from "uix/components/ValueInput.tsx";
+import { BaseComponent } from "uix/components/BaseComponent.ts";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -10,6 +11,7 @@ import { ValueInput } from "uix/components/ValueInput.tsx";
  * 
  * (e.g. http://localhost:4200/textInput/backend+static )
  */
+
 
 export const testComponents = {
 	textInput: <div style={{display:"flex", gap:5, margin:5}}>

@@ -27,6 +27,9 @@ import { App } from "../app/app.ts";
 import { bindContentProperties } from "../snippets/bound_content_properties.ts";
 
 // deno-lint-ignore no-namespace
+/**
+ * @deprecated Please use UIX.BaseComponent or UIX.ShadowDOMComponent
+ */
 export namespace Base {
     export interface Options extends Elements.Base.Options {
         vertical_align?:Types.VERTICAL_ALIGN
@@ -103,7 +106,11 @@ export namespace Base {
     }
 }
 
-@template("uix:component") 
+
+@template("uix:component")
+/**
+ * @deprecated Please use UIX.BaseComponent or UIX.ShadowDOMComponent
+ */
 export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base implements RouteManager {
 
     static DEFAULT_OPTIONS:Base.Options = {
@@ -164,7 +171,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     protected is_skeleton = false // true if component not yet fully initialized, still displayed as skeleton and not associated with DATEX object
 
-
+    /**
+     * @deprecated Please use UIX.BaseComponent or UIX.ShadowDOMComponent
+     */
     constructor(options?:Datex.DatexObjectInit<O>, constraints?:Datex.DatexObjectInit<Types.component_constraints>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super(null)
@@ -882,7 +891,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         return js_code;
     }
 
-    public standaloneEnabled() {
+    // used in render.ts
+    private standaloneEnabled() {
         return Object.keys((<typeof Base>this.constructor).standaloneMethods).length || this.standalone_handlers.size;
     }
 

@@ -147,9 +147,11 @@ export function addStyleSheetLink(element:HTMLElement|ShadowRoot, url:string|URL
         const link = document.createElement("link");
         link.rel = "stylesheet";
         link.onload = ()=>resolve(link);
-        link.onerror = ()=>reject();
+        link.onerror = ()=>reject("Failed to load stylesheet " + url);
         link.href = url.toString();
+        
         element.appendChild(link);
+
         // onload not working with JSDom
         if (IS_HEADLESS) resolve(link);
     })

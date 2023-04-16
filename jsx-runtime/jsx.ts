@@ -1,6 +1,6 @@
 import { Path } from "unyt_node/path.ts";
 import { $$, Datex } from "unyt_core";
-import { HTMLUtils } from "../html/utils.ts";
+import { UIX } from "uix";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import { BaseComponent } from "../components/BaseComponent.ts";
 import { validElementAttrs, validHTMLElementAttrs } from "../html/attributes.ts";
@@ -37,19 +37,19 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 
 	if (init_attributes) {
 		for (let [key,val] of Object.entries(props)) {
-			if (key == "style") HTMLUtils.setCSS(element, <any> val);
+			if (key == "style") UIX.HTMLUtils.setCSS(element, <any> val);
 			else {
 				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) {
 					val = new Path(val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile()).toString();
 				}
-				HTMLUtils.setElementAttribute(element, key, <any>val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile());
+				UIX.HTMLUtils.setElementAttribute(element, key, <any>val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile());
 			}
 		}
 	}
 
 	if (init_children) {
 		for (const child of children) {
-			HTMLUtils.append(element, child);
+			UIX.HTMLUtils.append(element, child);
 		}
 	}
 
@@ -65,6 +65,8 @@ jsx.customAttributes = ['children', 'key', 'props']
 // TODO: handle separate
 export const jsxs = jsx;
 
+// @ts-ignore global jsx (required to work in standalone mode)
+globalThis._jsx = jsx;
 
 declare global {
 	namespace JSX {

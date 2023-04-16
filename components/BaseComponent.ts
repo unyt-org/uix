@@ -19,7 +19,7 @@ import { INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { addGlobalStyleSheetLink } from "../utils/css_style_compat.ts";
 
 
-export type standaloneProperties = Record<string,{type:'id'|'content'|'layout'|'child',id:string}>;
+export type standaloneProperties = Record<string,{type:'id'|'content'|'layout'|'child',id:string} | {type:'prop', init:string}>;
 
 // deno-lint-ignore no-namespace
 export namespace BaseComponent {
@@ -237,7 +237,16 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             this.standaloneProperties[name] = {type:'child', id};
         }
 
-        else throw new Error("@UIX.standalone instance properties are currently only supported in combination with @UIX.id or @UIX.content")
+        // normal property (extract initializer from class source code)
+        else {
+            const classCode = this.toString().replace(/.*{/, '');
+            const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
+            if (!propertyCode) {
+                throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
+            }
+            this.standaloneProperties[name] = {type:'prop', init:propertyCode};
+        }
+
     }
 
     public static getStandaloneJS() {
@@ -346,8 +355,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         // clone this.stylesheets for current class if not already cloned
         this.stylesheets = [...this.stylesheets];
         // find matching .css and .dx files by name
-        this.findModuleBoundStylesheets(); 
-        
+        this.addPotentialModuleStylesheet(); 
 
         const loaders:Promise<CSSStyleSheet|false>[] = [];
 
@@ -364,7 +372,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     /**
      * find the x.css file matching the x.ts module file of this component (if specified)
      */
-    private static findModuleBoundStylesheets(){
+    private static addPotentialModuleStylesheet(){
         if (this._use_resources) {
             const css_url = this._module.replace(/\.m?(ts|js)x?$/, '.css');
             this.module_stylesheets = [...this.module_stylesheets]; // create new module stylesheets are for this class
@@ -394,6 +402,11 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     protected SCROLL_TO_BOTTOM = false;
     protected FORCE_SCROLL_TO_BOTTOM = false;
     protected CONTENT_PADDING = true;
+
+    /**
+     * true if component is in standalone mode (UIX library not loaded)
+     */
+    public standalone = false;
 
     protected openGraphImageGenerator?: OpenGraphPreviewImageGenerator; // set the custom preview image generator for open graph cards
 
@@ -585,8 +598,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         return await Datex.Runtime.deepCloneValue(this);
     }
 
-
-    public standaloneEnabled() {
+    // used in render.ts
+    private standaloneEnabled() {
         return !! (
             Object.keys((<typeof BaseComponent>this.constructor).standaloneMethods).length || 
             Object.keys((<typeof BaseComponent>this.constructor).standaloneProperties).length || 
@@ -611,6 +624,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         js_code += `import {querySelector} from "uix/snippets/shadow_dom_selector.ts";\n`
         js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
         js_code += `Object.assign(self, ${pseudoClass});\n`
+        js_code += `self.standalone = true;\n`
 
         // bind @id + @content properties
         const idProps:Record<string,string> = {};
@@ -625,6 +639,9 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             else if (data.type == "content") contentProps[name] = data.id;
             else if (data.type == "layout")layoutProps[name] = data.id;
             else if (data.type == "child") childProps[name] = data.id;
+            else if (data.type == "prop") {
+                js_code += `self["${name}"] = (function (){return (${data.init})}).apply(self);`
+            }
         }
         if (Object.keys(standaloneProperties).length) {
             js_code += `import { bindContentProperties } from "uix/snippets/bound_content_properties.ts";\n`
@@ -877,10 +894,13 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         if (typeof url_or_style_sheet == "string" || url_or_style_sheet instanceof URL) {
             url_or_style_sheet = new URL(url_or_style_sheet, (<typeof BaseComponent>this.constructor)._module);
             this.style_sheets_urls.push(url_or_style_sheet.toString());
+
+            // allow fail if only potential module stylesheet
+            const allow_fail = (<typeof BaseComponent>this.constructor).module_stylesheets.includes(url_or_style_sheet.toString());
             
             // adopt CSSStylesheet (works if css does not use @import and shadowRoot exists, otherwise use <link>)
             if (adopt && this.shadowRoot) {
-                const stylesheet = BaseComponent.getURLStyleSheet(url_or_style_sheet, (<typeof BaseComponent>this.constructor).module_stylesheets.includes(url_or_style_sheet.toString()));
+                const stylesheet = BaseComponent.getURLStyleSheet(url_or_style_sheet, allow_fail);
                 // is sync
                 if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) this.adoptStyle(stylesheet)
                 else if (stylesheet) return new Promise<void>(async resolve=>{
@@ -891,7 +911,13 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
                 // stylesheet might be false, no stylesheet, ignore (error is logged)
             }
             // insert <link>
-            else return this.insertStyleSheetLink(url_or_style_sheet);
+            else return (async ()=>{
+                try {
+                    await this.insertStyleSheetLink(url_or_style_sheet);
+                } catch (e) {
+                    if (!allow_fail) throw e;
+                }
+            })()
         }
 
         else if (url_or_style_sheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet){
@@ -909,7 +935,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     }
 
     protected insertStyleSheetLink(url:URL) {
-        addGlobalStyleSheetLink(url);
+        return addGlobalStyleSheetLink(url);
     }
 
 

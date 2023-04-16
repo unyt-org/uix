@@ -44,6 +44,11 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 	const url = new Error().stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
 	if (!url) throw new Error("Could not get the location of a UIX component. This should not happen");
 
+	// deprecated message
+	// if (component_class.prototype instanceof Components.Base) {
+	// 	logger.warn("UIX.Components.Base is deprecated - please use UIX.BaseComponent or UIX.ShadowDOMComponent")
+	// }
+
 	if (component_class.prototype instanceof Components.Base || component_class.prototype instanceof BaseComponent) {
 
 		// set auto module (url from stack trace), not if module === null => resources was disabled with @NoResources

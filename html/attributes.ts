@@ -36,7 +36,7 @@ export type validHTMLElementAttrs = {
 
 export type validElementAttrs<TAG extends string> = TAG extends keyof typeof elementAttributes ? {
 	[key in (typeof elementAttributes)[TAG][number]]: TAG extends keyof customAttributeValues ? (key extends keyof customAttributeValues[TAG] ? customAttributeValues[TAG][key] : string) : string
-} : Record<string, never>;
+} : Record<string, unknown>;
 
 
 /** attribute definitions used by multiple elements */ 
@@ -72,7 +72,7 @@ export const elementAttributes = {
 export type customAttributeValues = {
 	a: {
 		href: string|URL
-	}
+	},
 
 	input: widthAndHeight & src & {
 		autocomplete: "on"|"off"

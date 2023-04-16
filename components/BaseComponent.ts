@@ -181,16 +181,16 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     }
 
 
-    private static standalone_loaded = false;
-    private static loadStandaloneProps() {
-        if (this.standalone_loaded) return;
-        this.standalone_loaded = true;
-        const props:Record<string, string> = this.prototype[METADATA]?.[STANDALONE_PROPS]?.public;
+    private static standalone_loaded: Set<typeof BaseComponent> = new Set();
+    private static loadStandaloneProps(scope = this.prototype) {
+        if (this.standalone_loaded.has(this)) return;
+
+        const props:Record<string, string> = scope[METADATA]?.[STANDALONE_PROPS]?.public;
         if (!props) return;
 
         for (const name of Object.values(props)) {
-            if (this.prototype[<keyof typeof this.prototype>name])
-                this.addStandaloneMethod(name, this.prototype[<keyof typeof this.prototype>name]);
+            if (scope[<keyof typeof scope>name])
+                this.addStandaloneMethod(name, scope[<keyof typeof scope>name]);
             else 
                 this.addStandaloneProperty(name);
         }
@@ -511,7 +511,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         // options already handled in constructor
         
         // handle default component options (class, ...)
-        if (this.options.class) HTMLUtils.setElementAttribute(this, "class", this.options.$.class);
+        if (this.options?.class) 
+            HTMLUtils.setElementAttribute(this, "class", this.options.$.class);
 
         await this.init(true);
         await this.onConstructed?.();
@@ -574,7 +575,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
    
         await (<typeof BaseComponent>this.constructor).loadModuleDatexImports();
         // @standlone props only relevant for backend
-        if (IS_HEADLESS) (<typeof BaseComponent>this.constructor).loadStandaloneProps();
+        if (IS_HEADLESS) (<typeof BaseComponent>this.constructor).loadStandaloneProps(this);
 
         if (constructed) await this.onConstruct?.();
         await this.onInit?.() // element was constructed, not fully loaded / added to DOM!

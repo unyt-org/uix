@@ -821,10 +821,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
 
-    private static standalone_loaded = false;
+    private static standalone_loaded: Set<typeof Base> = new Set();
     private static loadStandaloneMethods() {
-        if (this.standalone_loaded) return;
-        this.standalone_loaded = true;
+        if (this.standalone_loaded.has(this)) return;
+        this.standalone_loaded.add(this);
         const props:Record<string, string> = this.prototype[METADATA]?.[STANDALONE_PROPS]?.public;
         if (!props) return;
 
@@ -844,7 +844,8 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     private static standaloneMethods:Record<string,Function> = {};
     protected static addStandaloneMethod(name: string, value:Function) {
         // make sure this class has a separate standaloneMethods object
-        if (this.standaloneMethods == Base.standaloneMethods) this.standaloneMethods = {};
+        if (Object.getPrototypeOf(this).standaloneMethods === this.standaloneMethods) this.standaloneMethods = Object.create(this.standaloneMethods);
+       
         this.standaloneMethods[name] = value;
         // add inferred methods
         for (const method of this.inferredStandaloneMethods[name]??[]) this.addStandaloneMethod(method, this.prototype[method]);
@@ -858,7 +859,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected static standaloneProperties:Record<string,{type:'id'|'content'|'layout'|'child',id:string}> = {};
     protected static addStandaloneProperty(name: string) {
         // make sure this class has a separate standaloneProperties object
-        if (this.standaloneProperties == Base.standaloneProperties) this.standaloneProperties = {};
+        if (Object.getPrototypeOf(this).standaloneProperties === this.standaloneProperties) this.standaloneProperties = Object.create(this.standaloneProperties);
 
         if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];

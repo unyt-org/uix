@@ -18,4 +18,19 @@ export class ValueInput extends BaseComponent<ValueInput.Options, never> {
 	@standalone @layout 
 	input = <input onclick={()=>console.log("click",this)} type={this.options?.type} placeholder={this.options?.placeholder}/>
 
- }
+	@standalone protected override onDisplay(): void | Promise<void> {
+		console.log("DISPLAY 1",this)	
+	}
+}
+
+ @Component<ValueInput.Options>({
+	class: "value-input",
+	type: "text"
+})
+export class ValueInput2 extends ValueInput {
+
+	@standalone protected override onDisplay(): void | Promise<void> {
+		super.onDisplay();
+		console.log("DISPLAY 2!!",this)	
+	}
+}

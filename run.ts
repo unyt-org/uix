@@ -48,6 +48,7 @@ const cmd = [
 	"deno",
 	"run",
 	"-Aq",
+	"--unsafely-ignore-certificate-errors=localhost",
 ];
 
 if (reload) {
@@ -71,7 +72,7 @@ async function run() {
 			...config_params,
 			run_script_abs_url,
 			...config_params, // pass --import-map and --config also as runtime args to reconstruct the command when the backend restarts
-			  ...Deno.args,
+			...Deno.args,
 		]
 	}).status();
 	if (exitStatus.code == 42) {

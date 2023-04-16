@@ -204,7 +204,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     private static standaloneMethods:Record<string,Function> = {};
     protected static addStandaloneMethod(name: string, value:Function) {
         // make sure this class has a separate standaloneMethods object
-        if (this.standaloneMethods == BaseComponent.standaloneMethods) this.standaloneMethods = {};
+        if (Object.getPrototypeOf(this).standaloneMethods === this.standaloneMethods) this.standaloneMethods = Object.create(this.standaloneMethods);
+
         this.standaloneMethods[name] = value;
         // add inferred methods
         for (const method of this.inferredStandaloneMethods[name]??[]) this.addStandaloneMethod(method, this.prototype[<keyof typeof this.prototype>method]);
@@ -218,8 +219,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     protected static standaloneProperties:standaloneProperties = {};
     protected static addStandaloneProperty(name: string) {
         // make sure this class has a separate standaloneProperties object
-        if (this.standaloneProperties == BaseComponent.standaloneProperties) this.standaloneProperties = {};
-
+        if (Object.getPrototypeOf(this).standaloneProperties === this.standaloneProperties) this.standaloneProperties = Object.create(this.standaloneProperties);
+        
         if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'id', id};
@@ -663,8 +664,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     protected generatePropertySelectorCode(standaloneProperties:standaloneProperties) {
         let js_code = "";
         for (const [name, data] of Object.entries(standaloneProperties)) {
-            // no difference between @id, @content, @child, @layout
-            js_code += `self["${name}"] = self.querySelector("#${data.id}");\n`;
+            // no difference between @id, @content, @child, @layout, ignore other props
+            if (data.type != "prop") js_code += `self["${name}"] = self.querySelector("#${data.id}");\n`;
         }
         return js_code;
     }

@@ -5,13 +5,13 @@ import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import { BaseComponent } from "../components/BaseComponent.ts";
 import { validElementAttrs, validHTMLElementAttrs } from "../html/attributes.ts";
 
-const jsxFragment = 'jsx.Fragment'
-const jsxTextNode = 'jsx.Text'
+// const jsxFragment = 'jsx.Fragment'
+// const jsxTextNode = 'jsx.Text'
 
-type jsxDOMContainer = HTMLElement | DocumentFragment | null
-type jsxDOMElement = HTMLElement | DocumentFragment | Text
+// type jsxDOMContainer = HTMLElement | DocumentFragment | null
+// type jsxDOMElement = HTMLElement | DocumentFragment | Text
 
-export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): jsxDOMElement {
+export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): HTMLElement {
 
 	let element:HTMLElement;
 	let { children = [], ...props } = config
@@ -58,9 +58,9 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 	return ptr;
 }
 
-jsx.Fragment = jsxFragment
-jsx.TextNode = jsxTextNode
-jsx.customAttributes = ['children', 'key', 'props']
+// jsx.Fragment = jsxFragment
+// jsx.TextNode = jsxTextNode
+// jsx.customAttributes = ['children', 'key', 'props']
 
 // TODO: handle separate
 export const jsxs = jsx;
@@ -73,7 +73,9 @@ declare global {
 		// JSX node definition
 		type Element = HTMLElement
 
-		type ElementClass = jsxDOMElement
+		// type ElementClass = typeof HTMLElement
+
+		type Fragment = number;
 
 		// Property that will hold the HTML attributes of the Component
 		interface ElementAttributesProperty {

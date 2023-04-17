@@ -22,7 +22,7 @@ import { serializeJSValue } from "../utils/serialize_js.ts";
 
 
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string, init?:string};
-export type standalonePropertyData = {type:'prop', init:string}
+export type standalonePropertyData = {type:'prop', init?:string}
 export type standaloneProperties = Record<string, standaloneContentPropertyData | standalonePropertyData>;
 
 // deno-lint-ignore no-namespace
@@ -232,39 +232,33 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     // add instance properties that are loaded in standalone mode
     protected static standaloneProperties:standaloneProperties = {};
     protected static addStandaloneProperty(name: string) {
-        let init:Record<string,any>|null = {type:'prop'};
         if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            init = {type:'id', id};
-        }
-        else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'content', id};
-            init = null;
-        }
-        else if (name in (this.prototype[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'layout', id};
-            init = null;
-        }
-        else if (name in (this.prototype[METADATA]?.[CHILD_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[CHILD_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'child', id};
-            init = null;
-        }
-
-        // normal property (extract initializer from class source code)
-        if (init) {
+            // // extract initializer from class source code
             // const classCode = this.toString().replace(/.*{/, '');
             // const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
             // if (!propertyCode) {
             //     console.log(classCode)
             //     throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
             // }
-            // init.init = propertyCode;
-            this.standaloneProperties[name] = <any>init;
+            this.standaloneProperties[name] = {type:'id', id};
         }
-
+        else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'content', id};
+        }
+        else if (name in (this.prototype[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'layout', id};
+        }
+        else if (name in (this.prototype[METADATA]?.[CHILD_PROPS]?.public??{})) {
+            const id = this.prototype[METADATA]?.[CHILD_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+            this.standaloneProperties[name] = {type:'child', id};
+        }
+        // normal property
+        else {
+            this.standaloneProperties[name] = {type:'prop'};
+        }
     }
 
     /**
@@ -366,7 +360,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             }
             // check if already in DOM, otherwise create (TODO: improve)
             else if (data.type == "id") {
-                // js_code += `this["${name}"] = ${this.getSelectorCode(data)} ?? ${data.init};\n`
+                js_code += `this["${name}"] = ${this.getSelectorCode(data, 'this')};\n`
             }
             // @content, @child, @layout - find with selector
             else {
@@ -748,7 +742,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             }
             // check if already in DOM, otherwise create (TODO: improve)
             else if (data.type == "id") {
-                js_code += `self["${name}"] = ${(this.constructor as typeof BaseComponent).getSelectorCode(data, 'self')} ?? ${serializeJSValue(this[<keyof this>name])};\n`
+                // js_code += `self["${name}"] = ${(this.constructor as typeof BaseComponent).getSelectorCode(data, 'self')} ?? self["${name}"];\n`
             }
         }
 

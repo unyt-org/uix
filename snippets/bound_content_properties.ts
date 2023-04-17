@@ -17,7 +17,7 @@ const PROPS_MAP = globalThis.uix_PROPS_MAP ??= Symbol("PROPS_MAP");
  * @param allow_existing 
  * @param load_from_props 
  */
-export function bindContentProperties(element: HTMLElement & {[key:string|symbol]:any}, id_props:Record<string,string>, content_props:Record<string,string>, layout_props:Record<string,string>, child_props:Record<string,string>, allow_existing = false, load_from_props = true){
+export function bindContentProperties(element: HTMLElement & {[key:string|symbol]:any}, id_props?:Record<string,string>, content_props?:Record<string,string>, layout_props?:Record<string,string>, child_props?:Record<string,string>, allow_existing = false, load_from_props = true){
 	
 	// @UIX.id props
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
@@ -25,7 +25,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 	
 	if (id_props) {
 		for (const [prop,id] of Object.entries(id_props)) {
-			if (content_props[prop]) continue; // is content, ignore
+			if (content_props?.[prop]) continue; // is content, ignore
 
 			const prev = element[prop];
 

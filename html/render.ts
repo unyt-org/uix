@@ -217,7 +217,7 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 
 	// scripts when DOM loaded:
 	script += `
-	addEventListener("DOMContentLoaded", ()=>{
+	addEventListener("DOMContentLoaded", async ()=>{
 		// polyfill for browsers that don't support declarative shadow DOM
 		if (!HTMLTemplateElement.prototype.hasOwnProperty('shadowRootMode')) {
 			(function attachShadowRoots(root) {

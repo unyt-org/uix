@@ -9,17 +9,17 @@ export namespace ValueInput {
 	}
 }
 
-
 @Component<ValueInput.Options>({
 	class: "value-input",
 	type: "text"
 })
 export class ValueInput extends BaseComponent<ValueInput.Options, never> {
 
+	@standalone count = 0;
 	@standalone @layout input = <input onclick={()=>this.onClick()} type={this.options.type} placeholder={this.options.placeholder}/>
 	
 	@standalone onClick() {
-		console.log("click",this)
+		console.log("click",this.count++,this)
 	}
-	
+
 }

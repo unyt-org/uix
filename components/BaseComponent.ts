@@ -18,6 +18,7 @@ import { bindContentProperties } from "../snippets/bound_content_properties.ts";
 import { INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { addGlobalStyleSheetLink } from "../utils/css_style_compat.ts";
 import { indent } from "../utils/indent.ts"
+import { serializeJSValue } from "../utils/serialize_js.ts";
 
 
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string, init?:string};
@@ -27,7 +28,8 @@ export type standaloneProperties = Record<string, standaloneContentPropertyData 
 // deno-lint-ignore no-namespace
 export namespace BaseComponent {
     export interface Options {
-        class?: string
+        class?: string,
+        title?: string
     }
 }
 
@@ -253,13 +255,13 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
         // normal property (extract initializer from class source code)
         if (init) {
-            const classCode = this.toString().replace(/.*{/, '');
-            const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
-            if (!propertyCode) {
-                console.log(classCode)
-                throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
-            }
-            init.init = propertyCode;
+            // const classCode = this.toString().replace(/.*{/, '');
+            // const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
+            // if (!propertyCode) {
+            //     console.log(classCode)
+            //     throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
+            // }
+            // init.init = propertyCode;
             this.standaloneProperties[name] = <any>init;
         }
 
@@ -360,23 +362,23 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         for (const [name, data] of Object.entries(this.standaloneProperties)) {
             // normal property init
             if (data.type == "prop") {
-                js_code += `this["${name}"] = ${data.init};\n`
+                // js_code += `this["${name}"] = ${data.init};\n`
             }
             // check if already in DOM, otherwise create (TODO: improve)
             else if (data.type == "id") {
-                js_code += `this["${name}"] = ${this.getSelectorCode(data)} ?? ${data.init};\n`
+                // js_code += `this["${name}"] = ${this.getSelectorCode(data)} ?? ${data.init};\n`
             }
             // @content, @child, @layout - find with selector
             else {
-                js_code += `this["${name}"] = ${this.getSelectorCode(data)};\n`;
+                js_code += `this["${name}"] = ${this.getSelectorCode(data, 'this')};\n`;
             } 
         }
         return js_code;
     }
 
-    protected static getSelectorCode(propData:standaloneContentPropertyData) {
+    protected static getSelectorCode(propData:standaloneContentPropertyData, self:string) {
         // direct child
-        return `this.querySelector("#${propData.id}")`;
+        return `${self}.querySelector("#${propData.id}")`;
     }
 
     /** wait until static (css) and dx module files loaded */
@@ -737,6 +739,18 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
  
         js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
         js_code += `bindPrototype(self, globalThis.UIX_Standalone.${this.constructor.name});\n`
+
+        // init props with current values
+        for (const [name, data] of Object.entries((this.constructor as typeof BaseComponent).standaloneProperties)) {
+            // normal property init
+            if (data.type == "prop") {
+                js_code += `self["${name}"] = ${serializeJSValue(this[<keyof this>name])};\n`
+            }
+            // check if already in DOM, otherwise create (TODO: improve)
+            else if (data.type == "id") {
+                js_code += `self["${name}"] = ${(this.constructor as typeof BaseComponent).getSelectorCode(data, 'self')} ?? ${serializeJSValue(this[<keyof this>name])};\n`
+            }
+        }
 
         // call custom standalone handlers
         for (const handler of this.standalone_handlers) {

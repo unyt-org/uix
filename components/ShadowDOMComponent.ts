@@ -24,13 +24,13 @@ export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOM
         new URL('../style/fontawesome.css', import.meta.url).toString()
     ]
     
-    protected static override getSelectorCode(propData:standaloneContentPropertyData) {
+    protected static override getSelectorCode(propData:standaloneContentPropertyData, self:string) {
         // direct child
         if (propData.type == "child") 
-            return `this.querySelector("#${propData.id}")`;
+            return `${self}.querySelector("#${propData.id}")`;
         // shadow root child
         else 
-            return `this.shadowRoot.querySelector("#${propData.id}")`;
+            return `${self}.shadowRoot.querySelector("#${propData.id}")`;
     }
 
     /************************************ END STATIC ***************************************/

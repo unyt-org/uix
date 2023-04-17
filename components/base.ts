@@ -27,6 +27,7 @@ import { App } from "../app/app.ts";
 import { bindContentProperties } from "../snippets/bound_content_properties.ts";
 import { standaloneContentPropertyData, standaloneProperties } from "./BaseComponent.ts";
 import { indent } from "../utils/indent.ts";
+import { serializeJSValue } from "../utils/serialize_js.ts";
 
 // deno-lint-ignore no-namespace
 /**
@@ -903,13 +904,13 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         // normal property (extract initializer from class source code)
         if (init) {
-            const classCode = this.toString().replace(/.*{/, '');
-            const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
-            if (!propertyCode) {
-                console.log(classCode)
-                throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
-            }
-            init.init = propertyCode;
+            // const classCode = this.toString().replace(/.*{/, '');
+            // const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
+            // if (!propertyCode) {
+            //     console.log(classCode)
+            //     throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
+            // }
+            // init.init = propertyCode;
             this.standaloneProperties[name] = <any>init;
         }
 
@@ -982,15 +983,15 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         for (const [name, data] of Object.entries(this.standaloneProperties)) {
             // normal property init
             if (data.type == "prop") {
-                js_code += `this["${name}"] = ${data.init};\n`
+                // js_code += `this["${name}"] = ${data.init};\n`
             }
             // check if already in DOM, otherwise create (TODO: improve)
             else if (data.type == "id") {
-                js_code += `this["${name}"] = ${this.getSelectorCode(data)} ?? ${data.init};\n`
+                // js_code += `this["${name}"] = ${this.getSelectorCode(data)} ?? ${data.init};\n`
             }
             // @content, @child, @layout - find with selector
             else {
-                js_code += `this["${name}"] = ${this.getSelectorCode(data)};\n`;
+                js_code += `this["${name}"] = ${this.getSelectorCode(data, 'this')};\n`;
             } 
         }
         return js_code;
@@ -1018,13 +1019,13 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
 
-    protected static getSelectorCode(propData:standaloneContentPropertyData) {
+    protected static getSelectorCode(propData:standaloneContentPropertyData, self: string) {
         // direct child
         if (propData.type == "child") 
-            return `this.querySelector("#${propData.id}")`;
+            return `${self}.querySelector("#${propData.id}")`;
         // shadow root child
         else 
-            return `this.shadowRoot.querySelector("#${propData.id}")`;
+            return `${self}.shadowRoot.querySelector("#${propData.id}")`;
     }
 
     // used in render.ts
@@ -1056,6 +1057,18 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
         js_code += `bindPrototype(self, globalThis.UIX_Standalone.${this.constructor.name});\n`
 
+        // init props with current values
+        for (const [name, data] of Object.entries((this.constructor as typeof Base).standaloneProperties)) {
+            // normal property init
+            if (data.type == "prop") {
+                js_code += `self["${name}"] = ${serializeJSValue(this[<keyof this>name])};\n`
+            }
+            // check if already in DOM, otherwise create (TODO: improve)
+            else if (data.type == "id") {
+                js_code += `self["${name}"] = ${(this.constructor as typeof Base).getSelectorCode(data, 'self')} ?? ${serializeJSValue(this[<keyof this>name])};\n`
+            }
+        }
+        
         // call custom standalone handlers
         for (const handler of this.standalone_handlers) {
             // workaround to always set 'this' context to UIX component, even when handler is an arrow function

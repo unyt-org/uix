@@ -1,6 +1,7 @@
 import { ValueInput } from "uix/components/ValueInput.tsx";
 import { UIX } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
+import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -14,11 +15,15 @@ import { Api, test } from "../backend/public.ts";
  */
 
 
+
+function Container({children}:{children:HTMLElement|HTMLElement[]}) {
+	return <div style={{display:"flex", gap:5, margin:5}}>{...(children instanceof Array ? children : [children])}</div>
+}
+
 export const testComponents = {
 
-	textInput: <div style={{display:"flex", gap:5, margin:5}}>
-		<ValueInput placeholder="text 1..."/>
-	</div>,
+	textInput: 		<Container><ValueInput placeholder="text 1..."/></Container>,
+	dropdownMenu: 	<Container><DropdownMenu/></Container>,
 
 	/** 
 	 * Contexts demo:
@@ -36,9 +41,9 @@ export const testComponents = {
 		<button 
 			onmousedown={UIX.onFrontend(() => console.log("mouse down"))} 
 			onmouseup={Api.method1}
-			onclick={e => {
+			onclick={async e => {
 				console.log("clicked",e);
-				const x = test(10);
+				const x = await test(10);
 				console.log("res",x)
 			}}
 		>

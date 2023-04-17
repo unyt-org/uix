@@ -206,7 +206,7 @@ export namespace HTMLUtils {
 	}
 
 	export const EVENT_LISTENERS: unique symbol = Symbol("EVENT_LISTENERS");
-	export type elWithEventListeners = HTMLElement & {[EVENT_LISTENERS]:Map<keyof HTMLElementEventMap, Set<Function>>}
+	export type elWithEventListeners = HTMLElement & {[EVENT_LISTENERS]:Map<keyof HTMLElementEventMap, Set<(...args:any)=>any>>}
 
 	function setAttribute(element: HTMLElement, property:string, val:unknown, root_path?:string|URL) {
 		// not an HTML attribute - set property

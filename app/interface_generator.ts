@@ -4,6 +4,7 @@ import { Path } from "unyt_node/path.ts";
 import { $$, Datex } from "unyt_core";
 import { indent } from "../utils/indent.ts";
 
+export const BACKEND_EXPORT:unique symbol = Symbol("BACKEND_EXPORT");
 
 type interf = {new(...args:unknown[]):unknown};
 
@@ -62,16 +63,22 @@ function getValueTSCode(module_name:string, name:string, value: any, no_pointer 
 			if (typeof value == "function" && /^\s*class/.test(value.toString())) {
 				// convert static class to normal object
 				const original_value = value;
+				original_value[BACKEND_EXPORT] = true;
 				value = {}
 				for (const prop of Object.getOwnPropertyNames(original_value)) {
 					if (prop != "length" && prop != "name" && prop != "prototype") {
 						value[prop] = typeof original_value[prop] == "function" ? $$(Datex.Function.createFromJSFunction(original_value[prop], original_value)) : $$(original_value[prop]);
+						value[prop][BACKEND_EXPORT] = true;
+						if (original_value[prop]!=undefined) original_value[prop][BACKEND_EXPORT] = true;
 					}
 				}
 			}
 			
 			// convert Function to DATEX Function
-			else if (value instanceof Function) value = Datex.Function.createFromJSFunction(value); 
+			else if (value instanceof Function) {
+				value[BACKEND_EXPORT] = true;
+				value = Datex.Function.createFromJSFunction(value);
+			}
 
 			// log warning for non-pointer arrays and object (ignore defaults aka 'no_pointer')
 			else if ((type == Datex.Type.std.Array || type == Datex.Type.std.Object) && !no_pointer) {
@@ -79,8 +86,9 @@ function getValueTSCode(module_name:string, name:string, value: any, no_pointer 
 				implicitly_converted.getAuto(module_name).add(name);
 			}
 		}
-		
+
 		value = $$(value);
+		value[BACKEND_EXPORT] = true;
 	}
 
 	// disable garbage collection

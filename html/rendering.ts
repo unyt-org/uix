@@ -98,7 +98,7 @@ export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FI
 		return provideContent(<ArrayBuffer> await Datex.Compiler.compile("?", [value]), options.type[0])
 	}
 	else if (options?.type == Datex.FILE_TYPE.JSON) {
-		return provideContent(JSON.stringify(value, null, options?.formatted ? '    ' : undefined), options.type[0])
+		return provideContent(JSON.stringify(value??null, null, options?.formatted ? '    ' : undefined), options.type[0])
 	}
 	else {
 		return provideContent(Datex.Runtime.valueToDatexStringExperimental(value, options?.formatted), (options?.type ?? Datex.FILE_TYPE.DATEX_SCRIPT)[0])

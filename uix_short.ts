@@ -5,6 +5,7 @@ export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
 
 /** make decorators global */
 import {content as _content, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, Component as _Component, standalone as _standalone} from "./uix_all.ts";
+import { bindToOrigin } from "./utils/datex_over_http.ts";
 
 declare global {
 	const content: typeof _content;
@@ -230,4 +231,19 @@ export function HTML (name:TemplateStringsArray|string, ...content:(HTMLElement|
 		return el;
 	}
 	
+}
+
+/**
+ * bind to origin in function prototype
+ */
+
+declare global {
+	interface CallableFunction {
+		bindToOrigin<T, A extends unknown[], R>(this: (this: T, ...args: A) => R, context?:any): (...args: A)=>Promise<Awaited<Promise<R>>>;
+	}
+}
+
+// @ts-ignore
+Function.prototype.bindToOrigin = function (this:(...args: any)=>any, context:any) {
+	return bindToOrigin(this, context);
 }

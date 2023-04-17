@@ -45,6 +45,7 @@ export * from "./utils/global_values.ts"
 export * from "./utils/resources.ts"
 export * from "./utils/semaphore.ts"
 export * from "./utils/utils.ts"
+export * from "./utils/datex_over_http.ts"
 
 // UIX app
 export * from "./app/app.ts"

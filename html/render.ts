@@ -6,6 +6,7 @@ import { indent } from "../utils/indent.ts";
 import type { HTMLProvider } from "./html_provider.ts";
 import { HTMLUtils } from "./utils.ts";
 import { COMPONENT_CONTEXT, STANDALONE } from "../snippets/bound_content_properties.ts";
+import { BACKEND_EXPORT } from "../app/interface_generator.ts";
 
 await import("./deno_dom.ts");
 
@@ -130,14 +131,21 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 	}
 	attrs.push("data-static");
 
+	const standaloneContext = (<any>el)[STANDALONE];
+
 	// inject event listeners
-	if ((<any>el)[STANDALONE] && dataPtr && opts?._injectedJsData && (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
+	if (dataPtr && opts?._injectedJsData && (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
 		const context = <HTMLElement|undefined>(<any>el)[COMPONENT_CONTEXT];
 		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
 		let script = `  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
 		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
 			for (const listener of listeners) {
-				const listenerSource = listener.toString();
+				// @ts-ignore
+				const standaloneFunction = listener[STANDALONE];
+				// @ts-ignore
+				// const backendExportFunction = listener[BACKEND_EXPORT];
+				const forceBindToOriginContext = !standaloneContext&&!standaloneFunction;
+				const listenerSource = (forceBindToOriginContext ? UIX.bindToOrigin(listener) : listener).toString();
 
 				// native function not supported
 				if (listenerSource == 'function () { [native code] }') {

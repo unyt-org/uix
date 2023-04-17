@@ -16,6 +16,7 @@ const {serveDir} = globalThis.Deno ? (await import("https://deno.land/std@0.164.
 
 import { UIX_CACHE_PATH } from "../utils/constants.ts";
 import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
+import { provideError, provideValue } from "../html/rendering.ts";
 
 export class FrontendManager extends HTMLProvider {
 
@@ -166,6 +167,21 @@ export class FrontendManager extends HTMLProvider {
 		if (this.app_options.installable) this.server.path("/manifest.json", (req, path)=>this.handleManifest(req, path));
 		this.server.path("/@uix/sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/@uix/sw.ts", (req, path)=>this.handleServiceWorker(req, path));
+
+		// handle datex-via-http
+		this.server.path(/^\/@uix\/datex\/.*$/, async (req, path)=>{
+			const dx = decodeURIComponent(path.replace("/@uix/datex/", ""));
+			// TODO: rate limiting
+			console.log("datex-via-http:",dx);
+			try {
+				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {});
+				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON}));
+			}
+			catch (e) {
+				req.respondWith(await provideError("DATEX Error: " + e));
+			}
+		});
+
 
 		// handle routes (ignore /@uix/.... .dx)
 		this.server.path(/^((?!^(\/@uix\/|\/\.dx)).)*$/, (req, path, con)=>{

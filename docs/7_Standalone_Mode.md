@@ -11,10 +11,11 @@ Component methods and properties that should be available in standalone mode hav
 *Standalone support for component properties is still experimental*
 
 ```tsx
+
 @Component
 export class ButtonComponent extends BaseComponent {
 	@standalone clickCounter = 0;
-	@standalone @id count = <span>{this.clickCounter}</span>;
+	@standalone @id count = <span>{this.options.text}</span>;
 	@standalone @content button = <button onclick={()=>this.handleClick()}>I was clicked {this.count} times</button>;
 
 	@standalone handleClick() {

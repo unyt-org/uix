@@ -17,6 +17,7 @@ import { App } from "../app/app.ts";
 import { bindContentProperties } from "../snippets/bound_content_properties.ts";
 import { INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { addGlobalStyleSheetLink } from "../utils/css_style_compat.ts";
+import { indent } from "../utils/indent.ts"
 
 
 export type standaloneProperties = Record<string,{type:'id'|'content'|'layout'|'child',id:string} | {type:'prop', init:string}>;
@@ -180,17 +181,23 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         }
     }
 
+    private static standalone_loaded = new Set<typeof BaseComponent>();
+    private static standalone_class_code = new Map<typeof BaseComponent,string>();
 
-    private static standalone_loaded: Set<typeof BaseComponent> = new Set();
-    private static loadStandaloneProps(scope = this.prototype) {
+    private static loadStandaloneProps() {
+        const scope = this.prototype;
+
         if (this.standalone_loaded.has(this)) return;
+        this.standalone_loaded.add(this);
 
         const props:Record<string, string> = scope[METADATA]?.[STANDALONE_PROPS]?.public;
         if (!props) return;
 
         for (const name of Object.values(props)) {
+            // prototype has methods
             if (scope[<keyof typeof scope>name])
                 this.addStandaloneMethod(name, scope[<keyof typeof scope>name]);
+            // otherwise, instace property
             else 
                 this.addStandaloneProperty(name);
         }
@@ -204,7 +211,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     private static standaloneMethods:Record<string,Function> = {};
     protected static addStandaloneMethod(name: string, value:Function) {
         // make sure this class has a separate standaloneMethods object
-        if (Object.getPrototypeOf(this).standaloneMethods === this.standaloneMethods) this.standaloneMethods = Object.create(this.standaloneMethods);
+        if (Object.getPrototypeOf(this).standaloneMethods === this.standaloneMethods) this.standaloneMethods = {};
 
         this.standaloneMethods[name] = value;
         // add inferred methods
@@ -219,7 +226,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     protected static standaloneProperties:standaloneProperties = {};
     protected static addStandaloneProperty(name: string) {
         // make sure this class has a separate standaloneProperties object
-        if (Object.getPrototypeOf(this).standaloneProperties === this.standaloneProperties) this.standaloneProperties = Object.create(this.standaloneProperties);
+        if (Object.getPrototypeOf(this).standaloneProperties === this.standaloneProperties) this.standaloneProperties = {};
         
         if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
@@ -243,6 +250,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             const classCode = this.toString().replace(/.*{/, '');
             const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
             if (!propertyCode) {
+                console.log(classCode)
                 throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
             }
             this.standaloneProperties[name] = {type:'prop', init:propertyCode};
@@ -250,18 +258,39 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     }
 
-    public static getStandaloneJS() {
-        if (!Object.keys(this.standaloneMethods).length) return null;
+    /**
+     * returns a pseudo class that is used in standalone mode (only generated if standalone methods exist)
+     */
+    public static getStandalonePseudoClass() {
+        // get from cache
+        if (this.standalone_class_code.has(this)) {
+            return this.standalone_class_code.get(this);
+        }
 
-        let js_code = '{\n';
+        const parent = this.getParentClass();
+
+        let js_code = `class ${this.name}${parent ? ` extends globalThis.UIX_Standalone.${parent.name}`:''} {${Object.values(this.standaloneMethods).length?'\n':''}`;
+        js_code += this.getStandaloneConstructor();
         for (const [_name, content] of Object.entries(this.standaloneMethods)) {
-            js_code += this.getStandloneMethodContentWithMappedImports(content) + ',\n';
+            js_code += this.getStandloneMethodContentWithMappedImports(content) + '\n';
         }
         js_code += '}'
+
+        // save static class code in cache
+        this.standalone_class_code.set(this,js_code);
         return js_code;
     }
 
+    /**
+     * returns the parent class if not BaseComponent
+     */
+    public static getParentClass(): typeof BaseComponent {
+        return Object.getPrototypeOf(this) != HTMLElement ? Object.getPrototypeOf(this) : null;
+    }
 
+    /**
+     * maps file import paths (datex.get or import) in JS source code to web paths
+     */
     private static getStandloneMethodContentWithMappedImports(method:Function){
         return method.toString().replace(/(import|datex\.get) *\((?:'((?:\.(\.)?\/).*)'|"((?:\.(\.)?\/).*)")\)/g, (m,g1,g2,g3,g4)=>{
             const relImport = g2 ?? g4;
@@ -270,6 +299,21 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             return `${g1}("${App.filePathToWebPath(absImport)}")`
         })
        
+    }
+
+    protected static generatePropertySelectorCode() {
+        let js_code = "";
+        for (const [name, data] of Object.entries(this.standaloneProperties)) {
+            // normal property init
+            if (data.type == "prop") {
+                js_code += `this["${name}"] = ${data.init};\n`
+            }
+            // @id, @content, @child, @layout - find with selector
+            else {
+                js_code += `this["${name}"] = this.querySelector("#${data.id}");\n`;
+            } 
+        }
+        return js_code;
     }
 
     /** wait until static (css) and dx module files loaded */
@@ -416,6 +460,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     constructor(options?:Datex.DatexObjectInit<O>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
+
         // @ts-ignore [INIT_PROPS]
         if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
         // pre-init options before other DATEX state is initialized 
@@ -575,7 +620,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
    
         await (<typeof BaseComponent>this.constructor).loadModuleDatexImports();
         // @standlone props only relevant for backend
-        if (IS_HEADLESS) (<typeof BaseComponent>this.constructor).loadStandaloneProps(this);
+        if (IS_HEADLESS) this.loadStandaloneProps();
 
         if (constructed) await this.onConstruct?.();
         await this.onInit?.() // element was constructed, not fully loaded / added to DOM!
@@ -583,6 +628,14 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         this.enableDefaultOpenGraphGenerator();
 
         //await Promise.all(loaders); // TODO: await stylesheet loading? leads to errors
+    }
+
+    // load standalone props recursively, including all parent classes
+    private loadStandaloneProps() {
+        let clss = <any>this.constructor;
+        do {
+            (<typeof BaseComponent>clss).loadStandaloneProps();
+        } while ((clss=Object.getPrototypeOf(Object.getPrototypeOf(clss))) && clss != HTMLElement && clss != Element && clss != Object); //  prototype chain, skip proxies inbetween
     }
 
     private enableDefaultOpenGraphGenerator() {
@@ -616,17 +669,34 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         this.standalone_handlers.add(handler);
     }
 
+    protected static getStandaloneConstructor() {
+        if (this.name === BaseComponent.name) return indent(4) `
+            _standalone_construct() {
+                this.standalone = true;
+            }
+        `
+        else {
+            const propInit = this.generatePropertySelectorCode();
+            if (propInit) {
+                return indent(4) `
+                _standalone_construct() {
+                    super._standalone_construct();
+                    ${propInit}}
+                `
+            }
+            else return "";
+        }
+    }
+
     // get instance specific standalone js code that is immediately executed
-    public getStandaloneJS() {
+    public getStandaloneInit() {
         let js_code = '';
-        const pseudoClass = `globalThis.UIX_Standalone_${this.constructor.name}`;
+        const pseudoClass = `globalThis.UIX_Standalone.${this.constructor.name}`;
         const standaloneProperties = (<typeof BaseComponent>this.constructor).standaloneProperties;
             
-        
-        js_code += `import {querySelector} from "uix/snippets/shadow_dom_selector.ts";\n`
         js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
-        js_code += `Object.assign(self, ${pseudoClass});\n`
-        js_code += `self.standalone = true;\n`
+        // TODO prototype entries
+        js_code += `bindPrototype(self, ${pseudoClass});\n`
 
         // bind @id + @content properties
         const idProps:Record<string,string> = {};
@@ -634,20 +704,15 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         const layoutProps:Record<string,string> = {};
         const childProps:Record<string,string> = {};
 
-        js_code += this.generatePropertySelectorCode(standaloneProperties)
-
+        let has_content_prop = false;
         for (const [name, data] of Object.entries(standaloneProperties)) {
-            if (data.type == "id") idProps[name] = data.id;
-            else if (data.type == "content") contentProps[name] = data.id;
-            else if (data.type == "layout")layoutProps[name] = data.id;
-            else if (data.type == "child") childProps[name] = data.id;
-            else if (data.type == "prop") {
-                js_code += `self["${name}"] = (function (){return (${data.init})}).apply(self);`
-            }
+            if (data.type == "id") {idProps[name] = data.id; has_content_prop=true;}
+            else if (data.type == "content") {contentProps[name] = data.id; has_content_prop=true;}
+            else if (data.type == "layout") {layoutProps[name] = data.id; has_content_prop=true;}
+            else if (data.type == "child") {childProps[name] = data.id; has_content_prop=true;}
         }
-        if (Object.keys(standaloneProperties).length) {
-            js_code += `import { bindContentProperties } from "uix/snippets/bound_content_properties.ts";\n`
-            js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, ${JSON.stringify(layoutProps)}, ${JSON.stringify(childProps)}, true);\n`
+        if (has_content_prop) {
+            js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, ${JSON.stringify(layoutProps)}, ${JSON.stringify(childProps)}, true, false);\n`
         }
 
         // call custom standalone handlers
@@ -656,18 +721,9 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             js_code += `await (function (){return (${(<typeof BaseComponent>this.constructor).getStandloneMethodContentWithMappedImports(handler)})()}).apply(self);\n`;
         }
 
-        // lifecycle event handlers
-        if ((<typeof BaseComponent>this.constructor).standaloneMethods.onDisplay) js_code += `await self.onDisplay()\n`;
-
-        return js_code;
-    }
-
-    protected generatePropertySelectorCode(standaloneProperties:standaloneProperties) {
-        let js_code = "";
-        for (const [name, data] of Object.entries(standaloneProperties)) {
-            // no difference between @id, @content, @child, @layout, ignore other props
-            if (data.type != "prop") js_code += `self["${name}"] = self.querySelector("#${data.id}");\n`;
-        }
+        // standalone constructor (calls onDisplay())
+        js_code += `self._standalone_construct();\n`;
+        js_code += `self.onDisplay?.();\n`
         return js_code;
     }
 

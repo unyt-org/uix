@@ -37,31 +37,47 @@ function generateStandaloneJS(el:Element|ShadowRoot, opts?:_renderOptions){
 	let html = "";
 	// is UIX component with standalone methods?
 	// @ts-ignore
-	if (opts?._injectedJsData && el.standaloneEnabled?.() && el.constructor.getStandaloneJS) {
-		if (!opts._injectedJsData.declare) opts._injectedJsData.declare = {};
-		if (!opts._injectedJsData.init) opts._injectedJsData.init = [];
+	if (opts?._injectedJsData && el.standaloneEnabled?.()) {
+		// add all class declarations
+		loadClassDeclarations(<any>el.constructor, opts._injectedJsData);
 
-		const name = `UIX_Standalone_${el.constructor.name}`;
-		if (!opts._injectedJsData.declare[name]) {
-			// @ts-ignore
-			const standaloneJS = el.constructor.getStandaloneJS();
-			if (standaloneJS) opts._injectedJsData.declare[name] = `globalThis.UIX_Standalone_${el.constructor.name} = ${standaloneJS};`
-		}
-		// @ts-ignore
-		if (el.getStandaloneJS) {
-			html += `<script type="module">\n`
-			// @ts-ignore
-			html += el.getStandaloneJS();
-			html += `</script>`
-		}
+		// add init script
+		html += getInitScript(el);
 	}
 	return html;
+}
+
+function loadClassDeclarations(componentClass: (typeof Element| typeof ShadowRoot) & {getParentClass?:()=>typeof HTMLElement|null, getStandalonePseudoClass?:()=>string}, _injectedJsData:injectScriptData) {
+	// no valid component
+	if (!componentClass.getStandalonePseudoClass || !componentClass.getParentClass) return;
+	
+	// add parent class?
+	const parent_class = componentClass.getParentClass()
+	if (parent_class) loadClassDeclarations(<any>parent_class, _injectedJsData);
+
+	const name = componentClass.name;
+	if (!_injectedJsData.declare[name]) {
+		_injectedJsData.declare[name] = componentClass.getStandalonePseudoClass();
+	}
+}
+
+function getInitScript(component:(Element|ShadowRoot) & {getStandaloneInit?:()=>string}) {
+	if (component.getStandaloneInit) {
+		let html = `\n<script type="module">\n`
+		html += component.getStandaloneInit();
+		html += `</script>`
+		return html;
+	}
+	else return "";
 }
 
 export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions) {
 	if (!opts?.includeShadowRoots) return el.innerHTML;
 
 	let html = "";
+
+	// get js if UIX component with standalone methods?
+	const js = generateStandaloneJS(el, opts);
 
 	// add shadow root
 	if (el instanceof globalThis.Element && el.shadowRoot) {
@@ -71,18 +87,16 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions) 
 		// @ts-ignore
 		if (el.getRenderedStyle) html += el.getRenderedStyle();
 
-		// is UIX component with standalone methods?
-		html += generateStandaloneJS(el, opts);
+		html += js;
 
 		html += '</template>'
 	}
-
-	// standalone methods outside shadow DOM - TODO: improve
-	else html += generateStandaloneJS(el, opts);
+	else html += js;
 
 	for (const child of el.childNodes) {
 		html += await _getOuterHTML(child, opts);
 	}
+
 
 	return html || HTMLUtils.escapeHtml(el.innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
@@ -130,19 +144,35 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 
 	// inject event listeners
 	if ((<any>el)[STANDALONE] && dataPtr && opts?._injectedJsData && (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
-		const contextPtr = (<HTMLElement|undefined>(<any>el)[COMPONENT_CONTEXT])?.attributes.getNamedItem("data-ptr")?.value;
-		let script = `{const el = querySelector('[data-ptr="${dataPtr}"]'); const ctx = querySelector('[data-ptr="${contextPtr}"]');`
+		const context = <HTMLElement|undefined>(<any>el)[COMPONENT_CONTEXT];
+		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
+		let script = `{\n  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
 		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
 			for (const listener of listeners) {
+				const listenerSource = listener.toString();
+
+				// native function not supported
+				if (listenerSource == 'function () { [native code] }') {
+					throw new Error("Invalid event handler for standalone mode: native function in 'on"+event+"' handler (If you are using bind(), it is not supported.)");
+				}
 				// normal function with own 'this' context
-				if (isNormalFunction(listener)) script += `el.addEventListener("${event}", ${listener});`
-				// object methods not supported
-				else if (isObjectMethod(listener)) throw new Error("Invalid event handler for standalone mode: must be a function or arrow function ("+listener.name+")");	
+				if (isNormalFunction(listenerSource)) script += `  el.addEventListener("${event}", ${listenerSource});`
+				// object methods check if 'this' context is component context;
+				else if (isObjectMethod(listenerSource)) {
+					throw new Error("Invalid event handler for standalone mode: cannot determine context for '"+listener.name+"()' on 'on"+event+"' handler");	
+					// const name = listener.name;
+					// // is property of context
+					// if ((<any>context)?.[name] === listener) {
+					// 	script += `  el.addEventListener("${event}", (function (...args){return this['${name}'](...args)}).bind(ctx));`
+					// }
+					// // other 'this' context, not supported
+					// else throw new Error("Invalid event handler for standalone mode: not a standalone context ("+listener.name+")");	
+				}
 				// context wrapper for arrow function or object method
-				else script += `el.addEventListener("${event}", (function (...args){return (${listener})(...args)}).bind(ctx));`
+				else script += `  el.addEventListener("${event}", (function (...args){return (${listenerSource})(...args)}).bind(ctx));`
 			}
 		}
-		script += `}`
+		script += `\n}`
 		opts._injectedJsData.init.push(script);
 	}
 
@@ -158,15 +188,12 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 //   (typeof fn === 'function') &&
 //   !/^(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*\s*(?:(?:(?:async\s(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*\s*)?function|class)(?:\s|(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*)|(?:[_$\w][\w0-9_$]*\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*\()|(?:\[\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*(?:(?:['][^']+['])|(?:["][^"]+["]))\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*\]\())/.test(fn.toString());
 
-const isObjectMethod = (fn:Function) => {
-	if (typeof fn !== 'function') return false;
-	return fn.toString().match(/^(async\s+)?[^\s(]+(\(|\*)/)
+const isObjectMethod = (fnSrc:string) => {
+	return !!fnSrc.match(/^(async\s+)?[^\s(]+ *(\(|\*)/)
 }
  
-
-const isNormalFunction = (fn:Function) => {
-	if (typeof fn !== 'function') return false;
-	return fn.toString().match(/^(async\s+)?function(\(| |\*)/)
+const isNormalFunction = (fnSrc:string) => {
+	return !!fnSrc.match(/^(async\s+)?function(\(| |\*)/)
 }
  
 
@@ -180,13 +207,22 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 
 	const html = await _getOuterHTML(el, opts);
 
-	let script = `<script type="module">`
-	script += `import {querySelector, querySelectorAll} from "uix/snippets/shadow_dom_selector.ts";`
+	let script = `<script type="module">\n`
+	// global imports and definitions
+	script += `import {querySelector, querySelectorAll} from "uix/snippets/shadow_dom_selector.ts";\n`
+	script += `import {bindPrototype} from "uix/snippets/get_prototype_properties.ts";\n`
+	script += `import {bindContentProperties} from "uix/snippets/bound_content_properties.ts";\n`
+	script += `globalThis.querySelector = querySelector;\nglobalThis.querySelectorAll = querySelectorAll;\n`
+	script += `globalThis.bindPrototype = bindPrototype;\n`
+	script += `globalThis.bindContentProperties = bindContentProperties;\n`
 
-	// global utils
-	for (const val of Object.values(scriptData.declare)) {
-		script += val
+	// inject declarations
+	script += `globalThis.UIX_Standalone = {};\n`
+	for (const [name, val] of Object.entries(scriptData.declare)) {
+		script += `globalThis.UIX_Standalone.${name} = ${val};\n`
 	}
+
+	// inject initializations
 	for (const val of scriptData.init) {
 		script += val
 	}
@@ -205,7 +241,7 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 				}
 			});
 		})(document);
-	}`
+	}\n`
 
 	script += `</script>`
 

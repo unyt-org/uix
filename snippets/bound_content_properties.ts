@@ -1,5 +1,3 @@
-import { HTMLUtils } from "../html/utils.ts";
-
 // @ts-ignore sfgafari workaround
 export const COMPONENT_CONTEXT: unique symbol = globalThis.uix_COMPONENT_CONTEXT ??= Symbol("COMPONENT_CONTEXT");
 // @ts-ignore sfgafari workaround
@@ -8,42 +6,19 @@ export const STANDALONE: unique symbol = globalThis.uix_STANDALONE ??= Symbol("S
 // @ts-ignore TODO: reenable
 const PROPS_MAP = globalThis.uix_PROPS_MAP ??= Symbol("PROPS_MAP");
 
-// ... all for safari workaround ...
-function _PROPS_MAP() {
-	try {
-		return PROPS_MAP;
-	} catch {}
-	// @ts-ignore
-	if (!globalThis.uix_PROPS_MAP) globalThis.uix_PROPS_MAP = Symbol("PROPS_MAP");
-	// @ts-ignore
-	return globalThis.uix_PROPS_MAP;
-}
-function _COMPONENT_CONTEXT() {
-	try {
-		return COMPONENT_CONTEXT;
-	} catch {}
-	// @ts-ignore
-	if (!globalThis.uix_COMPONENT_CONTEXT) globalThis.uix_COMPONENT_CONTEXT = Symbol("COMPONENT_CONTEXT");
-	// @ts-ignore
-	return globalThis.uix_COMPONENT_CONTEXT;
-}
-function _STANDALONE() {
-	try {
-		return STANDALONE;
-	} catch {}
-	// @ts-ignore
-	if (!globalThis.uix_STANDALONE) globalThis.uix_STANDALONE = Symbol("STANDALONE");
-	// @ts-ignore
-	return globalThis.uix_STANDALONE;
-}
 
-
-export function bindContentProperties(element: HTMLElement & {[key:string|symbol]:any}, id_props:Record<string,string>, content_props:Record<string,string>, layout_props:Record<string,string>, child_props:Record<string,string>, allow_existing = false){
-
-	// TODO: fix
-	// SaFaRi: ReferenceError: Cannot access uninitialized variable??!?
-	const PROPS_MAP = _PROPS_MAP()  
-
+/**
+ * 
+ * @param element 
+ * @param id_props 
+ * @param content_props 
+ * @param layout_props 
+ * @param child_props 
+ * @param allow_existing 
+ * @param load_from_props 
+ */
+export function bindContentProperties(element: HTMLElement & {[key:string|symbol]:any}, id_props:Record<string,string>, content_props:Record<string,string>, layout_props:Record<string,string>, child_props:Record<string,string>, allow_existing = false, load_from_props = true){
+	
 	// @UIX.id props
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
 	const props_map = element[PROPS_MAP];
@@ -73,32 +48,27 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 		const container = ()=>element.shadowRoot?.querySelector("#content")??element
 		for (const [prop,id] of Object.entries(content_props)) {
 			if (!allow_existing && element[prop] instanceof HTMLElement && element.shadowRoot?.contains(element[prop])) throw new Error("property '" + prop +"' cannot be used as an @content property - already part of the component")
-			bindContent(element, container, prop, id)
+			bindContent(element, container, prop, id, load_from_props)
 		}
 	}
 
 	// @UIX.layout props
 	if (layout_props) {
 		const container = ()=>element.shadowRoot?.querySelector("#content_container")??element.shadowRoot??element
-		for (const [prop,id] of Object.entries(layout_props)) bindContent(element, container, prop, id)
+		for (const [prop,id] of Object.entries(layout_props)) bindContent(element, container, prop, id, load_from_props)
 	}
 
 	// @UIX.child props
 	if (child_props) {
 		const container = ()=>element;
-		for (const [prop,id] of Object.entries(child_props)) bindContent(element, container, prop, id)
+		for (const [prop,id] of Object.entries(child_props)) bindContent(element, container, prop, id, load_from_props)
 	}
 
 }
 
 
-function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:()=>Element|ShadowRoot|null|undefined, prop:string, id:string) {
+function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:()=>Element|ShadowRoot|null|undefined, prop:string, id:string, load_from_prop = true) {
 	
-	// TODO: fix
-	// SaFaRi: ReferenceError: Cannot access uninitialized variable??!?
-	const PROPS_MAP = _PROPS_MAP()  
-	const COMPONENT_CONTEXT = _COMPONENT_CONTEXT();
-	const STANDALONE = _STANDALONE();
 
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
 	const props_map = element[PROPS_MAP]!;
@@ -120,7 +90,11 @@ function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:
 				isPlaceholder = true;
 			}
 			// encapsulate in HTMLElement
-			if (!(el instanceof HTMLElement)) el = HTMLUtils.createHTMLElement('<span></span>', el);
+			if (!(el instanceof HTMLElement)) {
+				const inner = el;
+				el = document.createElement("span");
+				el.append(inner);
+			}
 
 			// set outer element as [COMPONENT_CONTEXT]
 			el[COMPONENT_CONTEXT] = element;
@@ -150,5 +124,5 @@ function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:
 		}
 	})
 
-	element[prop] = prev; // trigger setter
+	if (load_from_prop) element[prop] = prev; // trigger setter
 }

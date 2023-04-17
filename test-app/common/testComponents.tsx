@@ -1,4 +1,4 @@
-import { ValueInput2 } from "uix/components/ValueInput.tsx";
+import { ValueInput } from "uix/components/ValueInput.tsx";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -14,7 +14,7 @@ import { ValueInput2 } from "uix/components/ValueInput.tsx";
 
 export const testComponents = {
 	textInput: <div style={{display:"flex", gap:5, margin:5}}>
-		{/* <ValueInput placeholder="text 1..."/> */}
-		<ValueInput2 placeholder="text 2..."/>
+		<ValueInput placeholder="text 1..."/>
+		{/* <ValueInput placeholder="text 2..."/> */}
 	</div>
 }

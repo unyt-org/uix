@@ -11,6 +11,8 @@ class DOMPointerSource implements Datex.PointerSource {
 		const element = querySelector(`[data-ptr="${pointer_id}"]`);
 		// console.log("ptrsrc ",pointer_id,element)
 
+		// TODO: only trigger web component custom registry for component classes when DATEX (from entrypoint) fully loaded
+
 		// get skeleton element from DOM
 	
 		if (element) {

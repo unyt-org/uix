@@ -14,23 +14,13 @@ export namespace ValueInput {
 	type: "text"
 })
 export class ValueInput extends BaseComponent<ValueInput.Options, never> {
+	@standalone x = "x"
+	@standalone @layout input = <input onclick={()=>this.onDisplay()} type={this.options.type} placeholder={this.options.placeholder}/>
 
-	@standalone @layout 
-	input = <input onclick={()=>console.log("click",this)} type={this.options?.type} placeholder={this.options?.placeholder}/>
-
-	@standalone protected override onDisplay(): void | Promise<void> {
-		console.log("DISPLAY 1",this)	
+	@standalone method1() {
+		console.log("1");
 	}
-}
-
- @Component<ValueInput.Options>({
-	class: "value-input",
-	type: "text"
-})
-export class ValueInput2 extends ValueInput {
-
-	@standalone protected override onDisplay(): void | Promise<void> {
-		super.onDisplay();
-		console.log("DISPLAY 2!!",this)	
+	@standalone override onDisplay() {
+		console.log("display",this.x)
 	}
 }

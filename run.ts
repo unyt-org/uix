@@ -17,6 +17,8 @@ import { getExistingFile } from "./utils/file_utils.ts";
 import { command_line_options, root_path } from "./utils/args.ts";
 
 const reload = command_line_options.option("reload", {type:"boolean", aliases:["r"]})
+const enableTLS = command_line_options.option("enable-tls", {type:"boolean"})
+
 const deno_config_path = getExistingFile(root_path, './deno.json');
 
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
@@ -47,9 +49,10 @@ const config_params:string[] = [];
 const cmd = [
 	"deno",
 	"run",
-	"-Aq",
-	"--unsafely-ignore-certificate-errors=localhost",
+	"-Aq"
 ];
+
+if (enableTLS) cmd.push("--unsafely-ignore-certificate-errors=localhost");
 
 if (reload) {
 	cmd.push("--reload");

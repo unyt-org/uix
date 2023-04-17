@@ -825,6 +825,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     private static loadStandaloneMethods() {
         if (this.standalone_loaded.has(this)) return;
         this.standalone_loaded.add(this);
+
         const props:Record<string, string> = this.prototype[METADATA]?.[STANDALONE_PROPS]?.public;
         if (!props) return;
 
@@ -844,7 +845,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     private static standaloneMethods:Record<string,Function> = {};
     protected static addStandaloneMethod(name: string, value:Function) {
         // make sure this class has a separate standaloneMethods object
-        if (Object.getPrototypeOf(this).standaloneMethods === this.standaloneMethods) this.standaloneMethods = Object.create(this.standaloneMethods);
+        if (Object.getPrototypeOf(this).standaloneMethods === this.standaloneMethods) this.standaloneMethods = {};
        
         this.standaloneMethods[name] = value;
         // add inferred methods
@@ -859,7 +860,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected static standaloneProperties:Record<string,{type:'id'|'content'|'layout'|'child',id:string}> = {};
     protected static addStandaloneProperty(name: string) {
         // make sure this class has a separate standaloneProperties object
-        if (Object.getPrototypeOf(this).standaloneProperties === this.standaloneProperties) this.standaloneProperties = Object.create(this.standaloneProperties);
+        if (Object.getPrototypeOf(this).standaloneProperties === this.standaloneProperties) this.standaloneProperties = {};
 
         if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
@@ -881,20 +882,35 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         else throw new Error("@UIX.standalone instance properties are currently only supported in combination with @UIX.id or @UIX.content")
     }
 
-    public static getStandaloneJS() {
-        if (!Object.keys(this.standaloneMethods).length) return null;
+    /**
+     * returns a pseudo class that is used in standalone mode (only generated if standalone methods exist)
+     */
+    public static getStandalonePseudoClass() {
+        const parent = this.getParentClass();
 
-        let js_code = '{\n';
+        let js_code = `class ${this.name}${parent ? ` extends globalThis.UIX_Standalone.${parent.name}`:''} {\n`;
         for (const [_name, content] of Object.entries(this.standaloneMethods)) {
-            js_code += this.getStandloneMethodContentWithMappedImports(content) + ',\n';
+            js_code += this.getStandloneMethodContentWithMappedImports(content) + '\n';
         }
         js_code += '}'
         return js_code;
     }
 
+    /**
+     * returns the parent class if not Base
+     */
+    public static getParentClass(): typeof Base {
+        return Object.getPrototypeOf(this) != Base ? Object.getPrototypeOf(this) : null;
+    }
+
+
     // used in render.ts
     private standaloneEnabled() {
-        return Object.keys((<typeof Base>this.constructor).standaloneMethods).length || this.standalone_handlers.size;
+        return !! (
+            Object.keys((<typeof Base>this.constructor).standaloneMethods).length || 
+            Object.keys((<typeof Base>this.constructor).standaloneProperties).length || 
+            this.standalone_handlers.size
+        );
     }
 
 
@@ -905,9 +921,9 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     }
 
     // get instance specific standalone js code that is immediately executed
-    public getStandaloneJS() {
+    public getStandaloneInit() {
         let js_code = '';
-        const pseudoClass = `globalThis.UIX_Standalone_${this.constructor.name}`;
+        const pseudoClass = `globalThis.UIX_Standalone["${this.constructor.name}"]`;
         const standaloneProperties = Object.entries((<typeof Base>this.constructor).standaloneProperties);
 
 
@@ -941,7 +957,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         }
         if (standaloneProperties.length) {
             js_code += `import { bindContentProperties } from "uix/snippets/bound_content_properties.ts";\n`
-            js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, ${JSON.stringify(layoutProps)}, ${JSON.stringify(childProps)}, true);\n`
+            js_code += `bindContentProperties(self, ${JSON.stringify(idProps)}, ${JSON.stringify(contentProps)}, ${JSON.stringify(layoutProps)}, ${JSON.stringify(childProps)}, true, false);\n`
         }
 
 

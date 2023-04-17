@@ -36,7 +36,8 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 				set(el) {
 					if (el instanceof HTMLElement) el.setAttribute("id", id); // auto set id
 					if (el) props_map.set(prop, el)
-				}
+				},
+				configurable: true,
 			})
 
 			if (prev != undefined) element[prop] = prev; // trigger setter
@@ -78,6 +79,7 @@ function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:
 	const property_descriptor = Object.getOwnPropertyDescriptor(element, prop) 
 					
 	Object.defineProperty(element, prop, {
+		configurable: true,
 		get: () => {
 			if (property_descriptor?.get) return property_descriptor.get.call(element);
 			return props_map.get(prop)

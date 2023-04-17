@@ -88,6 +88,7 @@ export namespace Routing {
 			content = await getContentFromEntrypoint(frontend_entrypoint)
 			entrypoint = frontend_entrypoint;
 		}
+
 		// try backend entrypoint
 		if (content == null && backend_entrypoint) {
 			content = await getContentFromEntrypoint(backend_entrypoint);
@@ -97,12 +98,16 @@ export namespace Routing {
 			const inferred_entrypoint = getInferredDOMEntrypoint();
 			const _content = await getContentFromEntrypoint(inferred_entrypoint);
 			const refetched_route = await refetchRoute(getCurrentRouteFromURL(), inferred_entrypoint);
+			
+			console.log(inferred_entrypoint, _content, refetched_route)
+
 			// check of accepted route matches new calculated current_route
 			if (!Path.routesAreEqual(getCurrentRouteFromURL(), refetched_route)) {
 				logger.warn `invalid route from inferred frontend entrypoint, reloading page from backend`; 
 				if (allowReload) window.location.reload()
 				return false
 			}
+			// window.location.reload()
 			return true;
 			// TODO: what to do with returned content (full entrypoint route not known)
 		}

@@ -43,6 +43,5 @@ export const testComponents = {
 			}}
 		>
 			Click Me
-		</button>,
-
+		</button>
 }

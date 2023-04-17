@@ -8,7 +8,6 @@ In this mode, it is still possible to add interactivity and other TS functionali
 
 Component methods and properties that should be available in standalone mode have to be decorated with `@standalone`.
 
-*Standalone support for component properties is still experimental*
 
 ```tsx
 
@@ -25,6 +24,16 @@ export class ButtonComponent extends BaseComponent {
 }
 ```
 
+## Supported properties
+
+The following values can be used as standalone properties:
+ * JSON-compatible values (Arrays, number, strings, ...)
+ * HTML Elements
+
+
+
+## Lifecycle
+
 Some internal component lifecycle handlers are also supported in standalone mode.
 The `standalone` property is `true` when to component is loaded in standalone mode.
 
@@ -38,6 +47,8 @@ export class ButtonComponent extends BaseComponent {
 
 }
 ```
+
+## Using UIX library functions
 
 Keep in mind that reactive functionality is not supported in standalone mode.
 If you want to use JSX, you need to explicitly import JSX:

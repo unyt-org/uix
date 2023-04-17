@@ -59,7 +59,7 @@
     "http://localhost:4200/html/deno_dom.ts": "b01391b62aa4b86d7d36784e4a7c77284f8158011a76e4c9ecc4083602f6eb19",
     "http://localhost:4200/html/html_provider.ts": "4b93250a84ee95bb530e5fdcf1558a09f95fa85c39468d334d7481040dd0df2d",
     "http://localhost:4200/html/render.ts": "4acc3bd9253cad4a35c77f81a73e8f03b8cd6da5fa580e9588927ceecee97029",
-    "http://localhost:4200/html/rendering.ts": "280cee50db89c5f40ba36873e3be9369b19b951d1ae490ce15aa1ab05667a4d8",
+    "http://localhost:4200/html/rendering.ts": "a4680f6c6c213c02495367fb6b0d99b883d6960091a0e7191a69339c651355ab",
     "http://localhost:4200/html/utils.ts": "6622682a6b3dc9086060fce4888ce1c39a5648765962e20a5e2e47e6dbddb193",
     "http://localhost:4200/jsx-runtime/jsx.ts": "78bc338786bca78bf58fb71270277a48a2626252a6da8924f627c5755f64270e",
     "http://localhost:4200/lib/urlpattern-polyfill/dist/urlpattern.js": "a2584e42c3b3892e58f0175d5a1a9e9018075b07b1eda68555fbd84290afece0",

@@ -209,11 +209,24 @@ export abstract class EntrypointProxy implements RouteHandler {
 
 	async getRoute(route:Path.Route, context: UIX.Context) {
 		let entrypoint = this.#entrypoint;
+		route = Path.Route(await this.redirect?.(route, context) ?? route);
 		const intercepted = await this.intercept?.(route, context);
 		if (intercepted != null) entrypoint = intercepted;
 		const [content, render_method] = await resolveEntrypointRoute(entrypoint, route, context);
 		return this.transform?.(content, render_method, route, context) ?? <any> new RenderPreset<RenderMethod, html_content_or_generator>(render_method, content);
 	}
+
+	/**
+	 * This method is called before intercept()
+	 * It can be used to modify the route that is used by the intercept method and the entrypoint
+	 * 
+	 * The returned value replaces the current route part
+	 * 
+	 * @param route requested route
+	 * @param context UIX context
+	 * @returns new route or void
+	 */
+	abstract redirect?(route:Path.Route, context: UIX.Context): void|Path.route_representation|string|null|Promise<void|Path.route_representation|string|null>
 
 	/**
 	 * This method is called before a route is resolved by the entrypoint

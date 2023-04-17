@@ -9,18 +9,17 @@ export namespace ValueInput {
 	}
 }
 
+
 @Component<ValueInput.Options>({
 	class: "value-input",
 	type: "text"
 })
 export class ValueInput extends BaseComponent<ValueInput.Options, never> {
-	@standalone x = "x"
-	@standalone @layout input = <input onclick={()=>this.onDisplay()} type={this.options.type} placeholder={this.options.placeholder}/>
 
-	@standalone method1() {
-		console.log("1");
+	@standalone @layout input = <input onclick={()=>this.onClick()} type={this.options.type} placeholder={this.options.placeholder}/>
+	
+	@standalone onClick() {
+		console.log("click",this)
 	}
-	@standalone override onDisplay() {
-		console.log("display",this.x)
-	}
+	
 }

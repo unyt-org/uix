@@ -33,18 +33,14 @@ const selfClosingTags = new Set([
 ])
 
 
-function generateStandaloneJS(el:Element|ShadowRoot, opts?:_renderOptions){
-	let html = "";
+function loadStandaloneJS(el:(Element|ShadowRoot) & {standaloneEnabled?:()=>boolean}, opts?:_renderOptions){
 	// is UIX component with standalone methods?
-	// @ts-ignore
 	if (opts?._injectedJsData && el.standaloneEnabled?.()) {
 		// add all class declarations
 		loadClassDeclarations(<any>el.constructor, opts._injectedJsData);
-
-		// add init script
-		html += getInitScript(el);
+		// add init script for instance
+		loadInitScript(el, opts._injectedJsData);
 	}
-	return html;
 }
 
 function loadClassDeclarations(componentClass: (typeof Element| typeof ShadowRoot) & {getParentClass?:()=>typeof HTMLElement|null, getStandalonePseudoClass?:()=>string}, _injectedJsData:injectScriptData) {
@@ -61,14 +57,10 @@ function loadClassDeclarations(componentClass: (typeof Element| typeof ShadowRoo
 	}
 }
 
-function getInitScript(component:(Element|ShadowRoot) & {getStandaloneInit?:()=>string}) {
+function loadInitScript(component:(Element|ShadowRoot) & {getStandaloneInit?:()=>string}, _injectedJsData:injectScriptData) {
 	if (component.getStandaloneInit) {
-		let html = `\n<script type="module">\n`
-		html += component.getStandaloneInit();
-		html += `</script>`
-		return html;
+		_injectedJsData.init.push(component.getStandaloneInit());
 	}
-	else return "";
 }
 
 export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions) {
@@ -76,8 +68,8 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions) 
 
 	let html = "";
 
-	// get js if UIX component with standalone methods?
-	const js = generateStandaloneJS(el, opts);
+	// load js (into opts._injectedJsData) if UIX component with standalone methods
+	loadStandaloneJS(el, opts);
 
 	// add shadow root
 	if (el instanceof globalThis.Element && el.shadowRoot) {
@@ -86,12 +78,8 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions) 
 
 		// @ts-ignore
 		if (el.getRenderedStyle) html += el.getRenderedStyle();
-
-		html += js;
-
 		html += '</template>'
 	}
-	else html += js;
 
 	for (const child of el.childNodes) {
 		html += await _getOuterHTML(child, opts);
@@ -146,7 +134,7 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 	if ((<any>el)[STANDALONE] && dataPtr && opts?._injectedJsData && (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
 		const context = <HTMLElement|undefined>(<any>el)[COMPONENT_CONTEXT];
 		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
-		let script = `{\n  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
+		let script = `  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
 		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
 			for (const listener of listeners) {
 				const listenerSource = listener.toString();
@@ -172,7 +160,6 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 				else script += `  el.addEventListener("${event}", (function (...args){return (${listenerSource})(...args)}).bind(ctx));`
 			}
 		}
-		script += `\n}`
 		opts._injectedJsData.init.push(script);
 	}
 
@@ -222,26 +209,32 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 		script += `globalThis.UIX_Standalone.${name} = ${val};\n`
 	}
 
-	// inject initializations
+	// initialization scripts
+	let init_script = "";
 	for (const val of scriptData.init) {
-		script += val
+		init_script += `{\n${val}\n}\n`
 	}
 
-	// polyfill for browsers that don't support declarative shadow DOM
+	// scripts when DOM loaded:
 	script += `
-	if (!HTMLTemplateElement.prototype.hasOwnProperty('shadowRootMode')) {
-		(function attachShadowRoots(root) {
-			querySelectorAll("template[shadowrootmode]").forEach((template) => {
-				const mode = template.getAttribute("shadowrootmode");
-				if (template.parentNode) {
-					const shadowRoot = template.parentNode.attachShadow({ mode });
-					shadowRoot.appendChild(template.content);
-					template.remove();
-					attachShadowRoots(shadowRoot);
-				}
-			});
-		})(document);
-	}\n`
+	addEventListener("DOMContentLoaded", ()=>{
+		// polyfill for browsers that don't support declarative shadow DOM
+		if (!HTMLTemplateElement.prototype.hasOwnProperty('shadowRootMode')) {
+			(function attachShadowRoots(root) {
+				querySelectorAll("template[shadowrootmode]").forEach((template) => {
+					const mode = template.getAttribute("shadowrootmode");
+					if (template.parentNode) {
+						const shadowRoot = template.parentNode.attachShadow({ mode });
+						shadowRoot.appendChild(template.content);
+						template.remove();
+						attachShadowRoots(shadowRoot);
+					}
+				});
+			})(document);
+		}
+
+		${init_script};
+	})\n`
 
 	script += `</script>`
 

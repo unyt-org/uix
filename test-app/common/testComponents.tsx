@@ -15,6 +15,5 @@ import { ValueInput } from "uix/components/ValueInput.tsx";
 export const testComponents = {
 	textInput: <div style={{display:"flex", gap:5, margin:5}}>
 		<ValueInput placeholder="text 1..."/>
-		{/* <ValueInput placeholder="text 2..."/> */}
 	</div>
 }

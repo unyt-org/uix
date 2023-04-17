@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-async-promise-executor
 import { PlaceholderCSSStyleDeclaration, addStyleSheetLink } from "../utils/css_style_compat.ts";
 import { Theme } from "../base/theme.ts";
-import { BaseComponent, standaloneProperties } from "./BaseComponent.ts"
+import { BaseComponent, standaloneContentPropertyData, standaloneProperties } from "./BaseComponent.ts"
 import { App } from "../app/app.ts";
 import { logger } from "../utils/global_values.ts"
 
@@ -24,6 +24,15 @@ export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOM
         new URL('../style/fontawesome.css', import.meta.url).toString()
     ]
     
+    protected static override getSelectorCode(propData:standaloneContentPropertyData) {
+        // direct child
+        if (propData.type == "child") 
+            return `this.querySelector("#${propData.id}")`;
+        // shadow root child
+        else 
+            return `this.shadowRoot.querySelector("#${propData.id}")`;
+    }
+
     /************************************ END STATIC ***************************************/
 
 
@@ -60,14 +69,6 @@ export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOM
     public getRenderedStyle() {
         let html = "";
 
-        // for (let sheet of this.constructor._module_stylesheets) {
-        //     if (sheet.toString().startsWith("file://") && rel_path) {
-        //         // relative web path (@...)
-        //         sheet = new Path(sheet).getAsRelativeFrom(rel_path).replace(/^\.\//, "/@");
-        //     }
-        //     html += `<link rel=stylesheet href="${sheet}">`;
-        // }
-
         // links
 		for (let url of this.style_sheets_urls) {
             if (url.toString().startsWith("file://")) {
@@ -79,21 +80,7 @@ export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOM
 
         // noscript fallback style
         html += `<noscript><link rel="stylesheet" href="https://dev.cdn.unyt.org/uix/style/noscript.css"></noscript>`
-        // stylesheets
-        // for (const sheet of this.#style_sheets) {
-        //     // workaround for server side stylesheet
-        //     if (sheet._cached_css) html += `<style>${sheet._cached_css}</style>`
-        //     // normal impl
-        //     else {
-        //         html += `<style>`
-        //         for (const rule of sheet.cssRules) {
-        //             html += rule.cssText;
-        //         }
-        //         html += `</style>`
-        //     }
-        //     break; // only add first style (:host:host style)
-        // }
-
+   
         if (this.#adopted_root_style) {
             html += `<style>${this.#adopted_root_style.cssText}</style>`
         }
@@ -105,25 +92,6 @@ export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOM
         html += `<style>${Theme.getDarkThemesCSS().replaceAll("\n","")+'\n'+Theme.getLightThemesCSS().replaceAll("\n","")}</style>`
 
         return html;
-    }
-
-    protected override generatePropertySelectorCode(standaloneProperties:standaloneProperties) {
-        let js_code = "";
-        for (const [name, data] of Object.entries(standaloneProperties)) {
-            if (data.type == "id") {
-                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
-            }
-            else if (data.type == "content") {
-                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
-            }
-            else if (data.type == "layout") {
-                js_code += `self["${name}"] = self.shadowRoot?.querySelector("#${data.id}");\n`;
-            }
-            else if (data.type == "child") {
-                js_code += `self["${name}"] = self.querySelector("#${data.id}");\n`;
-            }
-        }
-        return js_code;
     }
 
 

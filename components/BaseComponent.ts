@@ -20,7 +20,9 @@ import { addGlobalStyleSheetLink } from "../utils/css_style_compat.ts";
 import { indent } from "../utils/indent.ts"
 
 
-export type standaloneProperties = Record<string,{type:'id'|'content'|'layout'|'child',id:string} | {type:'prop', init:string}>;
+export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
+export type standalonePropertyData = {type:'prop', init:string}
+export type standaloneProperties = Record<string, standaloneContentPropertyData | standalonePropertyData>;
 
 // deno-lint-ignore no-namespace
 export namespace BaseComponent {
@@ -310,10 +312,15 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             }
             // @id, @content, @child, @layout - find with selector
             else {
-                js_code += `this["${name}"] = this.querySelector("#${data.id}");\n`;
+                js_code += `this["${name}"] = ${this.getSelectorCode(data)};\n`;
             } 
         }
         return js_code;
+    }
+
+    protected static getSelectorCode(propData:standaloneContentPropertyData) {
+        // direct child
+        return `this.querySelector("#${propData.id}")`;
     }
 
     /** wait until static (css) and dx module files loaded */
@@ -992,7 +999,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         throw new Error("Cannot adopt style on UIX.BaseComponent - no shadow root")
     }
 
-    protected insertStyleSheetLink(url:URL) {
+    protected insertStyleSheetLink(url:URL): Promise<void>|void {
         return addGlobalStyleSheetLink(url);
     }
 

@@ -7,7 +7,8 @@ import "./render.ts";
 
 import { $$, Datex } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
-import { DX_VALUE, INIT_PROPS } from "unyt_core/datex_all.ts";
+import { DX_VALUE, INIT_PROPS, logger } from "unyt_core/datex_all.ts";
+import { STANDALONE } from "../snippets/bound_content_properties.ts";
 
 
 // handle htmlfragment (DocumentFragment)
@@ -95,14 +96,23 @@ Datex.Type.get('html').setJSInterface({
 		return el;
 	},
 
-	serialize(val) {
+	serialize(val: HTMLElement&{[HTMLUtils.EVENT_LISTENERS]?:Map<keyof HTMLElementEventMap, Set<Function>>}) {
 		if (!(val instanceof HTMLElement)) throw "not an HTMLElement";
-		const data: {style?:Record<string,string>, content?:any[], attr?:Record<string,unknown>} = {style: {}, attr: {}, content: []}
+		const data: {style:Record<string,string>, content:any[], attr:Record<string,unknown>} = {style: {}, attr: {}, content: []}
 
 		// attributes
 		for (let i = 0; i < val.attributes.length; i++) {
 			const attrib = val.attributes[i];
 			if (attrib.name !== "style" && attrib.name !== "data-ptr") data.attr[attrib.name] = attrib.value;
+		}
+		// event handler attributes
+		for (const [name, handlers] of val[HTMLUtils.EVENT_LISTENERS]??[]) {
+			const allowedHandlers = [];
+			for (const handler of handlers) {
+				if (handler[STANDALONE]) logger.error("@standalone and UIX.inDisplayContext functions are currently not supported with UIX.renderDynamic/UIX.renderWithHydration ("+(handler.name??'anonymous function')+")")
+				else allowedHandlers.push($$(handler))
+			}
+			data.attr['on'+name] = allowedHandlers;
 		}
 
 		// style (uix _original_style)

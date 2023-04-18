@@ -3,6 +3,7 @@ export function test(x:any) {
 	return [1,2,3,'cool']
 }
 
+// @allowUnsigned
 export class Api {
 	static method1(){
 		console.log("method 1 was called",datex.meta);

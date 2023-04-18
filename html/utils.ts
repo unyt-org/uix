@@ -224,16 +224,20 @@ export namespace HTMLUtils {
 		// normal attribute
 		if (val === false) element.removeAttribute(property);
 		else if (val === true || val === undefined) element.setAttribute(property,"");
-		else if (typeof val == "function") {
-			if (property.startsWith("on")) {
-				const eventName = <keyof HTMLElementEventMap>property.replace("on","").toLowerCase();
-				element.addEventListener(eventName, <any>val);
-				// save in [EVENT_LISTENERS]
-				if (!(<elWithEventListeners>element)[EVENT_LISTENERS]) (<elWithEventListeners>element)[EVENT_LISTENERS] = new Map<keyof HTMLElementEventMap, Set<Function>>().setAutoDefault(Set);
-				(<elWithEventListeners>element)[EVENT_LISTENERS].getAuto(eventName).add(val);
+		else if (property.startsWith("on")) {
+			for (const handler of ((val instanceof Array || val instanceof Set) ? val : [val])) {
+				if (typeof handler == "function") {
+					const eventName = <keyof HTMLElementEventMap>property.replace("on","").toLowerCase();
+					element.addEventListener(eventName, <any>handler);
+					// save in [EVENT_LISTENERS]
+					if (!(<elWithEventListeners>element)[EVENT_LISTENERS]) (<elWithEventListeners>element)[EVENT_LISTENERS] = new Map<keyof HTMLElementEventMap, Set<Function>>().setAutoDefault(Set);
+					(<elWithEventListeners>element)[EVENT_LISTENERS].getAuto(eventName).add(handler);
+				}
+				else throw new Error("Cannot set event listener for element attribute '"+property+"'")
 			}
-			else throw new Error("Cannot set event listener for element attribute '"+property+"'")
+			
 		}
+		
 		else element.setAttribute(property, formatAttributeValue(val,root_path));
 	}
 

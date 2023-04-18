@@ -32,6 +32,7 @@ export * from "./sw/sw_installer.ts"
 
 // components
 export * from "./components/BaseComponent.ts"
+export * from "./components/ShadowDOMComponent.ts"
 export * from "./components/main.ts"
 
 // elements

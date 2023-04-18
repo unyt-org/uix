@@ -64,7 +64,7 @@ function loadInitScript(component:(Element|ShadowRoot) & {getStandaloneInit?:()=
 	}
 }
 
-export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions) {
+export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collectedStylsheets?:string[]) {
 	if (!opts?.includeShadowRoots) return el.innerHTML;
 
 	let html = "";
@@ -75,29 +75,34 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions) 
 	// add shadow root
 	if (el instanceof globalThis.Element && el.shadowRoot) {
 		html += `<template shadowrootmode="${el.shadowRoot.mode}">`
-		html += await getInnerHTML(el.shadowRoot, opts);
-
+		// collect stylsheets that children require
+		const collectedStylesheets:string[] = []
+		html += await getInnerHTML(el.shadowRoot, opts, collectedStylesheets);
+		for (const link of collectedStylesheets) html += `<link rel="stylesheet" href="${App.filePathToWebPath(link)}">\n`;
 		// @ts-ignore
 		if (el.getRenderedStyle) html += el.getRenderedStyle();
 		html += '</template>'
 	}
 
-	for (const child of el.childNodes) {
-		html += await _getOuterHTML(child, opts);
+	else {
+		if (el.style_sheets_urls && collectedStylsheets) collectedStylsheets.push(...el.style_sheets_urls)
 	}
 
+	for (const child of el.childNodes) {
+		html += await _getOuterHTML(child, opts, collectedStylsheets);
+	}
 
 	return html || HTMLUtils.escapeHtml(el.innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
-async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):Promise<string> {
+async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions, collectedStylsheets?:string[]):Promise<string> {
 	
 	if (el instanceof globalThis.Text) return HTMLUtils.escapeHtml(el.textContent ?? ""); // text node
 
 	if (el instanceof DocumentFragment) {
 		const content = [];
 		for (const child of el.children) {
-			content.push(await _getOuterHTML(child, opts));
+			content.push(await _getOuterHTML(child, opts, collectedStylsheets));
 		}
 		return content.join("\n");
 	}
@@ -112,7 +117,7 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions):
 		throw "invalid HTML node"
 	}
 
-	const inner = await getInnerHTML(el, opts);
+	const inner = await getInnerHTML(el, opts, collectedStylsheets);
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
 

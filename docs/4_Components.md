@@ -109,9 +109,9 @@ const parent =
 Component children are part of the component state and are restored when the component is recreated.
 
 
-## Internal component layout (Shadow DOM with UIX.ShadowDomComponent)
+## Internal component layout (Shadow DOM with UIX.ShadowDOMComponent)
 
-Components extending `UIX.ShadowDomComponent` have the following structure:
+Components extending `UIX.ShadowDOMComponent` have the following structure:
 ```html
 <uix-component>
 
@@ -142,7 +142,7 @@ For most use cases, it makes sense to initialize the content when the component 
 
 ```tsx
 @Component
-class ParentComponent extends UIX.ShadowDomComponent {
+class ParentComponent extends UIX.ShadowDOMComponent {
     // add layout content to the shadow dom
     // + elements automatically get assigned an id
     @layout componentTitle = <div>Component Title</div>
@@ -170,7 +170,7 @@ Also, it is not possible to use the `@content` decorator *and* append children t
 
 ```tsx
 @Component
-class ParentComponent extends UIX.ShadowDomComponent {
+class ParentComponent extends UIX.ShadowDOMComponent {
     @layout componentTitle = <div>Component Title</div>
     @content customContent = <div>Content</div>
 }
@@ -209,10 +209,10 @@ export default <ParentComponent/>
 
 To apply css styles to a component in a module `my_component.ts`, you can create a file next to the module file, called `my_component.css`. 
 
-If the component extends `UIX.ShadowDomComponent`, the styles declared in this file are automatically adopted for all instances of the component and are not exposed
+If the component extends `UIX.ShadowDOMComponent`, the styles declared in this file are automatically adopted for all instances of the component and are not exposed
 to other components.
 
-For components that don't extend `UIX.ShadowDomComponent`, the styles from `my_component.css` are added as to the global style declaration. In this
+For components that don't extend `UIX.ShadowDOMComponent`, the styles from `my_component.css` are added as to the global style declaration. In this
 case it is your responsibility to make sure that your style declarations don't have any side effects for other components.
 
 For general global styles, you can add an `entrypoint.css` file next to the `entrypoint.ts` file.

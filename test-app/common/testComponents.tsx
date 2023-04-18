@@ -1,7 +1,7 @@
-import { ValueInput } from "uix/components/ValueInput.tsx";
 import { UIX } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
+import { ValueInput } from "uix/components/ValueInput.tsx";
 
 /**
  * Put examples for all components in the testComponents object.

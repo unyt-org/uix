@@ -4,7 +4,7 @@ import { Res, Theme, HTMLUtils } from "./uix_all.ts";
 export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
 
 /** make decorators global */
-import {content as _content, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, Component as _Component, standalone as _standalone} from "./uix_all.ts";
+import {content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, Component as _Component, standalone as _standalone} from "./uix_all.ts";
 import { bindToOrigin } from "./utils/datex_over_http.ts";
 
 declare global {
@@ -16,6 +16,7 @@ declare global {
 	const Component: typeof _Component;
 	const NoResources: typeof _NoResources;
 	const standalone: typeof _standalone;
+	const bindOrigin: typeof _bindOrigin;
 }
 
 // @ts-ignore global
@@ -34,6 +35,8 @@ globalThis.Component = _Component;
 globalThis.NoResources = _NoResources;
 // @ts-ignore global
 globalThis.standalone = _standalone;
+// @ts-ignore global
+globalThis.bindOrigin = _bindOrigin;
 
 // GET STRING reference
 export function S (_s:TemplateStringsArray|string|Datex.Value<string>, ...params:string[]):Datex.Value<string> {

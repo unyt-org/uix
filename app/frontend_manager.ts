@@ -174,7 +174,7 @@ export class FrontendManager extends HTMLProvider {
 			// TODO: rate limiting
 			console.log("datex-via-http:",dx);
 			try {
-				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {});
+				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:Datex.BROADCAST});
 				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON}));
 			}
 			catch (e) {

@@ -3,6 +3,7 @@ import { customAttributeValues } from "../html/attributes.ts"
 import { UIX } from "uix";
 import { BaseComponent } from "./BaseComponent.ts"
 import { HTMLUtils } from "../html/utils.ts";
+import { bindToOrigin } from "../utils/datex_over_http.ts";
 
 export namespace ValueInput {
 	export interface Options extends BaseComponent.Options {
@@ -21,7 +22,7 @@ export class ValueInput extends BaseComponent<ValueInput.Options, never> {
 	@standalone @layout input = <input onclick={()=>this.onClick()} type={this.options.type} placeholder={this.options.placeholder}/>
 	
 	@standalone onClick() {
-		console.log("click", this.count++)
+		console.log("onClick", this.count++)
 	}
 
 }

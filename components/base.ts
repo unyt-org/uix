@@ -16,7 +16,7 @@ import { DEFAULT_BORDER_SIZE, IS_HEADLESS } from "../utils/constants.ts"
 import { Clipboard } from "../base/clipboard.ts"
 import type { Group } from "./group.ts"
 import { Components } from "./main.ts"
-import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
+import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, ORIGIN_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import { bindObserver } from "../html/datex_binding.ts";
 import { Path } from "unyt_node/path.ts";
 import { RouteManager } from "../html/rendering.ts";
@@ -25,9 +25,11 @@ import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, update
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open_graph.ts";
 import { App } from "../app/app.ts";
 import { bindContentProperties } from "../snippets/bound_content_properties.ts";
-import { standaloneContentPropertyData, standaloneProperties } from "./BaseComponent.ts";
+import { propInit, standaloneContentPropertyData, standaloneProperties } from "./BaseComponent.ts";
 import { indent } from "../utils/indent.ts";
 import { serializeJSValue } from "../utils/serialize_js.ts";
+import { bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
+
 
 // deno-lint-ignore no-namespace
 /**
@@ -848,17 +850,25 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         const parentProps = (Object.getPrototypeOf(this).prototype)?.[METADATA]?.[STANDALONE_PROPS]?.public;
         const props:Record<string, string> = scope[METADATA]?.[STANDALONE_PROPS]?.public;
+        const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
+
         if (!props) return;
         // workaround: [STANDALONE_PROPS] from parent isn't overriden, just ignore
         if (parentProps === props) return;
 
         for (const name of Object.values(props)) {
             // prototype has methods
-            if (scope[<keyof typeof scope>name])
+            if (scope[<keyof typeof scope>name]) {
+                // also bound to origin
+                if (originProps?.[name]) {
+                    // @ts-ignore
+                    scope[<keyof typeof scope>name] = bindToOrigin(scope[<keyof typeof scope>name], undefined, name, originProps[name].datex);
+                }
                 this.addStandaloneMethod(name, scope[<keyof typeof scope>name]);
+            }
             // otherwise, instace property
             else 
-                this.addStandaloneProperty(name);
+            this.addStandaloneProperty(name, originProps?.[name]);
         }
     }
 
@@ -880,7 +890,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     // add instance properties that are loaded in standalone mode
     protected static standaloneProperties:standaloneProperties = {};
-    protected static addStandaloneProperty(name: string) {
+    protected static addStandaloneProperty(name: string, init?:propInit) {
         if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
             // // extract initializer from class source code
@@ -890,23 +900,23 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             //     console.log(classCode)
             //     throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
             // }
-            this.standaloneProperties[name] = {type:'id', id};
+            this.standaloneProperties[name] = {type:'id', id, init};
         }
         else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'content', id};
+            this.standaloneProperties[name] = {type:'content', id, init};
         }
         else if (name in (this.prototype[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'layout', id};
+            this.standaloneProperties[name] = {type:'layout', id, init};
         }
         else if (name in (this.prototype[METADATA]?.[CHILD_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[CHILD_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'child', id};
+            this.standaloneProperties[name] = {type:'child', id, init};
         }
         // normal property
         else {
-            this.standaloneProperties[name] = {type:'prop'};
+            this.standaloneProperties[name] = {type:'prop', init};
         }
     }
 
@@ -1052,13 +1062,13 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
         // init props with current values
         for (const [name, data] of Object.entries((this.constructor as typeof Base).standaloneProperties)) {
-            // normal property init
-            if (data.type == "prop") {
-                js_code += `self["${name}"] = ${serializeJSValue(this[<keyof this>name])};\n`
+            // init from origin context (via datex)
+            if (data.init) {
+                js_code += `self["${name}"] = ${getValueInitializer(this[<keyof this>name], data.init.datex)};\n`
             }
-            // check if already in DOM, otherwise create (TODO: improve)
-            else if (data.type == "id") {
-                // js_code += `self["${name}"] = ${(this.constructor as typeof BaseComponent).getSelectorCode(data, 'self')} ?? self["${name}"];\n`
+            // normal property init
+            else if (data.type == "prop") {
+                js_code += `self["${name}"] = ${serializeJSValue(this[<keyof this>name])};\n`
             }
         }
         

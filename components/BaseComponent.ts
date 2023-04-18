@@ -19,11 +19,13 @@ import { INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { addGlobalStyleSheetLink } from "../utils/css_style_compat.ts";
 import { indent } from "../utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize_js.ts";
+import { ORIGIN_PROPS } from "../uix_all.ts"
+import { bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
 
-
-export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string, init?:string};
-export type standalonePropertyData = {type:'prop', init?:string}
-export type standaloneProperties = Record<string, standaloneContentPropertyData | standalonePropertyData>;
+export type propInit = {datex?:boolean};
+export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
+export type standalonePropertyData = {type:'prop'}
+export type standaloneProperties = Record<string, (standaloneContentPropertyData | standalonePropertyData) & {init?:propInit }>;
 
 // deno-lint-ignore no-namespace
 export namespace BaseComponent {
@@ -199,17 +201,25 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
         const parentProps = (Object.getPrototypeOf(this).prototype)?.[METADATA]?.[STANDALONE_PROPS]?.public;
         const props:Record<string, string> = scope[METADATA]?.[STANDALONE_PROPS]?.public;
+        const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
+
         if (!props) return;
         // workaround: [STANDALONE_PROPS] from parent isn't overriden, just ignore
         if (parentProps === props) return;
 
         for (const name of Object.values(props)) {
             // prototype has methods
-            if (scope[<keyof typeof scope>name])
+            if (scope[<keyof typeof scope>name]) {
+                // also bound to origin
+                if (originProps?.[name]) {
+                    // @ts-ignore
+                    scope[<keyof typeof scope>name] = bindToOrigin(scope[<keyof typeof scope>name], undefined, name, originProps[name].datex);
+                }
                 this.addStandaloneMethod(name, scope[<keyof typeof scope>name]);
+            }
             // otherwise, instace property
             else 
-                this.addStandaloneProperty(name);
+            this.addStandaloneProperty(name, originProps?.[name]);
         }
     }
 
@@ -231,7 +241,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     // add instance properties that are loaded in standalone mode
     protected static standaloneProperties:standaloneProperties = {};
-    protected static addStandaloneProperty(name: string) {
+    protected static addStandaloneProperty(name: string, init?:propInit) {
         if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
             // // extract initializer from class source code
@@ -241,23 +251,23 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             //     console.log(classCode)
             //     throw new Error("Could not create @standalone property \""+name+"\". Make sure you add a semicolon (;) at the end of the property initialization.")
             // }
-            this.standaloneProperties[name] = {type:'id', id};
+            this.standaloneProperties[name] = {type:'id', id, init};
         }
         else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'content', id};
+            this.standaloneProperties[name] = {type:'content', id, init};
         }
         else if (name in (this.prototype[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'layout', id};
+            this.standaloneProperties[name] = {type:'layout', id, init};
         }
         else if (name in (this.prototype[METADATA]?.[CHILD_PROPS]?.public??{})) {
             const id = this.prototype[METADATA]?.[CHILD_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
-            this.standaloneProperties[name] = {type:'child', id};
+            this.standaloneProperties[name] = {type:'child', id, init};
         }
         // normal property
         else {
-            this.standaloneProperties[name] = {type:'prop'};
+            this.standaloneProperties[name] = {type:'prop', init};
         }
     }
 
@@ -736,13 +746,13 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
         // init props with current values
         for (const [name, data] of Object.entries((this.constructor as typeof BaseComponent).standaloneProperties)) {
-            // normal property init
-            if (data.type == "prop") {
-                js_code += `self["${name}"] = ${serializeJSValue(this[<keyof this>name])};\n`
+            // init from origin context (via datex)
+            if (data.init) {
+                js_code += `self["${name}"] = ${getValueInitializer(this[<keyof this>name], data.init.datex)};\n`
             }
-            // check if already in DOM, otherwise create (TODO: improve)
-            else if (data.type == "id") {
-                // js_code += `self["${name}"] = ${(this.constructor as typeof BaseComponent).getSelectorCode(data, 'self')} ?? self["${name}"];\n`
+            // normal property init
+            else if (data.type == "prop") {
+                js_code += `self["${name}"] = ${serializeJSValue(this[<keyof this>name])};\n`
             }
         }
 

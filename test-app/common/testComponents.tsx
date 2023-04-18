@@ -34,12 +34,12 @@ export const testComponents = {
 	 * -> When the button is created and rendered on the frontend, the onclick
 	 *    handler is called on the *frontend*
 	 * 
- 	 * By wrapping it with UIX.onFrontend(), the onmousedown handler is always called on
+ 	 * By wrapping it with UIX.inDisplayContext(), the onmousedown handler is always called on
 	 * the *frontend*, also in standalone mode
 	*/
 	contexts: 
 		<button 
-			onmousedown={UIX.onFrontend(() => console.log("mouse down"))} 
+			onmousedown={UIX.inDisplayContext(() => console.log("mouse down"))} 
 			onmouseup={Api.method1}
 			onclick={async e => {
 				console.log("clicked",e);

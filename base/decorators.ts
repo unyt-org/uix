@@ -1,5 +1,5 @@
 import { Datex } from "unyt_core";
-import { context_kind, context_meta_getter, context_meta_setter, context_name, handleDecoratorArgs, METADATA } from "unyt_core/datex_all.ts";
+import { Class, context_kind, context_meta_getter, context_meta_setter, context_name, handleDecoratorArgs, METADATA } from "unyt_core/datex_all.ts";
 import { Types } from "../utils/global_types.ts";
 import { abstract_component_classes, component_classes, component_groups, logger } from "../utils/global_values.ts";
 import { getCloneKeys } from "../utils/utils.ts";
@@ -148,6 +148,7 @@ export const CHILD_PROPS: unique symbol = Symbol("CHILD_PROPS");
 export const LAYOUT_PROPS: unique symbol = Symbol("LAYOUT_PROPS");
 export const IMPORT_PROPS: unique symbol = Symbol("IMPORT_PROPS");
 export const STANDALONE_PROPS: unique symbol = Symbol("STANDALONE_PROPS");
+export const ORIGIN_PROPS: unique symbol = Symbol("ORIGIN_PROPS");
 
 /** @id to automatically assign a element id to a component property */
 export function id(id?:string):any
@@ -246,6 +247,25 @@ function _standalone(element_class:typeof Elements.Base, name:context_name, kind
 	}
 
 	setMetadata(STANDALONE_PROPS, name);
+}
+
+
+/** @bindOrigin to declare methods that work in a standlone context, but are executed in the original context */
+export function bindOrigin(options:{datex:boolean}):any
+export function bindOrigin(target: any, propertyKey: string, descriptor: PropertyDescriptor):any
+export function bindOrigin(_invalid_param_0_: HTMLElement, _invalid_param_1_?: string, _invalid_param_2_?: PropertyDescriptor):any
+
+export function bindOrigin(...args:any[]) {
+	return handleDecoratorArgs(args, _bindOrigin);
+}
+
+function _bindOrigin(val:(...args:any)=>any, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[{datex:boolean}?] = []) {
+	if (is_static) {
+		logger.error("@UIX.bindOrigin cannot be used on static class fields");
+		return;
+	}
+	setMetadata(STANDALONE_PROPS, name);
+	setMetadata(ORIGIN_PROPS, params[0]??{datex:false});
 }
 
 

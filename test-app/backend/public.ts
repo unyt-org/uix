@@ -5,7 +5,7 @@ export function test(x:any) {
 
 export class Api {
 	static method1(){
-		console.log("method 1 was called");
+		console.log("method 1 was called",datex.meta);
 		return true;
 	}
 }

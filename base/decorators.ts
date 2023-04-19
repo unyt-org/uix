@@ -44,7 +44,7 @@ function _Component(component_class:Types.ComponentSubClass, name:context_name, 
 	const stack = new Error().stack;
 	const url = stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
 	if (!url) {
-		console.log(url,">",stack,">",stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/));
+		console.log(url,">",btoa(stack?.trim()??''),">",stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/));
 		throw new Error("Could not get the location of a UIX component. This should not happen");
 	}
 

@@ -8,7 +8,7 @@ import { Elements} from "../elements/main.ts";
 import { Files } from "./files.ts";
 import "../html/datex_binding.ts";
 import { BaseComponent } from "../components/BaseComponent.ts";
-import { getCallerFile } from "https://dev.cdn.unyt.org/unyt_core/utils/caller_metadata.ts";
+import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 
 //export const customElements = <typeof globalThis.customElements> globalThis.customElements ? globalThis.customElements : {define:()=>null};
 

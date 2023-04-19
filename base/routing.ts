@@ -45,6 +45,11 @@ export namespace Routing {
 	export async function setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint) {
 		frontend_entrypoint = frontend;
 		backend_entrypoint = backend;
+		// entrypoints available - enable frontend routing
+		if (frontend_entrypoint || backend_entrypoint) {
+			enableFrontendRouting();
+		}
+		
 		const backend_available = backend_entrypoint ? await initEndpointContent(backend_entrypoint) : false;
 		const frontend_available = frontend_entrypoint ? await initEndpointContent(frontend_entrypoint) : false;
 		// no content for path found after initial loading
@@ -174,34 +179,41 @@ export namespace Routing {
 
 	}
 
+	let frontendRoutingEnabled = false;
 
-	// listen for history changes
+	function enableFrontendRouting() {
+		if (frontendRoutingEnabled) return;
+		frontendRoutingEnabled = true;
+		logger.debug("frontend routing enabled");
 
-	// @ts-ignore
-	if (globalThis.navigation) {
+		// listen for history changes
+
 		// @ts-ignore
-		globalThis.navigation?.addEventListener("navigate", (e:any)=>{
-			if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
-			const url = new URL(e.destination.url);
-			if (url.origin != new URL(window.location.href).origin) return;
+		if (globalThis.navigation) {
+			// @ts-ignore
+			globalThis.navigation?.addEventListener("navigate", (e:any)=>{
+				if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
+				const url = new URL(e.destination.url);
+				if (url.origin != new URL(window.location.href).origin) return;
 
-			// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)
-			e.intercept({
-				async handler() {
-					await handleCurrentURLRoute();
-				},
-				focusReset: 'manual',
-				scroll: 'manual'
+				// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)
+				e.intercept({
+					async handler() {
+						await handleCurrentURLRoute();
+					},
+					focusReset: 'manual',
+					scroll: 'manual'
+				})
+				e.s
 			})
-			e.s
-		})
-	}
+		}
 
-	// fallback if "navigate" event not supported - only works for # paths, otherwise, page is reloaded
-	else {
-		globalThis.addEventListener('popstate', (e) => {
-			handleCurrentURLRoute();
-		})
+		// fallback if "navigate" event not supported - only works for # paths, otherwise, page is reloaded
+		else {
+			globalThis.addEventListener('popstate', (e) => {
+				handleCurrentURLRoute();
+			})
+		}
 	}
 
 }

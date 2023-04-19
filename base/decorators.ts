@@ -36,13 +36,13 @@ export function Component<T extends Components.Base.Options|BaseComponent.Option
 export function Component():any
 export function Component<C>(target: Function & { prototype: C }):any
 export function Component<C>(...args:any[]):any {
-	return handleDecoratorArgs(args, _Component);
+	const url = getCallerFile();
+	return handleDecoratorArgs(args, (...args)=>_Component(url, ...args));
 }
 
 
-function _Component(component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
+function _Component(url:string, component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
 
-	const url = getCallerFile(); // stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
 	if (!url) {
 		throw new Error("Could not get the location of a the UIX component '"+component_class.name+"'. This should not happen");
 	}

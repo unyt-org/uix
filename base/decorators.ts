@@ -41,9 +41,10 @@ export function Component<C>(...args:any[]):any {
 
 function _Component(component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
 
-	const url = new Error().stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
+	const stack = new Error().stack;
+	const url = stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
 	if (!url) {
-		console.log(new Error().stack);
+		console.log(stack,url);
 		throw new Error("Could not get the location of a UIX component. This should not happen");
 	}
 

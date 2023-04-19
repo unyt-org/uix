@@ -8,6 +8,7 @@ import { Elements} from "../elements/main.ts";
 import { Files } from "./files.ts";
 import "../html/datex_binding.ts";
 import { BaseComponent } from "../components/BaseComponent.ts";
+import { getCallerFile } from "https://dev.cdn.unyt.org/unyt_core/utils/caller_metadata.ts";
 
 //export const customElements = <typeof globalThis.customElements> globalThis.customElements ? globalThis.customElements : {define:()=>null};
 
@@ -41,11 +42,9 @@ export function Component<C>(...args:any[]):any {
 
 function _Component(component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
 
-	const stack = new Error().stack;
-	const url = stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
+	const url = getCallerFile(); // stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/)?.[1];
 	if (!url) {
-		console.log(url,">",btoa(stack?.trim()??''),">",stack?.trim()?.match(/((?:https?|file)\:\/\/.*?)(?::\d+)*(?:$|\nevaluate@)/));
-		throw new Error("Could not get the location of a UIX component. This should not happen");
+		throw new Error("Could not get the location of a the UIX component '"+component_class.name+"'. This should not happen");
 	}
 
 	// deprecated message

@@ -187,11 +187,11 @@ export class FileProvider implements RouteHandler {
 		if (this.#path.fs_is_dir) this.#path = this.#path.asDir()
 	}
 
-	getRoute(route:Path.Route, context: UIX.Context) {
+	getRoute(route:Path.route_representation|string, context: UIX.Context) {
 		const path = this.#path.getChildPath(route);
 		if (!path.fs_exists) return provideError("File not found", 404);
 		if (!context.request) return provideError("Cannot serve file");
-		else return fileServer!.serveFile(context.request, path.pathname);
+		else return fileServer!.serveFile(context.request, path.normal_pathname);
 	}
 }
 

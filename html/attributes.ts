@@ -67,8 +67,6 @@ type src = {
 const alt = "alt" as const;
 
 
-
-
 /** list of all allowed attributes for HTML elements */
 export const htmlElementAttributes = {
 
@@ -121,10 +119,14 @@ type cXY = {
 	cy: htmlPixels
 }
 
+export const svgTags = new Set(["animate", "animateMotion", "animateTransform", "circle", "clipPath", "defs", "desc", "ellipse", "feBlend", "feColorMatrix", "feComponentTransfer", "feComposite", "feConvolveMatrix", "feDiffuseLighting", "feDisplacementMap", "feDisplacementMap", "feDropShadow", "feFlood", "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur", "feImage", "feMerge", "feMergeNode", "feMorphology", "feOffset", "fePointLight", "feSpecularLighting", "feSpotLight", "feTile", "feTurbulence", "filter", "foreignObject", "g", "image", "line", "linearGradient", "marker", "mask", "metadata", "mpath", "path", "pattern", "polygon", "polyline", "radialGradient", "rect", "set", "stop",  "svg", "switch", "symbol", "text", "textPath","tspan", "use", "view"] satisfies (keyof SVGElementTagNameMap)[])
+
+// TODO: name collisions: "a", "script", "style",  "title", 
+
 /** list of all allowed attributes for HTML elements */
 export const svgElementAttributes = {
 	circle: [...cXY, "fill", "r"],
-	svg: [...widthAndHeight, "xmlns", "viewBox"]
+	svg: [...widthAndHeight, "xmlns", "viewBox", "preserveAspectRatio"]
 } as const satisfies {[key in keyof SVGElementTagNameMap]?: readonly string[]};
 
 
@@ -134,3 +136,6 @@ export type svgElementAttributeValues = {
 		r: htmlPixels
 	}
 }
+
+
+export const mathMLTags = new Set(["annotation","annotation-xml","maction","math","merror","mfrac","mi","mmultiscripts","mn","mo","mover","mpadded","mphantom","mprescripts","mroot","mrow","ms","mspace","msqrt","mstyle","msub","msubsup","msup","mtable","mtd","mtext","mtr","munder","munderover","semantics"] satisfies (keyof MathMLElementTagNameMap)[])

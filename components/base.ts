@@ -1409,7 +1409,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             (<any>child).focus() // bring child to foreground
         }
         // end of route reached / handled in component without redirecting to children, all ok
-        if (route.route.length == 1 || !(child instanceof HTMLElement) || (typeof child?.resolveRoute !== "function")) return route; 
+        if (route.route.length == 1 || !(child instanceof Element) || (typeof child?.resolveRoute !== "function")) return route; 
         // recursively follow route
         else {
             const child_route = await child.resolveRoute(Path.Route(route.route.slice(1)), context);

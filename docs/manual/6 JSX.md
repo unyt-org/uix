@@ -12,13 +12,13 @@ const section =
 	<div id="section-1">
 		<h1 style="font-weight:bold">Title</h1>
 		<p>First Paragraph</p>
-	</div>
+	</div> as HTMLDivElement
 ```
 
 ## Supported attributes
 
 For normal DOM elements, all attributes that are normally supported by the element, can be used.
-Component support the common attributes for DOM element (e.g. 'id', 'class', 'style', event handlers) per default, and 
+Component support the common attributes for DOM element (e.g. `id`, `class`, `style` or event handlers) per default, and 
 can accept additional custom attributes defined in the component class or function.
 
 Additionally, there are special attributes for uix-specific functionality:
@@ -108,17 +108,26 @@ If you don't want to use JSX, you can also just use the `HTML` function which pr
 JSX:
 ```tsx
 const count: Datex.Pointer<number> = $$(0);
-const div: HTMLDivElement = 
+const div = 
 	<div>
 		<p>Count: {count}</p>
-	</div>
+	</div> as HTMLDivElement
 ```
 
 HTML:
 ```tsx
 const count: Datex.Pointer<number> = $$(0);
-const div: HTMLDivElement = HTML`
+const div = HTML`
 	<div>
 		<p>Count: ${count}</p>
-	</div>`
+	</div>` as HTMLDivElement
+```
+
+## JSX return types
+
+TypeScript currently does not support dynamic return types for JSX declarations.
+This means that all JSX-generated elements must be explicitly cast to the correct class:
+
+```tsx
+const anchor = <a href="/link">Link</a> as HTMLAnchorElement
 ```

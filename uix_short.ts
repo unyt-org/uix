@@ -164,7 +164,6 @@ export function HTML(template:any, ...content:(HTMLElement|Datex.CompatValue<unk
 			all.push(HTMLUtils.valuesToDOMElement(...children));
 			if (!html.trim()) break;
 		}
-		console.log(all);
 		return HTMLUtils.valuesToDOMElement(...all);
 	}
 	
@@ -286,7 +285,6 @@ function matchAttribute(html:string, content:any[], attrs:Record<string,any>) {
 		const injectedIds = [...attrVal.matchAll(extractInjectedIds)].map(v=>Number(v[1]));
 		const injected = content.slice(injectedIds.at(0), injectedIds.at(-1)!+1)
 		attrVal = attrVal.replaceAll(extractInjectedIds, '(?)');
-		console.log(injected, attrVal);
 		throw "todo: $$ transform for attribute"
 	}
 

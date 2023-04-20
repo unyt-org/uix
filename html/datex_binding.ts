@@ -35,26 +35,26 @@ Datex.Type.get('htmlfragment').setJSInterface({
 
 // handles html/x and also casts from uix/x
 
-Datex.Type.get('html').setJSInterface({
-    class: globalThis.HTMLElement,
+const elementInterface:Datex.js_interface_configuration & {_name:string} = {
+	_name: "unset",
 
 	get_type(val) {
-		if (val instanceof HTMLElement) return Datex.Type.get('std', 'html', val.tagName.toLowerCase());
-		else throw "not an HTMLElement"
+		if (val instanceof this.class!) return Datex.Type.get('std', this._name, val.tagName.toLowerCase());
+		else throw "not an " + this.class!.name;
 	},
 
 	// called when replicating from state
 	cast_no_tuple(val, type, ctx) {
 
 		const is_uix = type.name == "uix";
-		if (!is_uix && !type.variation) throw new Error("cannot create HTMLElement without concrete type")
+		if (!is_uix && !type.variation) throw new Error("cannot create "+this.class!.name+" without concrete type")
 		
 		const propertyInitializer = is_uix ? type.getPropertyInitializer(val.p) : null;
 
 		// create HTMLElement / UIX component
 		const el = is_uix ?
 			type.newJSInstance(false, undefined, propertyInitializer!) :  // call js constructor, but don't handle as constructor in lifecycle 
-			document.createElement(type.variation); // create normal HTMLElement, no UIX lifecycle
+			HTMLUtils.createElement(type.variation); // create normal Element, no UIX lifecycle
 
 		// set attrs, style, content from object
 		if (typeof val == "object" && Object.getPrototypeOf(val) === Object.prototype) {
@@ -71,7 +71,7 @@ Datex.Type.get('html').setJSInterface({
 				}
 				else if (prop=="content") {
 					for (const child of (value instanceof Array ? value : [value])) {
-						if (child instanceof HTMLElement) HTMLUtils.append(el, <HTMLElement>child);
+						if (child instanceof this.class!) HTMLUtils.append(el, <Element>child);
 						else HTMLUtils.append(el, child);
 					}
 				}
@@ -80,7 +80,7 @@ Datex.Type.get('html').setJSInterface({
 
 		// set direct content when cast from different value
 		else {
-			if (val instanceof HTMLElement) HTMLUtils.append(el, <HTMLElement>val);
+			if (val instanceof this.class!) HTMLUtils.append(el, <Element>val);
 			else HTMLUtils.append(el, val);
 		}
 
@@ -96,8 +96,8 @@ Datex.Type.get('html').setJSInterface({
 		return el;
 	},
 
-	serialize(val: HTMLElement&{[HTMLUtils.EVENT_LISTENERS]?:Map<keyof HTMLElementEventMap, Set<Function>>}) {
-		if (!(val instanceof HTMLElement)) throw "not an HTMLElement";
+	serialize(val: Element&{[HTMLUtils.EVENT_LISTENERS]?:Map<keyof HTMLElementEventMap, Set<Function>>}) {
+		if (!(val instanceof this.class!)) throw "not an " + this.class!.name;
 		const data: {style:Record<string,string>, content:any[], attr:Record<string,unknown>} = {style: {}, attr: {}, content: []}
 
 		// attributes
@@ -170,18 +170,32 @@ Datex.Type.get('html').setJSInterface({
 		return val;
 	}
 
-})
+}
 
 
+Datex.Type.get('html').setJSInterface(Object.assign(Object.create(elementInterface), {
+	_name: 'html',
+    class: globalThis.HTMLElement
+}))
+
+Datex.Type.get('svg').setJSInterface(Object.assign(Object.create(elementInterface), {
+	_name: 'svg',
+    class: globalThis.SVGElement
+}))
+
+// Datex.Type.get('mathml').setJSInterface(Object.assign(Object.create(elementInterface), {
+//     class: globalThis.MathMLElement
+// }))
 
 const OBSERVER = Symbol("OBSERVER");
 const OBSERVER_EXCLUDE_UPDATES = Symbol("OBSERVER_EXCLUDE_UPDATES");
 const OBSERVER_IGNORE = Symbol("OBSERVER_IGNORE");
 
 
-export function bindObserver(element:HTMLElement) {
+export function bindObserver(element:Element) {
 	const pointer = Datex.Pointer.getByValue(element);
 	if (!pointer) throw new Error("cannot bind observers for HTMLElement without pointer")
+	if (!element.dataset) throw new Error("element has nodaset, todo");
 	if (!element.dataset['ptr']) element.dataset['ptr'] = pointer.id;
 
 	// @ts-ignore

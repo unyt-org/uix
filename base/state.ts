@@ -224,7 +224,7 @@ export namespace State {
     export async function importState(dx:string){
 
         const state = <any> await datex(dx);
-        if (state instanceof HTMLElement) {
+        if (state instanceof Element) {
             document.body.append(state);
         }
         else {
@@ -236,7 +236,7 @@ export namespace State {
     export async function importStateBase64(dx:string){
 
         const state = await Datex.Runtime.decodeValueBase64(dx);
-        if (state instanceof HTMLElement) {
+        if (state instanceof Element) {
             document.body.append(state);
         }
         else {

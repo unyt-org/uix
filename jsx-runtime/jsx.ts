@@ -3,18 +3,13 @@ import { $$, Datex } from "unyt_core";
 import { UIX } from "uix";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import { BaseComponent } from "../components/BaseComponent.ts";
-import { validHTMLElementSpecificAttrs, validHTMLElementAttrs, validSVGElementSpecificAttrs } from "../html/attributes.ts";
-import { logger } from "../uix_all.ts";
+import { validHTMLElementSpecificAttrs, validHTMLElementAttrs, validSVGElementSpecificAttrs, svgTags, mathMLTags } from "../html/attributes.ts";
+import { HTMLUtils, logger } from "../uix_all.ts";
 
-// const jsxFragment = 'jsx.Fragment'
-// const jsxTextNode = 'jsx.Text'
 
-// type jsxDOMContainer = HTMLElement | DocumentFragment | null
-// type jsxDOMElement = HTMLElement | DocumentFragment | Text
+export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): Element {
 
-export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): HTMLElement {
-
-	let element:HTMLElement;
+	let element:Element;
 	let { children = [], ...props } = config
 	if (!(children instanceof Array)) children = [children];
 
@@ -58,11 +53,11 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 		return placeholder;
 	}
 
-	else element = <HTMLElement> document.createElement(type);
+	else element = HTMLUtils.createElement(type);
 
 	if (init_attributes) {
 		for (let [key,val] of Object.entries(props)) {
-			if (key == "style") UIX.HTMLUtils.setCSS(element, <any> val);
+			if (key == "style" && (element as HTMLElement).style) UIX.HTMLUtils.setCSS(element as HTMLElement, <any> val);
 			else {
 				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) {
 					// TODO: remove 'module'
@@ -88,6 +83,12 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 	return ptr;
 }
 
+export function Fragment({children}:{children:Element[]}) {
+	const fragment = new DocumentFragment();
+	children.map(c=>HTMLUtils.append(fragment, c));
+	return fragment;
+}
+ 
 // jsx.Fragment = jsxFragment
 // jsx.TextNode = jsxTextNode
 // jsx.customAttributes = ['children', 'key', 'props']
@@ -101,9 +102,9 @@ globalThis._jsx = jsx;
 declare global {
 	namespace JSX {
 		// JSX node definition
-		type Element = HTMLElement
+		type Element = globalThis.Element
 
-		// type ElementClass = typeof HTMLElement
+		// type ElementClass = typeof Element
 
 		type Fragment = number;
 
@@ -114,10 +115,10 @@ declare global {
 
 		// Property in 'props' that will hold the children of the Component
 		interface ElementChildrenAttribute {
-			children: HTMLElement[]|HTMLElement
+			children: Element[]|Element
 		}
 
-		type _child = Datex.CompatValue<HTMLElement|DocumentFragment|string|number|boolean|bigint|null|child[]>;
+		type _child = Datex.CompatValue<Element|DocumentFragment|string|number|boolean|bigint|null|child[]>;
 		type child = _child|Promise<_child>
 
 		type htmlAttrs<T extends Record<string,unknown>> = DatexValueObject<Omit<Partial<T>, 'children'|'style'>>

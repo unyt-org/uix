@@ -286,7 +286,7 @@ export class RenderPreset<R extends RenderMethod,T extends html_content_or_gener
  * @param render_method 
  * @returns 
  */
-export async function createSnapshot<T extends HTMLElement|DocumentFragment>(content:T, render_method = RenderMethod.HYDRATION):Promise<T> {
+export async function createSnapshot<T extends Element|DocumentFragment>(content:T, render_method = RenderMethod.HYDRATION):Promise<T> {
 	await preloadElementOnBackend(content);
 	// TODO: better solution to wait for component to load
 	await sleep(4000);
@@ -298,7 +298,7 @@ export async function createSnapshot<T extends HTMLElement|DocumentFragment>(con
 
 // collapse RenderPreset, ... to HTML element or other content
 export type raw_content = Blob|Response
-export type html_content = Datex.CompatValue<HTMLElement|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|raw_content;
+export type html_content = Datex.CompatValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|raw_content;
 export type html_generator = (ctx:UIX.Context)=>html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 export type html_content_or_generator = html_content|html_generator;
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
@@ -391,7 +391,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await entrypoint(context!), route, context, only_return_static_content, return_first_routing_handler)
 	}
 	// handle presets
-	else if (entrypoint instanceof RenderPreset || (entrypoint && typeof entrypoint == "object" && !(entrypoint instanceof HTMLElement) && '__content' in entrypoint)) {
+	else if (entrypoint instanceof RenderPreset || (entrypoint && typeof entrypoint == "object" && !(entrypoint instanceof Element) && '__content' in entrypoint)) {
 		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(<html_content_or_generator>await entrypoint.__content, route, context, only_return_static_content, return_first_routing_handler);
 		render_method = <RenderMethod> entrypoint.__render_method;
 	}
@@ -404,7 +404,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	}
 	
 	// path object
-	else if (!(entrypoint instanceof HTMLElement || entrypoint instanceof Datex.Markdown) && entrypoint && typeof entrypoint == "object" && Object.getPrototypeOf(entrypoint) == Object.prototype) {
+	else if (!(entrypoint instanceof Element || entrypoint instanceof Datex.Markdown) && entrypoint && typeof entrypoint == "object" && Object.getPrototypeOf(entrypoint) == Object.prototype) {
 		// find longest matching route
 		let closest_match_key:string|null = null;
 		let closest_match_route:Path.Route|null = null;
@@ -483,7 +483,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	// only load once in recursive calls when deepest level reached
 	if (!loaded) {
 		// preload in deno, TODO: better solution?
-		if (IS_HEADLESS && entrypoint instanceof HTMLElement) {
+		if (IS_HEADLESS && entrypoint instanceof Element) {
 			await preloadElementOnBackend(entrypoint);
 		}
 
@@ -511,7 +511,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 }
 
 
-export async function preloadElementOnBackend(entrypoint:HTMLElement|DocumentFragment){
+export async function preloadElementOnBackend(entrypoint:Element|DocumentFragment){
 	// preload in deno, TODO: better solution?
 	if (IS_HEADLESS) {
 		globalThis.document.body.append(entrypoint);

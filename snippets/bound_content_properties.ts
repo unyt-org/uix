@@ -34,7 +34,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 					return props_map.get(prop)
 				},
 				set(el) {
-					if (el instanceof HTMLElement) el.setAttribute("id", id); // auto set id
+					if (el instanceof Element) el.setAttribute("id", id); // auto set id
 					if (el) props_map.set(prop, el)
 				},
 				configurable: true,
@@ -48,7 +48,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 	if (content_props) {
 		const container = ()=>element.shadowRoot?.querySelector("#content")??element
 		for (const [prop,id] of Object.entries(content_props)) {
-			if (!allow_existing && element[prop] instanceof HTMLElement && element.shadowRoot?.contains(element[prop])) throw new Error("property '" + prop +"' cannot be used as an @content property - already part of the component")
+			if (!allow_existing && element[prop] instanceof Element && element.shadowRoot?.contains(element[prop])) throw new Error("property '" + prop +"' cannot be used as an @content property - already part of the component")
 			bindContent(element, container, prop, id, load_from_props)
 		}
 	}
@@ -92,7 +92,7 @@ function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:
 				isPlaceholder = true;
 			}
 			// encapsulate in HTMLElement
-			if (!(el instanceof HTMLElement)) {
+			if (!(el instanceof Element)) {
 				const inner = el;
 				el = document.createElement("span");
 				el.append(inner);

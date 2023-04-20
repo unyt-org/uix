@@ -76,7 +76,7 @@ export namespace Routing {
 			document.body.innerHTML = "";
 			// console.log("-->",collapsed_content)
 			// TODO: 
-			if (typeof content == "object" && !(content instanceof HTMLElement)) console.warn("invalid content, cannot handle yet", content)
+			if (typeof content == "object" && !(content instanceof Element)) console.warn("invalid content, cannot handle yet", content)
 			HTMLUtils.append(document.body, content) // add to document
 		}
 	
@@ -129,7 +129,7 @@ export namespace Routing {
 	}
 
 	function getInferredDOMEntrypoint(){
-		return document.body.children[0] instanceof HTMLElement ? document.body.children[0] : null
+		return document.body.children[0] instanceof Element ? document.body.children[0] : null
 	}
 
 	const INITIAL_LOAD = Symbol("INITIAL_LOAD")

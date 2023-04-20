@@ -17,7 +17,7 @@ import { always } from "https://dev.cdn.unyt.org/unyt_core/datex.ts";
 
 
 
-function Container({children}:{children:HTMLElement|HTMLElement[]}) {
+function Container({children}:{children:Element|Element[]}) {
 	return <div style={{display:"flex", gap:5, margin:5}}>{...(children instanceof Array ? children : [children])}</div>
 }
 
@@ -78,18 +78,29 @@ export const testComponents = {
 			{datex `<html/button> "click me"`}
 		</h3>,
 
+	// fixme: fragments not working correctly with JSdom and Text nodes
+	fragment1 : <DocumentFragment>
+		Child 1
+		<i>Child 2</i>
+		{123345}
+	</DocumentFragment>,
+
+	fragment2 : <>
+		Child 1
+		<i>Child 2</i>
+		{123345}
+	</>,
+
 	svg: 
 		<svg 
-			id="test"
-			xmlns="http://www.w3.org/2000/svg"
-			viewBox="0 0 250 250"
-			width="250"
-			height="250">
+			width="400"
+			height="400">
 			<circle
-				cx={100}
-				cy={100}
-				r="50"
-				fill="gold"
+				onclick={UIX.inDisplayContext((e)=>console.log("load",e))}
+				cx={200}
+				cy={200}
+				r="100"
+				fill="cyan"
 				id="circle"/>
 		</svg>
 };

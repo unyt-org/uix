@@ -2,7 +2,7 @@ import "unyt_core";
 import { DX_VALUE } from "unyt_core/datex_all.ts";
 import { Datex, decimal, pointer } from "unyt_core";
 import { Theme } from "../base/theme.ts";
-import { defaultElementAttributes, elementEventHandlerAttributes, htmlElementAttributes, svgElementAttributes } from "./attributes.ts";
+import { defaultElementAttributes, elementEventHandlerAttributes, htmlElementAttributes, mathMLTags, svgElementAttributes, svgTags } from "./attributes.ts";
 
 
 // deno-lint-ignore no-namespace
@@ -40,6 +40,16 @@ export namespace HTMLUtils {
 			else setElementText(element, content);
 		}
 		return element;
+	}
+
+
+	const svgNS = "http://www.w3.org/2000/svg"
+	const mathMLNS = "http://www.w3.org/1998/Math/MathML"
+
+	export function createElement(tagName:string): SVGElement|MathMLElement|HTMLElement {
+		if (svgTags.has(<any>tagName)) return <SVGElement> document.createElementNS(svgNS, tagName);
+		else if (mathMLTags.has(<any>tagName)) return <MathMLElement> document.createElementNS(mathMLNS, tagName);
+		else return <HTMLElement> document.createElement(tagName);
 	}
 
 	export function setCSS<T extends HTMLElement>(element:T, property:string, value?:Datex.CompatValue<string|number>):T
@@ -99,7 +109,7 @@ export namespace HTMLUtils {
 
 	export function valuesToDOMElement(...values:any[]) {
 		if (values.length == 1) {
-			if (values[0] instanceof HTMLElement || values[0] instanceof DocumentFragment) return values[0];
+			if (values[0] instanceof Element || values[0] instanceof DocumentFragment) return values[0];
 			else return HTMLUtils.getTextNode(values[0]);
 		}
 		else {
@@ -222,7 +232,7 @@ export namespace HTMLUtils {
 	export const EVENT_LISTENERS: unique symbol = Symbol("EVENT_LISTENERS");
 	export type elWithEventListeners = HTMLElement & {[EVENT_LISTENERS]:Map<keyof HTMLElementEventMap, Set<(...args:any)=>any>>}
 
-	function setAttribute(element: HTMLElement, property:string, val:unknown, root_path?:string|URL) {
+	function setAttribute(element: Element, property:string, val:unknown, root_path?:string|URL) {
 		// not an HTML attribute - set property
 		if (!(
 			property.startsWith("data-") ||
@@ -231,8 +241,13 @@ export namespace HTMLUtils {
 			elementEventHandlerAttributes.includes(<typeof elementEventHandlerAttributes[number]>property) ||
 			(<readonly string[]>htmlElementAttributes[<keyof typeof htmlElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof htmlElementAttributes[keyof typeof htmlElementAttributes][number]>property) ||
 			(<readonly string[]>svgElementAttributes[<keyof typeof svgElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof svgElementAttributes[keyof typeof svgElementAttributes][number]>property) )) {
-				// @ts-ignore element property name
-				element[property] = Datex.Value.collapseValue(val, true, true);
+				try {
+					element[property] = Datex.Value.collapseValue(val, true, true);
+				}
+				catch(e) {
+					// console.log(e,element,property)
+					console.error("could not set attribute '" + property + "' for " + element.constructor.name);
+				}
 			return;
 		}
 
@@ -256,7 +271,7 @@ export namespace HTMLUtils {
 		else element.setAttribute(property, formatAttributeValue(val,root_path));
 	}
 
-	export function setElementAttribute<T extends HTMLElement>(element:T, property:string, value:Datex.CompatValue<any>|Function, root_path?:string|URL) {
+	export function setElementAttribute<T extends Element>(element:T, property:string, value:Datex.CompatValue<any>|Function, root_path?:string|URL) {
 		if (!element) return;
 	
 		// DatexValue
@@ -269,11 +284,11 @@ export namespace HTMLUtils {
 	}
 
 	// remember which values are currently synced with element content - for unobserve
-	const element_bound_html_values = new WeakMap<HTMLElement, Datex.Value>();
-	const element_bound_text_values = new WeakMap<HTMLElement, Datex.Value>();
+	const element_bound_html_values = new WeakMap<Element, Datex.Value>();
+	const element_bound_text_values = new WeakMap<Element, Datex.Value>();
 
-	function updateElementHTML(this:HTMLElement, html:HTMLElement|string){
-		if (html instanceof HTMLElement) {
+	function updateElementHTML(this:Element, html:Element|string){
+		if (html instanceof Element) {
 			this.innerHTML = '';
 			this.append(html)
 		} 
@@ -293,7 +308,7 @@ export namespace HTMLUtils {
 		else this.innerText = ((<any>text)?.toString()) ?? ''
 	}
 
-	export function setElementHTML<T extends HTMLElement>(element:T, html:Datex.CompatValue<string|HTMLElement>):T {
+	export function setElementHTML<T extends Element>(element:T, html:Datex.CompatValue<string|Element>):T {
 		// unobserve?
 		element_bound_html_values.get(element)?.unobserve(element);
 		element_bound_text_values.get(element)?.unobserve(element);
@@ -343,7 +358,7 @@ export namespace HTMLUtils {
 	type appendableContent = appendableContentBase|Promise<appendableContentBase>;
 
 	// append an element or text to an element
-	export function append<T extends HTMLElement|DocumentFragment>(element:T, content:appendableContent):T {
+	export function append<T extends Element|DocumentFragment>(element:T, content:appendableContent):T {
 		// wait for promise
 		if (content instanceof Promise) {
 			const placeholder = document.createElement("div")
@@ -371,10 +386,10 @@ export namespace HTMLUtils {
 
 
 	// jquery-like event listener (multiple events at once + delegate with query selector)
-	export function addDelegatedEventListener<E extends HTMLElement>(target:E, events:string, selector:string,  listener: (this: HTMLElement, ev: Event) => any, options?: boolean | AddEventListenerOptions){
+	export function addDelegatedEventListener<E extends Element>(target:E, events:string, selector:string,  listener: (this: Element, ev: Event) => any, options?: boolean | AddEventListenerOptions){
 		for (const event of events.split(" ")){
 			target.addEventListener(event.trim(), function (event) {
-				if (event.target && event.target instanceof HTMLElement && event.target.closest(selector)) {
+				if (event.target && event.target instanceof Element && event.target.closest(selector)) {
 					listener.call(event.target, event)
 				}
 			}, options);

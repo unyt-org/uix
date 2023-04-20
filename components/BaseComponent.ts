@@ -37,7 +37,7 @@ export namespace BaseComponent {
 
 
 @template("uix:basecomponent") 
-export abstract class BaseComponent<O extends BaseComponent.Options = BaseComponent.Options, ChildElement extends HTMLElement = HTMLElement> extends HTMLElement implements RouteManager {
+export abstract class BaseComponent<O extends BaseComponent.Options = BaseComponent.Options, ChildElement extends Element = HTMLElement> extends HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -921,7 +921,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             (<any>child).focus() // bring child to foreground
         }
         // end of route reached / handled in component without redirecting to children, all ok
-        if (route.route.length == 1 || !(child instanceof HTMLElement) || (typeof child?.resolveRoute !== "function")) return route; 
+        if (route.route.length == 1 || !(child instanceof Element) || (typeof child?.resolveRoute !== "function")) return route; 
         // recursively follow route
         else {
             const child_route = await child.resolveRoute(Path.Route(route.route.slice(1)), context);

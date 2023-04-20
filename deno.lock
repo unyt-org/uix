@@ -326,6 +326,7 @@
     "https://dev.cdn.unyt.org/unyt_core/network/network_utils.ts": "531615aa700a8d10e0bfaa3c8f79c247f98e69add0005a2898c532ae3d0a57d2",
     "https://dev.cdn.unyt.org/unyt_core/network/supranet.ts": "71de4a697300680186c2c079f6d3faed94f3dce04943a07778c12a1dd4f0ff62",
     "https://dev.cdn.unyt.org/unyt_core/network/unyt.ts": "79f94a3bdd1cae7fb722346ee36dc9045b71bc93e8e744242054db566424d180",
+    "https://dev.cdn.unyt.org/unyt_core/no_init.ts": "c74fad1f7f8e0683ef202fd78a1c00b423f430f748a65f9427f18b3c7056be77",
     "https://dev.cdn.unyt.org/unyt_core/runtime/cache_path.ts": "018f7c0608456c699001c4687be0da5437cbf4716db9b5785c503624d1a7f695",
     "https://dev.cdn.unyt.org/unyt_core/runtime/cli.ts": "1aa1cf585d31fb3c3bb4bfcda5f73ceecf1089b38720f55721d5fe234a0fc7e1",
     "https://dev.cdn.unyt.org/unyt_core/runtime/constants.ts": "721c631f278edd1be73e725031ec680982e8172b7ee247e531dbdbe9d2b71ee7",

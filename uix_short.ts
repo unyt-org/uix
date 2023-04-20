@@ -1,5 +1,7 @@
-import { Datex } from "unyt_core";
+// deno-lint-ignore-file no-control-regex
+import { Datex, text } from "unyt_core";
 import { Res, Theme, HTMLUtils } from "./uix_all.ts";
+import { jsx } from "./jsx-runtime/jsx.ts";
 
 export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
 
@@ -112,129 +114,187 @@ const inside_el_header_regex = /<[^>]*$/;
 const id_inject_regex = /<([^> ]*)(\s+[^>]*$)/;
 const find_el_id_regex = /<[^> ]* id=["']?([^ "'\n>]+)["']?[^>]*$/;
 
-// shortcut extension of createHTMLElement with extended template support (attributes, style properties, nested HTML)
-export function HTML (name:TemplateStringsArray|string, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]) {
+
+const injectionMarker = '\x00';
+const tagStart = /^<([\w\-.:]*|\x00\(\d+\))\s*( |\/|>)/;
+const extractInjectedId = /\x00\((\d+)\)/;
+const extractInjectedIds = /\x00\((\d+)\)/gm;
+const extractInjectedIdsNoGroup = /\x00\((?:\d+)\)/gm;
+const attrStart = /^\s*([\w-]+)\s*=\s*/;
+const string = /^("(?:(?:.|\n)*?[^\\])??(?:(?:\\\\)+)?"|'(?:(?:.|\n)*?[^\\])??(?:(?:\\\\)+)?')/;
+const word = /^[\w-]+\b/;
+const tagEnd = /^\s*(\/)?>/
+const closingTag = /^<\/\s*([\w\-.:]*|\x00\(\d+\))\s*>/
+
+const untilTagClose = /[^<]*(?=<|$)/
+
+type jsxConstructor = [string|typeof HTMLElement, Record<string,any>];
+
+/**
+ * Alternative to JSX, just using native JS template strings
+ * @param template html template string
+ * @param content 
+ * @returns 
+ */
+export function HTML(value:any): HTMLElement|DocumentFragment
+export function HTML(template:TemplateStringsArray|string, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]): HTMLElement|DocumentFragment
+export function HTML(template:any, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]) {
+	const isTemplate = template?.raw instanceof Array && template instanceof Array;
 	// just HTML string and children
-	if (typeof name == "string") {
-		return HTMLUtils.createHTMLElement(name, content);
+	if (!isTemplate) {
+		return HTMLUtils.getTextNode(template);
 	}
 	// template
 	else {
 
-		const uuid = Math.round(Math.random()*1000) + "" + new Date().getTime();
-		const style_injections:Record<number,[prop:string,el_id:string]> = {}
-		const attribute_injections:Record<number,[prop:string,el_id:string]> = {}
-
+		// combine html
 		let html = "";
 		let c = 0;
-		for (const raw of name.raw) {
+		for (const raw of (template as unknown as TemplateStringsArray).raw) {
 			html += raw;
-			// insert
-
-			if (c<name.raw.length-1) {
-				// element/style attributes
-				if (html.match(inside_el_header_regex)) {
-					let el_id:string|undefined;
-
-					// does not yet have an assigned id?
-					if (!(el_id = html.match(find_el_id_regex)?.[1])) {
-						el_id = `el_${uuid}_${c}`;
-						// inject unique id for element at beginning of tag
-						html = html.replace(id_inject_regex,`<$1 id=${el_id} $2`);
-					}
-
-					// style property
-					const style_prop = html.match(style_prop_regex)?.[1];
-					if (style_prop) {
-						// remove from html
-						html = html.replace(style_prop_regex, '');
-						style_injections[c] = [style_prop, el_id];
-					}
-
-					else {
-						// normal attribute
-						const attr = html.match(attr_regex)?.[1];
-						if (attr) {
-							// remove from html
-							html = html.replace(attr_regex, '');
-							attribute_injections[c] = [attr, el_id];
-						}
-						
-						else {
-							throw Error("invalid injection in HTML")
-						}
-					}
-					
-					
-				}
-				// element child
-				else {
-					html += `<span class=tmp-${c}>?</span>`;
-				}
-			}
-			
-			c++;
+			if (c<(template as unknown as TemplateStringsArray).raw.length-1) html += `\x00(${c++})`;
 		}
-
-		// console.log(html, style_injections, attribute_injections)
-
-		const el = HTMLUtils.createHTMLElement(html);
-
-		const findElement = (id:string)=>{
-			// find element
-			let parent:HTMLElement|null;
-			if (el.id == id) parent = el;
-			else parent = el.querySelector('#'+id);
-			if (!parent) throw Error("HTML parsing error");
-			return parent;
+		console.log(">>",html)
+		const [_html, ...children] = matchTag(html, content);
+		if (children.length == 1) {
+			if (children[0] instanceof HTMLElement) return children[0];
+			else return HTMLUtils.getTextNode(children[0]);
 		}
-
-
-		// inject content
-		c = 0;
-		for (const child of content) {
-
-			// inject style
-			if (c in style_injections) {
-				const [prop, id] = style_injections[c];
-				// find element
-				const parent = findElement(id);
-				HTMLUtils.setCSSProperty(parent, prop, child)
-			}
-			// inject attribute
-			else if (c in attribute_injections) {
-				const [attr, id] = attribute_injections[c];
-				// find element
-				const parent = findElement(id);
-				// on-x handler function
-				if (attr.startsWith("on") && child instanceof Function) {
-					parent.addEventListener(<keyof HTMLElementEventMap> attr.replace("on",""), <any>child);
-				}
-				else HTMLUtils.setElementAttribute(parent, attr, child)
-				// console.log("attr parent",parent,attr,child)
-			}
-
-			else {
-				// insert child
-				const tmp = <HTMLElement> el.querySelector(".tmp-"+c);
-				if (!tmp) throw Error("HTML parsing error");
-				if (child instanceof HTMLElement) tmp.replaceWith(child);
-				else if (child instanceof Array) {
-					tmp.innerHTML = "";
-					// tmp.style.all = "inherit"; //TODO keep?
-					tmp.append(...child);
-				}
-				else HTMLUtils.setElementText(tmp, child);
-			}
-
-			c++;
-
+		else {
+			const fragment = new DocumentFragment();
+			children.forEach(c=>HTMLUtils.append(fragment, c))
+			return fragment;
 		}
-
-		return el;
 	}
 	
 }
+
+function matchTag(html:string, content:any[]) {
+	const start = html.match(tagStart);
+	const tag = start?.[1];
+
+	// no tag - html content
+	if (!tag) {
+		const matchInner = html.match(untilTagClose);
+		if (!matchInner) throw new Error("UIX.HTML: Invalid HTML")
+		const inner = matchInner[0];
+		html = html.replace(matchInner[0], "").trimStart();
+		const injectedIds = [...inner.matchAll(extractInjectedIds)].map(v=>Number(v[1]));
+		const injected = content.slice(injectedIds.at(0), injectedIds.at(-1)!+1)
+		const contentParts = inner.split(extractInjectedIdsNoGroup);
+
+		const combined = contentParts.map((e,i) => [e, injected[i]]).flat().slice(0, -1).filter(c=>c!=="");
+		console.warn("inner",inner,contentParts,injected,combined)
+		return [html, ...combined]
+	}
+
+	html = html.replace(start[0], "").trimStart();
+	const immediateTagClose = start[2] == "/";
+	const noAttrs = immediateTagClose || start[2] == ">"
+
+	// reinsert immediately closing > or /
+	if (immediateTagClose) html = "/" + html
+	else if (noAttrs) html = ">" + html
+
+	let tagName:string|Function = tag;
+	if (tag.startsWith(injectionMarker)) tagName = content[Number(tag.match(extractInjectedId)![1])]
+
+	// tag start - attributes
+	const attrs = {children: []} as JSX.ElementChildrenAttribute & {children:any[]};
+
+	if (!noAttrs) {
+		while (html && !html.match(tagEnd)) {
+			html = matchAttribute(html, content, attrs).trimStart();
+		}
+	}
+	
+	const endMatch = html.match(tagEnd)!;
+	const selfClosing = immediateTagClose || !!endMatch[1]
+	html = html.replace(endMatch[0], "").trimStart();
+	
+	// children
+	if (!selfClosing) {
+		let matchClose:RegExpMatchArray|null|undefined
+		while (html && !((matchClose=html.match(closingTag)))) {
+			const [newhtml, ...children] = matchTag(html, content);
+			attrs.children.push(...children);
+			html = newhtml;
+		}
+		if (!matchClose) throw new Error("UIX.HTML: missing closing tag for " + (typeof tagName == "string" ? tagName : tagName.name))
+		if (matchClose![1]!=tagName) throw new Error("UIX.HTML: closing tag "+matchClose![1]+" does not match " + (typeof tagName == "string" ? tagName : tagName.name))
+		html = html.replace(matchClose![0], "").trimStart();
+	}
+
+	// single child
+	if (attrs.children.length == 1) attrs.children = attrs.children[0];
+
+
+	return [html, jsx(tagName, attrs)] as const;
+}
+
+function matchAttribute(html:string, content:any[], attrs:Record<string,any>) {
+
+	if (!html.match(word)) {
+		throw new Error("UIX.HTML: invalid token (near '"+html+"')")
+	}
+
+	// attr=
+	const attr = html.match(attrStart);
+	// standalone attribute without value
+	if (!attr) {
+		const trueAttr = html.match(word);
+		if (trueAttr) {
+			html = html.replace(trueAttr[0], "").trimStart();
+			attrs[trueAttr[0]] = true;
+		}
+		return html;
+	}
+
+	html = html.replace(attr[0], "").trimStart();
+	const attrName = attr[1];
+
+	const attrValMatch = html.match(string);
+
+	let attrVal: any;
+	let contentInserted = false;
+
+	// matched " or '
+	if (attrValMatch) {
+		html = html.replace(attrValMatch[0], "").trimStart();
+		attrVal = attrValMatch?.[0]?.slice(1,-1)
+	}
+	// injected
+	else if (html.startsWith(injectionMarker)) {
+		const match = html.match(extractInjectedId);
+		attrVal = content[Number(match![1])];
+		html = html.replace(match![0], "").trimStart();
+		contentInserted = true;
+	}
+	// unescaped value
+	else if (html.match(word)) {
+		const valMatch = html.match(word);
+		if (!valMatch) throw new Error("UIX.HTML: Invalid HTML, invalid attribute definition ("+attrName+")");
+		html = html.replace(valMatch[0], "").trimStart();
+		attrVal = valMatch[0];
+	}
+	else {
+		throw new Error("UIX.HTML: Invalid HTML, invalid attribute definition ("+attrName+")");
+	}
+
+	// resolve "\x00(1)"
+	if (!contentInserted && attrVal.includes(injectionMarker)) {
+		const injectedIds = [...attrVal.matchAll(extractInjectedIds)].map(v=>Number(v[1]));
+		const injected = content.slice(injectedIds.at(0), injectedIds.at(-1)!+1)
+		attrVal = attrVal.replaceAll(extractInjectedIds, '(?)');
+		console.log(injected, attrVal);
+		throw "todo: $$ transform for attribute"
+	}
+
+	attrs[attrName] = attrVal;
+	return html;
+}
+
+globalThis.HTML = HTML;
 
 /**
  * bind to origin in function prototype

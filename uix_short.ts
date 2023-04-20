@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-control-regex
 import { Datex, text } from "unyt_core";
-import { Res, Theme, HTMLUtils } from "./uix_all.ts";
+import { Res, Theme, HTMLUtils, logger } from "./uix_all.ts";
 import { jsx } from "./jsx-runtime/jsx.ts";
 
 export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
@@ -220,7 +220,7 @@ function matchTag(html:string, content:any[]) {
 			attrs.children.push(...children);
 			html = newhtml;
 		}
-		if (!matchClose) throw new Error("UIX.HTML: missing closing tag for " + (typeof tagName == "string" ? tagName : tagName.name))
+		if (!matchClose) logger.warn("UIX.HTML: missing closing tag for " + (typeof tagName == "string" ? tagName : tagName.name))
 		if (matchClose![1]!=tagName) throw new Error("UIX.HTML: closing tag "+matchClose![1]+" does not match " + (typeof tagName == "string" ? tagName : tagName.name))
 		html = html.replace(matchClose![0], "").trimStart();
 	}

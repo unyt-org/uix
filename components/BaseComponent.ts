@@ -622,7 +622,11 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     // default constructor
     @constructor async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
-        // options already handled in constructor
+        // options normally already handled in constructor
+        if (!this.options) {
+            if (!options) logger.warn("no options found");
+            else this.initOptions(options);
+        }
         
         // handle default component options (class, ...)
         if (this.options?.class) 
@@ -1045,7 +1049,13 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     protected routeDelegate?: BaseComponent; // delegate that handles all routes for this component
     /** called to get the current route of the component (child route) */
-    getInternalRoute():string[] {return []}
+    getInternalRoute():string[] {
+        const identifier = this.getRouteIdentifier();
+        if (typeof identifier == "string") return [identifier]
+        else return [];
+    }
+
+    protected getRouteIdentifier():string|undefined|void {}
 
     /** called when a route is requested from the component, return element matching the route identifier or true if route was handled */
     protected onRoute?(identifier:string, is_initial_route:boolean):Promise<void|BaseComponent|boolean>|void|BaseComponent|boolean

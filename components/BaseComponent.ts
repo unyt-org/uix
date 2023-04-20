@@ -534,7 +534,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
         // pre-init options before other DATEX state is initialized 
         // (this should not happen when reconstructing, because options are undefined or have [INIT_PROPS])
-        else if (options) this.initOptions(options);
+        else this.initOptions(options);
 
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
@@ -622,12 +622,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     // default constructor
     @constructor async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
-        // options normally already handled in constructor
-        if (!this.options) {
-            if (!options) logger.warn("no options found");
-            else this.initOptions(options);
-        }
-        
+        // options already handled in constructor
+
         // handle default component options (class, ...)
         if (this.options?.class) 
             HTMLUtils.setElementAttribute(this, "class", this.options.$.class);

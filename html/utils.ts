@@ -2,7 +2,7 @@ import "unyt_core";
 import { DX_VALUE } from "unyt_core/datex_all.ts";
 import { Datex, decimal, pointer } from "unyt_core";
 import { Theme } from "../base/theme.ts";
-import { defaultElementAttributes, elementEventHandlerAttributes, elementAttributes } from "./attributes.ts";
+import { defaultElementAttributes, elementEventHandlerAttributes, htmlElementAttributes, svgElementAttributes } from "./attributes.ts";
 
 
 // deno-lint-ignore no-namespace
@@ -229,7 +229,8 @@ export namespace HTMLUtils {
 			property.startsWith("aria-") ||
 			defaultElementAttributes.includes(<typeof defaultElementAttributes[number]>property) || 
 			elementEventHandlerAttributes.includes(<typeof elementEventHandlerAttributes[number]>property) ||
-			(<readonly string[]>elementAttributes[<keyof typeof elementAttributes>element.tagName.toLowerCase()])?.includes(<typeof elementAttributes[keyof typeof elementAttributes][number]>property))) {
+			(<readonly string[]>htmlElementAttributes[<keyof typeof htmlElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof htmlElementAttributes[keyof typeof htmlElementAttributes][number]>property) ||
+			(<readonly string[]>svgElementAttributes[<keyof typeof svgElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof svgElementAttributes[keyof typeof svgElementAttributes][number]>property) )) {
 				// @ts-ignore element property name
 				element[property] = Datex.Value.collapseValue(val, true, true);
 			return;

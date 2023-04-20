@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-namespace
-import { customAttributeValues } from "../html/attributes.ts"
+import { htmlElementAttributeValues } from "../html/attributes.ts"
 import { UIX } from "uix";
 import { BaseComponent } from "./BaseComponent.ts"
 

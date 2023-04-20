@@ -5,10 +5,13 @@
  */
 
 
+// general html specific types
+
 type numberString = `${number}`
 type integerString = `${bigint}`
 type htmlNumber = numberString|number|bigint
 type htmlPixels = integerString|number|bigint
+type htmlColor = ""
 
 
 // list of all event handler content attributes
@@ -20,12 +23,13 @@ export const elementEventHandlerAttributes = [
 export const defaultElementAttributes = [
 	"accesskey", "class", "contenteditable", "contextmenu", "dir", "draggable", "dropzone", "hidden", "id", "lang", "spellcheck", "style", "tabindex", "title",
 	// uix specific
-	"uix-module"
+	"uix-module", "datex-pointer"
 ] as const;
 
 // custom attribute values for default attributes (default: string)
 type customDefaultAttributeValues = {
-	"uix-module": string|URL
+	"uix-module": string|URL,
+	"datex-pointer": boolean
 }
 
 export type validHTMLElementAttrs = {
@@ -34,9 +38,14 @@ export type validHTMLElementAttrs = {
 	[key in typeof elementEventHandlerAttributes[number]]: key extends keyof GlobalEventHandlers ? GlobalEventHandlers[key] : never
 }
 
-export type validElementAttrs<TAG extends string> = TAG extends keyof typeof elementAttributes ? {
-	[key in (typeof elementAttributes)[TAG][number]]: TAG extends keyof customAttributeValues ? (key extends keyof customAttributeValues[TAG] ? customAttributeValues[TAG][key] : string) : string
+export type validHTMLElementSpecificAttrs<TAG extends string> = TAG extends keyof typeof htmlElementAttributes ? {
+	[key in (typeof htmlElementAttributes)[TAG][number]]: TAG extends keyof htmlElementAttributeValues ? (key extends keyof htmlElementAttributeValues[TAG] ? htmlElementAttributeValues[TAG][key] : string) : string
 } : Record<string, unknown>;
+
+export type validSVGElementSpecificAttrs<TAG extends string> = TAG extends keyof typeof svgElementAttributes ? {
+	[key in (typeof svgElementAttributes)[TAG][number]]: TAG extends keyof svgElementAttributeValues ? (key extends keyof svgElementAttributeValues[TAG] ? svgElementAttributeValues[TAG][key] : string) : string
+} : Record<string, unknown>;
+
 
 
 /** attribute definitions used by multiple elements */ 
@@ -58,8 +67,10 @@ type src = {
 const alt = "alt" as const;
 
 
-/** list of all allowed attributes for elements */
-export const elementAttributes = {
+
+
+/** list of all allowed attributes for HTML elements */
+export const htmlElementAttributes = {
 
 	a: ["href"],
 	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value"],
@@ -69,7 +80,7 @@ export const elementAttributes = {
 
 
 /** custom values for specific element attributes (default: string) */
-export type customAttributeValues = {
+export type htmlElementAttributeValues = {
 	a: {
 		href: string|URL
 	},
@@ -98,5 +109,28 @@ export type customAttributeValues = {
 		loading: "eager"|"lazy",
 		referrerpolicy: "no-referrer"|"no-referrer-when-downgrade"|"origin"|"origin-when-cross-origin"|"unsafe-url",
 		usemap: `#${string}`
+	}
+}
+
+
+
+// width, height
+const cXY = ["cx", "cy"] as const;
+type cXY = {
+	cx: htmlPixels,
+	cy: htmlPixels
+}
+
+/** list of all allowed attributes for HTML elements */
+export const svgElementAttributes = {
+	circle: [...cXY, "fill", "r"],
+	svg: [...widthAndHeight, "xmlns", "viewBox"]
+} as const satisfies {[key in keyof SVGElementTagNameMap]?: readonly string[]};
+
+
+/** custom values for specific element attributes (default: string) */
+export type svgElementAttributeValues = {
+	circle: cXY & {
+		r: htmlPixels
 	}
 }

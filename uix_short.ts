@@ -139,7 +139,7 @@ export function unsafeHTML(html:string, content?: Datex.CompatValue<HTMLElement>
  * @returns 
  */
 export function HTML(value:any): HTMLElement|DocumentFragment
-export function HTML(template:TemplateStringsArray|string, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]): HTMLElement|DocumentFragment
+export function HTML<R extends HTMLElement|DocumentFragment = HTMLElement|DocumentFragment>(template:TemplateStringsArray|string, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]): R
 export function HTML(template:any, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]) {
 	const isTemplate = template?.raw instanceof Array && template instanceof Array;
 	// just HTML string and children

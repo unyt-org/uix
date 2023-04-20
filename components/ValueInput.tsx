@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-namespace
-import { customAttributeValues } from "../html/attributes.ts"
+import { htmlElementAttributeValues } from "../html/attributes.ts"
 import { UIX } from "uix";
 import { BaseComponent } from "./BaseComponent.ts"
 import { HTMLUtils } from "../html/utils.ts";
@@ -7,7 +7,7 @@ import { bindToOrigin } from "../utils/datex_over_http.ts";
 
 export namespace ValueInput {
 	export interface Options extends BaseComponent.Options {
-		type?: customAttributeValues['input']['type'],
+		type?: htmlElementAttributeValues['input']['type'],
 		placeholder?: string
 	}
 }

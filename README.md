@@ -32,12 +32,12 @@ However, the saved state of a UIX Component should not contain web-specfic conte
 
 ## Documentation
 
-1. [Getting Started](./docs/manual/1_Getting_Started.md)
-2. [Entrypoints and Routing](./docs/manual/2_Entrypoints_and_Routing.md)
-3. [Imports](./docsmanual//3_Imports.md)
-4. [Components](./docs/manual/4_Components.md)
-5. [States](./docs/manual/5_States.md)
-6. [JSX](./docs/manual/6_JSX.md)
-6. [Component Standalone Mode](./docs/manual/7_Standalone_Mode.md)
+1. [Getting Started](./docs/manual/1%20Getting%20Started.md)
+2. [Entrypoints and Routing](./docs/manual/2%20Entrypoints%20and%20Routing.md)
+3. [Imports](./docsmanual/3%20Imports.md)
+4. [Components](./docs/manual/4%20Components.md)
+5. [States](./docs/manual/5%20States.md)
+6. [JSX](./docs/manual/6%20JSX.md)
+6. [Component Standalone Mode](./docs/manual/7%20Standalone%20Mode.md)
 
 ## [Development Guidelines](./DEVELOP.md)

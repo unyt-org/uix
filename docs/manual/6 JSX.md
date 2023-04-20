@@ -1,11 +1,11 @@
 # JSX
 
-UIX supports JSX syntax for creating HTML Elements and UIX Components.
+UIX supports JSX syntax for creating HTML/SVG Elements and UIX Components.
 
-## Creating normal HTML Elements
+## Creating normal DOM Elements
 
-All existing HTML Elements (e.g. `<div>`, `<p>`, `<img>`, ...) can be created with JSX. 
-Supported attributes can also be used.
+All existing DOM Elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>` ...) can be created with JSX. 
+
 
 ```tsx
 const section = 
@@ -15,9 +15,26 @@ const section =
 	</div>
 ```
 
+## Supported attributes
+
+For normal DOM elements, all attributes that are normally supported by the element, can be used.
+Component support the common attributes for DOM element (e.g. 'id', 'class', 'style', event handlers) per default, and 
+can accept additional custom attributes defined in the component class or function.
+
+Additionally, there are special attributes for uix-specific functionality:
+ * `uix-module`: specify the module path which is used as a reference for relative paths, e.g.:
+ 	```tsx
+	<img uix-module={import.meta.url} src="./relative/path/from/current/module/image.png"/>
+ 	```
+	This is only required for compatibility with Safari. In other runtime environments (e.g. Deno), the `import.meta.url` is always automatically inferred and does not have to be explicitly set.
+ * `datex-pointer`: boolean (set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. Per default, only class components are automatically bound to a pointer.
+
+
 ### Special attributes values
 
-Every attribute value can set to a DATEX pointer.
+
+#### Event Handlers
+Every attribute value can be set to a DATEX pointer.
 When the pointer value changes, the attribute is also updated.
 
 Some attributes support special values. For example, all event listener attributes (`on[event]=...`) can take a callback function as a value.
@@ -34,6 +51,8 @@ export default
 	</div>
 ```
 
+#### Style
+
 The `style` attribute also accepts an object with style declarations. The style properties can be pointer values that 
 get dynamically updated.
 
@@ -49,12 +68,57 @@ setInterval(()=>borderWidth.val++, 1000)
 export default <div id="sd" style={{borderStyle:'solid', borderWidth}}>content</div>
 ```
 
+#### Paths
+
+All attributes that accept a path as a value (e.g. `src`, `href`) can be set to paths relative to the current module (For additional information check out `uix-module` in [Supported Attributes](#supported-attributes)).
+
+Relative paths in element attributes are always correctly resolved on the backend and on the frontend.
+
+```tsx
+// backend/entrypoint.ts
+export default {
+	'/img1': <img href="../common/images/1.png"/>, // file is in common directory: can be resolved on the frontend
+	'/img2': <img href="./res/images/2.png"/>, // file is in backend directory: only accessible on the backend, not available on the frontend!
+}
+```
+```tsx
+// frontend/entrypoint.ts
+export default {
+	'/img3': <img href="../common/images/3.png"/>, // file is in common directory: can be resolved on the frontend
+	'/img4': <img href="./res/images/4.png"/>, // file is in frontend directory: also accessible on the frontend
+}
+```
+
+
 ## Creating Components
 
 Component defined with functions or Component classes can also be created with JSX.
-In addition to the default HTML Element attributes, all Component options can also be set
+In addition to the default DOM element attributes, all Component options can also be set
 via JSX attributes:
 
 ```tsx
 const comp = <UIX.Components.TextView style="color:green" text="text content"/>
+```
+
+
+## Using the `HTML` utility function instead of JSX
+
+If you don't want to use JSX, you can also just use the `HTML` function which provides the exact same functionality as JSX with JavaScript template strings:
+
+JSX:
+```tsx
+const count: Datex.Pointer<number> = $$(0);
+const div: HTMLDivElement = 
+	<div>
+		<p>Count: {count}</p>
+	</div>
+```
+
+HTML:
+```tsx
+const count: Datex.Pointer<number> = $$(0);
+const div: HTMLDivElement = HTML`
+	<div>
+		<p>Count: ${count}</p>
+	</div>`
 ```

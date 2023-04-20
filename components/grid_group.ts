@@ -389,7 +389,6 @@ export class GridGroup<O extends GridGroup.Options=GridGroup.Options, ChildEleme
                 ghost_element.style.gridColumnEnd = (x+2).toString();
                 ghost_element.style.gridRowStart = (y+1).toString();
                 ghost_element.style.gridRowEnd = (y+2).toString();
-
                 let start_vertex:[number,number] = [x, y];
                 let end_vertex:[number,number] = [x+1, y+1];
 

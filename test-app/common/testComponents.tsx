@@ -76,5 +76,20 @@ export const testComponents = {
 			{always `${x} + ${y}`}
 			<br/>
 			{datex `<html/button> "click me"`}
-		</h3>
+		</h3>,
+
+	svg: 
+		<svg 
+			id="test"
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 250 250"
+			width="250"
+			height="250">
+			<circle
+				cx={100}
+				cy={100}
+				r="50"
+				fill="gold"
+				id="circle"/>
+		</svg>
 };

@@ -3,7 +3,8 @@ import { $$, Datex } from "unyt_core";
 import { UIX } from "uix";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import { BaseComponent } from "../components/BaseComponent.ts";
-import { validElementAttrs, validHTMLElementAttrs } from "../html/attributes.ts";
+import { validHTMLElementSpecificAttrs, validHTMLElementAttrs, validSVGElementSpecificAttrs } from "../html/attributes.ts";
+import { logger } from "../uix_all.ts";
 
 // const jsxFragment = 'jsx.Fragment'
 // const jsxTextNode = 'jsx.Text'
@@ -36,7 +37,7 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 	}
 
 	else if (type == "datex") {
-
+		logger.warn("the <datex> JSX element only has experimental support")
 		const placeholder = document.createElement("div");
 		let dx = '';
 		const dxData = [];
@@ -64,6 +65,7 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 			if (key == "style") UIX.HTMLUtils.setCSS(element, <any> val);
 			else {
 				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) {
+					// TODO: remove 'module'
 					val = new Path(val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile()).toString();
 				}
 				UIX.HTMLUtils.setElementAttribute(element, key, <any>val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile());
@@ -76,6 +78,10 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 			UIX.HTMLUtils.append(element, child);
 		}
 	}
+
+	const makePtr = !!(<Record<string,any>>props)['datex-pointer'];
+	// TODO: return here and only add pseudo pointer, without initializing the pointer
+	// if (!makePtr) return element;
 
 	// !important, cannot return directly because of stack problems, store in ptr variable first
 	const ptr = $$(element);
@@ -130,7 +136,9 @@ declare global {
 		
 		// HTML elements allowed in JSX, and their attributes definitions
 		type IntrinsicElements = {
-			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: child} & htmlAttrs<validElementAttrs<key>>
+			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: child} & htmlAttrs<validHTMLElementSpecificAttrs<key>>
+		} & {
+			readonly [key in keyof SVGElementTagNameMap]: IntrinsicAttributes & {children?: child} & htmlAttrs<validSVGElementSpecificAttrs<key>>
 		} & {
 			datex: {children?: any} & {[key in keyof IntrinsicAttributes]: never}
 		}

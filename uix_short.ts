@@ -221,8 +221,8 @@ function matchTag(html:string, content:any[]) {
 			html = newhtml;
 		}
 		if (!matchClose) logger.warn("UIX.HTML: missing closing tag for " + (typeof tagName == "string" ? tagName : tagName.name))
-		if (matchClose![1]!=tagName) throw new Error("UIX.HTML: closing tag "+matchClose![1]+" does not match " + (typeof tagName == "string" ? tagName : tagName.name))
-		html = html.replace(matchClose![0], "").trimStart();
+		if (matchClose && matchClose![1]!=tagName) throw new Error("UIX.HTML: closing tag "+matchClose![1]+" does not match " + (typeof tagName == "string" ? tagName : tagName.name))
+		if (matchClose) html = html.replace(matchClose![0], "").trimStart();
 	}
 
 	// single child

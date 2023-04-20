@@ -72,7 +72,7 @@
     "http://localhost:4200/sw/sw_installer.ts": "043f91f99801db31e8f860f18f05e5654dd961b2f9d7cb46ef90a40addb4e601",
     "http://localhost:4200/uix.ts": "6f7ef9b8baf21f8249bfd6c770b74a2514bbded28a75701ba3d3e23c42e7a33f",
     "http://localhost:4200/uix_all.ts": "1b39ce161f6e2d9388eeb58533e5f7f00e72d361c9a313ded68d8bbdb86b6e07",
-    "http://localhost:4200/uix_short.ts": "0bb95de2990847866fd54a4a8f3e55db2692c100fb2382886e71f734dce5e890",
+    "http://localhost:4200/uix_short.ts": "7209109a65685c8588bbc856a39b5871aad5e56e3f909ee317d8068f44be3c6c",
     "http://localhost:4200/utils/args.ts": "b738320fa4b9bc5e829ea1d9fe3b920001191f2eeba839fa81b44754a4885020",
     "http://localhost:4200/utils/config_files.ts": "40b4530d7716b3a66a41f117250c02612c3cc5d4224ea1279a60fd519d6e1161",
     "http://localhost:4200/utils/constants.ts": "434b0532b8a229fc352c27a42cfe94631a0a843f9088613be73412a68c20a663",

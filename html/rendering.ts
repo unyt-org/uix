@@ -182,6 +182,8 @@ export class FileProvider implements RouteHandler {
 
 	#path: Path
 
+	get path() {return this.#path}
+
 	constructor(path:Path.representation) {
 		this.#path = new Path(path, getCallerFile());
 		if (this.#path.fs_is_dir) this.#path = this.#path.asDir()

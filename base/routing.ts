@@ -104,8 +104,6 @@ export namespace Routing {
 			const _content = await getContentFromEntrypoint(inferred_entrypoint);
 			const refetched_route = await refetchRoute(getCurrentRouteFromURL(), inferred_entrypoint);
 			
-			console.log(inferred_entrypoint, _content, refetched_route)
-
 			// check of accepted route matches new calculated current_route
 			if (!Path.routesAreEqual(getCurrentRouteFromURL(), refetched_route)) {
 				logger.warn `invalid route from inferred frontend entrypoint, reloading page from backend`; 

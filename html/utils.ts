@@ -13,8 +13,10 @@ export namespace HTMLUtils {
 		return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 	}
 
-	// create HTMLElement from string
-	export function createHTMLElement(html?:string, content?:Datex.CompatValue<unknown|HTMLElement>|(Datex.CompatValue<unknown|HTMLElement>)[]):HTMLElement {
+	/**
+	 * @deprecated use unsafeHTML
+	 */
+	export function createHTMLElement(html?:string, content?:Datex.CompatValue<HTMLElement>|(Datex.CompatValue<HTMLElement>)[]):HTMLElement {
 		if (html == undefined) html = "<div></div>";
 		const template = document.createElement('template');
 		html = html.trim();
@@ -93,6 +95,18 @@ export namespace HTMLUtils {
 			}, undefined, undefined);
 		}
 		return element;
+	}
+
+	export function valuesToDOMElement(...values:any[]) {
+		if (values.length == 1) {
+			if (values[0] instanceof HTMLElement || values[0] instanceof DocumentFragment) return values[0];
+			else return HTMLUtils.getTextNode(values[0]);
+		}
+		else {
+			const fragment = new DocumentFragment();
+			values.forEach(c=>HTMLUtils.append(fragment, c))
+			return fragment;
+		}
 	}
 
 	export function getTextNode(content:any) {
@@ -324,13 +338,20 @@ export namespace HTMLUtils {
 		return element;
 	}
 
+	type appendableContentBase = Datex.CompatValue<Element|DocumentFragment|string|number|bigint|boolean>|Promise<appendableContent>;
+	type appendableContent = appendableContentBase|Promise<appendableContentBase>;
+
 	// append an element or text to an element
-	export function append<T extends HTMLElement|DocumentFragment>(element:T, content:Datex.CompatValue<Element|DocumentFragment|string|number|bigint|boolean>):T {
-		if (content instanceof Node) element.append(content);
-		else if (typeof content == "string" || typeof content == "number" || typeof content == "boolean" || typeof content == "bigint") element.append(content.toString());
-		else {
-			element.append(getTextNode(content));
+	export function append<T extends HTMLElement|DocumentFragment>(element:T, content:appendableContent):T {
+		// wait for promise
+		if (content instanceof Promise) {
+			const placeholder = document.createElement("div")
+			placeholder.setAttribute("data-async-placeholder", "");
+			element.append(placeholder);
+			content.then(v=>placeholder.replaceWith(valuesToDOMElement(v)))
+			return element;
 		}
+		element.append(valuesToDOMElement(content));
 		return element;
 	}
 

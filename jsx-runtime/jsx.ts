@@ -17,6 +17,7 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 	let { children = [], ...props } = config
 	if (!(children instanceof Array)) children = [children];
 
+
 	let init_children = true;
 	let init_attributes = true;
 
@@ -33,6 +34,29 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 			init_attributes = true;
 		}
 	}
+
+	else if (type == "datex") {
+
+		const placeholder = document.createElement("div");
+		let dx = '';
+		const dxData = [];
+		for (const child of children) {
+			if (typeof child == "string") dx += child;
+			else {
+				dx += Datex.INSERT_MARK; // (?)
+				dxData.push(child);
+			}
+		}
+		// TODO: DATEX spec, always create a new 'always' pointer if two pointers are added, multiplied, ...?
+		dx = `always(${dx})`;
+
+		// execute datex and set result as html content
+		datex(dx, dxData).then(res=>{
+			placeholder.replaceWith(UIX.HTMLUtils.valuesToDOMElement(res))
+		});
+		return placeholder;
+	}
+
 	else element = <HTMLElement> document.createElement(type);
 
 	if (init_attributes) {
@@ -87,7 +111,8 @@ declare global {
 			children: HTMLElement[]|HTMLElement
 		}
 
-		type child = Datex.CompatValue<HTMLElement|string|number|boolean|bigint|null|child[]>
+		type _child = Datex.CompatValue<HTMLElement|DocumentFragment|string|number|boolean|bigint|null|child[]>;
+		type child = _child|Promise<_child>
 
 		type htmlAttrs<T extends Record<string,unknown>> = DatexValueObject<Omit<Partial<T>, 'children'|'style'>>
 
@@ -106,6 +131,8 @@ declare global {
 		// HTML elements allowed in JSX, and their attributes definitions
 		type IntrinsicElements = {
 			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: child} & htmlAttrs<validElementAttrs<key>>
+		} & {
+			datex: {children?: any} & {[key in keyof IntrinsicAttributes]: never}
 		}
 	}
   }

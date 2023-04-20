@@ -128,7 +128,9 @@ const closingTag = /^<\/\s*([\w\-.:]*|\x00\(\d+\))\s*>/
 
 const untilTagClose = /[^<]*(?=<|$)/
 
-type jsxConstructor = [string|typeof HTMLElement, Record<string,any>];
+export function unsafeHTML(html:string, content?: Datex.CompatValue<HTMLElement>|(Datex.CompatValue<HTMLElement>)[]) {
+	return HTMLUtils.createHTMLElement(html, content)
+}
 
 /**
  * Alternative to JSX, just using native JS template strings
@@ -154,17 +156,16 @@ export function HTML(template:any, ...content:(HTMLElement|Datex.CompatValue<unk
 			html += raw;
 			if (c<(template as unknown as TemplateStringsArray).raw.length-1) html += `\x00(${c++})`;
 		}
-		console.log(">>",html)
-		const [_html, ...children] = matchTag(html, content);
-		if (children.length == 1) {
-			if (children[0] instanceof HTMLElement) return children[0];
-			else return HTMLUtils.getTextNode(children[0]);
+		html = html.trimStart();
+		const all = [];
+		while (true) {
+			const [_html, ...children] = matchTag(html, content);
+			html = _html;
+			all.push(HTMLUtils.valuesToDOMElement(...children));
+			if (!html.trim()) break;
 		}
-		else {
-			const fragment = new DocumentFragment();
-			children.forEach(c=>HTMLUtils.append(fragment, c))
-			return fragment;
-		}
+		console.log(all);
+		return HTMLUtils.valuesToDOMElement(...all);
 	}
 	
 }
@@ -184,7 +185,6 @@ function matchTag(html:string, content:any[]) {
 		const contentParts = inner.split(extractInjectedIdsNoGroup);
 
 		const combined = contentParts.map((e,i) => [e, injected[i]]).flat().slice(0, -1).filter(c=>c!=="");
-		console.warn("inner",inner,contentParts,injected,combined)
 		return [html, ...combined]
 	}
 
@@ -294,13 +294,19 @@ function matchAttribute(html:string, content:any[], attrs:Record<string,any>) {
 	return html;
 }
 
+// @ts-ignore global HTML
 globalThis.HTML = HTML;
+
+const _HTML = HTML;
 
 /**
  * bind to origin in function prototype
  */
 
 declare global {
+
+	const HTML: typeof _HTML;
+
 	interface CallableFunction {
 		bindToOrigin<T, A extends unknown[], R>(this: (this: T, ...args: A) => R, context?:any): (...args: A)=>Promise<Awaited<Promise<R>>>;
 	}

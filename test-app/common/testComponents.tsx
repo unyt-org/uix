@@ -1,7 +1,8 @@
-import { UIX } from "uix/uix.ts";
+import { UIX, unsafeHTML } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
+import { always } from "https://dev.cdn.unyt.org/unyt_core/datex.ts";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -19,6 +20,11 @@ import { ValueInput } from "uix/components/ValueInput.tsx";
 function Container({children}:{children:HTMLElement|HTMLElement[]}) {
 	return <div style={{display:"flex", gap:5, margin:5}}>{...(children instanceof Array ? children : [children])}</div>
 }
+
+const x = $$(0);
+const y = $$(0);
+setInterval(()=>x.val = Math.round(Math.random()*100), 1000);
+setInterval(()=>y.val = Math.round(Math.random()*100), 2000);
 
 export const testComponents = {
 
@@ -48,5 +54,27 @@ export const testComponents = {
 			}}
 		>
 			Click Me
-		</button>
-}
+		</button>,
+
+	html: <div>
+		{HTML `
+			<h3>Header</h3>
+			<p>
+				<a href="/link">Link</a><br/>
+				${1234}<br/>
+				${"test content"}
+			</p>
+		`}
+		{unsafeHTML('<div>Unsafe HTML<script type="text/javascript">alert(1)</script></div>')}
+	</div>,
+
+	datex:
+		<h3>
+			{x} + {y} = 
+			<datex>{x}+{y}</datex>
+			<br/>
+			{always `${x} + ${y}`}
+			<br/>
+			{datex `<html/button> "click me"`}
+		</h3>
+};

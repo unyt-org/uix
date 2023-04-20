@@ -204,6 +204,7 @@ export class FileProvider implements RouteHandler {
 export abstract class EntrypointProxy<E extends Entrypoint = Entrypoint> implements RouteHandler {
 
 	#entrypoint: E
+	get entrypoint() {return this.#entrypoint}
 
 	constructor(entrypoint: E = null) {
 		this.#entrypoint = entrypoint;

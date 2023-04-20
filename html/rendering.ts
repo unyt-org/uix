@@ -199,11 +199,11 @@ export class FileProvider implements RouteHandler {
 /**
  * transforms entrypoint content to a new entrypoint content
  */
-export abstract class EntrypointProxy implements RouteHandler {
+export abstract class EntrypointProxy<E extends Entrypoint = Entrypoint> implements RouteHandler {
 
-	#entrypoint: Entrypoint
+	#entrypoint: E
 
-	constructor(entrypoint: Entrypoint = null) {
+	constructor(entrypoint: E = null) {
 		this.#entrypoint = entrypoint;
 	}
 

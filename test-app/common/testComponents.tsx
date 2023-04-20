@@ -96,7 +96,6 @@ export const testComponents = {
 			width="400"
 			height="400">
 			<circle
-				onclick={UIX.inDisplayContext((e)=>console.log("load",e))}
 				cx={200}
 				cy={200}
 				r="100"

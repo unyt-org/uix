@@ -34,7 +34,7 @@
 */
 
 // make sure datex is loaded
-import "unyt_core/datex.ts";
+import "unyt_core";
 
 // all UIX.*
 import * as UIX from "./uix_all.ts";

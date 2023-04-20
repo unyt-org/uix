@@ -5,7 +5,7 @@ import { resolveEntrypointRoute, html_content, html_content_or_generator_or_pres
 import { logger } from "../utils/global_values.ts";
 import { Context, ContextGenerator, HTMLUtils } from "../uix_all.ts";
 import { getOuterHTML } from "../html/render.ts";
-import { Datex } from "unyt_core/datex.ts";
+import { Datex } from "unyt_core";
 import { OPEN_GRAPH } from "../base/open_graph.ts";
 
 

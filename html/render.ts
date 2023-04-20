@@ -1,4 +1,4 @@
-import { Datex } from "unyt_core/datex.ts";
+import { Datex } from "unyt_core";
 import { App } from "../app/app.ts";
 import { OpenGraphInformation } from "../base/open_graph.ts";
 import { UIX } from "../uix.ts";

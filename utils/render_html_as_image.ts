@@ -1,4 +1,4 @@
-import { Datex } from "unyt_core/datex.ts";
+import { Datex } from "unyt_core";
 import { UIX_CACHE_PATH } from "./constants.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
 import { createSnapshot, RenderMethod } from "../html/rendering.ts";
@@ -15,7 +15,7 @@ const import_map = new ImportMap({
 	"imports": {
 		"unyt/": "https://dev.cdn.unyt.org/",
 
-		"unyt_core": "https://dev.cdn.unyt.org/unyt_core/datex.ts",
+		"unyt_core": "unyt_core",
 		"uix": "https://dev.cdn.unyt.org/uix/uix.ts",
 
 		"unyt_core/": "https://dev.cdn.unyt.org/unyt_core/",

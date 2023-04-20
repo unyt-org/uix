@@ -1,0 +1,4 @@
+## function **bindObserver** (element: HTMLElement)
+
+
+

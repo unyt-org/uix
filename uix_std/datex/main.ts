@@ -16,7 +16,7 @@ import { UIX } from "uix";
 
 import { Logger } from "unyt_core/utils/logger.ts";
 import MonacoHandler from "uix_std/code_editor/monaco.ts";
-import {Datex} from "unyt_core/datex.ts";
+import {Datex} from "unyt_core";
 import { DatexPointerList, DatexValueTreeView } from "./value_tree_view.ts";
 import { DatexInterface } from "./interface.ts";
 import { DatexDataViewer } from "./data_viewer.ts";

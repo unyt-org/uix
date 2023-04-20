@@ -1,0 +1,6 @@
+## class **Theme**
+### Properties
+**LIGHT**: {__name: string,text: string,text_light: string,text_highlight: string,bg_default: string,bg_dark: string,bg_loading: string,bg_button: string,bg_input: string,bg_hover: string,bg_focus: string,bg_overlay: string,bg_content: string,bg_content_hlt: string,bg_content_dark: string,bg_content_edit: string,bg_code: string,bg_console: string,border: string,code_string_color: string,code_number_color: string,code_boolean_color: string,code_buffer_color: string,grey_blue: string,light_blue: string,purple: string,green: string,red: string,dark_red: string,blue: string,orange: string,yellow: string,accent: string,}<br>
+**DARK**: {__name: string,text: string,text_light: string,text_highlight: string,bg_default: string,bg_dark: string,bg_loading: string,bg_button: string,bg_input: string,bg_hover: string,bg_focus: string,bg_overlay: string,bg_content: string,bg_content_hlt: string,bg_content_dark: string,bg_content_edit: string,bg_code: string,bg_console: string,border: string,code_string_color: string,code_number_color: string,code_boolean_color: string,code_buffer_color: string,grey_blue: string,light_blue: string,purple: string,green: string,red: string,dark_red: string,blue: string,orange: string,yellow: string,accent: string,}<br>
+
+

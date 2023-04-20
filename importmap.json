@@ -1,5 +1,6 @@
 {
 	"imports": {
+		"unyt/": "https://cdn.unyt.org/",
 		"unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
 		"uix": "./uix.ts",
 

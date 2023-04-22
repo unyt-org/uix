@@ -52,19 +52,19 @@ export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOM
 
         this.addStyleSheet(Theme.stylesheet);
 
-        // init Shadow DOM
-        if (!super.shadowRoot) {
+        // init Shadow DOM - only add a default slot if none exists
+        if (!this.shadowRoot.querySelector("slot")) {
             this.content = document.createElement('slot');
             this.content.classList.add("content");
             this.content.id = "content";
             this.shadowRoot.append(this.content);
         }
 
-
         return super.init(constructed)
     }
 
     public appendContent(...elements:(HTMLElement|string)[]) {
+        if (!this.content) throw new Error("cannot append to non-existing content")
         this.content.append(...elements)
     }
 

@@ -631,6 +631,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             HTMLUtils.setElementAttribute(this, "class", this.options.$.class);
 
         this.loadTemplate();
+        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in ShadowDOMComponent.init
         await this.init(true);
         await this.onConstructed?.();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
@@ -639,13 +640,15 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     // called when created from saved state
     @replicator async replicate() {
         // this.loadTemplate();
+        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in ShadowDOMComponent.init
         await this.init();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
 
     private loadTemplate() {
         if ((<typeof BaseComponent> this.constructor).template) {
-            const template = (<typeof BaseComponent> this.constructor).template!(this.options);
+            // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
+            const template = (<typeof BaseComponent> this.constructor).template!(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options);
             HTMLUtils.append(this, template);
         }
     }

@@ -9,6 +9,7 @@ import { indent } from "../utils/indent.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
 import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
+
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
 
@@ -483,7 +484,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	// only load once in recursive calls when deepest level reached
 	if (!loaded) {
 		// preload in deno, TODO: better solution?
-		if (IS_HEADLESS && entrypoint instanceof Element) {
+		if (IS_HEADLESS && (entrypoint instanceof Element || entrypoint instanceof DocumentFragment)) {
 			await preloadElementOnBackend(entrypoint);
 		}
 
@@ -511,14 +512,31 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 }
 
 
-export async function preloadElementOnBackend(entrypoint:Element|DocumentFragment){
+export async function preloadElementOnBackend(element:Element|DocumentFragment) {
 	// preload in deno, TODO: better solution?
 	if (IS_HEADLESS) {
-		globalThis.document.body.append(entrypoint);
 		// wait until create lifecycle finished
-		if (entrypoint instanceof UIX.Components.Base) {
-			await entrypoint.created;
-		}		
+		// if (element instanceof Element) {
+		// 	globalThis.document.body.append(element);
+		// }
+		// if (element instanceof UIX.Components.Base) {
+		// 	await element.created;
+		// }
+		const promises = [];
+
+		// fake dom append
+		if (element instanceof UIX.BaseComponent || element instanceof UIX.Components.Base) {
+			await element.connectedCallback()
+			await element.created;
+		}
+		// load shadow root
+		if ((element as Element).shadowRoot) promises.push(preloadElementOnBackend((element as Element).shadowRoot!))
+		// load children
+		for (const child of (element.childNodes as unknown as Element[])) {
+			promises.push(preloadElementOnBackend(child));
+		}
+
+		await Promise.all(promises)
 	}
 }
 

@@ -166,9 +166,54 @@ class MyCustomComponent extends UIX.BaseComponent {
 }
 ```
 If you want to define an abstract Component class that is not intended to be used as an actual Component, you can mark it with `@UIX.Abstract`.
-
-
 A UIX Component also inherits the default options from its parent class.
+
+
+## Creating component classes based on templates
+
+Templates defined with `UIX.template` can also be used as a base layout for component classes.
+Just use the template returned from `UIX.template` can as a class decorator:
+
+```tsx
+// using a static template
+@UIX.template(
+    <article>
+        <h1 id="header">Header</h1>
+        <section id="description"></section>
+    </article>
+)
+class MyCustomComponent extends UIX.BaseComponent {
+    @UIX.id declare header: HTMLHeadingElement
+    @UIX.id declare description: HTMLElement
+
+    override onCreate() {
+		this.description.innerText = "Some description text..."
+    }
+}
+```
+```tsx
+// using a template generator
+@UIX.template<{title:string}>(({title}) =>
+    <article>
+        <h1>{title}</h1>
+        <section>Default section content</section>
+    </article>
+)
+class MyCustomComponent extends UIX.BaseComponent<{title:string, additionalOption:number}> {
+    override onCreate() {
+        console.log("options", this.options.title, this.options.additionalOption)
+    }
+}
+```
+```tsx
+// using a pre-defined template
+const CoolDiv = UIX.template(<div>cool</div>);
+
+@CoolDiv
+class MyCustomComponent extends UIX.BaseComponent<{title:string}> {
+    onCreate() {}
+}
+```
 
 
 ## Defining custom options 

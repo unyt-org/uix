@@ -52,13 +52,35 @@ const TemplateCompWithOptions = UIX.template<{a:number, b?:number}, never>(({a,b
 
 
 @UIX.template(
-	<div id="div" style="color:blue">12345</div>
+    <article>
+        <h1 id="header">Header</h1>
+        <section id="description"></section>
+    </article>
 )
 class ClassComponent extends UIX.BaseComponent {
+    @UIX.id declare header: HTMLHeadingElement
+    @UIX.id declare description: HTMLElement
 
-	protected override onCreate(){
-		console.log("create",this)
+	protected override onConstruct(): void | Promise<void> {
+		console.log("constructed")
 	}
+
+    override onCreate() {
+		console.log("created")
+		this.description.innerText = "New description ...";
+    }
+}
+
+@UIX.template<{title:string}>(({title}) =>
+	<article>
+        <h1>{title}</h1>
+        <section>Default section content</section>
+    </article>
+)
+class ClassComponent2 extends UIX.BaseComponent<{title:string}> {
+    override onCreate() {
+        console.log("options",this.options)
+    }
 }
 
 const CustomComponentWithSlots2 = UIX.template(<div>
@@ -144,6 +166,7 @@ export const testComponents = {
 		<BlankTemplateComp>Hello World Blank</BlankTemplateComp>
 		<TemplateCompWithOptions a={x} b={5}/>
 		<ClassComponent><span>inner</span></ClassComponent>
+		<ClassComponent2 title={x}>...here</ClassComponent2>
 
 	</>,
 

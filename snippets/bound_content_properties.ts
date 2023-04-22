@@ -7,6 +7,13 @@ export const STANDALONE: unique symbol = globalThis.uix_STANDALONE ??= Symbol("S
 const PROPS_MAP = globalThis.uix_PROPS_MAP ??= Symbol("PROPS_MAP");
 
 
+function getElementWithId(parent:Element|ShadowRoot, id:string) {
+	return parent.querySelector("#"+id) ?? 
+		parent.querySelector(`[data-placeholder-id="${id}"]`) ??
+		(parent as Element).shadowRoot?.querySelector("#"+id) ?? 
+		(parent as Element).shadowRoot?.querySelector(`[data-placeholder-id="${id}"]`);
+}
+
 /**
  * 
  * @param element 
@@ -25,13 +32,13 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 	
 	if (id_props) {
 		for (const [prop,id] of Object.entries(id_props)) {
-			if (content_props?.[prop]) continue; // is content, ignore
+			if (content_props?.[prop] || layout_props?.[prop] || child_props?.[prop]) continue; // is content, ignore
 
 			const prev = element[prop];
 
 			Object.defineProperty(element, prop, {
 				get() {
-					return props_map.get(prop)
+					return props_map.get(prop) ?? getElementWithId(element, id);
 				},
 				set(el) {
 					if (el instanceof Element) el.setAttribute("id", id); // auto set id
@@ -106,7 +113,7 @@ function bindContent(element:HTMLElement & {[key:string|symbol]:any}, container:
 			// add to content if it exists
 			const content = container();
 			if (content) {
-				const previous = content.querySelector("#"+id) ?? content.querySelector(`[data-placeholder-id="${id}"]`);
+				const previous = getElementWithId(content, id);
 				if (previous == el) {/* ignore */}
 				else if (previous) content.replaceChild(el, previous);
 				else {

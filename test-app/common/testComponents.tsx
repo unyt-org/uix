@@ -94,7 +94,7 @@ const CustomComponentWithSlots2 = UIX.template(<div>
 
 export const testComponents = {
 
-	textInput: 		<Container><ValueInput placeholder="text 1..."/></Container>,
+	textInput: 		<Container><div>&copy; <span>2023 unyt.org</span></div><ValueInput placeholder="text 1..."/></Container>,
 	dropdownMenu: 	<Container><DropdownMenu/></Container>,
 
 	/** 

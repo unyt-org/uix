@@ -132,6 +132,12 @@ export function unsafeHTML(html:string, content?: Datex.CompatValue<HTMLElement>
 	return HTMLUtils.createHTMLElement(html, content)
 }
 
+function decodeHTMLEntity(inputStr:string) {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = inputStr;
+    return textarea.value;
+}
+
 /**
  * Alternative to JSX, just using native JS template strings
  * @param template html template string
@@ -142,7 +148,7 @@ export function HTML(value:any): HTMLElement|DocumentFragment
 export function HTML<R extends HTMLElement|DocumentFragment = HTMLElement|DocumentFragment>(template:TemplateStringsArray|string, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]): R
 export function HTML(template:any, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]) {
 	const isTemplate = template?.raw instanceof Array && template instanceof Array;
-	// just HTML string and children
+	// non template value - convert to HTML node
 	if (!isTemplate) {
 		return HTMLUtils.getTextNode(template);
 	}
@@ -181,7 +187,7 @@ function matchTag(html:string, content:any[]) {
 		html = html.replace(matchInner[0], "").trimStart();
 		const injectedIds = [...inner.matchAll(extractInjectedIds)].map(v=>Number(v[1]));
 		const injected = content.slice(injectedIds.at(0), injectedIds.at(-1)!+1)
-		const contentParts = inner.split(extractInjectedIdsNoGroup);
+		const contentParts = inner.split(extractInjectedIdsNoGroup).map(v=>decodeHTMLEntity(v)); // convert &nbsp; etc
 
 		const combined = contentParts.map((e,i) => [e, injected[i]]).flat().slice(0, -1).filter(c=>c!=="");
 		return [html, ...combined]

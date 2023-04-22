@@ -13,13 +13,14 @@
 // ---
 
 import MonacoHandler, {MonacoTab} from "./monaco.ts";
-import {UIX} from "../../uix.ts";
+import {UIX} from "uix";
 import "./marked.js";
 declare let marked;
 
 import { Logger } from "unyt_core/utils/logger.ts";
-import { S } from "../../uix_short.ts";
-import { Resource } from "../../uix_all.ts";
+import { S } from "uix/uix_short.ts";
+import { Resource } from "uix/uix_all.ts";
+import { IS_HEADLESS } from "uix/utils/constants.ts";
 const logger = new Logger("code_editor")
 
 
@@ -151,6 +152,8 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
 
 
     override async onCreate() {
+
+        if (IS_HEADLESS) return; // not supported in deno
 
         // workaround to pre-load editor style
         await MonacoHandler.init();

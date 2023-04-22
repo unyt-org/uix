@@ -520,8 +520,8 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
 
 		// fake dom append
 		if (element instanceof UIX.BaseComponent || element instanceof UIX.Components.Base) {
-			element.connectedCallback();
 			await Promise.race([
+				element.connectedCallback(),
 				element.created,
 				new Promise<void>(resolve=>setTimeout(()=>{
 					logger.error("component <"+element.tagName.toLowerCase()+"> onCreate() has not resolved after 10s, static snapshot is generated for current state");

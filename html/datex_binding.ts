@@ -9,6 +9,7 @@ import { $$, Datex } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
 import { DX_VALUE, INIT_PROPS, logger } from "unyt_core/datex_all.ts";
 import { STANDALONE } from "../snippets/bound_content_properties.ts";
+import { DX_IGNORE } from "https://dev.cdn.unyt.org/unyt_core/runtime/constants.ts";
 
 
 // handle htmlfragment (DocumentFragment)
@@ -25,13 +26,25 @@ Datex.Type.get('htmlfragment').setJSInterface({
 		for (const child of val) {
 			HTMLUtils.append(fragment, child);
 		}
-		return val;
+		return fragment;
 	},
 
 	serialize(val:DocumentFragment) {
-		return [...val.children]
+		return serializeChildren(val)
 	}
 })
+
+function serializeChildren(parent:Element|DocumentFragment) {
+	// children
+	const children = [];
+	for (let i = 0; i < parent.childNodes.length; i++) {
+		const child = parent.childNodes[i];
+		// @ts-ignore
+		if (child instanceof Text) children.push(child[DX_VALUE] ?? child.textContent);
+		else children.push(child);
+	}
+	return children;
+}
 
 // handles html/x and also casts from uix/x
 
@@ -75,6 +88,10 @@ const elementInterface:Datex.js_interface_configuration & {_name:string} = {
 						else HTMLUtils.append(el, child);
 					}
 				}
+				else if (prop=="shadowroot") {
+					const shadowRoot = el.attachShadow({mode:"open"});
+					shadowRoot.append(value);
+				}
 			}
 		}
 
@@ -98,7 +115,7 @@ const elementInterface:Datex.js_interface_configuration & {_name:string} = {
 
 	serialize(val: Element&{[HTMLUtils.EVENT_LISTENERS]?:Map<keyof HTMLElementEventMap, Set<Function>>}) {
 		if (!(val instanceof this.class!)) throw "not an " + this.class!.name;
-		const data: {style:Record<string,string>, content:any[], attr:Record<string,unknown>} = {style: {}, attr: {}, content: []}
+		const data: {style:Record<string,string>, content:any[], attr:Record<string,unknown>, shadowroot?:DocumentFragment} = {style: {}, attr: {}, content: []}
 
 		// attributes
 		for (let i = 0; i < val.attributes.length; i++) {
@@ -128,12 +145,13 @@ const elementInterface:Datex.js_interface_configuration & {_name:string} = {
 		}
 		
 		// children
-		for (let i = 0; i < val.childNodes.length; i++) {
-			const child = val.childNodes[i];
-			// @ts-ignore
-			if (child instanceof Text) data.content.push(child[DX_VALUE] ?? child.textContent);
-			else data.content.push(child);
+		data.content = serializeChildren(val);
+
+		// shadowroot
+		if (val.shadowRoot && !(<any>val.shadowRoot)[DX_IGNORE]) {
+			data.shadowroot = val.shadowRoot;
 		}
+
 		// logger.info("serialize",data)
 
 		// optimize serialization

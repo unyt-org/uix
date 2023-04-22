@@ -1,9 +1,9 @@
 // deno-lint-ignore-file no-async-promise-executor
 import { PlaceholderCSSStyleDeclaration, addStyleSheetLink } from "../utils/css_style_compat.ts";
 import { Theme } from "../base/theme.ts";
-import { BaseComponent, standaloneContentPropertyData, standaloneProperties } from "./BaseComponent.ts"
+import { BaseComponent, standaloneContentPropertyData } from "./BaseComponent.ts"
 import { App } from "../app/app.ts";
-import { logger } from "../utils/global_values.ts"
+import { DX_IGNORE } from "unyt_core/datex_all.ts";
 
 // deno-lint-ignore no-namespace
 export namespace ShadowDOMComponent {
@@ -37,10 +37,15 @@ export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOM
 
 
     // shadow DOM slot - all children go here
-    content!:HTMLElement;
+    content?:HTMLElement;
 
     override get shadowRoot() {
-        return super.shadowRoot ?? this.attachShadow({mode: 'open'})
+        if (!super.shadowRoot) {
+            this.attachShadow({mode: 'open'});
+            // don't send shadow root over datex, not part of component state like for default html elements with custom shadow dom
+            (<any>super.shadowRoot)![DX_IGNORE] = true;
+        }
+        return super.shadowRoot!;
     }
 
     protected override init(constructed?: boolean) {
@@ -48,10 +53,13 @@ export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOM
         this.addStyleSheet(Theme.stylesheet);
 
         // init Shadow DOM
-        this.content = document.createElement('slot');
-        this.content.classList.add("content");
-        this.content.id = "content";
-        this.shadowRoot.append(this.content);
+        if (!super.shadowRoot) {
+            this.content = document.createElement('slot');
+            this.content.classList.add("content");
+            this.content.id = "content";
+            this.shadowRoot.append(this.content);
+        }
+
 
         return super.init(constructed)
     }

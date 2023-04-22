@@ -23,12 +23,13 @@ export const elementEventHandlerAttributes = [
 export const defaultElementAttributes = [
 	"accesskey", "class", "contenteditable", "contextmenu", "dir", "draggable", "dropzone", "hidden", "id", "lang", "spellcheck", "style", "tabindex", "title",
 	// uix specific
-	"uix-module", "datex-pointer"
+	"uix-module", "datex-pointer", "shadow-root"
 ] as const;
 
 // custom attribute values for default attributes (default: string)
 type customDefaultAttributeValues = {
 	"uix-module": string|URL,
+	"shadow-root": boolean|'open'|'closed',
 	"datex-pointer": boolean
 }
 
@@ -72,7 +73,8 @@ export const htmlElementAttributes = {
 
 	a: ["href"],
 	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value"],
-	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"]
+	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
+	template: ["shadowrootmode"]
 
 } as const satisfies {[key in keyof HTMLElementTagNameMap]?: readonly string[]};
 
@@ -107,6 +109,9 @@ export type htmlElementAttributeValues = {
 		loading: "eager"|"lazy",
 		referrerpolicy: "no-referrer"|"no-referrer-when-downgrade"|"origin"|"origin-when-cross-origin"|"unsafe-url",
 		usemap: `#${string}`
+	},
+	template: {
+		shadowrootmode: 'open'|'closed'
 	}
 }
 

@@ -74,10 +74,11 @@ export namespace Routing {
 		if (current_content !== content) {
 			current_content = content;
 			document.body.innerHTML = "";
-			// console.log("-->",collapsed_content)
-			// TODO: 
-			if (typeof content == "object" && !(content instanceof Element)) console.warn("invalid content, cannot handle yet", content)
-			HTMLUtils.append(document.body, content) // add to document
+			// console.log("-->",content)
+			// TODO:
+			if (content instanceof Array) HTMLUtils.append(document.body, ...content) // add to document
+			else if (content instanceof Element || content instanceof DocumentFragment) HTMLUtils.append(document.body, content) // add to document
+			else logger.error("invalid content, cannot handle yet", content)
 		}
 	
 		await update(getCurrentRouteFromURL(), false)

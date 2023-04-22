@@ -85,23 +85,24 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 	}
 
 	else {
+		// @ts-ignore
 		if (el.style_sheets_urls && collectedStylsheets) collectedStylsheets.push(...el.style_sheets_urls)
 	}
 
-	for (const child of el.childNodes) {
+	for (const child of (el.childNodes as unknown as Node[])) {
 		html += await _getOuterHTML(child, opts, collectedStylsheets);
 	}
 
-	return html || HTMLUtils.escapeHtml(el.innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
+	return html || HTMLUtils.escapeHtml((el as HTMLElement).innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
-async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions, collectedStylsheets?:string[]):Promise<string> {
+async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[]):Promise<string> {
 	
 	if (el instanceof globalThis.Text) return HTMLUtils.escapeHtml(el.textContent ?? ""); // text node
 
 	if (el instanceof DocumentFragment) {
 		const content = [];
-		for (const child of el.children) {
+		for (const child of (el.childNodes as unknown as Node[])) {
 			content.push(await _getOuterHTML(child, opts, collectedStylsheets));
 		}
 		return content.join("\n");
@@ -112,7 +113,7 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions, 
 	}
 
 	// invalid node/element
-	if (!el.tagName) {
+	if (!(el instanceof Element)) {
 		console.log("cannot render node",el);
 		throw "invalid HTML node"
 	}
@@ -130,7 +131,7 @@ async function _getOuterHTML(el:Element|DocumentFragment, opts?:_renderOptions, 
 		if (val.startsWith("file://")) val = App.filePathToWebPath(val);
 		// blob -> data url
 		else if (val.startsWith("blob:")) {
-			val = await blobToBase64(val);
+			val = await blobToBase64(val) as string;
 		}
 		attrs.push(`${attrib.name}="${val}"`) // TODO escape
 	}
@@ -200,10 +201,10 @@ const isNormalFunction = (fnSrc:string) => {
 
 
 export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, lang?:string}):Promise<[header_script:string, html_content:string]> {
-	if (el[CACHED_CONTENT]) return el[CACHED_CONTENT];
+	if ((el as any)[CACHED_CONTENT]) return (el as any)[CACHED_CONTENT];
 
 	const scriptData:injectScriptData = {declare:{}, init:[]};
-	if (opts?.injectStandaloneJS) opts._injectedJsData = scriptData;
+	if (opts?.injectStandaloneJS) (opts as any)._injectedJsData = scriptData;
 
 	const html = await _getOuterHTML(el, opts);
 
@@ -256,7 +257,7 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 
 async function blobToBase64(blobUri:string|URL) {
 	const blob = await fetch(blobUri).then(r => r.blob());
-	return new Promise<string>((resolve, _) => {
+	return new Promise<string|ArrayBuffer|null>((resolve, _) => {
 	  const reader = new FileReader();
 	  reader.onloadend = () => resolve(reader.result);
 	  reader.readAsDataURL(blob);
@@ -264,14 +265,17 @@ async function blobToBase64(blobUri:string|URL) {
   }
 
 // https://gist.github.com/developit/54f3e3d1ce9ed0e5a171044edcd0784f
+// @ts-ignore
 if (!globalThis.Element.prototype.getInnerHTML) {
+	// @ts-ignore
 	globalThis.Element.prototype.getInnerHTML = function(opts?:{includeShadowRoots?:boolean, lang?:string}) {
 	  return getInnerHTML(this, opts);
 	}
 }
 
-
+// @ts-ignore
 if (!globalThis.Element.prototype.getOuterHTML) {
+	// @ts-ignore
 	globalThis.Element.prototype.getOuterHTML = function(opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, lang?:string}) {
 		return getOuterHTML(this, opts);
 	}

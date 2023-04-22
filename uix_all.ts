@@ -2,6 +2,7 @@
 export * from "./html/datex_binding.ts"
 export * from "./html/rendering.ts"
 export * from "./html/utils.ts"
+export * from "./html/anonymous_components.ts"
 
 // init
 export * from "./base/init.ts"

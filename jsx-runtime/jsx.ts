@@ -6,28 +6,42 @@ import { BaseComponent } from "../components/BaseComponent.ts";
 import { validHTMLElementSpecificAttrs, validHTMLElementAttrs, validSVGElementSpecificAttrs, svgTags, mathMLTags } from "../html/attributes.ts";
 import { HTMLUtils, logger } from "../uix_all.ts";
 
+export const SET_DEFAULT_ATTRIBUTES: unique symbol = Symbol("SET_DEFAULT_ATTRIBUTES");
+export const SET_DEFAULT_CHILDREN: unique symbol = Symbol("SET_DEFAULT_CHILDREN");
 
-export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): Element {
+export function jsx (type: string | any, config: Record<string,any>): Element {
 
 	let element:Element;
-	let { children = [], ...props } = config
-	if (!(children instanceof Array)) children = [children];
+	if (!(config.children instanceof Array)) config.children = [config.children];
+	const { children = [], ...props } = config
 
+	let set_default_children = true;
+	let set_default_attributes = true;
+	let allow_invalid_attributes = true;
 
-	let init_children = true;
-	let init_attributes = true;
-
+	let shadow_root = false;
+	if (props['shadow-root']) {
+		shadow_root = props['shadow-root']==true?'open':props['shadow-root'];
+		delete props['shadow-root'];
+	}
+	
 	if (typeof type === 'function') {
-		// class extending HTMLElement
+
+		// class component
 		if (HTMLElement.isPrototypeOf(type) || type === DocumentFragment || DocumentFragment.isPrototypeOf(type)) {
+			set_default_children = (type as any)[SET_DEFAULT_CHILDREN] ?? true;
+			set_default_attributes = (type as any)[SET_DEFAULT_ATTRIBUTES] ?? true;
+			if (set_default_children) delete config.children;
+
 			element = new type(props) // uix component
-			init_attributes = false;
 		}
+		// function component
 		else {
-			element = type(config) // function
-			// TODO:
-			init_children = false;
-			init_attributes = true;
+			set_default_children = (type as any)[SET_DEFAULT_CHILDREN];
+			set_default_attributes = (type as any)[SET_DEFAULT_ATTRIBUTES];
+			if (set_default_children) delete config.children;
+
+			element = type(config) 
 		}
 	}
 
@@ -53,30 +67,48 @@ export function jsx (type: string | any, config: JSX.ElementChildrenAttribute): 
 		return placeholder;
 	}
 
-	else element = HTMLUtils.createElement(type);
+	else {
+		allow_invalid_attributes = false;
+		
+		// convert shadow-root to template
+		if (type == "shadow-root") {
+			type = "template"
+			props.shadowrootmode = props.mode ?? "open";
+			delete props.mode
+		}
+		
+		element = HTMLUtils.createElement(type);
+	}
 
-	if (init_attributes) {
-		for (let [key,val] of Object.entries(props)) {
-			if (key == "style" && (element as HTMLElement).style) UIX.HTMLUtils.setCSS(element as HTMLElement, <any> val);
+	if (set_default_attributes) {
+		for (let [attr,val] of Object.entries(props)) {
+			if (attr == "style" && (element as HTMLElement).style) UIX.HTMLUtils.setCSS(element as HTMLElement, <any> val);
 			else {
 				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) {
 					// TODO: remove 'module'
 					val = new Path(val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile()).toString();
 				}
-				UIX.HTMLUtils.setElementAttribute(element, key, <any>val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile());
+				const valid_attr = UIX.HTMLUtils.setElementAttribute(element, attr, <any>val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile());
+				if (!allow_invalid_attributes && !valid_attr) throw new Error(`Element attribute "${attr}" is not allowed for <${element.tagName.toLowerCase()}>`)
 			}
 		}
 	}
 
-	if (init_children) {
-		for (const child of children) {
-			UIX.HTMLUtils.append(element, child);
+	if (set_default_children) {
+		if (shadow_root) {
+			const template = jsx("template", {children, shadowrootmode:shadow_root});
+			UIX.HTMLUtils.append(element, template);
 		}
+		else {
+			UIX.HTMLUtils.append(element, ...children);
+		}
+		
 	}
 
-	const makePtr = !!(<Record<string,any>>props)['datex-pointer'];
-	// TODO: return here and only add pseudo pointer, without initializing the pointer
-	// if (!makePtr) return element;
+	// TODO: datex-pointer false default?
+	const makePtr = (<Record<string,any>>props)['datex-pointer'] == true || (<Record<string,any>>props)['datex-pointer'] == undefined;
+	// TODO: add pseudo pointer id attr, without initializing the pointer
+	if (!makePtr) return element;
 
 	// !important, cannot return directly because of stack problems, store in ptr variable first
 	const ptr = $$(element);
@@ -118,8 +150,11 @@ declare global {
 			children: Element[]|Element
 		}
 
-		type _child = Datex.CompatValue<Element|DocumentFragment|string|number|boolean|bigint|null|child[]>;
-		type child = _child|Promise<_child>
+		type singleChild = Datex.CompatValue<Element|DocumentFragment|string|number|boolean|bigint|null|undefined>;
+		type singleOrMultipleChildren = singleChild|singleChild[];
+		type childrenOrChildrenPromise = singleOrMultipleChildren|Promise<singleOrMultipleChildren>
+		// enable as workaround to allow {...[elements]} type checking to work correctly
+		// type childrenOrChildrenPromise = _childrenOrChildrenPromise|_childrenOrChildrenPromise[]
 
 		type htmlAttrs<T extends Record<string,unknown>> = DatexValueObject<Omit<Partial<T>, 'children'|'style'>>
 
@@ -135,13 +170,20 @@ declare global {
 			[key in keyof T]: T[key] extends (...args:any)=>any ? T[key] : Datex.CompatValue<T[key]>
 		}
 		
-		// HTML elements allowed in JSX, and their attributes definitions
-		type IntrinsicElements = {
-			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: child} & htmlAttrs<validHTMLElementSpecificAttrs<key>>
-		} & {
-			readonly [key in keyof SVGElementTagNameMap]: IntrinsicAttributes & {children?: child} & htmlAttrs<validSVGElementSpecificAttrs<key>>
-		} & {
-			datex: {children?: any} & {[key in keyof IntrinsicAttributes]: never}
+		type IntrinsicElements = 
+		// html elements
+		{
+			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise} & htmlAttrs<validHTMLElementSpecificAttrs<key>>
+		} 
+		// svg elements
+		& {
+			readonly [key in keyof SVGElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise} & htmlAttrs<validSVGElementSpecificAttrs<key>>
+		} 
+		// other custom elements
+		& {
+			// inject datex script, returned value is inserted into the dom
+			datex: {children?: any} & {[key in keyof IntrinsicAttributes]: never},
+			'shadow-root': {children?: childrenOrChildrenPromise} & {[key in keyof IntrinsicAttributes]: never} & {mode?:'open'|'closed'}
 		}
 	}
   }

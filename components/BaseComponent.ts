@@ -19,7 +19,7 @@ import { INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { addGlobalStyleSheetLink } from "../utils/css_style_compat.ts";
 import { indent } from "../utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize_js.ts";
-import { ORIGIN_PROPS } from "../uix_all.ts"
+import { ORIGIN_PROPS, elementGenerator } from "../uix_all.ts"
 import { bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
 
 export type propInit = {datex?:boolean};
@@ -37,7 +37,7 @@ export namespace BaseComponent {
 
 
 @template("uix:basecomponent") 
-export abstract class BaseComponent<O extends BaseComponent.Options = BaseComponent.Options, ChildElement extends Element = HTMLElement> extends HTMLElement implements RouteManager {
+export abstract class BaseComponent<O extends BaseComponent.Options = BaseComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -590,6 +590,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     #anchor_lifecycle_ready_resolve?:Function
     #anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
 
+    private static template?:elementGenerator<any,any,any>
+
     /**
      * Promise that resolves after onConstruct is finished
      */
@@ -628,6 +630,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         if (this.options?.class) 
             HTMLUtils.setElementAttribute(this, "class", this.options.$.class);
 
+        this.loadTemplate();
         await this.init(true);
         await this.onConstructed?.();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
@@ -635,8 +638,16 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     // called when created from saved state
     @replicator async replicate() {
+        // this.loadTemplate();
         await this.init();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
+    }
+
+    private loadTemplate() {
+        if ((<typeof BaseComponent> this.constructor).template) {
+            const template = (<typeof BaseComponent> this.constructor).template!(this.options);
+            HTMLUtils.append(this, template);
+        }
     }
 
     private initOptions(options?: Datex.DatexObjectInit<O>){

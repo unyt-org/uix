@@ -232,55 +232,56 @@ export namespace HTMLUtils {
 	export const EVENT_LISTENERS: unique symbol = Symbol("EVENT_LISTENERS");
 	export type elWithEventListeners = HTMLElement & {[EVENT_LISTENERS]:Map<keyof HTMLElementEventMap, Set<(...args:any)=>any>>}
 
-	function setAttribute(element: Element, property:string, val:unknown, root_path?:string|URL) {
-		// not an HTML attribute - set property
+	function setAttribute(element: Element, attr:string, val:unknown, root_path?:string|URL) {
+		// not an HTML attribute
 		if (!(
-			property.startsWith("data-") ||
-			property.startsWith("aria-") ||
-			defaultElementAttributes.includes(<typeof defaultElementAttributes[number]>property) || 
-			elementEventHandlerAttributes.includes(<typeof elementEventHandlerAttributes[number]>property) ||
-			(<readonly string[]>htmlElementAttributes[<keyof typeof htmlElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof htmlElementAttributes[keyof typeof htmlElementAttributes][number]>property) ||
-			(<readonly string[]>svgElementAttributes[<keyof typeof svgElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof svgElementAttributes[keyof typeof svgElementAttributes][number]>property) )) {
-				try {
-					element[property] = Datex.Value.collapseValue(val, true, true);
-				}
-				catch(e) {
-					// console.log(e,element,property)
-					console.error("could not set attribute '" + property + "' for " + element.constructor.name);
-				}
-			return;
+			attr.startsWith("data-") ||
+			attr.startsWith("aria-") ||
+			defaultElementAttributes.includes(<typeof defaultElementAttributes[number]>attr) || 
+			elementEventHandlerAttributes.includes(<typeof elementEventHandlerAttributes[number]>attr) ||
+			(<readonly string[]>htmlElementAttributes[<keyof typeof htmlElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof htmlElementAttributes[keyof typeof htmlElementAttributes][number]>attr) ||
+			(<readonly string[]>svgElementAttributes[<keyof typeof svgElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof svgElementAttributes[keyof typeof svgElementAttributes][number]>attr) )) {
+				return false;
+				// try {
+				// 	element[property] = Datex.Value.collapseValue(val, true, true);
+				// }
+				// catch(e) {
+				// 	// console.log(e,element,property)
+				// 	console.error("could not set attribute '" + property + "' for " + element.constructor.name);
+				// }
 		}
-
 		// normal attribute
-		if (val === false) element.removeAttribute(property);
-		else if (val === true || val === undefined) element.setAttribute(property,"");
-		else if (property.startsWith("on")) {
+		if (val === false) element.removeAttribute(attr);
+		else if (val === true || val === undefined) element.setAttribute(attr,"");
+		else if (attr.startsWith("on")) {
 			for (const handler of ((val instanceof Array || val instanceof Set) ? val : [val])) {
 				if (typeof handler == "function") {
-					const eventName = <keyof HTMLElementEventMap>property.replace("on","").toLowerCase();
+					const eventName = <keyof HTMLElementEventMap>attr.replace("on","").toLowerCase();
 					element.addEventListener(eventName, <any>handler);
 					// save in [EVENT_LISTENERS]
 					if (!(<elWithEventListeners>element)[EVENT_LISTENERS]) (<elWithEventListeners>element)[EVENT_LISTENERS] = new Map<keyof HTMLElementEventMap, Set<Function>>().setAutoDefault(Set);
 					(<elWithEventListeners>element)[EVENT_LISTENERS].getAuto(eventName).add(handler);
 				}
-				else throw new Error("Cannot set event listener for element attribute '"+property+"'")
+				else throw new Error("Cannot set event listener for element attribute '"+attr+"'")
 			}
 			
 		}
 		
-		else element.setAttribute(property, formatAttributeValue(val,root_path));
+		else element.setAttribute(attr, formatAttributeValue(val,root_path));
+
+		return true;
 	}
 
 	export function setElementAttribute<T extends Element>(element:T, property:string, value:Datex.CompatValue<any>|Function, root_path?:string|URL) {
-		if (!element) return;
-	
+		if (!element) return false;
 		// DatexValue
 		if (value instanceof Datex.Value) {
-			setAttribute(element, property, value.val, root_path)
-			value.observe(v => setAttribute(element, property, v, root_path));
+			const valid = setAttribute(element, property, value.val, root_path)
+			if (valid) value.observe(v => setAttribute(element, property, v, root_path));
+			return valid;
 		}
 		// default
-		else setAttribute(element, property, value, root_path)
+		else return setAttribute(element, property, value, root_path)
 	}
 
 	// remember which values are currently synced with element content - for unobserve
@@ -358,17 +359,39 @@ export namespace HTMLUtils {
 	type appendableContent = appendableContentBase|Promise<appendableContentBase>;
 
 	// append an element or text to an element
-	export function append<T extends Element|DocumentFragment>(element:T, content:appendableContent):T {
-		// wait for promise
-		if (content instanceof Promise) {
-			const placeholder = document.createElement("div")
-			placeholder.setAttribute("data-async-placeholder", "");
-			element.append(placeholder);
-			content.then(v=>placeholder.replaceWith(valuesToDOMElement(v)))
-			return element;
+	export function append<T extends Element|DocumentFragment>(parent:T, ...children:appendableContent[]):T {
+		// use content if parent is <template>
+		const element = parent instanceof HTMLTemplateElement ? parent.content : parent;
+
+		for (const child of children) {
+			// wait for promise
+			if (child instanceof Promise) {
+				const placeholder = document.createElement("div")
+				placeholder.setAttribute("data-async-placeholder", "");
+				element.append(placeholder);
+				child.then(v=>{
+					const dom = valuesToDOMElement(v);
+					// set shadow root or replace
+					if (!setTemplateAsShadowRoot(element, dom)) placeholder.replaceWith(dom)
+				})
+				return parent;
+			}
+			const dom = valuesToDOMElement(child);
+			// set shadow root or append
+			if (!setTemplateAsShadowRoot(element, dom)) element.append(dom);
 		}
-		element.append(valuesToDOMElement(content));
-		return element;
+		
+		return parent;
+	}
+
+	export function setTemplateAsShadowRoot(parent: Element|DocumentFragment, element: Element|DocumentFragment|Text) {
+		if (parent instanceof Element && element instanceof HTMLTemplateElement && element.hasAttribute("shadowrootmode")) {
+			if (parent.shadowRoot) throw new Error("element <"+parent.tagName.toLowerCase()+"> already has a shadow root")
+			const shadowRoot = parent.attachShadow({mode: (element.getAttribute("shadowrootmode")??"open") as "open"|"closed"})
+			shadowRoot.append((element as HTMLTemplateElement).content)
+			return true;
+		}
+		return false;
 	}
 
 

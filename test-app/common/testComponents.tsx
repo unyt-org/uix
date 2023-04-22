@@ -2,7 +2,6 @@ import { UIX, unsafeHTML } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
-import { always } from "https://dev.cdn.unyt.org/unyt_core/datex.ts";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -16,7 +15,6 @@ import { always } from "https://dev.cdn.unyt.org/unyt_core/datex.ts";
  */
 
 
-
 function Container({children}:{children:Element|Element[]}) {
 	return <div style={{display:"flex", gap:5, margin:5}}>{...(children instanceof Array ? children : [children])}</div>
 }
@@ -25,6 +23,52 @@ const x = $$(0);
 const y = $$(0);
 setInterval(()=>x.val = Math.round(Math.random()*100), 1000);
 setInterval(()=>y.val = Math.round(Math.random()*100), 2000);
+
+
+const TemplateComp = UIX.template(<div style="color:red; font-size:2em"/>)
+// allow children
+const TemplateCompWithShadowRoot = UIX.template(
+	<div style="color:green; font-size:2em" shadow-root>
+		<input type="button" value="click me!" onclick={UIX.inDisplayContext(e => console.log("click",e.target))} onmousedown={e => console.log("mousedown",e.target)}/>
+		custom layout before
+		<slot/>
+		custom layout after
+	</div>
+);
+
+// same as TemplateCompWithShadowRoot, just with shadow root (template) explicitly declared
+const TemplateCompWithShadowRootTemplate = UIX.template(
+	<div style="color:blue; font-size:2em">
+		<template shadowrootmode="open">
+			custom layout before
+			<slot/>
+			custom layout after
+		</template>
+	</div>
+);
+
+const BlankTemplateComp = UIX.blankTemplate(({children}) => <div style="color:orange; font-size:2em">custom layout before{...children}custom layout after</div>)
+const TemplateCompWithOptions = UIX.template<{a:number, b?:number}, never>(({a,b}) => <div>a={a}, b={b}</div>);
+
+
+@UIX.template(
+	<div id="div" style="color:blue">12345</div>
+)
+class ClassComponent extends UIX.BaseComponent {
+
+	protected override onCreate(){
+		console.log("create",this)
+	}
+}
+
+const CustomComponentWithSlots2 = UIX.template(<div>
+    <shadow-root>
+        Before children
+        <slot/>
+        After children
+    </shadow-root>
+    This child is appended to the slot element inside the shadow root
+</div>)
 
 export const testComponents = {
 
@@ -91,6 +135,18 @@ export const testComponents = {
 		{123345}
 	</>,
 
+	templates: <>
+
+		<CustomComponentWithSlots2>123</CustomComponentWithSlots2>
+		<TemplateComp>Hello World</TemplateComp>
+		<TemplateCompWithShadowRoot>Hello World Shadow Root</TemplateCompWithShadowRoot>
+		<TemplateCompWithShadowRootTemplate>Hello World Shadow Root 2</TemplateCompWithShadowRootTemplate>
+		<BlankTemplateComp>Hello World Blank</BlankTemplateComp>
+		<TemplateCompWithOptions a={x} b={5}/>
+		<ClassComponent><span>inner</span></ClassComponent>
+
+	</>,
+
 	svg: 
 		<svg 
 			width="400"
@@ -100,6 +156,7 @@ export const testComponents = {
 				cy={200}
 				r="100"
 				fill="cyan"
-				id="circle"/>
+				id="circle">
+			</circle>
 		</svg>
 };

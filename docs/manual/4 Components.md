@@ -1,31 +1,155 @@
 
 # Components
 
-## Creating component functions
-
-The easiest way to get a component-like behaviour is to use a simple function that returns an HTML Element.
-With this approach, you can still get reactive behaviour and saved states, but you don't get any advanced component features, like
+## Anonymous components (templates)
+The easiest way to define components in UIX is using templates.
+With anonymous component templates, you can still get reactive behaviour and saved states, but you don't get any advanced component features, like
 lifecycle handlers and utility methods.
+Anonymous components are build on top of existing DOM API features (shadow roots, slots).
+
+To define a new template, call the `UIX.template` function and pass in an element value (JSX definition), or a generator function returning an element (JSX):
 
 ```tsx
-function MyComponent(props: {children: HTMLElement[], color: string, countstart: number}) {
+// define templates:
+const CustomComponent = UIX.template(<div class='class1'></div>)
+const CustomComponent2 = UIX.template<{customAttr:number}>(({customAttr}) => <div class='class2'><b>the customAttr is {customAttr}</b></div>)
+
+// create elements:
+const comp1 = <CustomComponent id='c1'/> // returns: <div class='class1 class2' id='c1'></div>
+const comp2 = <CustomComponent id='c2' customAttr={42}/> // returns: <div class='class2' id='c2'><b>the customAttr is 42</b></div>
+```
+
+### Child elements
+
+Default element attributes (e.g. `id`, `style`, ...) are assigned to the root element after it is created.
+Children defined in JSX are also appended to the root element per default:
+
+```tsx
+// define template:
+const CustomComponent = UIX.template(<div class='class1'></div>)
+
+// create element:
+const comp3 = <CustomComponent id='c1'>
+    <div>Child 1</div>
+    {"Child 2"}
+</CustomComponent>;
+
+/* returns:
+<div class='class1' id='c1'>
+    <div>Child 1</div>
+    Child 2
+</div>
+*/
+```
+
+### Using shadow roots
+
+To get more control over the location of child elements, shadow roots and slots can be used.
+To enable the shadow root for the root element, either add the `shadow-root` attribute, or add a
+`<shadow-root>` element as the first child of the returned element:
+
+```tsx
+// define template:
+const CustomComponentWithSlots = UIX.template(<div shadow-root>
+    Before children
+    <slot/>
+    After children
+</div>)
+
+// alternative template definition:
+const CustomComponentWithSlots2 = UIX.template(<div>
+    <shadow-root>
+        Before children
+        <slot/>
+        After children
+    </shadow-root>
+    This child is appended to the slot element inside the shadow root
+</div>)
+
+// create element:
+const comp3 = <CustomComponentWithSlots id='c1'>
+    <div>Child 1</div>
+    {"Child 2"}
+</CustomComponentWithSlots>;
+
+/* returns:
+<div id='c1'>
+    #shadow-root
+        Before children
+        <slot>
+            <div>Child 1</div>
+            Child 2
+        </slot>
+        After children
+</div>
+*/
+```
+
+### Advanced example
+
+```tsx
+// define component template:
+const MyComponent = UIX.template<{background: 'red'|'green', countstart: number}>(({background, countstart}) => {
     // create a counter pointer and increment every second
-    const counter = $$(props.countstart);
+    const counter = $$(countstart);
     setInterval(() => counter.val++, 1000);
 
     // return component content
-    return <div style={{background:props.color}}>
-            	Count: {counter}
-            	{...props.children}
-    	   </div>
-}
+    return <div style={{background}}>
+                Count: {counter}
+                {...props.children}
+           </div>
+});
 
+// create element:
 export default
-    <MyComponent color="green" countstart={42}>
+    <MyComponent background="green" countstart={42}>
         <div>child 1</div>
         <div>child 2</div>
     </MyComponent>
 ```
+
+### Using UIX.blankTemplate (function component)
+
+For some use cases, it might make be useful to access all attributes and the children set in JSX when creating an anonymous component.
+
+The UIX.blankTemplate function allows you to create an element with complete control over attributes and children.
+In contrast to UIX.template, children defined in JSX are not automatically appended to the root element of the template,
+and HTML Attributes defined in JSX are also not automatically set for the root element.
+
+All attributes and the children are available in the props argument of the generator function.
+```tsx
+// define:
+const CustomComponent = UIX.blankTemplate<{color:string}>(({color, style, id, children}) => <div id={id} style={style}><h1>Header</h1>{...children}</div>)
+
+// create:
+const comp = (
+<CustomComponent id="c1">
+     <div>first child</div>
+     <div>second child</div>
+</CustomComponent>
+)
+```
+
+This behavious is more similar to other JSX frameworks. You can also just use a normal function instead of `UIX.blankTemplate` (The `UIX.blankTemplate` is just a wrapper around a component function
+with some additional type features).
+Keep in mind that UIX always returns the `children` property as an array, even if just a single child was provided in JSX.
+```tsx
+// define:
+function CustomFunctionComponent({color, id, children}: {id:string, children:HTMLElement[], color:string}) {
+    return <div id={id} style={{color}}>
+        {...children}
+    </div>
+}
+
+// create:
+const comp = (
+<CustomFunctionComponent id="c1" color="blue">
+     <div>first child</div>
+     <div>second child</div>
+</CustomFunctionComponent>
+```
+
 
 ## Creating custom component classes
 
@@ -192,7 +316,7 @@ export default <ParentComponent/>
     // called after component is constructed or restored
     onInit() {}
 
-	// called once before onAnchor
+    // called once before onAnchor
     onCreate() {}
 
     // called when the component is added to the DOM

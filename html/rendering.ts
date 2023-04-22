@@ -519,13 +519,13 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
 		// fake dom append
 		if (element instanceof UIX.BaseComponent || element instanceof UIX.Components.Base) {
 			let resolved = false;
-			const timeoutSec = `${(element.CREATE_TIMEOUT/1000).toFixed(3)}s`
+			const timeoutSec = `${(element.CREATE_TIMEOUT/1000)}s`
 			await Promise.race([
 				element.connectedCallback(),
 				element.created,
 				new Promise<void>(resolve=>setTimeout(()=>{
 					if (!resolved) {
-						logger.error("onCreate() method of component <"+element.tagName.toLowerCase()+"> has not resolved after "+timeoutSec+", generating static snapshot for available state. Increase the CREATE_TIMEOUT for this component if the onCreate method is supposed to take longer than "+timeoutSec+".");
+						logger.error("onCreate() method of "+element.constructor.name+" has not resolved after "+timeoutSec+", generating static snapshot for available state. Increase the CREATE_TIMEOUT for this component if the onCreate method is supposed to take longer than "+timeoutSec+".");
 						resolve()
 					}
 				},element.CREATE_TIMEOUT))

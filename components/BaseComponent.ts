@@ -1082,7 +1082,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     /** called after added to an other Element */
     protected onAnchor?():void|Promise<void>
 
-    /** timeout after which onCreate is no longer awaited, snapshot is taken */
+    /** timeout (ms) after which onCreate is no longer awaited, snapshot is taken */
     CREATE_TIMEOUT = 10_000;
 
     /** called after options loaded, element content can be created */

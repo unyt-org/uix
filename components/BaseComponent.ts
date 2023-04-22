@@ -21,7 +21,6 @@ import { indent } from "../utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize_js.ts";
 import { ORIGIN_PROPS, Theme, elementGenerator } from "../uix_all.ts"
 import { bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
-import { debug } from "https://deno.land/std@0.104.0/log/mod.ts"
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};

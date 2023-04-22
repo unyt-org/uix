@@ -289,8 +289,6 @@ export class RenderPreset<R extends RenderMethod,T extends html_content_or_gener
  */
 export async function createSnapshot<T extends Element|DocumentFragment>(content:T, render_method = RenderMethod.HYDRATION):Promise<T> {
 	await preloadElementOnBackend(content);
-	// TODO: better solution to wait for component to load
-	await sleep(4000);
 	// @ts-ignore
 	content[CACHED_CONTENT] = await getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
 	return content;
@@ -521,15 +519,16 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
 		// fake dom append
 		if (element instanceof UIX.BaseComponent || element instanceof UIX.Components.Base) {
 			let resolved = false;
+			const timeoutSec = `${(element.CREATE_TIMEOUT/1000).toFixed(3)}s`
 			await Promise.race([
 				element.connectedCallback(),
 				element.created,
 				new Promise<void>(resolve=>setTimeout(()=>{
 					if (!resolved) {
-						logger.error("component <"+element.tagName.toLowerCase()+"> onCreate() has not resolved after 10s, static snapshot is generated for current state");
+						logger.error("onCreate() method of component <"+element.tagName.toLowerCase()+"> has not resolved after "+timeoutSec+", generating static snapshot for available state. Increase the CREATE_TIMEOUT for this component if the onCreate method is supposed to take longer than "+timeoutSec+".");
 						resolve()
 					}
-				},10_000))
+				},element.CREATE_TIMEOUT))
 			])
 			resolved = true;
 		}

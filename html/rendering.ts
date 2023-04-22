@@ -534,6 +534,7 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
 		// fake dom append
 		if (element instanceof UIX.BaseComponent || element instanceof UIX.Components.Base) {
 			console.log("loading " + element.tagName.toLocaleLowerCase())
+			element.connectedCallback();
 			await element.created;
 			console.log("loaded " + element.tagName.toLocaleLowerCase())
 		}

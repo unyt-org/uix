@@ -71,7 +71,7 @@ const alt = "alt" as const;
 /** list of all allowed attributes for HTML elements */
 export const htmlElementAttributes = {
 
-	a: ["href"],
+	a: ["href", "target"],
 	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value"],
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"]

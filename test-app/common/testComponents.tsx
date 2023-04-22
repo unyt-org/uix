@@ -2,6 +2,8 @@ import { UIX, unsafeHTML } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
+import { always, and } from "unyt_core/datex.ts";
+import { transform } from "https://dev.cdn.unyt.org/unyt_core/datex_short.ts";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -14,10 +16,7 @@ import { ValueInput } from "uix/components/ValueInput.tsx";
  * (e.g. http://localhost:4200/textInput/backend+static )
  */
 
-
-function Container({children}:{children:Element|Element[]}) {
-	return <div style={{display:"flex", gap:5, margin:5}}>{...(children instanceof Array ? children : [children])}</div>
-}
+const Container = UIX.template(<div style={{display:"flex", gap:5, margin:5}}></div>)
 
 const x = $$(0);
 const y = $$(0);
@@ -77,7 +76,7 @@ class ClassComponent extends UIX.BaseComponent {
         <section>Default section content</section>
     </article>
 )
-class ClassComponent2 extends UIX.BaseComponent<{title:string}> {
+class ClassComponent2 extends UIX.ShadowDOMComponent<{title:string}> {
     override onCreate() {
         console.log("options",this.options)
     }
@@ -91,6 +90,46 @@ const CustomComponentWithSlots2 = UIX.template(<div>
     </shadow-root>
     This child is appended to the slot element inside the shadow root
 </div>)
+
+const list = [
+	{
+		name: 'Example 1',
+		url: 'https://unyt.org'
+	},
+	{
+		name: 'Example 1',
+		url: 'https://unyt.org'
+	},
+	{
+		name: 'Example 1',
+		url: 'https://unyt.org'
+	}
+]
+
+
+
+const ListView = UIX.template(()=>{
+	const index = $$(0);
+	const sculpture = index.transform(i => list[i]);
+
+	const x = always `${index} + 1`;
+	console.log(x)
+
+	return (<>
+		<button onclick={()=>index.val++}>
+			Next
+		</button>
+		<h2>
+			<i>{sculpture.name} </i> 
+			more: {sculpture.url}
+		</h2>
+		<h3>  
+			({index.transform(i => i+1)} of {list.length})
+		</h3>
+	</>);	  
+})
+
+
 
 export const testComponents = {
 
@@ -133,6 +172,10 @@ export const testComponents = {
 		`}
 		{unsafeHTML('<div>Unsafe HTML<script type="text/javascript">alert(1)</script></div>')}
 	</div>,
+
+	list: <Container>
+		<ListView></ListView>
+	</Container>,
 
 	datex:
 		<h3>

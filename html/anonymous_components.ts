@@ -2,6 +2,7 @@ import { X } from "https://jspm.dev/npm:@jspm/core@2.0.1/_/57403c48.js";
 import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../jsx-runtime/jsx.ts";
 import { UIX } from "../uix.ts";
 import { HTMLUtils } from "./utils.ts";
+import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 
 /**
  * cloneNode(true), but also clones shadow roots.
@@ -47,7 +48,7 @@ type Equals<X, Y> =
     (<T>() => T extends Y ? 1 : 2) ? true : false;
 
 export type elementGenerator<Options extends Record<string,any>, Children, handleAllProps = true, childrenAsArray = false> =
-	(props: JSX.DatexValueObject<Options> & (handleAllProps extends true ? (JSX.IntrinsicAttributes & (Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children: childrenAsArray extends true ? childrenToArray<Children> : Children}))) : unknown)) => Element;
+	(props: JSX.DatexValueObject<Options> & (handleAllProps extends true ? (JSX.IntrinsicAttributes & (Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: childrenAsArray extends true ? childrenToArray<Children> : Children}))) : unknown)) => Element;
 
 
 /**
@@ -97,10 +98,13 @@ export function template<Options extends Record<string, any> = {}, Children = JS
 
 export function template(templateOrGenerator:Element|elementGenerator<any, any, any>) {
 	let generator:any;
+	const module = getCallerFile();
+	console.warn("called",module)
 
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any) {
 		// decorator
 		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
+			propsOrClass._init_module = module;
 			Component(propsOrClass).template = generator
 		}
 		// jsx
@@ -112,6 +116,7 @@ export function template(templateOrGenerator:Element|elementGenerator<any, any, 
 
 		// decorator
 		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
+			propsOrClass._init_module = module;
 			Component(propsOrClass).template = generator
 		}
 		// jsx

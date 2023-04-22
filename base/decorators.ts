@@ -36,13 +36,14 @@ export function Component<T extends Components.Base.Options|BaseComponent.Option
 export function Component():any
 export function Component<C>(target: Function & { prototype: C }):any
 export function Component<C>(...args:any[]):any {
-	const url = getCallerFile();
+	const url = getCallerFile(); // TODO: called even if _init_module set
 	return handleDecoratorArgs(args, (...args)=>_Component(url, ...args));
 }
 
 
 function _Component(url:string, component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
-
+	
+	url = component_class._init_module ?? url;
 	if (!url) {
 		throw new Error("Could not get the location of a the UIX component '"+component_class.name+"'. This should not happen");
 	}

@@ -1285,8 +1285,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     // called when added to DOM
     connectedCallback() {
         if (this.is_skeleton) return; // ignore
-        console.log("connect",this.options.title)
-
 
         const parent_is_uix = this.parentElement instanceof Base;
         

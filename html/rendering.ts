@@ -485,7 +485,14 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	if (!loaded) {
 		// preload in deno, TODO: better solution?
 		if (IS_HEADLESS && (entrypoint instanceof Element || entrypoint instanceof DocumentFragment)) {
-			await preloadElementOnBackend(entrypoint);
+			// TODO: remove timeout, should always resolve?
+			await Promise.race([
+				preloadElementOnBackend(entrypoint),
+				new Promise<void>(resolve=>setTimeout(()=>{
+					logger.warn("component preloading force-terminated after 10s");
+					resolve()
+				},10_000))
+			])
 		}
 
 		// routing handler?
@@ -526,8 +533,9 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
 
 		// fake dom append
 		if (element instanceof UIX.BaseComponent || element instanceof UIX.Components.Base) {
-			await element.connectedCallback()
+			console.log("loading " + element.tagName.toLocaleLowerCase())
 			await element.created;
+			console.log("loaded " + element.tagName.toLocaleLowerCase())
 		}
 		// load shadow root
 		if ((element as Element).shadowRoot) promises.push(preloadElementOnBackend((element as Element).shadowRoot!))

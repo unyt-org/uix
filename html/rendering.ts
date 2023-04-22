@@ -520,6 +520,7 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
 
 		// fake dom append
 		if (element instanceof UIX.BaseComponent || element instanceof UIX.Components.Base) {
+			console.log("start<"+element.tagName.toLowerCase()+">")
 			await Promise.race([
 				element.connectedCallback(),
 				element.created,
@@ -528,6 +529,7 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
 					resolve()
 				},10_000))
 			])
+			console.log("end<"+element.tagName.toLowerCase()+">")
 		}
 		// load shadow root
 		if ((element as Element).shadowRoot) promises.push(preloadElementOnBackend((element as Element).shadowRoot!))

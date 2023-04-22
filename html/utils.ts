@@ -241,7 +241,9 @@ export namespace HTMLUtils {
 			elementEventHandlerAttributes.includes(<typeof elementEventHandlerAttributes[number]>attr) ||
 			(<readonly string[]>htmlElementAttributes[<keyof typeof htmlElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof htmlElementAttributes[keyof typeof htmlElementAttributes][number]>attr) ||
 			(<readonly string[]>svgElementAttributes[<keyof typeof svgElementAttributes>element.tagName.toLowerCase()])?.includes(<typeof svgElementAttributes[keyof typeof svgElementAttributes][number]>attr) )) {
-				return false;
+				// TODO: remove deprecated module
+				if (attr!="module")
+					return false;
 				// try {
 				// 	element[property] = Datex.Value.collapseValue(val, true, true);
 				// }

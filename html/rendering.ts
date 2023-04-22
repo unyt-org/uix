@@ -485,14 +485,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	if (!loaded) {
 		// preload in deno, TODO: better solution?
 		if (IS_HEADLESS && (entrypoint instanceof Element || entrypoint instanceof DocumentFragment)) {
-			// TODO: remove timeout, should always resolve?
-			await Promise.race([
-				preloadElementOnBackend(entrypoint),
-				new Promise<void>(resolve=>setTimeout(()=>{
-					logger.warn("component preloading force-terminated after 10s");
-					resolve()
-				},10_000))
-			])
+			await preloadElementOnBackend(entrypoint)
 		}
 
 		// routing handler?
@@ -522,21 +515,19 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 export async function preloadElementOnBackend(element:Element|DocumentFragment) {
 	// preload in deno, TODO: better solution?
 	if (IS_HEADLESS) {
-		// wait until create lifecycle finished
-		// if (element instanceof Element) {
-		// 	globalThis.document.body.append(element);
-		// }
-		// if (element instanceof UIX.Components.Base) {
-		// 	await element.created;
-		// }
+
 		const promises = [];
 
 		// fake dom append
 		if (element instanceof UIX.BaseComponent || element instanceof UIX.Components.Base) {
-			console.log("loading " + element.tagName.toLocaleLowerCase())
-			await element.connectedCallback();
-			await element.created;
-			console.log("loaded " + element.tagName.toLocaleLowerCase())
+			element.connectedCallback();
+			await Promise.race([
+				element.created,
+				new Promise<void>(resolve=>setTimeout(()=>{
+					logger.error("component <"+element.tagName.toLowerCase()+"> onCreate() has not resolved after 10s, static snapshot is generated for current state");
+					resolve()
+				},10_000))
+			])
 		}
 		// load shadow root
 		if ((element as Element).shadowRoot) promises.push(preloadElementOnBackend((element as Element).shadowRoot!))

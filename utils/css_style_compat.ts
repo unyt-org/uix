@@ -146,14 +146,29 @@ export function addStyleSheetLink(element:HTMLElement|ShadowRoot, url:string|URL
     return new Promise<HTMLLinkElement>((resolve, reject)=>{
         const link = document.createElement("link");
         link.rel = "stylesheet";
-        link.onload = ()=>resolve(link);
-        link.onerror = ()=>reject("Failed to load stylesheet " + url);
+        link.onload = ()=>{
+            resolve(link)
+        };
+        link.onerror = ()=>{
+            link.remove();
+            reject("Failed to load stylesheet " + url);
+        };
         link.href = url.toString();
-        
         element.appendChild(link);
 
         // onload not working with JSDom
-        if (IS_HEADLESS) resolve(link);
+        if (IS_HEADLESS) {
+            (async ()=>{
+                try {
+                    if ((await fetch(url)).ok) {
+                        element.appendChild(link);
+                        resolve(link);
+                    }
+                    else reject("Failed to load stylesheet " + url);
+                }
+                catch {reject("Failed to load stylesheet " + url);}
+            })()   
+        }
     })
 }
 

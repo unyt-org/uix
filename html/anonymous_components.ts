@@ -8,17 +8,25 @@ import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
  * cloneNode(true), but also clones shadow roots.
  * @param element original element
  */
-function cloneWithShadowRoots(element:Element) {
-  function walk(node:Element, clone:Element) {
-    const shadow = node.shadowRoot;
-    if (shadow) {
-      clone.attachShadow({ mode: shadow.mode }).append(...([].map.call(shadow.childNodes, (c:Node) => cloneWithListeners(c)) as Node[]));
-    }
-    for (let i=0; i<node.children.length; i++) walk(node.children[i], clone.children[i]);
-  }
-  const clone = cloneWithListeners(element) as Element;
-  walk(element, clone);
-  return clone;
+function cloneWithShadowRoots(element:Node) {
+	if (!(element instanceof Element)) return element.cloneNode(true);
+
+	function walk(node:Element, clone:Element) {
+		const shadow = node.shadowRoot;
+		if (shadow) {
+		clone.attachShadow({ mode: shadow.mode }).append(...([].map.call(shadow.childNodes, (c:Node) => cloneWithListeners(c)) as Node[]));
+		}
+		for (let i=0; i<node.children.length; i++) walk(node.children[i], clone.children[i]);
+	}
+	const clone = cloneWithListeners(element) as Element;
+	walk(element, clone);
+
+	// add template content
+	if (element instanceof HTMLTemplateElement) {
+		for (const node of element.content.childNodes as unknown as Node[]) (clone as HTMLTemplateElement).content.append(cloneWithShadowRoots(node))
+	}
+
+	return clone;
 }
 
 /**
@@ -99,7 +107,6 @@ export function template<Options extends Record<string, any> = {}, Children = JS
 export function template(templateOrGenerator:Element|elementGenerator<any, any, any>) {
 	let generator:any;
 	const module = getCallerFile();
-	console.warn("called",module)
 
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any) {
 		// decorator

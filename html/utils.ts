@@ -374,26 +374,38 @@ export namespace HTMLUtils {
 				child.then(v=>{
 					const dom = valuesToDOMElement(v);
 					// set shadow root or replace
-					if (!setTemplateAsShadowRoot(element, dom)) placeholder.replaceWith(dom)
+					if (!appendElementOrShadowRoot(element, dom, false)) placeholder.replaceWith(dom)
 				})
 				return parent;
 			}
 			const dom = valuesToDOMElement(child);
 			// set shadow root or append
-			if (!setTemplateAsShadowRoot(element, dom)) element.append(dom);
+			appendElementOrShadowRoot(element, dom);
 		}
 		
 		return parent;
 	}
 
-	export function setTemplateAsShadowRoot(parent: Element|DocumentFragment, element: Element|DocumentFragment|Text) {
-		if (parent instanceof Element && element instanceof HTMLTemplateElement && element.hasAttribute("shadowrootmode")) {
-			if (parent.shadowRoot) throw new Error("element <"+parent.tagName.toLowerCase()+"> already has a shadow root")
-			const shadowRoot = parent.attachShadow({mode: (element.getAttribute("shadowrootmode")??"open") as "open"|"closed"})
-			shadowRoot.append((element as HTMLTemplateElement).content)
-			return true;
+	/**
+	 * 
+	 * @param parent 
+	 * @param element 
+	 * @param appendAll if false, only shadowRoot is set, other elements are ignored
+	 * @returns true if element appended
+	 */
+	export function appendElementOrShadowRoot(parent: Element|DocumentFragment, element: Element|DocumentFragment|Text, appendAll = true) {
+		for (const candidate of (element instanceof DocumentFragment ? [...(element.childNodes as any)] : [element]) as unknown as Node[]) {
+			if (parent instanceof Element && candidate instanceof HTMLTemplateElement && candidate.hasAttribute("shadowrootmode")) {
+				if (parent.shadowRoot) throw new Error("element <"+parent.tagName.toLowerCase()+"> already has a shadow root")
+				const shadowRoot = parent.attachShadow({mode: (candidate.getAttribute("shadowrootmode")??"open") as "open"|"closed"})
+				shadowRoot.append((candidate as HTMLTemplateElement).content);
+				if (!appendAll) return true;
+			}
+			else if (appendAll) {
+				parent.append(candidate);
+			}
 		}
-		return false;
+		return appendAll;
 	}
 
 

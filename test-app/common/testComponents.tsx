@@ -50,11 +50,14 @@ const BlankTemplateComp = UIX.blankTemplate(({children}) => <div style="color:or
 const TemplateCompWithOptions = UIX.template<{a:number, b?:number}, never>(({a,b}) => <div>a={a}, b={b}</div>);
 
 
-@UIX.template(
-    <article>
+@UIX.template(<>
+    <shadow-root>
         <h1 id="header">Header</h1>
         <section id="description"></section>
-    </article>
+		<slot/>
+    </shadow-root>
+	predefined child
+</>
 )
 class ClassComponent extends UIX.BaseComponent {
     @UIX.id declare header: HTMLHeadingElement
@@ -106,7 +109,24 @@ const list = [
 	}
 ]
 
+// react
+function ReactListView () {
+	const [index, setIndex] = useState(0);
+	const sculpture = list[index];
 
+	return (<>
+		<button onClick={()=>setIndex(index + 1)}>
+			Next
+		</button>
+		<h2>
+			<i>{sculpture.name} </i> 
+			more: {sculpture.url}
+		</h2>
+		<h3>  
+			({index + 1} of {list.length})
+		</h3>
+	</>);	  
+}
 
 const ListView = UIX.template(()=>{
 	const index = $$(0);

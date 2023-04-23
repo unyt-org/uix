@@ -3,11 +3,11 @@
 
 ## Anonymous components (templates)
 The easiest way to define components in UIX is using templates.
-With anonymous component templates, you can still get reactive behaviour and saved states, but you don't get any advanced component features, like
+With anonymous component templates, you can still get reactive behaviour and saved states, but you don't get any advanced component features like
 lifecycle handlers and utility methods.
-Anonymous components are build on top of existing DOM API features (shadow roots, slots).
+Anonymous components are built on top of existing DOM API features (shadow roots, slots).
 
-To define a new template, call the `UIX.template` function and pass in an element value (JSX definition), or a generator function returning an element (JSX):
+To define a new template, call the `UIX.template` function and pass in an element value (JSX definition) or a generator function returning an element (JSX):
 
 ```tsx
 // define templates:
@@ -45,8 +45,9 @@ const comp3 = <CustomComponent id='c1'>
 ### Using shadow roots
 
 To get more control over the location of child elements, shadow roots and slots can be used.
-To enable the shadow root for the root element, either add the `shadow-root` attribute, or add a
-`<shadow-root>` element as the first child of the returned element:
+To add a shadow root to the root element add a `<shadow-root>` element as the first child of the outer element.
+Alternativly, you can add a `shadow-root` attribute to the outer element. In this case, they child elements of the outer element are
+all appended to the shadow root.
 
 ```tsx
 // define template:
@@ -109,7 +110,7 @@ export default
     </MyComponent>
 ```
 
-### Using UIX.blankTemplate (function component)
+### Using UIX.blankTemplate / function components
 
 For some use cases, it might make be useful to access all attributes and the children set in JSX when creating an anonymous component.
 
@@ -131,8 +132,8 @@ const comp = (
 )
 ```
 
-This behavious is more similar to other JSX frameworks. You can also just use a normal function instead of `UIX.blankTemplate` (The `UIX.blankTemplate` is just a wrapper around a component function
-with some additional type features).
+This behaviour is more similar to other JSX frameworks. You can also just use a normal function instead of `UIX.blankTemplate` (the `UIX.blankTemplate` is just a wrapper around a component function with some additional type features).
+
 Keep in mind that UIX always returns the `children` property as an array, even if just a single child was provided in JSX.
 ```tsx
 // define:
@@ -165,14 +166,15 @@ class MyCustomComponent extends UIX.BaseComponent {
 
 }
 ```
-If you want to define an abstract Component class that is not intended to be used as an actual Component, you can mark it with `@UIX.Abstract`.
-A UIX Component also inherits the default options from its parent class.
-
 
 ## Creating component classes based on templates
 
-Templates defined with `UIX.template` can also be used as a base layout for component classes.
-Just use the template returned from `UIX.template` can as a class decorator:
+Templates defined with `UIX.template` can also be used as a base layout for component classes - 
+just use the template returned from `UIX.template` as a class decorator.
+
+*With the `@UIX.id` decorator, component properties can be bound to the element inside the component which has
+an id that equals the property name.
+When the property is overriden, the element with the matching id is also replaced with the new property.*
 
 ```tsx
 // using a static template
@@ -364,10 +366,10 @@ export default <ParentComponent/>
     // called once before onAnchor
     onCreate() {}
 
-    // called when the component is added to the DOM
+    // called every time the component is added to a new parent in the DOM
     onAnchor() {}
 
-    // called after onAnchor, when the component is displayed in a browser context
+    // called after onAnchor when the component is displayed in a browser context
     onDisplay() {}
 
 }

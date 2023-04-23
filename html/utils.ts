@@ -3,6 +3,7 @@ import { DX_VALUE } from "unyt_core/datex_all.ts";
 import { Datex, decimal, pointer } from "unyt_core";
 import { Theme } from "../base/theme.ts";
 import { defaultElementAttributes, elementEventHandlerAttributes, htmlElementAttributes, mathMLTags, svgElementAttributes, svgTags } from "./attributes.ts";
+import { JSX_INSERT_STRING } from "../jsx-runtime/jsx.ts";
 
 
 // deno-lint-ignore no-namespace
@@ -274,7 +275,12 @@ export namespace HTMLUtils {
 		return true;
 	}
 
-	export function setElementAttribute<T extends Element>(element:T, property:string, value:Datex.CompatValue<any>|Function, root_path?:string|URL) {
+	export function setElementAttribute<T extends Element>(element:T, property:string, value:Datex.CompatValue<any>|Function, root_path?:string|URL):boolean|Promise<boolean> {
+		value = value?.[JSX_INSERT_STRING] ? value.val : value; // collapse safely injected strings
+
+		// first await, if value is promise
+		if (value instanceof Promise) return value.then(v=>setElementAttribute(element, property, v, root_path))
+
 		if (!element) return false;
 		// DatexValue
 		if (value instanceof Datex.Value) {
@@ -365,7 +371,9 @@ export namespace HTMLUtils {
 		// use content if parent is <template>
 		const element = parent instanceof HTMLTemplateElement ? parent.content : parent;
 
-		for (const child of children) {
+		for (let child of children) {
+			child = (child as any)?.[JSX_INSERT_STRING] ? (child as any).val : child; // collapse safely injected strings
+
 			// wait for promise
 			if (child instanceof Promise) {
 				const placeholder = document.createElement("div")

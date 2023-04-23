@@ -60,7 +60,7 @@
     "https://dev.cdn.unyt.org/unyt_core/compiler/unit_codes.ts": "0da02d162eed5583c30130eea7d3f013bc09e1c5e274d1b3c41566cb71ef22a1",
     "https://dev.cdn.unyt.org/unyt_core/datex.ts": "bc94810795da30f8c5494a194788e622e2aef29d1a4ab0d229d2987442dd5789",
     "https://dev.cdn.unyt.org/unyt_core/datex_all.ts": "831953bd7394e3051a8327269eedaadaaa1f2923192e838d85ad8fe321d951b4",
-    "https://dev.cdn.unyt.org/unyt_core/datex_short.ts": "c36712b9dccfc2483bdcd365af0e5026f12dc72a8892e4c103559e0b757d2cf0",
+    "https://dev.cdn.unyt.org/unyt_core/datex_short.ts": "930547f965f4eafb1f94d98466f266a1759cc952db3b02a8f50a0d04cfc26af1",
     "https://dev.cdn.unyt.org/unyt_core/js_adapter/js_class_adapter.ts": "eca9bc1cbafceac9dc197767cd558cc731657dc42619ec0d7adba596615f1764",
     "https://dev.cdn.unyt.org/unyt_core/js_adapter/legacy_decorators.ts": "a4e89ef74be48bf593d5788d680e807cd4da7992cdb0a8c80b881dca45f37fec",
     "https://dev.cdn.unyt.org/unyt_core/lib/localforage/drivers/indexeddb.js": "94a6cfe0f3bfbe677bae59127c991405d68c4c54ae4d3dbbdb56072a471ece02",

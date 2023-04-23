@@ -9,11 +9,24 @@ import { HTMLUtils, logger } from "../uix_all.ts";
 export const SET_DEFAULT_ATTRIBUTES: unique symbol = Symbol("SET_DEFAULT_ATTRIBUTES");
 export const SET_DEFAULT_CHILDREN: unique symbol = Symbol("SET_DEFAULT_CHILDREN");
 
+export const JSX_INSERT_STRING: unique symbol = Symbol("JSX_INSERT_STRING");
+
+export function escapeString(string:string) {
+	return {[JSX_INSERT_STRING]:true, val:string};
+}
+
 export function jsx (type: string | any, config: Record<string,any>): Element {
 
 	let element:Element;
 	if (!(config.children instanceof Array)) config.children = [config.children];
-	const { children = [], ...props } = config
+	let { children = [], ...props } = config
+
+	for (let i=0; i<children.length; i++) {
+		const child = children[i];
+		if (typeof child == "string" && child.match(embeddedDatexStart)) {
+			children = extractEmbeddedDatex(children, i);
+		}
+	}
 
 	let set_default_children = true;
 	let set_default_attributes = true;
@@ -45,27 +58,6 @@ export function jsx (type: string | any, config: Record<string,any>): Element {
 		}
 	}
 
-	else if (type == "datex") {
-		logger.warn("the <datex> JSX element only has experimental support")
-		const placeholder = document.createElement("div");
-		let dx = '';
-		const dxData = [];
-		for (const child of children) {
-			if (typeof child == "string") dx += child;
-			else {
-				dx += Datex.INSERT_MARK; // (?)
-				dxData.push(child);
-			}
-		}
-		// TODO: DATEX spec, always create a new 'always' pointer if two pointers are added, multiplied, ...?
-		dx = `always(${dx})`;
-
-		// execute datex and set result as html content
-		datex(dx, dxData).then(res=>{
-			placeholder.replaceWith(UIX.HTMLUtils.valuesToDOMElement(res))
-		});
-		return placeholder;
-	}
 
 	else {
 		allow_invalid_attributes = false;
@@ -121,6 +113,55 @@ export function Fragment({children}:{children:Element[]}) {
 	return fragment;
 }
  
+
+const embeddedDatexStart = /\#\(/;
+const embeddedDatexEnd = /\)/;
+
+function extractEmbeddedDatex(children:any[], startIndex = 0) {
+	logger.warn("DATEX injections with #(...) are experimental")
+
+	const newChildren = children.slice(0, startIndex);
+
+	let [start, dx] = (children[startIndex] as string).split(embeddedDatexStart);
+	newChildren.push(start);
+
+	const dxData = [];
+	let currentIndex = startIndex+1;
+	for (currentIndex; currentIndex < children.length; currentIndex++) {
+		const child = children[currentIndex];
+		if (typeof child == "string") {
+			if (child.match(embeddedDatexEnd)) {
+				const [dxEnd, end] = child.split(embeddedDatexEnd);
+				children[currentIndex] = end;
+				dx += dxEnd;
+				break;
+			}
+			else dx += child;
+		}
+		else {
+			dx += Datex.INSERT_MARK;
+			// safely injected string
+			dxData.push(child?.[JSX_INSERT_STRING] ? child.val : child);
+		}
+	}
+	const placeholder = document.createElement("div");
+	newChildren.push(placeholder)
+	newChildren.push(...children.slice(currentIndex));
+
+	// TODO: DATEX spec, always create a new 'always' pointer if two pointers are added, multiplied, ...?
+	dx = `always(${dx})`;
+
+	logger.debug("DATEX injected in JSX:",dx,dxData);
+
+	// execute datex and set result as html content
+	datex(dx, dxData).then(res=>{
+		placeholder.replaceWith(UIX.HTMLUtils.valuesToDOMElement(res))
+	});
+
+	return newChildren;
+}
+
+
 // jsx.Fragment = jsxFragment
 // jsx.TextNode = jsxTextNode
 // jsx.customAttributes = ['children', 'key', 'props']
@@ -181,8 +222,6 @@ declare global {
 		} 
 		// other custom elements
 		& {
-			// inject datex script, returned value is inserted into the dom
-			datex: {children?: any} & {[key in keyof IntrinsicAttributes]: never},
 			'shadow-root': {children?: childrenOrChildrenPromise} & {[key in keyof IntrinsicAttributes]: never} & {mode?:'open'|'closed'}
 		}
 	}

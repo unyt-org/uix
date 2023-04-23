@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-control-regex
 import { Datex, text } from "unyt_core";
 import { Res, Theme, HTMLUtils, logger } from "./uix_all.ts";
-import { jsx } from "./jsx-runtime/jsx.ts";
+import { escapeString, jsx } from "./jsx-runtime/jsx.ts";
 
 export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
 
@@ -108,23 +108,18 @@ export function C (name:TemplateStringsArray|string, ...params:string[]) {
 }
 
 
-const style_prop_regex = /([\w-]+)\s*:\s*$/;
-const attr_regex = /([\w-]+)\s*=\s*$/;
-const inside_el_header_regex = /<[^>]*$/;
-const id_inject_regex = /<([^> ]*)(\s+[^>]*$)/;
-const find_el_id_regex = /<[^> ]* id=["']?([^ "'\n>]+)["']?[^>]*$/;
-
-
 const injectionMarker = '\x00';
-const tagStart = /^<([\w\-.:]*|\x00\(\d+\))\s*( |\/|>)/;
-const extractInjectedId = /\x00\((\d+)\)/;
-const extractInjectedIds = /\x00\((\d+)\)/gm;
-const extractInjectedIdsNoGroup = /\x00\((?:\d+)\)/gm;
+const tagStart = /^<([\w\-.:]*|\x00\[\d+\])\s*( |\/|>)/;
+const extractInjectedId = /\x00\[(\d+)\]/;
+const extractInjectedIds = /\x00\[(\d+)\]/gm;
+const extractInjectedIdsNoGroup = /\x00\[(?:\d+)\]/gm;
 const attrStart = /^\s*([\w-]+)\s*=\s*/;
 const string = /^("(?:(?:.|\n)*?[^\\])??(?:(?:\\\\)+)?"|'(?:(?:.|\n)*?[^\\])??(?:(?:\\\\)+)?')/;
 const word = /^[\w-]+\b/;
 const tagEnd = /^\s*(\/)?>/
-const closingTag = /^<\/\s*([\w\-.:]*|\x00\(\d+\))\s*>/
+const closingTag = /^<\/\s*([\w\-.:]*|\x00\[\d+\])\s*>/
+const injectedDatex = /^\#\(/;
+
 
 const untilTagClose = /[^<]*(?=<|$)/
 
@@ -155,12 +150,17 @@ export function HTML(template:any, ...content:(HTMLElement|Datex.CompatValue<unk
 	// template
 	else {
 
+		// escape non-pointer strings in content
+		for (let i=0; i<content.length; i++) {
+			if (typeof content[i] === "string") content[i] = escapeString(content[i] as string);
+		}
+
 		// combine html
 		let html = "";
 		let c = 0;
 		for (const raw of (template as unknown as TemplateStringsArray).raw) {
 			html += raw;
-			if (c<(template as unknown as TemplateStringsArray).raw.length-1) html += `\x00(${c++})`;
+			if (c<(template as unknown as TemplateStringsArray).raw.length-1) html += `\x00[${c++}]`;
 		}
 		html = html.trimStart();
 		const all = [];
@@ -263,17 +263,30 @@ function matchAttribute(html:string, content:any[], attrs:Record<string,any>) {
 	let attrVal: any;
 	let contentInserted = false;
 
+	// get value:
+
 	// matched " or '
 	if (attrValMatch) {
 		html = html.replace(attrValMatch[0], "").trimStart();
 		attrVal = attrValMatch?.[0]?.slice(1,-1)
 	}
-	// injected
+	// injected js
 	else if (html.startsWith(injectionMarker)) {
 		const match = html.match(extractInjectedId);
 		attrVal = content[Number(match![1])];
 		html = html.replace(match![0], "").trimStart();
 		contentInserted = true;
+	}
+	// injected dx
+	else if (html.match(injectedDatex)) {
+		let [dx, newHTML] = html.split(")", 2)
+		dx = dx.replace(injectedDatex, '')
+		const injectedIds = [...dx.matchAll(extractInjectedIds)].map(v=>Number(v[1]));
+		dx = dx.replaceAll(extractInjectedIds, Datex.INSERT_MARK);
+		dx = `always(${dx})`;
+		const injected = content.slice(injectedIds.at(0), injectedIds.at(-1)!+1)
+		attrVal = datex(dx, injected)
+		html = newHTML;
 	}
 	// unescaped value
 	else if (html.match(word)) {
@@ -287,10 +300,10 @@ function matchAttribute(html:string, content:any[], attrs:Record<string,any>) {
 	}
 
 	// resolve "\x00(1)"
-	if (!contentInserted && attrVal.includes(injectionMarker)) {
+	if (!contentInserted && typeof attrVal=="string" && attrVal?.includes(injectionMarker)) {
 		const injectedIds = [...attrVal.matchAll(extractInjectedIds)].map(v=>Number(v[1]));
 		const injected = content.slice(injectedIds.at(0), injectedIds.at(-1)!+1)
-		attrVal = attrVal.replaceAll(extractInjectedIds, '(?)');
+		attrVal = attrVal.replaceAll(extractInjectedIds, Datex.INSERT_MARK);
 		throw "todo: $$ transform for attribute"
 	}
 

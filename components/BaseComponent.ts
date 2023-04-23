@@ -684,7 +684,6 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         if ((<typeof BaseComponent> this.constructor).template) {
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
             const template = (<typeof BaseComponent> this.constructor).template!(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options);
-            console.log("temp",(<typeof BaseComponent> this.constructor).template,template)
             HTMLUtils.append(this, template);
         }
     }

@@ -2,8 +2,8 @@ import { UIX, unsafeHTML } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
-import { always, and } from "unyt_core/datex.ts";
-import { transform } from "https://dev.cdn.unyt.org/unyt_core/datex_short.ts";
+import { add, always, and } from "unyt_core/datex.ts";
+import { sub, transform } from "https://dev.cdn.unyt.org/unyt_core/datex_short.ts";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -18,10 +18,11 @@ import { transform } from "https://dev.cdn.unyt.org/unyt_core/datex_short.ts";
 
 const Container = UIX.template(<div style={{display:"flex", gap:5, margin:5}}></div>)
 
-const x = $$(0);
-const y = $$(0);
-setInterval(()=>x.val = Math.round(Math.random()*100), 1000);
-setInterval(()=>y.val = Math.round(Math.random()*100), 2000);
+const a = $$(0);
+const b = $$(0);
+const helloWorld = "Hello World";
+setInterval(()=>a.val = Math.round(Math.random()*100), 1000);
+setInterval(()=>b.val = Math.round(Math.random()*100), 2000);
 
 
 const TemplateComp = UIX.template(<div style="color:red; font-size:2em"/>)
@@ -97,54 +98,33 @@ const CustomComponentWithSlots2 = UIX.template(<div>
 const list = [
 	{
 		name: 'Example 1',
-		url: 'https://unyt.org'
+		url: 'https://unyt.org/1'
 	},
 	{
-		name: 'Example 1',
-		url: 'https://unyt.org'
+		name: 'Example 2',
+		url: 'https://unyt.org/2'
 	},
 	{
-		name: 'Example 1',
-		url: 'https://unyt.org'
+		name: 'Example 3',
+		url: 'https://unyt.org/3'
 	}
 ]
 
-// react
-function ReactListView () {
-	const [index, setIndex] = useState(0);
-	const sculpture = list[index];
-
-	return (<>
-		<button onClick={()=>setIndex(index + 1)}>
-			Next
-		</button>
-		<h2>
-			<i>{sculpture.name} </i> 
-			more: {sculpture.url}
-		</h2>
-		<h3>  
-			({index + 1} of {list.length})
-		</h3>
-	</>);	  
-}
 
 const ListView = UIX.template(()=>{
-	const index = $$(0);
+	const index = $$ (0);
 	const sculpture = index.transform(i => list[i]);
-
-	const x = always `${index} + 1`;
-	console.log(x)
 
 	return (<>
 		<button onclick={()=>index.val++}>
 			Next
 		</button>
 		<h2>
-			<i>{sculpture.name} </i> 
-			more: {sculpture.url}
+			<i>{sculpture.$.name} </i> 
+			more: {sculpture.$.url}
 		</h2>
 		<h3>  
-			({index.transform(i => i+1)} of {list.length})
+			({add(index, 1)} of {list.length})
 		</h3>
 	</>);	  
 })
@@ -198,14 +178,13 @@ export const testComponents = {
 	</Container>,
 
 	datex:
-		<h3>
-			{x} + {y} = 
-			<datex>{x}+{y}</datex>
-			<br/>
-			{always `${x} + ${y}`}
-			<br/>
-			{datex `<html/button> "click me"`}
-		</h3>,
+		<Container>
+			<div>{datex `<html/button> "click me"`}</div>
+			<div>{always `${a} + ${b}`}</div>
+			<div>val = #({a} * 100)</div>
+			{HTML`<div>val2 = #(${a} * 100)</div>`}
+			{HTML`<div id=#('id_${a}')>...</div>`}
+		</Container>,
 
 	// fixme: fragments not working correctly with JSdom and Text nodes
 	fragment1 : <DocumentFragment>
@@ -227,9 +206,9 @@ export const testComponents = {
 		<TemplateCompWithShadowRoot>Hello World Shadow Root</TemplateCompWithShadowRoot>
 		<TemplateCompWithShadowRootTemplate>Hello World Shadow Root 2</TemplateCompWithShadowRootTemplate>
 		<BlankTemplateComp>Hello World Blank</BlankTemplateComp>
-		<TemplateCompWithOptions a={x} b={5}/>
+		<TemplateCompWithOptions a={a} b={5}/>
 		<ClassComponent><span>inner</span></ClassComponent>
-		<ClassComponent2 title={x}>...here</ClassComponent2>
+		<ClassComponent2 title={a}>...here</ClassComponent2>
 
 	</>,
 

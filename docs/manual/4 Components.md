@@ -187,7 +187,7 @@ class MyCustomComponent extends UIX.BaseComponent {
     @UIX.id declare description: HTMLElement
 
     override onCreate() {
-		this.description.innerText = "Some description text..."
+        this.description.innerText = "Some description text..."
     }
 }
 ```

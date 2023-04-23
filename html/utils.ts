@@ -11,7 +11,7 @@ export namespace HTMLUtils {
 
 	export function escapeHtml(str:string) {
 		if (typeof str != "string") return "";
-		return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+		return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replaceAll('"', '&quot;').replaceAll("'", '&#039;').replace('\u0009', '&#9;')//.replace('\n' , "&#13;")
 	}
 
 	/**

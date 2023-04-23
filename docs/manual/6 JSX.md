@@ -9,10 +9,10 @@ All existing DOM Elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>` ...) can be cre
 
 ```tsx
 const section = 
-	<div id="section-1">
-		<h1 style="font-weight:bold">Title</h1>
-		<p>First Paragraph</p>
-	</div> as HTMLDivElement
+    <div id="section-1">
+        <h1 style="font-weight:bold">Title</h1>
+        <p>First Paragraph</p>
+    </div> as HTMLDivElement
 ```
 
 ## Supported attributes
@@ -23,10 +23,10 @@ can accept additional custom attributes defined in the component class or functi
 
 Additionally, there are special attributes for uix-specific functionality:
  * `uix-module`: specify the module path which is used as a reference for relative paths, e.g.:
- 	```tsx
-	<img uix-module={import.meta.url} src="./relative/path/from/current/module/image.png"/>
- 	```
-	This is only required for compatibility with Safari. In other runtime environments (e.g. Deno), the `import.meta.url` is always automatically inferred and does not have to be explicitly set.
+     ```tsx
+    <img uix-module={import.meta.url} src="./relative/path/from/current/module/image.png"/>
+     ```
+    This is only required for compatibility with Safari. In other runtime environments (e.g. Deno), the `import.meta.url` is always automatically inferred and does not have to be explicitly set.
  * `datex-pointer`: boolean (set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. Per default, only class components are automatically bound to a pointer.
 
 
@@ -44,11 +44,11 @@ Some attributes support special values. For example, all event listener attribut
 const btnDisabled = $$(false);
 
 export default
-	<div>
-		<button disabled={btnDisabled}>Button</button>
-		<button onclick={()=>btnDisabled.val=false}>Enable</button>
-		<button onclick={()=>btnDisabled.val=true}>Disable</button>
-	</div>
+    <div>
+        <button disabled={btnDisabled}>Button</button>
+        <button onclick={()=>btnDisabled.val=false}>Enable</button>
+        <button onclick={()=>btnDisabled.val=true}>Disable</button>
+    </div>
 ```
 
 #### Style
@@ -77,15 +77,15 @@ Relative paths in element attributes are always correctly resolved on the backen
 ```tsx
 // backend/entrypoint.ts
 export default {
-	'/img1': <img href="../common/images/1.png"/>, // file is in common directory: can be resolved on the frontend
-	'/img2': <img href="./res/images/2.png"/>, // file is in backend directory: only accessible on the backend, not available on the frontend!
+    '/img1': <img href="../common/images/1.png"/>, // file is in common directory: can be resolved on the frontend
+    '/img2': <img href="./res/images/2.png"/>, // file is in backend directory: only accessible on the backend, not available on the frontend!
 }
 ```
 ```tsx
 // frontend/entrypoint.ts
 export default {
-	'/img3': <img href="../common/images/3.png"/>, // file is in common directory: can be resolved on the frontend
-	'/img4': <img href="./res/images/4.png"/>, // file is in frontend directory: also accessible on the frontend
+    '/img3': <img href="../common/images/3.png"/>, // file is in common directory: can be resolved on the frontend
+    '/img4': <img href="./res/images/4.png"/>, // file is in frontend directory: also accessible on the frontend
 }
 ```
 
@@ -109,18 +109,18 @@ JSX:
 ```tsx
 const count: Datex.Pointer<number> = $$(0);
 const div = 
-	<div>
-		<p>Count: {count}</p>
-	</div> as HTMLDivElement
+    <div>
+        <p>Count: {count}</p>
+    </div> as HTMLDivElement
 ```
 
 HTML:
 ```tsx
 const count: Datex.Pointer<number> = $$(0);
 const div = HTML`
-	<div>
-		<p>Count: ${count}</p>
-	</div>` as HTMLDivElement
+    <div>
+        <p>Count: ${count}</p>
+    </div>` as HTMLDivElement
 ```
 
 ## JSX return types

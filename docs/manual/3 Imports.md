@@ -11,7 +11,7 @@ export const map = new Map<string,string>();
 map.set("a", "Value for A");
 
 export function getData(){
-	return [1,2,3];
+    return [1,2,3];
 }
 ```
 

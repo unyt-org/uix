@@ -405,8 +405,8 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 				<template shadowrootmode=open>
 					<slot id=main></slot>
 					${body_style}
-				</template>
-				${prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')}
+				</template>` +
+(prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')) + `
 			</body>
 		</html>
 	`

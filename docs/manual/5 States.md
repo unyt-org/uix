@@ -15,14 +15,14 @@ Since UIX components are normal DATEX JS template classes, additional DATEX-expo
     @property someMap = new Map<number,Set<number>>()
     @property textView!: UIX.Components.TextView
 
-	onConstruct() {
-	    this.textView = new UIX.Components.TextView({text:'Hi'}); // the this.textView property is restored when the component recreated
-	}
+    onConstruct() {
+        this.textView = new UIX.Components.TextView({text:'Hi'}); // the this.textView property is restored when the component recreated
+    }
 
-	// called always after construction or recreation
-	onInit() {
-		this.logger.info(this.textView); // this.textView exists
-	}
+    // called always after construction or recreation
+    onInit() {
+        this.logger.info(this.textView); // this.textView exists
+    }
 }
 
 ```

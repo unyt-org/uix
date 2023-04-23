@@ -1,6 +1,6 @@
 # Entrypoints
 
-In a UIX app, every UI view is provided via default exports from `entrypoint` files located at the root
+In a UIX app, UI is provided via default exports from the `entrypoint.ts`/`entrypoint.tsx` files located at the root
 of the backend or frontend directories.
 
 There is a variety of values that can be exported from an entrypoint to be displayed in the browser client, including strings, HTML Elements, Blobs and [more](#entrypoint-values).

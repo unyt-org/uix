@@ -3,6 +3,7 @@ import { Path } from "unyt_node/path.ts";
 import { $$, Datex } from "unyt_core";
 import { UIX } from "../uix.ts";
 import { logger } from "../uix_all.ts";
+import { URLMatch } from "../base/context.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
 import { indent } from "../utils/indent.ts";
 
@@ -440,6 +441,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 				// route ends with * -> allow child routes
 				handle_children_separately = potential_route_key.endsWith("*");
 		
+				context.urlMatch = new URLMatch(match);
 				context.match = match;	
 			}
 

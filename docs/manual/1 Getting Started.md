@@ -1,13 +1,5 @@
 # Getting Started with UIX
 
-## 🧩 Architecture of a UIX Project
-Frontend and backend source code and other resources can be put into a single UIX project.
-
-Files in the `frontend` directory of the project are only available to frontend endpoints (browser clients), while files in the `backend` directory are only available to backend endpoints (deno).
-
-However, a key feature of UIX is that backend modules can be imported from frontend modules and vice versa.
-Files in the `common` directory are accessible from the frontend and backend.
-
 ## ✏️ Creating a new UIX Project
 
 ### Option 1: Using the UIX Project Template
@@ -46,7 +38,8 @@ A UIX Project requires at least three files:
 
 
 Per default, frontend code goes into a directory named `frontend`, backend code in a directory named
-`backend`, and common library code into a directory named `common`. These names can be changed in the app configuration file (`app.dx`), and additional directories can be defined.
+`backend`, and common library code into a directory named `common`.<br>
+These names can be changed in the app configuration file (`app.dx`), and additional directories can be defined.
 
 
 ## 🔌 Running a UIX Project
@@ -63,8 +56,18 @@ To run a UIX project, just run `uix` in the project root directory (where the `a
 If you don't want to install `uix`, you can alternatively run `deno run -Aq https://cdn.unyt.org/uix/run.ts`
 
 
+## 🧩 Architecture of a UIX Project
+
+With UIX, frontend and backend source code or other resources can be put into a single project.
+
+Files in the `frontend` directory of the project are only available to frontend endpoints (browser clients), while files in the `backend` directory are only available to backend endpoints (Deno).
+
+However, a key feature of UIX is that backend modules can be imported from frontend modules and vice versa.
+Files in the `common` directory are accessible from the frontend and backend.
+
+
 ## 🏝 UIX as a Frontend Library
-UIX was designed as a full stack framework, but it can also be used as a standalone frontend library.
+UIX was designed as a fullstack framework, but it can also be used as a standalone frontend library.
 
 ### Import Map
 You can directly import the UIX library from the unyt CDN (https://cdn.unyt.org/uix/uix.ts).
@@ -101,9 +104,10 @@ import { UIX } from "uix";
 
 You can of course use a classic build setup and compile your TypeScript files to JavaScript with tsc or other tools.
 
-But we recommend using the unyt standalone file server that returns transpiled JS files when TS files are requested by a browser client.
+For some uses cases, especially during development, it could be helpful to use the unyt standalone file server that automatically serves transpiled JS files when TS files are requested by a browser client.
 
-*This file server is also used for the unyt CDN.*
+We also use this file server for our CDN, because it provides great compatibility with Deno:
+When `.ts` files are requested by a Deno runtime, the server still returns the original source with type information.
 
 The server can be started with:
 

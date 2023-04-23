@@ -1,10 +1,10 @@
 # JSX
 
-UIX supports JSX syntax for creating HTML/SVG Elements and UIX Components.
+UIX supports JSX syntax for creating HTML/SVG elements and UIX components.
 
-## Creating normal DOM Elements
+## Creating native DOM elements
 
-All existing DOM Elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>` ...) can be created with JSX. 
+All native DOM elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>` ...) can be created with JSX. 
 
 
 ```tsx
@@ -17,8 +17,8 @@ const section =
 
 ## Supported attributes
 
-For normal DOM elements, all attributes that are normally supported by the element, can be used.
-Component support the common attributes for DOM element (e.g. `id`, `class`, `style` or event handlers) per default, and 
+For native DOM elements, all attributes that are natively supported by the element can be used.
+Components support the common attributes for DOM element (e.g. `id`, `class`, `style` or event handlers) per default, and 
 can accept additional custom attributes defined in the component class or function.
 
 Additionally, there are special attributes for uix-specific functionality:
@@ -33,7 +33,7 @@ Additionally, there are special attributes for uix-specific functionality:
 ### Special attributes values
 
 
-#### Event Handlers
+#### Event handlers
 Every attribute value can be set to a DATEX pointer.
 When the pointer value changes, the attribute is also updated.
 
@@ -85,12 +85,12 @@ export default {
 // frontend/entrypoint.ts
 export default {
     '/img3': <img href="../common/images/3.png"/>, // file is in common directory: can be resolved on the frontend
-    '/img4': <img href="./res/images/4.png"/>, // file is in frontend directory: also accessible on the frontend
+    '/img4': <img href="./res/images/4.png"/>, // file is in frontend directory: accessible on the frontend
 }
 ```
 
 
-## Creating Components
+## Creating components
 
 Component defined with functions or Component classes can also be created with JSX.
 In addition to the default DOM element attributes, all Component options can also be set
@@ -103,7 +103,7 @@ const comp = <UIX.Components.TextView style="color:green" text="text content"/>
 
 ## Using the `HTML` utility function instead of JSX
 
-If you don't want to use JSX, you can also just use the `HTML` function which provides the exact same functionality as JSX with JavaScript template strings:
+As an alternative to JSX, you can also use the `HTML` function which provides the exact same functionality as JSX with JavaScript template strings.
 
 JSX:
 ```tsx
@@ -123,11 +123,36 @@ const div = HTML`
     </div>` as HTMLDivElement
 ```
 
+In contrast to JSX, the `HTML` function does not require an extra transpiler step and can also be used in plain `.js` files.
+
+### DATEX Injections
+
+Besides JavaScript injections (with `${}`), the `HTML` function also supports reactive DATEX code injections with the `#()` syntax:
+```ts
+const count = $$(0);
+const div = HTML `<div>next count: #(${count} + 1)</div>`
+```
+The expression inside `#()` is always handled as a transform function that results in a new reactive
+pointer avlue.
+
+This is equivalent to a JavaScript `always()` transform function
+```ts
+const div = HTML `<div>next count: ${always(() => count + 1)}</div>`
+```
+or a DATEX `always` command
+```ts
+const div = HTML `<div>next count: ${always `${count} + 1`}</div>`
+```
+
 ## JSX return types
 
 TypeScript currently does not support dynamic return types for JSX declarations.
-This means that all JSX-generated elements must be explicitly cast to the correct class:
+This means that all JSX-generated elements must be explicitly cast to the correct class.
+The same is true for elements created with the `HTML` function.
 
 ```tsx
 const anchor = <a href="/link">Link</a> as HTMLAnchorElement
+```
+```tsx
+const anchor = HTML `<a href="/link">Link</a>` as HTMLAnchorElement
 ```

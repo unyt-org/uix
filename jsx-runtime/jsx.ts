@@ -73,14 +73,18 @@ export function jsx (type: string | any, config: Record<string,any>): Element {
 	}
 
 	if (set_default_attributes) {
+		let module = (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'];
+		// ignore module of is explicitly module===null, otherwise fallback to getCallerFile
+		if (module === undefined) module = getCallerFile();
+		
 		for (let [attr,val] of Object.entries(props)) {
 			if (attr == "style" && (element as HTMLElement).style) UIX.HTMLUtils.setCSS(element as HTMLElement, <any> val);
 			else {
-				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) {
+				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../")) && module !== null) {
 					// TODO: remove 'module'
-					val = new Path(val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile()).toString();
+					val = new Path(val, module).toString();
 				}
-				const valid_attr = UIX.HTMLUtils.setElementAttribute(element, attr, <any>val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile());
+				const valid_attr = UIX.HTMLUtils.setElementAttribute(element, attr, <any>val, module);
 				if (!allow_invalid_attributes && !valid_attr) throw new Error(`Element attribute "${attr}" is not allowed for <${element.tagName.toLowerCase()}>`)
 			}
 		}

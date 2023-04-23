@@ -941,9 +941,10 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         // call onAnchor
         try {await this.onAnchor?.()}
         catch (e) { logger.error("Error calling onAnchor on element: ?", e)}
+        await new Promise((r) => setTimeout(r, 0)); // dom changes
 
+        await new Promise((r) => setTimeout(r, 0)); // dom changes
         if (!IS_HEADLESS) await this.onDisplay?.();
-
         await new Promise((r) => setTimeout(r, 0)); // dom changes
 
         this.#create_lifecycle_ready_resolve?.();

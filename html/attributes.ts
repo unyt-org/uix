@@ -28,7 +28,7 @@ export const defaultElementAttributes = [
 
 // custom attribute values for default attributes (default: string)
 type customDefaultAttributeValues = {
-	"uix-module": string|URL,
+	"uix-module": string|URL|null,
 	"shadow-root": boolean|'open'|'closed',
 	"datex-pointer": boolean
 }

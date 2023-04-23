@@ -170,10 +170,11 @@ export class FrontendManager extends HTMLProvider {
 
 		// handle datex-via-http
 		this.server.path(/^\/@uix\/datex\/.*$/, async (req, path)=>{
-			const dx = decodeURIComponent(path.replace("/@uix/datex/", ""));
-			// TODO: rate limiting
-			console.log("datex-via-http:",dx);
 			try {
+				const dx = decodeURIComponent(path.replace("/@uix/datex/", ""));
+				// TODO: rate limiting
+				console.log("datex-via-http:",dx);
+
 				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:Datex.BROADCAST});
 				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON}));
 			}

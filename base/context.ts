@@ -2,11 +2,29 @@ const { deleteCookie, setCookie, getCookies }  = globalThis.Deno ? await import(
 
 export type RequestData = Request & {address:string}
 
+
+export class URLMatch {
+	constructor(public matches: URLPatternResult) {}
+
+	public get(identifier:string|number):string|null {
+		if (!this.matches) return null;
+		for (const group of Object.values(this.matches)) {
+			if (group.groups?.[identifier] != undefined) return group.groups[identifier];
+		}
+		return null;
+	}
+}
+
+const emptyMatch = new URLMatch({} as URLPatternResult);
+
+
 export class Context {
 	request?: RequestData
 	path!: string
 	match?: URLPatternResult
-	language = "en";}
+	urlMatch: URLMatch = emptyMatch;
+	language = "en";
+}
 
 export class ContextBuilder {
 

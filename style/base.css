@@ -31,7 +31,7 @@ div:focus {
 
 h1, h2, h3, h4, h5, h6 {
     color: var(--current_text_color_highlight);
-    font-family: "Roboto", sans-serif;
+    font-family: Helvetica, "Roboto", sans-serif;
     line-height: 1.2em;
     margin: 10px 0px;
 }

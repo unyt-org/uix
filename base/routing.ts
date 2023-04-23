@@ -73,12 +73,22 @@ export namespace Routing {
 		current_entrypoint = entrypoint;
 		if (current_content !== content) {
 			current_content = content;
-			document.body.innerHTML = "";
 			// console.log("-->",content)
 			// TODO:
-			if (content instanceof Array) HTMLUtils.append(document.body, ...content) // add to document
-			else if (content instanceof Element || content instanceof DocumentFragment) HTMLUtils.append(document.body, content) // add to document
-			else logger.error("invalid content, cannot handle yet", content)
+			if (content == null) return;
+			if (content instanceof Array) {
+				document.body.innerHTML = "";
+				HTMLUtils.append(document.body, ...content) // add to document
+			}
+			else { //if (content instanceof Element || content instanceof DocumentFragment) {
+				document.body.innerHTML = "";
+				// TODO: handle all content correctly (same behaviour as on backend)
+				HTMLUtils.append(document.body, content) // add to document
+			}
+			// else {
+			// 	logger.error("invalid content, cannot handle yet", content)
+			// 	return;
+			// }
 		}
 	
 		await update(getCurrentRouteFromURL(), false)

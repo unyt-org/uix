@@ -2,8 +2,10 @@
 
 ## Component states
 
-The `options` and the `constraints` property are part of the component state by default and are exposed to DATEX.
-Every change to the `options` or `constraints`, or any of their child properties is synced over DATEX and can be restored.
+All HTML attributes, children, and the `options` property are DATEX compatible and part of the component state by default.
+
+Every change to those values or can be synced over DATEX.
+The saved component state can also be stored (e.g. in the DATEX Pointer storage) and restored completely at any time (e.g. after a page reload).
 
 Since UIX components are normal DATEX JS template classes, additional DATEX-exposed properties can be declared using the `@property` decorator:
 
@@ -16,7 +18,7 @@ Since UIX components are normal DATEX JS template classes, additional DATEX-expo
     @property textView!: UIX.Components.TextView
 
     onConstruct() {
-        this.textView = new UIX.Components.TextView({text:'Hi'}); // the this.textView property is restored when the component recreated
+        this.textView = new UIX.Components.TextView({text:'Hi'}); // the this.textView property is restored when the component is recreated
     }
 
     // called always after construction or recreation
@@ -31,11 +33,12 @@ Since UIX components are normal DATEX JS template classes, additional DATEX-expo
 
 Persistent values can also be created outside of components with the `eternal` label:
 ```typescript
-const counter = eternal ?? $$(0);
-counter.val ++; // counter gets incremented every time the page is reloaded
+const counter = eternal ?? $$(0); // counter value gets restored from the previous state or initialized
+                                  // if no previous state exists
+counter.val ++; // counter gets incremented every time
 ```
 
-The saved UIX page state can also be created/restored by using `eternal` DATEX Values (use `lazyEternal` to make sure the type definitions are loaded):
+The complete UIX page state can also be created/restored as an `eternal` DATEX value (use `lazyEternal` to make sure the type definitions are loaded):
 
 ```typescript
 export default await lazyEternal ?? $$(<div>Content</div>)

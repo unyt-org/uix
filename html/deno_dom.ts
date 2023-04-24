@@ -20,6 +20,7 @@ if (IS_HEADLESS) {
 	globalThis.HTMLTemplateElement = window.HTMLTemplateElement;
 	globalThis.MathMLElement = window.MathMLElement;
 	globalThis.HTMLLinkElement = window.HTMLLinkElement;
+	globalThis.HTMLInputElement = window.HTMLInputElement;
 	globalThis.Element = window.Element;
 	globalThis.DocumentFragment = window.DocumentFragment;
 	globalThis.customElements = window.customElements;

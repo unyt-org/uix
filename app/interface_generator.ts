@@ -88,7 +88,10 @@ function getValueTSCode(module_name:string, name:string, value: any, no_pointer 
 		}
 
 		value = $$(value);
-		value[BACKEND_EXPORT] = true;
+		try {
+			value[BACKEND_EXPORT] = true;
+		}
+		catch {}
 	}
 
 	// disable garbage collection

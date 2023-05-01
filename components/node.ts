@@ -7,7 +7,7 @@ import { Theme } from "../base/theme.ts";
 import { HTMLUtils } from "../html/utils.ts";
 import { Elements } from "../elements/main.ts";
 import { Types } from "../utils/global_types.ts";
-import { pointer, props, text, transform } from "unyt_core/datex_short.ts";
+import { always, pointer, props, text, transform } from "unyt_core/datex_short.ts";
 import { DragGroup } from "./drag_group.ts";
 import { constructor, Datex, property, sync } from "unyt_core";
 import { NodeGroup } from "./node_group.ts";
@@ -39,7 +39,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                 text: S('copy'),
                 icon: I('fas-copy'),
                 shortcut: 'copy',
-                handler: async ()=>{
+                handler: ()=>{
                     Clipboard.putDatexValue(this);
                     // let els = this.parent instanceof DragGroup ? this.parent.getSelectedElements() : [this];
                     // for (let el of els) {
@@ -57,7 +57,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                 }
             },
             toggle: {
-                text: transform([this.options_props.expanded], (v) => v ? S('collapse') : S('expand')) ,
+                text: always(()=>this.options.$.expanded.val ? S('collapse') : S('expand')),
                 shortcut: 'enter',
                 handler: ()=>{
                     if (this.parent instanceof NodeGroup) this.parent.toggleCollapseSelectedElements();
@@ -69,8 +69,8 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
     protected override onRemove() {
         // remove connections
-        for (let connector of this.connectors) {
-            for (let connection of NodeGroup.connections_by_connector.get(connector)??[]) {
+        for (const connector of this.connectors) {
+            for (const connection of NodeGroup.connections_by_connector.get(connector)??[]) {
                 NodeGroup.deleteConnection(connection);
             }
         }
@@ -118,7 +118,9 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         
         // add title
         if (this.options.title) {
+            const prev = this.collapsed_title_div;
             this.collapsed_title_div = this.generateCollapsedTitleContent();
+            if (prev) prev.replaceWith(this.collapsed_title_div);
             // update collapsed title?
             if (this.collapsed_title_div && !this.options.expanded) {
                 this.title_div.replaceWith(this.collapsed_title_div);
@@ -146,6 +148,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
             this.constraints.y += this.height/2
         }
 
+        this.collapsed_title_div = this.generateCollapsedTitleContent();
         // try to load the collapsed title div
         if (this.collapsed_title_div) {
             this.title_div.replaceWith(this.collapsed_title_div);
@@ -334,9 +337,9 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
     }
 
     // remove item = dom element + connectors (+ connections)
-    public removeItem(element:HTMLElement) 
-    public removeItem(index:number) 
-    public removeItem(label:string) 
+    public removeItem(element:HTMLElement): void
+    public removeItem(index:number): void
+    public removeItem(label:string): void
     public removeItem(identifier:string|number|HTMLElement) {
         let item:Node.item_data;
 
@@ -375,8 +378,8 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         }
 
         // remove connections + connectors
-        for (let connector of item.connectors) {
-            for (let connection of NodeGroup.connections_by_connector.get(connector)??[]) {
+        for (const connector of item.connectors) {
+            for (const connection of NodeGroup.connections_by_connector.get(connector)??[]) {
                 NodeGroup.deleteConnection(connection);
             }
             Node.connector_dom_elements.get(connector).remove();
@@ -391,9 +394,9 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
     // add item dom + save item data in items array, initialize connectors
     addItem(item_data:Node.item_data, focus = false, save = true) {
-        item_data = pointer(item_data);
+        item_data = $$(item_data);
 
-        const generated_content = this.generateItemContent(item_data, props(item_data).value, focus);
+        const generated_content = this.generateItemContent(item_data, item_data.$.value, focus);
         let content_element:HTMLElement;
         let options: {wrap:boolean} = {wrap: true};
 
@@ -496,13 +499,14 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
     }
 
     getCollapseToggleButton(){
-        const chevron = text();
+        const chevron = text("x");
         this.collapse_toggle = new Elements.ToggleButton({
             content: chevron, 
-            checked: <Datex.Value<boolean>> this.options_props.expanded,
+            checked: <Datex.Value<boolean>> this.options.$.expanded,
             onChange: checked => {
-                chevron.value = checked ? I('fas-chevron-down') : I('fas-chevron-right');
-                this.toggleCollapse();
+                chevron.val = checked ? I('fas-chevron-down') : I('fas-chevron-right');
+                if (this.options.expanded) this.expand(true);
+                else this.collapse(true);
             }
         }).css({
             'background':'none',
@@ -541,14 +545,14 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
         const items = {};
         let index = 0;
-        for (let item of this.options.items) {
+        for (const item of this.options.items??[]) {
             let item_data: {node:Node, connection:NodeConnection}[];
 
             own_connectors:
-            for (let connector of item.connectors) {
+            for (const connector of item.connectors) {
                 // does own connector match options?
                 if (own_options) {
-                    for (let [key, value] of Object.entries(own_options)) {
+                    for (const [key, value] of Object.entries(own_options)) {
                         if (value instanceof Array && !value.includes(connector.options?.[key])) continue own_connectors;
                         if (!(value instanceof Array) && value !== connector.options?.[key]) continue own_connectors;
                     }
@@ -556,11 +560,11 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
                 // go through all connections for this connector
                 other_connectors:
-                for (let connection of NodeGroup.connections_by_connector.get(connector) || []) {
+                for (const connection of NodeGroup.connections_by_connector.get(connector) || []) {
                     const other_connector = connection.c1 == connector ? connection.c2 : connection.c1;
                     // does other_connector match options?
                     if (other_options) {
-                        for (let [key, value] of Object.entries(other_options)) {
+                        for (const [key, value] of Object.entries(other_options)) {
                             if (value instanceof Array && !value.includes(other_connector.options?.[key])) continue other_connectors;
                             if (!(value instanceof Array) && value !== other_connector.options?.[key]) continue other_connectors;
                         }
@@ -658,20 +662,20 @@ export namespace Node {
 
 @sync("uix:NodeConnector") export class NodeConnector<OPTIONS extends object = any> {
     
-    @property declare position: CONNECTOR_POSITION;
-    @property declare align: CONNECTOR_ALIGN;
+    @property declare position: Node.CONNECTOR_POSITION;
+    @property declare align: Node.CONNECTOR_ALIGN;
     @property declare options: OPTIONS;
 
     active?: boolean;
     translate?: number;
 
     constructor(
-        position?: CONNECTOR_POSITION,
-        align?: CONNECTOR_ALIGN,
+        position?: Node.CONNECTOR_POSITION,
+        align?: Node.CONNECTOR_ALIGN,
         options?: OPTIONS
     ){}
     
-    @constructor construct(position:CONNECTOR_POSITION, align: CONNECTOR_ALIGN, options:OPTIONS) {
+    @constructor construct(position:Node.CONNECTOR_POSITION, align: Node.CONNECTOR_ALIGN, options:OPTIONS) {
         this.position = position;
         this.align = align;
         this.options = options;
@@ -725,7 +729,7 @@ export namespace Node {
     y_start:number
     y_end:number
 
-    get start_facing(){return this.getFacing(this.c1?.position ?? this.temp_c1?.position ?? CONNECTOR_POSITION.RIGHT)}
+    get start_facing(){return this.getFacing(this.c1?.position ?? this.temp_c1?.position ?? Node.CONNECTOR_POSITION.RIGHT)}
     // c2 facing or temp c2 facing opposite c1 facing
     get end_facing(){return this.c2?.position==undefined ? 
         (this.temp_c2?.position==undefined ? {x:-this.start_facing.x, y:-this.start_facing.y} : this.getFacing(this.temp_c2.position)) :
@@ -736,12 +740,12 @@ export namespace Node {
     get delta_y(){return this.y_end - this.y_start}
 
     // get {x,y} from CONNECTOR_POSITION
-    private getFacing(position: CONNECTOR_POSITION): {x:number, y:number} {
+    private getFacing(position: Node.CONNECTOR_POSITION): {x:number, y:number} {
         switch (position) {
-            case CONNECTOR_POSITION.RIGHT: return {x:1, y:0};
-            case CONNECTOR_POSITION.LEFT: return {x:-1, y:0};
-            case CONNECTOR_POSITION.TOP: return {x:0, y:-1};
-            case CONNECTOR_POSITION.BOTTOM: return {x:0, y:1};
+            case Node.CONNECTOR_POSITION.RIGHT: return {x:1, y:0};
+            case Node.CONNECTOR_POSITION.LEFT: return {x:-1, y:0};
+            case Node.CONNECTOR_POSITION.TOP: return {x:0, y:-1};
+            case Node.CONNECTOR_POSITION.BOTTOM: return {x:0, y:1};
             default: return {x:1, y:0};
         }
     }
@@ -1199,10 +1203,10 @@ export namespace NodeConnection {
         group[Datex.DX_IGNORE] = true;
 
         // add temporarily to dom to get bounding box size
-        let tempDiv = document.createElement('div')
+        const tempDiv = document.createElement('div')
         tempDiv.setAttribute('style', "position:absolute; visibility:hidden; width:0; height:0")
         document.body.appendChild(tempDiv)
-        let tempSvg = document.createElementNS("http://www.w3.org/2000/svg", 'svg')
+        const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", 'svg')
         tempDiv.appendChild(tempSvg)
         tempSvg.appendChild(group)
         group_boxes.set(group, group.getBBox())

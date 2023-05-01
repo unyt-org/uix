@@ -268,7 +268,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
 
     private updateSelectBoxSelection(x:number, y:number, w:number, h:number){
         for (let el of this.elements) {
-            if (this.hasCollisionWithDiv(el, x, y, w, h)) this.selectElement(el);
+            if (this.hasCollisionWithElementBox(el, x, y, w, h)) this.selectElement(el);
             else this.deselectElement(el);
         }
     }
@@ -312,13 +312,22 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
 
         if (this.options.movable) {
 
-            const handle_move = e => {
+            const handle_move = (e:Event) => {
                 if (!moving) return;
+
+                if (e.touches?.length > 1) {
+                    // TODO
+                    console.log("zoom touch")
+                    return;
+                }
+
+                const clientX = e.clientX ?? e.touches?.[0].clientX;
+                const clientY = e.clientY ?? e.touches?.[0].clientY;
                 
                 // change select box size
                 if (moving_select_box) {
-                    const w = (e.clientX-select_box_start_client_x)/this.options._zoom;
-                    const h = (e.clientY-select_box_start_client_y)/this.options._zoom;
+                    const w = (clientX-select_box_start_client_x)/this.options._zoom;
+                    const h = (clientY-select_box_start_client_y)/this.options._zoom;
                     // move into negative
                     if (w < 0) this.select_box.style.left = (select_box_start_x+w) + "px";
                     if (h < 0) this.select_box.style.top = (select_box_start_y+h) + "px";
@@ -327,20 +336,20 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                     this.select_box.style.height = Math.abs(h) + "px"
 
                     // update selection when a certain distance is reached
-                    d = (last_x-e.clientX)**2 + (last_y-e.clientY)**2;
+                    d = (last_x-clientX)**2 + (last_y-clientY)**2;
                     if (d > 40) {
                         this.updateSelectBoxSelection(w < 0 ? select_box_start_x+w : select_box_start_x , h < 0 ? select_box_start_y+h : select_box_start_y, Math.abs(w), Math.abs(h));
-                        last_x = e.clientX;
-                        last_y = e.clientY;
+                        last_x = clientX;
+                        last_y = clientY;
                     }
                 }
 
                 // move complete container
                 else {
-                    let d_x = e.clientX - last_mouse_x;
-                    let d_y = e.clientY - last_mouse_y;
-                    last_mouse_x = e.clientX;
-                    last_mouse_y = e.clientY;
+                    const d_x = clientX - last_mouse_x;
+                    const d_y = clientY - last_mouse_y;
+                    last_mouse_x = clientX;
+                    last_mouse_y = clientY;
 
                     this.options._translate_x += d_x;
                     this.options._translate_y += d_y;
@@ -350,6 +359,20 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                 e.stopImmediatePropagation();
                 e.stopPropagation();
             }
+
+     
+
+            this.content_container.addEventListener("touchstart", e => {
+                moving = true;
+                last_mouse_x = e.touches[0].clientX;
+                last_mouse_y = e.touches[0].clientY;
+        
+                window.addEventListener("touchmove", handle_move, true);
+
+                this.onContainerClicked()
+
+                e.stopImmediatePropagation();
+            })
 
             this.content_container.addEventListener("mousedown", e => {
                 if (e.button == 2) {
@@ -390,6 +413,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                 e.stopImmediatePropagation();
             })
 
+            // mouse move cleanup
             window.addEventListener("mouseup", e => {
                 if (moving) {
                     window.removeEventListener("mousemove", handle_move, true)
@@ -400,6 +424,18 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                     e.stopPropagation();
                 }
               
+            })
+
+            // touch move cleanup
+            window.addEventListener("touchend", e => {
+                if (moving) {
+                    window.removeEventListener("touchmove", handle_move, true)
+                    this.content_container.style.cursor = "default";
+                    moving = false;
+                    moving_select_box = false;
+                    this.select_box.style.display = "none";
+                    e.stopPropagation();
+                }
             })
 
         }
@@ -447,46 +483,71 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
     }
 
 
-     // returns the element if a collision exists
-     public getContainedElements(element:ChildElement):Set<ChildElement> {
+    // returns the element if a collision exists
+    public getContainedElements(parent:ChildElement):Set<ChildElement> {
         const els = new Set<ChildElement>();
-        const x = element.constraints.x,
-            y = element.constraints.y,
-            w = this.getChildWidth(element),
-            h = this.getChildHeight(element);
 
-        for (let el of this.elements) {
-            if (el !== element && this.hasCollisionWithDiv(el, x, y, w, h)) els.add(el);
+        for (const el of this.elements) {
+            if (el !== parent && this.isIncludedInElementBox(parent, el)) els.add(el);
+        }
+        return els;
+    }
+
+    // returns the element if a collision exists
+    public getParentElements(element:ChildElement):ChildElement[] {
+        const els:ChildElement[] = [];
+        for (const potentialParent of this.elements) {
+            if (potentialParent !== element && this.isIncludedInElementBox(potentialParent, element)) els.push(potentialParent);
         }
         return els;
     }
 
     // child element collision detection
     public hasElementCollision(element: ChildElement) {
-        return this.hasCollision(element.constraints.x, element.constraints.y, this.getChildWidth(element), this.getChildHeight(element), element)
+        return this.hasCollision(element.constraints.x??-1, element.constraints.y??-1, this.getChildWidth(element), this.getChildHeight(element), element)
     }
 
     // returns the element if a collision exists
-    public hasCollision(x:number, y:number, w?:number, h?:number, exclude_element?:ChildElement):ChildElement {
-        for (let el of this.elements) {
-            if (el !== exclude_element && this.hasCollisionWithDiv(el, x, y, w, h)) {
+    public hasCollision(x:number, y:number, w?:number, h?:number, exclude_element?:ChildElement):ChildElement|undefined {
+        for (const el of this.elements) {
+            if (el !== exclude_element && this.hasCollisionWithElementBox(el, x, y, w, h)) {
                 return el;
             }
         }
     }
 
-    public hasCollisionWithDiv(el:ChildElement, x:number, y:number, w?:number, h?:number):boolean {
-        // only point collision
-        let x2 = el.constraints.x,
-            y2 = el.constraints.y,
+    public hasCollisionWithElementBox(el:ChildElement, x:number, y:number, w?:number, h?:number):boolean {
+        const x2 = el.constraints.x ?? -1,
+            y2 = el.constraints.y ?? -1,
             w2 = this.getChildWidth(el),
             h2 = this.getChildHeight(el);
 
-        if (w == null && h == null) return (x>x2 && y>y2 && x<x2+w2 && y<y2+h2)
-        else return (x<x2+w2 && x+w > x2 && y<y2+h2 && y+h>y2)
+        // point collision
+        if (w == null || h == null) return (x>x2 && y>y2 && x<x2+w2 && y<y2+h2)
+        // box collision
+        else return (x<x2+w2 && x+w>x2 && y<y2+h2 && y+h>y2)
     }
 
+    public isIncludedInElementBox(outer:ChildElement, test:ChildElement):boolean
+    public isIncludedInElementBox(outer:ChildElement, x:number, y:number, w?:number, h?:number):boolean
+    public isIncludedInElementBox(outer:ChildElement, x:number|ChildElement, y?:number, w?:number, h?:number):boolean {
+        if (typeof x != "number") {
+            const el = x;
+            x = el.constraints.x ?? -1,
+            y = el.constraints.y ?? -1,
+            w = this.getChildWidth(el),
+            h = this.getChildHeight(el);
+        }
+        const x2 = outer.constraints.x ?? -1,
+            y2 = outer.constraints.y ?? -1,
+            w2 = this.getChildWidth(outer),
+            h2 = this.getChildHeight(outer);
 
+        // point included
+        if (w == null || h == null) return (x>x2 && y>y2 && x<x2+w2 && y<y2+h2)
+        // box included
+        else return (x+w<x2+w2 && x>x2 && y+h<y2+h2 && y>y2)
+    }
 
     public putInFront(element:ChildElement){
         //for (let el of this.elements) el.style.zIndex = "0";
@@ -609,7 +670,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
 
         let i = 0;
         let row = 0;
-        while (collision_el = this.hasElementCollision(element)) {
+        while ((collision_el = this.hasElementCollision(element))) {
             if (row > 1) {
                 element.constraints.y = collision_el.constraints.y+this.getChildHeight(collision_el) + 10;
                 element.constraints.x = 10;
@@ -633,8 +694,11 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
         let last_mouse_x:number, last_mouse_y:number;
         let moving = false;
 
-        element.addEventListener("mousedown", e => {
+        const handleMouseDown = (e:Event) => {
             if (e.button == 2) return; // contextmenu mousedown
+
+            const clientX = e.clientX ?? e.touches?.[0].clientX;
+            const clientY = e.clientY ?? e.touches?.[0].clientY;
 
             if (element.constraints.draggable == false) {
                 element.style.cursor = ''
@@ -646,31 +710,45 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
             this.putInFront(element);
 
             moving = true;
-            last_mouse_x = e.clientX;
-            last_mouse_y = e.clientY;
+            last_mouse_x = clientX;
+            last_mouse_y = clientY;
 
-            let handle_move = e => {
+            const handle_move = (e:Event) => {
                 if (!moving) return;
-                
-                let d_x = e.clientX - last_mouse_x;
-                let d_y = e.clientY - last_mouse_y;
-                last_mouse_x = e.clientX;
-                last_mouse_y = e.clientY;
+
+                const clientX = e.clientX ?? e.touches?.[0].clientX;
+                const clientY = e.clientY ?? e.touches?.[0].clientY;
+
+                const d_x = clientX - last_mouse_x;
+                const d_y = clientY - last_mouse_y;
+                last_mouse_x = clientX;
+                last_mouse_y = clientY;
 
                 this.moveSelectedNodes((d_x/this.options._zoom)??0, (d_y/this.options._zoom)??0)
 
                 e.stopPropagation();
             }
 
+            window.addEventListener("touchmove", handle_move);
             window.addEventListener("mousemove", handle_move);
+
             window.addEventListener("mouseup", (e)=>{
                 window.removeEventListener("mousemove", handle_move);
+                window.removeEventListener("touchmove", handle_move);
+                element.style.cursor = 'grab'
+            });
+            window.addEventListener("touchend", (e)=>{
+                window.removeEventListener("mousemove", handle_move);
+                window.removeEventListener("touchmove", handle_move);
                 element.style.cursor = 'grab'
             });
 
             e.stopPropagation();
-        })
-    
+        }
+
+        element.addEventListener("mousedown", handleMouseDown)
+        element.addEventListener("touchstart", handleMouseDown)
+
     }
 
     // implement -> called when element size or position changed

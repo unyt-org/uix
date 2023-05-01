@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-namespace
 import { Datex } from "unyt_core";
 import { Components } from "../components/main.ts";
 import { Resource } from "../utils/resources.ts";
@@ -316,25 +317,27 @@ export namespace Handlers {
 	}
 	
 	// Shortcuts
-	export function handleShortcut(element:HTMLElement|Window, shortcut_name:string, handler:(x:number,y:number)=>void) {
+	export function handleShortcut(element:HTMLElement|Window, shortcut_name:string, handler:(x:number,y:number)=>void, exactTarget = false) {
 
 		if (!handler || !element ) return;
 
-		let shortcut_keys = Res.getShortcut(shortcut_name)?.split("+");
+		const shortcut_keys = Res.getShortcut(shortcut_name)?.split("+");
 
 		if (!shortcut_keys) {
 			logger.error("shortcut " + shortcut_name + " not found");
 			return;
 		}
 
-		let alt = shortcut_keys.includes("alt");
-		let cmd = shortcut_keys.includes("cmd");
-		let ctrl = shortcut_keys.includes("ctrl");
-		let shift = shortcut_keys.includes("shift");
-		let key = shortcut_keys[shortcut_keys.length-1];
+		const alt = shortcut_keys.includes("alt");
+		const cmd = shortcut_keys.includes("cmd");
+		const ctrl = shortcut_keys.includes("ctrl");
+		const shift = shortcut_keys.includes("shift");
+		const key = shortcut_keys[shortcut_keys.length-1];
 
 		let down = false;
 		element.addEventListener("keydown", (e:KeyboardEvent) => {
+			if (exactTarget && element !== e.target) return;
+
 			if (e.key?.toLowerCase() === key && (cmd === e.metaKey) && (ctrl === e.ctrlKey) && (shift === e.shiftKey) && (alt === e.altKey)) {
 				if (!down) handler(global_states.mouse_x,global_states.mouse_y);
 				down = true;
@@ -418,7 +421,7 @@ export namespace Handlers {
 		// enable key shortcuts on load (even if context menu not opened)
 		for (let item of Object.values(items)) {                
 			// add key shortcut
-			if (item !== "space" && item.shortcut) Handlers.handleShortcut(element, item.shortcut, item.handler);
+			if (item !== "space" && item.shortcut) Handlers.handleShortcut(element, item.shortcut, item.handler, true);
 		}
 
 		const menu_position = {x:0, y:0};

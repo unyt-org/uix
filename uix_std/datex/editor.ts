@@ -12,6 +12,7 @@ export namespace DatexEditor {
 		local_interface?: boolean // use local interface
 		expand_header?: boolean // expand header per default
         advanced_view?: boolean // display advanced DATEX settings
+        simple_view?: boolean // only editor, not runnable, not header
 		content?: string
 	}
 }
@@ -35,6 +36,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
     public log_buffer = new LogBuffer();
 
     protected override createContextMenu() {
+        if (this.options.simple_view) return {};
         return {
             run: {
                 text: S('run'),
@@ -84,7 +86,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
     public override async onCreate() {
 
-        await this.createHeader();
+        if (!this.options.simple_view) await this.createHeader();
 
         if (this.options.local_interface) {
             await Datex.InterfaceManager.enableLocalInterface();
@@ -374,7 +376,9 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
         if (!this.monaco) {
             this.monaco = await MonacoHandler.createTab(this.code_el, null, true);
-            this.monaco.loadText(this.options.content, "datex");
+            const options = {mouseWheelZoom:false};
+            if (this.options.simple_view) options.lineNumbers = "off"
+            this.monaco.loadText(this.options.content, "datex", options);
 
             // save when DATEX Script code changed
             this.monaco.addChangeListener(()=>{

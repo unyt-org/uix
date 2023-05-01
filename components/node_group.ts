@@ -23,7 +23,7 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
     override onContainerClicked() {
         if (this.moving_connection) {
             NodeGroup.deleteConnection(this.moving_connection);
-            this.content.removeEventListener("mousemove", this.moving_connection_listener)
+            globalThis.window.removeEventListener("mousemove", this.moving_connection_listener)
             this.moving_connection = null;
         }
     }
@@ -42,15 +42,15 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
     protected override onAnchor() {
         super.onAnchor();
         // update connection rendering
-        for (let connection of this.connections) {
+        for (const connection of this.connections) {
             NodeGroup.node_groups_by_connection.set(connection, this); // save reference to this group
         }
     }
 
     public override onChildConstraintsChanged(element:Base) {
         if (element instanceof Node) {
-            for (let connector of (<Node>element).connectors) {
-                for (let connection of NodeGroup.connections_by_connector.get(connector)||[]) {
+            for (const connector of (<Node>element).connectors) {
+                for (const connection of NodeGroup.connections_by_connector.get(connector)||[]) {
                     this.updateConnection(connection);
                 }
             }
@@ -115,11 +115,11 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
             // set connector active
             node.setConnectorActive(connector)
 
-            console.log("Connection: ", this.moving_connection.c1, " => ", this.moving_connection.c2)
+            // console.log("Connection: ", this.moving_connection.c1, " => ", this.moving_connection.c2)
 
             // reset
             this.moving_connection = null;
-            this.content.removeEventListener("mousemove", this.moving_connection_listener)
+            globalThis.window.removeEventListener("mousemove", this.moving_connection_listener)
 
         }
         
@@ -162,7 +162,7 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
     protected static nodes_for_connectors = new Map<NodeConnector, Node>();
 
     protected moving_connection:NodeConnection = null;
-    private moving_connection_listener:(e)=>void = null;
+    private moving_connection_listener?:(e:any)=>void = null;
 
 
     public setMovingConnection(connection: NodeConnection) {
@@ -172,7 +172,7 @@ export class NodeGroup<O extends NodeGroup.Options=NodeGroup.Options, ChildEleme
         this.moving_connection_listener = e=>{
             this.updateConnection(this.moving_connection, e);
         };
-        this.content.addEventListener("mousemove", this.moving_connection_listener)
+        globalThis.window.addEventListener("mousemove", this.moving_connection_listener)
     }
 
     public createConnection(out_connector?:NodeConnector, in_connector?:NodeConnector, out_end?:string, in_end?:string, options?:NodeConnection.Options){

@@ -4,6 +4,7 @@ import { Path } from "unyt_node/path.ts";
 import { Logger } from "unyt_core/datex_all.ts";
 import { resolveEntrypointRoute, Entrypoint, html_content_or_generator, provideError, RenderMethod, refetchRoute } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
+import { Datex } from "unyt_core/datex.ts";
 
 /**
  * Generalized implementation for setting the route in the current tab URL
@@ -80,10 +81,14 @@ export namespace Routing {
 				document.body.innerHTML = "";
 				HTMLUtils.append(document.body, ...content) // add to document
 			}
-			else { //if (content instanceof Element || content instanceof DocumentFragment) {
+			// TODO: currently only displayed if type not correctly mapped (TypedValue fallback)
+			else if (!(content instanceof Datex.TypedValue)) { //if (content instanceof Element || content instanceof DocumentFragment) {
 				document.body.innerHTML = "";
 				// TODO: handle all content correctly (same behaviour as on backend)
 				HTMLUtils.append(document.body, content) // add to document
+			}
+			else {
+				logger.warn("Invalid entrypoint value (matching JS definition is not available for type "+Datex.Type.ofValue(content)+")", content);
 			}
 			// else {
 			// 	logger.error("invalid content, cannot handle yet", content)

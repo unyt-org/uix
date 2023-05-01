@@ -10,7 +10,7 @@ import { HTMLUtils } from "../html/utils.ts"
 import { Utils } from "../base/utils.ts"
 import { Actions } from "../base/actions.ts"
 import { Handlers } from "../base/handlers.ts"
-import { Class, Logger, METADATA, ValueError } from "unyt_core/datex_all.ts"
+import { Class, DX_IGNORE, Logger, METADATA, ValueError } from "unyt_core/datex_all.ts"
 import { I, S } from "../uix_short.ts"
 import { DEFAULT_BORDER_SIZE, IS_HEADLESS } from "../utils/constants.ts"
 import { Clipboard } from "../base/clipboard.ts"
@@ -167,7 +167,11 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected openGraphImageGenerator?: OpenGraphPreviewImageGenerator; // set the custom preview image generator for open graph cards
 
     get shadow_root() {
-        return this.shadowRoot ?? this.attachShadow({mode: 'open'})
+        if (!this.shadowRoot) {
+            this.attachShadow({mode: 'open'});
+            (<any>this.shadowRoot)![DX_IGNORE] = true;
+        }
+        return this.shadowRoot!;
     }
 
     content_container:HTMLElement; // inner container for element specific and custom content

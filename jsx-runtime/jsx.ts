@@ -15,11 +15,17 @@ export function escapeString(string:string) {
 	return {[JSX_INSERT_STRING]:true, val:string};
 }
 
-export function jsx (type: string | any, config: Record<string,any>): Element {
+export function jsx (type: string | any, config: Record<string,any>): Element|DocumentFragment {
 
 	let element:Element;
-	if (!(config.children instanceof Array)) config.children = [config.children];
+	if (config.children && !(config.children instanceof Array)) config.children = [config.children];
 	let { children = [], ...props } = config
+
+	// _debug property to debug jsx
+	if (props._debug) {
+		delete props._debug;
+		console.log(type,children,props,config)
+	}
 
 	for (let i=0; i<children.length; i++) {
 		const child = children[i];
@@ -205,7 +211,7 @@ declare global {
 
 		// Common attributes of the standard HTML elements and JSX components
 		type IntrinsicAttributes = {
-			style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number>>>,
+			style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number|undefined>>>,
 		} & htmlAttrs<validHTMLElementAttrs>
 
 		// Common attributes of the UIX components only

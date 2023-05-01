@@ -233,7 +233,7 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
 
     
             // format code  
-            let current_lang; // current inline lang
+            let current_lang:string|undefined; // current inline lang
             container.querySelectorAll("code").forEach(async c=>{
                 let text = c.innerText;+
                 console.log("md",text,c)
@@ -250,8 +250,8 @@ export class MarkdownViewer extends UIX.Components.Base<MarkdownViewer.Options> 
                 }
                 if (current_lang) {
                     c.innerHTML = this.formatCode(await MonacoHandler.colorize(text, current_lang));
-                    c.setAttribute("lang", current_lang)
-                }          
+                    c.setAttribute("lang", current_lang == "rust" ? "datex" : current_lang)
+                }    
             })
 
 

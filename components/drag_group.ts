@@ -290,11 +290,11 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
 
         if (this.options.zoomable) {
             this.content_container.addEventListener('wheel', (e:WheelEvent) => {    
-                let bounds = this.content_container.getBoundingClientRect()
-                let x = (e.clientX - bounds.x)
-                let y = (e.clientY - bounds.y)
+                const bounds = this.content_container.getBoundingClientRect()
+                const x = (e.clientX - bounds.x)
+                const y = (e.clientY - bounds.y)
     
-                let xs = (x - this.options._translate_x) / this.options._zoom,
+                const xs = (x - this.options._translate_x) / this.options._zoom,
                     ys = (y - this.options._translate_y) / this.options._zoom,
                     delta = -e.deltaY;
             
@@ -311,19 +311,67 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
         }
 
         if (this.options.movable) {
+            let span:null|number = null;
+            const SCALE_CHANGE = 1.02;
+
+            let twoFingers = false;
+            let twoFingersRelX:number|undefined
+            let twoFingersRelY:number|undefined
 
             const handle_move = (e:Event) => {
                 if (!moving) return;
 
+                let clientX = e.clientX ?? e.touches?.[0].clientX;
+                let clientY = e.clientY ?? e.touches?.[0].clientY;
+                
+                // two fingers
                 if (e.touches?.length > 1) {
-                    // TODO
-                    console.log("zoom touch")
-                    return;
+
+                    const bounds = this.content_container.getBoundingClientRect()
+
+                    clientX = (e.touches[0].clientX+e.touches[1].clientX)/2
+                    clientY = (e.touches[0].clientY+e.touches[1].clientY)/2
+
+
+                    if (!twoFingers) {
+                        twoFingers = true;
+                        twoFingersRelX = last_mouse_x-clientX;
+                        twoFingersRelY = last_mouse_y-clientY;
+                    }
+
+                    const x = clientX - bounds.x
+                    const y = clientY - bounds.y
+        
+                    const xs = (x - this.options._translate_x) / this.options._zoom,
+                        ys = (y - this.options._translate_y) / this.options._zoom;
+
+                    const newSpan = Math.sqrt((e.touches[0].clientX-(e.touches[1]?.clientX??100))**2 + (e.touches[0].clientY-(e.touches[1]?.clientY??100))**2);
+                    if (span === null) {
+                        span = newSpan;
+                        return;
+                    }
+                    const delta = newSpan - span;
+                    span = newSpan;
+
+                    this.options._zoom += delta * 0.01;
+        
+                    if (this.options._zoom > this.options.max_zoom) this.options._zoom = this.options.max_zoom;
+                    if (this.options._zoom < this.options.min_zoom) this.options._zoom = this.options.min_zoom;
+        
+                    this.options._translate_x = (x - xs * this.options._zoom)
+                    this.options._translate_y = (y - ys * this.options._zoom)
+                
+                    this.updateTransforms()
+
+                    clientX += twoFingersRelX;
+                    clientY += twoFingersRelY;
                 }
 
-                const clientX = e.clientX ?? e.touches?.[0].clientX;
-                const clientY = e.clientY ?? e.touches?.[0].clientY;
-                
+                else {
+                    twoFingers = false;
+                    span = null
+                }
+
                 // change select box size
                 if (moving_select_box) {
                     const w = (clientX-select_box_start_client_x)/this.options._zoom;
@@ -419,6 +467,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                     window.removeEventListener("mousemove", handle_move, true)
                     this.content_container.style.cursor = "default";
                     moving = false;
+                    span = null
                     moving_select_box = false;
                     this.select_box.style.display = "none";
                     e.stopPropagation();
@@ -432,6 +481,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                     window.removeEventListener("touchmove", handle_move, true)
                     this.content_container.style.cursor = "default";
                     moving = false;
+                    span = null
                     moving_select_box = false;
                     this.select_box.style.display = "none";
                     e.stopPropagation();

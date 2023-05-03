@@ -104,7 +104,20 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         // load fields + connectors
         if (this.options.items) this.loadItems();
 
-        this.addEventListener("dblclick", ()=>this.toggleCollapse());
+        this.addEventListener("dblclick", () => this.toggleCollapse());
+
+        let timeout:number|undefined;
+        let lastTap = 0;
+        this.addEventListener('touchend', () => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            clearTimeout(timeout);
+            if (tapLength < 250 && tapLength > 0) {
+                this.toggleCollapse()
+            }
+            lastTap = currentTime;
+        });
+        
 
         this.updateConnectors()
 

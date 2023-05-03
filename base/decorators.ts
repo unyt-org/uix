@@ -45,6 +45,7 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 	
 	url = component_class._init_module ?? url;
 	if (!url) {
+		console.log(new Error().stack)
 		throw new Error("Could not get the location of a the UIX component '"+component_class.name+"'. This should not happen");
 	}
 

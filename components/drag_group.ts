@@ -163,13 +163,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                 text: S('paste'),
                 icon: I('fas-paste'),
                 shortcut: 'paste',
-                handler: async (x,y)=>{
-                    let el = await Clipboard.getItem(['application/datex-value']);
-                    console.log("paste", el)
-                    if (el instanceof Base) {
-                        this.handleChildInsert(<ChildElement>el,x,y)
-                    }
-                }
+                handler: (x,y) => this.handlePaste(x,y)
             },
             select_all: {
                 text: S('select_all'),
@@ -190,13 +184,20 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
         }
     }
 
+    public async handlePaste(x:number, y:number) {
+        const el = await Clipboard.getItem(['application/datex-value']);
+        if (el instanceof Base) {
+            this.handleChildInsert(<ChildElement>el,x,y)
+        }
+    }
+
 
     public selectAllElements(){
-        for (let el of this.elements) this.selectElement(el)
+        for (const el of this.elements) this.selectElement(el)
     }
 
     public deselectAllElements(){
-        for (let el of this.#selected_elements) el.style.outline = ""; // reset previous focused elements
+        for (const el of this.#selected_elements) el.style.outline = ""; // reset previous focused elements
         this.#selected_elements.clear();
     }
 
@@ -266,17 +267,45 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
         this.bg_container.style.transform = `translate(${tx}%, ${ty}%)`
     }
 
+    private selectBox?: {x:number, y:number, w:number, h:number}
+
     private updateSelectBoxSelection(x:number, y:number, w:number, h:number){
-        for (let el of this.elements) {
+        if (!this.selectBox) this.selectBox = {} as any;
+        this.selectBox!.x = x;
+        this.selectBox!.y = y;
+        this.selectBox!.w = w;
+        this.selectBox!.h = h;
+
+        for (const el of this.elements) {
             if (this.hasCollisionWithElementBox(el, x, y, w, h)) this.selectElement(el);
             else this.deselectElement(el);
         }
+    }
+
+    private handleKeyEventInSelectBox = (e:KeyboardEvent) => {
+        if (e.code == "Space") {
+
+            // disable select box
+            this.content_container.style.cursor = "default";
+            this.content_container.removeEventListener("keydown", this.handleKeyEventInSelectBox)
+            this.select_box.style.display = "none";
+
+            // spawn group node
+            this.handleGroupSpawn(this.selectBox!.x,this.selectBox!.y,this.selectBox!.w,this.selectBox!.h)
+            e.preventDefault()
+            e.stopPropagation();
+        }
+    }
+
+    protected handleGroupSpawn(x:number, y:number, w:number, h:number) {
+        // @implement
     }
 
     private handleContainerChanges(){
         let last_mouse_x:number, last_mouse_y:number;
         let moving = false;
         let moving_select_box = false;
+        this.content_container.removeEventListener("keydown", this.handleKeyEventInSelectBox)
         let select_box_start_client_x = 0,
             select_box_start_client_y = 0,
             select_box_start_x = 0,
@@ -432,6 +461,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                 // select box
                 if ((e.shiftKey && !this.options.move_with_shift) || (!e.shiftKey && this.options.move_with_shift)) {
                     moving_select_box = true;
+                    this.content_container.addEventListener("keydown", this.handleKeyEventInSelectBox)
                     select_box_start_client_x = e.clientX;
                     select_box_start_client_y = e.clientY;
                     this.select_box.style.display = "block";
@@ -469,6 +499,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                     moving = false;
                     span = null
                     moving_select_box = false;
+                    this.content_container.removeEventListener("keydown", this.handleKeyEventInSelectBox)
                     this.select_box.style.display = "none";
                     e.stopPropagation();
                 }
@@ -483,6 +514,7 @@ export class DragGroup<O extends DragGroup.Options=DragGroup.Options, ChildEleme
                     moving = false;
                     span = null
                     moving_select_box = false;
+                    this.content_container.removeEventListener("keydown", this.handleKeyEventInSelectBox)
                     this.select_box.style.display = "none";
                     e.stopPropagation();
                 }

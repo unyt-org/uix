@@ -48,12 +48,40 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                     // }
                 }
             },
+            cut: {
+                text: S('cut'),
+                icon: I('fas-scissors'),
+                shortcut: 'cut',
+                handler: ()=>{
+                    Clipboard.putDatexValue(this);
+                    if (this.parent instanceof DragGroup) {
+                        this.parent.removeSelectedElements();
+                        this.parent.content_container.focus()
+                    }
+                    else this.remove();
+                }
+            },
             delete: {
                 text: S('delete'),
                 shortcut: 'delete',
                 handler: ()=>{
-                    if (this.parent instanceof DragGroup) this.parent.removeSelectedElements();
+                    if (this.parent instanceof DragGroup) {
+                        this.parent.removeSelectedElements();
+                        this.parent.content_container.focus()
+                    }
                     else this.remove();
+                }
+            },
+            // just to focus parent
+            paste: {
+                text: S('paste'),
+                icon: I('fas-paste'),
+                shortcut: 'paste',
+                handler: (x,y) => {
+                    if (this.parent instanceof DragGroup) {
+                        this.parent.handlePaste(x,y)
+                        this.parent.content_container.focus()
+                    }
                 }
             },
             toggle: {
@@ -249,17 +277,25 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
     protected updateConnectors(){
         let left_connectors = 0,
             right_connectors = 0,
+            top_connectors = 0,
+            bottom_connectors = 0,
             left_index = 0,
             right_index = 0,
-            height = 0;
+            top_index = 0,
+            bottom_index = 0,
+            height = 0,
+            width = 0;
 
         // get number of connectors on each side if collapsed
         if (!this.options.expanded) {
             for (const connector of this.connectors) {
                 if (connector.position == Node.CONNECTOR_POSITION.LEFT) left_connectors++;
                 else if (connector.position == Node.CONNECTOR_POSITION.RIGHT) right_connectors++;
+                else if (connector.position == Node.CONNECTOR_POSITION.TOP) top_connectors++;
+                else if (connector.position == Node.CONNECTOR_POSITION.BOTTOM) bottom_connectors++;
             }
             height = this.offsetHeight;
+            width = this.offsetWidth;
         }
 
         // update each connector
@@ -279,12 +315,19 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                         
                         // handle collapsed node
                         else {
-                            if (connector.position == Node.CONNECTOR_POSITION.LEFT) connector.translate =  height * (++left_index/(left_connectors+1));
+                            if (connector.position == Node.CONNECTOR_POSITION.LEFT) connector.translate = height * (++left_index/(left_connectors+1));
                             else connector.translate = height * (++right_index/(right_connectors+1));
                         }
                     }
-                    else
-                        connector.translate = Node.connector_item_elements.get(connector)!.offsetLeft + Node.connector_item_elements.get(connector)!.offsetWidth/2 - dom_element.offsetWidth/2 + 15; // TODO why +15 ?
+                    else {
+                        if (this.options.expanded) connector.translate = Node.connector_item_elements.get(connector)!.offsetLeft + Node.connector_item_elements.get(connector)!.offsetWidth/2 - dom_element.offsetWidth/2 + 15; // TODO why +15 ?
+                        // handle collapsed node
+                        else {
+                            if (connector.position == Node.CONNECTOR_POSITION.BOTTOM) connector.translate = width * (++bottom_index/(bottom_connectors+1));
+                            else connector.translate = width * (++top_index/(top_connectors+1));
+                        }
+                    }
+                        
             }
 
             // right position
@@ -302,7 +345,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
             else if (connector.position == Node.CONNECTOR_POSITION.BOTTOM) {
                 dom_element.style.bottom = '0';
                 dom_element.style.setProperty(this.connectorAlignToPosition(connector.align??Node.CONNECTOR_ALIGN.START, false), connector.translate+'px');
-                dom_element.style.transform = connector.align==Node.CONNECTOR_ALIGN.END ? 'translate(5px, 5px)':'translate(-5px, -5px)' // correct translation
+                dom_element.style.transform = connector.align==Node.CONNECTOR_ALIGN.END ? 'translate(5px, 5px)':'translate(-5px, 5px)' // correct translation
 
             }
             else if (connector.position == Node.CONNECTOR_POSITION.TOP) {
@@ -867,8 +910,8 @@ export namespace Node {
         this.max_y = Math.max(this.max_y, ...new_ys)
         this.min_y = Math.min(this.min_y, ...new_ys)
 
-        let w = (this.max_x-this.min_x+this.offset*2);
-        let h = (this.max_y-this.min_y+this.offset*2)
+        const w = (this.max_x-this.min_x+this.offset*2);
+        const h = (this.max_y-this.min_y+this.offset*2)
 
         // invalid
         if (isNaN(this.min_x) || !isFinite(this.min_x) || isNaN(this.max_x) || !isFinite(this.max_x) ||
@@ -984,7 +1027,7 @@ export namespace Node {
         line.setAttribute('y1',y_start.toString());
         line.setAttribute('x2',x_end.toString());
         line.setAttribute('y2',y_end.toString());
-        line.setAttribute("stroke", this.options.line_color)
+        line.setAttribute("stroke", this.options.line_color!)
         line.setAttribute("stroke-linecap", "round");
         line.setAttribute("stroke-width", this.options.line_width+"px")
         if (this.options.line_style == NodeConnection.LINE_STYLE.DASHED) line.setAttribute("stroke-dasharray", "10,4")
@@ -999,21 +1042,53 @@ export namespace Node {
         x_end   = this.getSvgX(this.x_end),
         y_end   = this.getSvgY(this.y_end);
 
-        const factor = 0.5;
+        const facing_opposite = this.start_facing.x == -this.end_facing.x && this.start_facing.y == -this.end_facing.y;
+        const facing_horizontal = facing_opposite && this.start_facing.x != 0;
 
-        let p1_x    = x_end - (x_end-x_start)*factor,
-            p1_y    = y_start,
-            p2_x    = x_start + (x_end-x_start)*factor,
-            p2_y    = y_end;
-
-        let path = document.createElementNS('http://www.w3.org/2000/svg','path');
-        path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
-        path.setAttribute("stroke", this.options.line_color)
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute("stroke", this.options.line_color!)
         path.setAttribute("fill", "transparent")
         path.setAttribute("stroke-linecap", "round");
         path.setAttribute("stroke-width", this.options.line_width+"px")
         if (this.options.line_style == NodeConnection.LINE_STYLE.DASHED) path.setAttribute("stroke-dasharray", "10,4")
         else if (this.options.line_style == NodeConnection.LINE_STYLE.DOTTED) path.setAttribute("stroke-dasharray", `1,4`)
+
+        if (facing_opposite) {
+            const factor = 0.5;
+            
+            // -_
+            if (facing_horizontal) {
+                const p1_x  = x_end - (x_end-x_start)*factor,
+                    p1_y    = y_start,
+                    p2_x    = x_start + (x_end-x_start)*factor,
+                    p2_y    = y_end;
+
+                path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
+            }
+
+            // '.
+            else {
+                const p1_x  = x_start,
+                    p1_y    = y_start + (y_end-y_start)*factor,
+                    p2_x    = x_end,
+                    p2_y    = y_end - (y_end-y_start)*factor;
+
+                path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
+            }
+
+        }
+
+        else {
+            const factor = 1;
+
+            const p1_x  = x_start + (x_end-x_start)*factor,
+                p1_y    = y_start,
+                p2_x    = x_end,
+                p2_y    = y_end - (y_end-y_start)*factor;
+            path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
+
+        }
+
 
         this.element.append(path);
     }
@@ -1147,7 +1222,7 @@ export namespace Node {
         }
 
         path.setAttribute('d', path_string);
-        path.setAttribute("stroke", this.options.line_color);
+        path.setAttribute("stroke", this.options.line_color!);
         path.setAttribute("stroke-linecap", "round");
         path.setAttribute("fill", "transparent");
         path.setAttribute("stroke-width", this.options.line_width+"px");

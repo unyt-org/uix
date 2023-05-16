@@ -1678,7 +1678,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     override remove() {
         logger.debug("remove element ?", this.id || this.constructor.name);
-        console.log(this,Actions.getActiveDialogElement())
         if (this == Actions.getActiveDialogElement()) Actions.closeActiveDialog(); // is dialog element, close dialog
         else if (this.parent) this.parent.removeElement(this); // tell parent to remove
         else super.remove();

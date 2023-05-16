@@ -7,7 +7,8 @@ import { Node } from "./node.ts";
 @Component<Node.Options>({
     title: "Node Group",
     icon: 'fa-network-wired',
-    bg_color: '#1f6eb55a'
+    bg_color: '#1f6eb55a',
+    // enable_ctx: false
 }, {
     resizable: true,
     w: 100,

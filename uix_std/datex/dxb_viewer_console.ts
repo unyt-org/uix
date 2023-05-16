@@ -108,10 +108,10 @@ export class DXBViewerConsole extends UIX.Components.Base {
        
         this.sendMessageUp("SHOW_SECTION", sections[index]);
 
-        this.shadow_root.querySelector(`.dxb-id-${class_id}`).classList.add("inactive","active");
-        this.shadow_root.querySelector(`.dxb-outer-block`).classList.remove("active");
-        this.shadow_root.querySelector(`.dxb-id-${class_id}.dxb-index-${index}`).classList.add("active");
-        this.shadow_root.querySelector(`.dxb-id-${class_id}.dxb-index-${index}`).classList.remove("inactive");
+        this.shadow_root.querySelectorAll(`.dxb-id-${class_id}`).forEach(el=>el.classList.add("inactive","active"));
+        this.shadow_root.querySelectorAll(`.dxb-outer-block`).forEach(el=>el.classList.remove("active"));
+        this.shadow_root.querySelectorAll(`.dxb-id-${class_id}.dxb-index-${index}`).forEach(el=>el.classList.add("active"));
+        this.shadow_root.querySelectorAll(`.dxb-id-${class_id}.dxb-index-${index}`).forEach(el=>el.classList.remove("inactive"));
         (<HTMLElement>this.shadow_root.querySelector(`.dxb-id-${class_id}.dxb-index-${index}`)).focus();
 
         if(e) e.stopPropagation();
@@ -233,8 +233,8 @@ export class DXBViewerConsole extends UIX.Components.Base {
         let current_div = UIX.HTMLUtils.createHTMLElement(`<div class="dxb-outer-block"><div style='margin-bottom:10px'>ROUTING HEADER</div></div>`)
         const routing_header = current_div;
         current_div.addEventListener("mousedown", (e)=>{
-            this.shadow_root.querySelector(`.dxb-id-${class_id}`).classList.remove("inactive","active");
-            this.shadow_root.querySelector(`.dxb-outer-block`).classList.remove("active");
+            this.shadow_root.querySelectorAll(`.dxb-id-${class_id}`).forEach(el=>el.classList.remove("inactive","active"));
+            this.shadow_root.querySelectorAll(`.dxb-outer-block`).forEach(el=>el.classList.remove("active"));
             routing_header.classList.add("active");
             this.sendMessageUp("SHOW_HEADER", header)
         });
@@ -253,8 +253,8 @@ export class DXBViewerConsole extends UIX.Components.Base {
                 // on click BODY
                 const body = current_div;
                 current_div.addEventListener("mousedown", (e)=>{
-                    this.shadow_root.querySelector(`.dxb-id-${class_id}`).classList.remove("inactive", "active");
-                    this.shadow_root.querySelector(`.dxb-outer-block`).classList.remove("active");
+                    this.shadow_root.querySelectorAll(`.dxb-id-${class_id}`).forEach(el=>el.classList.remove("inactive", "active"));
+                    this.shadow_root.querySelectorAll(`.dxb-outer-block`).forEach(el=>el.classList.remove("active"));
                     body.classList.add("active");
        
                     if (header.encrypted) this.sendMessageUp("SHOW_BODY_ENC", [decompiled, decompiled_plain]);
@@ -267,8 +267,8 @@ export class DXBViewerConsole extends UIX.Components.Base {
                 current_div = UIX.HTMLUtils.createHTMLElement(`<div class="dxb-outer-block" style="margin-top:15px"><div style='margin-bottom:10px'>SIGNATURE</div></div>`)
                 const header_div = current_div;
                 current_div.addEventListener("mousedown", (e)=>{
-                    this.shadow_root.querySelector(`.dxb-id-${class_id}`).classList.remove("inactive","active");
-                    this.shadow_root.querySelector(`.dxb-outer-block`).classList.remove("active");
+                    this.shadow_root.querySelectorAll(`.dxb-id-${class_id}`).forEach(el=>el.classList.remove("inactive","active"));
+                    this.shadow_root.querySelectorAll(`.dxb-outer-block`).forEach(el=>el.classList.remove("active"));
                     header_div.classList.add("active");
         
                     this.sendMessageUp("SHOW_HEADER", header)
@@ -281,8 +281,8 @@ export class DXBViewerConsole extends UIX.Components.Base {
                 current_div = UIX.HTMLUtils.createHTMLElement(`<div class="dxb-outer-block" style="margin-top:15px"><div style='margin-bottom:10px'>HEADER</div></div>`)
                 const header_div = current_div;
                 current_div.addEventListener("mousedown", (e)=>{
-                    this.shadow_root.querySelector(`.dxb-id-${class_id}`).classList.remove("inactive","active");
-                    this.shadow_root.querySelector(`.dxb-outer-block`).classList.remove("active");
+                    this.shadow_root.querySelectorAll(`.dxb-id-${class_id}`).forEach(el=>el.classList.remove("inactive","active"));
+                    this.shadow_root.querySelectorAll(`.dxb-outer-block`).forEach(el=>el.classList.remove("active"));
                     header_div.classList.add("active");
         
                     this.sendMessageUp("SHOW_HEADER", header)

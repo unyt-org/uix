@@ -18,7 +18,7 @@ export function escapeString(string:string) {
 export function jsx (type: string | any, config: Record<string,any>): Element|DocumentFragment {
 
 	let element:Element;
-	if (config.children && !(config.children instanceof Array)) config.children = [config.children];
+	if ('children' in config && !(config.children instanceof Array)) config.children = [config.children];
 	let { children = [], ...props } = config
 
 	// _debug property to debug jsx

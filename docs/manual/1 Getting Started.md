@@ -1,9 +1,24 @@
 # Getting Started with UIX
 
+## 🧩 Architecture of a UIX Project
+
+With UIX, frontend and backend source code or other resources can be put into a single project.
+
+Files in the `frontend` directory of the project are only available to frontend endpoints (browser clients), while files in the `backend` directory are only available to backend endpoints (Deno).
+
+However, a key feature of UIX is that backend modules can be imported from frontend modules and vice versa.
+Files in the `common` directory are accessible from the frontend and backend.
+
 ## ✏️ Creating a new UIX Project
 
 ### Option 1: Using the UIX Project Template
-You can clone the UIX Base Project from https://github.com/unyt-org/uix-base-project.
+You can clone a simple UIX Base Project from https://github.com/unyt-org/uix-base-project:
+```bash
+git clone git@github.com:unyt-org/uix-base-project.git
+```
+
+If you are using VS Code, you can also install the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) extension
+for UIX and DATEX support.
 
 ### Option 2: Creating a new UIX Project from Scratch
 
@@ -18,14 +33,19 @@ A UIX Project requires at least three files:
  *	A `deno.json` file containing an import map and JSX settings:
     ```json
     {
+           
         "imports": {
-            "uix": "https://cdn.unyt.org/uix/uix.ts",
-            "uix/": "https://cdn.unyt.org/uix/",
-            "uix_std/": "https://cdn.unyt.org/uix/uix_std/",
-            "uix/jsx-runtime": "https://cdn.unyt.org/uix/jsx-runtime/jsx.ts",
-            
-            "unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
-            "unyt_core/": "https://cdn.unyt.org/unyt_core/",
+            "unyt/": "https://dev.cdn.unyt.org/",
+            "unyt_core": "https://dev.cdn.unyt.org/unyt_core/datex.ts",
+            "uix": "./uix.ts",
+            "unyt_core/": "https://dev.cdn.unyt.org/unyt_core/",
+            "uix/": "./",
+            "uix_std/": "./uix_std/",
+            "unyt_tests/": "https://dev.cdn.unyt.org/unyt_tests/",
+            "unyt_web/": "https://dev.cdn.unyt.org/unyt_web/",
+            "unyt_node/": "https://dev.cdn.unyt.org/unyt_node/",
+            "unyt_cli/": "https://dev.cdn.unyt.org/unyt_cli/",
+            "uix/jsx-runtime": "./jsx-runtime/jsx.ts"
         },
         
         "compilerOptions": {
@@ -55,17 +75,6 @@ To run a UIX project, just run `uix` in the project root directory (where the `a
 
 If you don't want to install `uix`, you can alternatively run `deno run -Aq https://cdn.unyt.org/uix/run.ts`
 
-
-## 🧩 Architecture of a UIX Project
-
-With UIX, frontend and backend source code or other resources can be put into a single project.
-
-Files in the `frontend` directory of the project are only available to frontend endpoints (browser clients), while files in the `backend` directory are only available to backend endpoints (Deno).
-
-However, a key feature of UIX is that backend modules can be imported from frontend modules and vice versa.
-Files in the `common` directory are accessible from the frontend and backend.
-
-
 ## 🏝 UIX as a Frontend Library
 UIX was designed as a fullstack framework, but it can also be used as a standalone frontend library.
 
@@ -79,14 +88,17 @@ To resolve imports correctly, you need to add an import map to your HTML page.
         <script type="importmap">
             {
                 "imports": {
-                    "uix": "https://cdn.unyt.org/uix/uix.ts",
-                    "uix/": "https://cdn.unyt.org/uix/",
-                    "uix_std/": "https://cdn.unyt.org/uix/uix_std/",
-                    "uix/jsx-runtime": "https://cdn.unyt.org/uix/jsx-runtime/jsx.ts",
-                    
-                    "unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
-                    "unyt_core/": "https://cdn.unyt.org/unyt_core/",
-                }
+                    "unyt/": "https://dev.cdn.unyt.org/",
+                    "unyt_core": "https://dev.cdn.unyt.org/unyt_core/datex.ts",
+                    "uix": "./uix.ts",
+                    "unyt_core/": "https://dev.cdn.unyt.org/unyt_core/",
+                    "uix/": "./",
+                    "uix_std/": "./uix_std/",
+                    "unyt_tests/": "https://dev.cdn.unyt.org/unyt_tests/",
+                    "unyt_web/": "https://dev.cdn.unyt.org/unyt_web/",
+                    "unyt_node/": "https://dev.cdn.unyt.org/unyt_node/",
+                    "unyt_cli/": "https://dev.cdn.unyt.org/unyt_cli/",
+                    "uix/jsx-runtime": "./jsx-runtime/jsx.ts"
             }
         </script>
         <script type="module" src="./main.ts"></script>

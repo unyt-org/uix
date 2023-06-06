@@ -1654,11 +1654,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         return this.options.collector;
     }
 
-    #scroll_context:scrollContext
+    #scroll_context:scrollContext = {}
     
     protected makeScrollContainer(element:HTMLElement, scroll_x = true, scroll_y = true) {
         // TODO: save scroll state
-        this.#scroll_context = {};
         return makeScrollContainer(element, scroll_x, scroll_y, this.#scroll_context);
     }
 

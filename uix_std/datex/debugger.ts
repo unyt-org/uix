@@ -13,7 +13,7 @@ import { DatexRuntimeInfo } from "./runtime_info.ts";
 @UIX.Group("Datex")
 @UIX.Component<UIX.Components.GridGroup.Options>({title:"Datex Debugger", icon:"fa-exchange-alt", rows:[1], columns: [1,2], gaps:0, sealed:false})
 @UIX.NoResources
-export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Components.GridGroup.Options> extends UIX.Components.GridGroup<O> {
+export class DatexDebugger extends UIX.Components.GridGroup<UIX.Components.GridGroup.Options & {view_v2?: boolean}> {
 
     interface_group:UIX.Components.TabGroup;
     pointers_and_scopes_group:UIX.Components.TabGroup;
@@ -64,14 +64,14 @@ export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Comp
 
         // local interface
         if (interf == Datex.InterfaceManager.local_interface) {
-            d = new DatexInterface({removable:!interf.persistent, local_interface:true, advanced_view:true});
+            d = new DatexInterface({removable:!interf.persistent, local_interface:true, advanced_view:true, view_v2:this.options.view_v2});
             await this.interface_group.addChild(d);
         }
         // other
         else {
             // single (main) endpoint
             if (interf.endpoint) {
-                d = new DatexInterface({removable:!interf.persistent, local_interface:false, advanced_view:true});
+                d = new DatexInterface({removable:!interf.persistent, local_interface:false, advanced_view:true, view_v2:this.options.view_v2});
                 await d.setDatexOutput(interf);
                 await this.interface_group.addChild(d);
             }
@@ -79,7 +79,7 @@ export class DatexDebugger<O extends UIX.Components.GridGroup.Options = UIX.Comp
             else {
                 let max = 5;
                 for (const e of interf.endpoints??[]) {
-                    d = new DatexInterface({removable:!interf.persistent, local_interface:false, advanced_view:true});
+                    d = new DatexInterface({removable:!interf.persistent, local_interface:false, advanced_view:true, view_v2:this.options.view_v2});
                     await d.setDatexOutput(interf, e);
                     await this.interface_group.addChild(d);
 

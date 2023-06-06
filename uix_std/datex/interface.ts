@@ -13,6 +13,7 @@ export namespace DatexInterface {
 		local_interface?: boolean // use local interface
 		endpoint?: Datex.Endpoint,
         advanced_view?: boolean // display advanced DATEX settings
+        view_v2?: boolean,
 		interface_type?: string,
 	}
 }
@@ -41,7 +42,7 @@ export class DatexInterface<O extends DatexInterface.Options = DatexInterface.Op
         this.addStyleSheet(MonacoHandler.standalone_stylesheet);
 
         // datex editor + console
-        const editor = new DatexEditor({identifier:'editor', advanced_view:this.options.advanced_view, border_br_radius:0, border_bl_radius:0});
+        const editor = new DatexEditor({identifier:'editor', view_v2:this.options.view_v2, advanced_view:this.options.advanced_view, border_br_radius:0, border_bl_radius:0});
         const console = new DatexConsoleView({identifier:'console', border_tr_radius:0, border_tl_radius:0, header:false, timestamps:false, editor:editor}, {gy:1});
 
         this.addChild(editor);

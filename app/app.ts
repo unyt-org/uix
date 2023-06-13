@@ -210,6 +210,8 @@ class UIXApp {
 			})
 			server.path("/.dx", Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true).replace('"##location##"', '#location'), 'text/datex')
 		}
+
+		await import("./http_over_datex.ts")
 		
 		try {
 			for (const handler of this.#ready_handlers) await handler();

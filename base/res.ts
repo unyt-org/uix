@@ -112,6 +112,7 @@ export namespace Res {
 
 			// general
 			copy: "Kopieren",
+			cut: "Ausschneiden",
 			paste: "Einfügen",
 			delete: "Löschen",
 			select_all: "Alle auswählen",
@@ -182,6 +183,7 @@ export namespace Res {
 
 			// general
 			copy: "Copy",
+			cut: "Cut",
 			paste: "Paste",
 			delete: "Delete",
 			select_all: "Select All",
@@ -242,6 +244,7 @@ export namespace Res {
 			?.toLowerCase()
 			.replace("delete", "⌦")
 			.replace("backspace", "⌫")
+			.replace(" ", "␣")
 			.replace("cmd", "⌘")
 			.replace("ctrl", "⌃")
 			.replace("enter", "⏎")

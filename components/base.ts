@@ -10,7 +10,7 @@ import { HTMLUtils } from "../html/utils.ts"
 import { Utils } from "../base/utils.ts"
 import { Actions } from "../base/actions.ts"
 import { Handlers } from "../base/handlers.ts"
-import { Class, Logger, METADATA, ValueError } from "unyt_core/datex_all.ts"
+import { Class, DX_IGNORE, Logger, METADATA, ValueError } from "unyt_core/datex_all.ts"
 import { I, S } from "../uix_short.ts"
 import { DEFAULT_BORDER_SIZE, IS_HEADLESS } from "../utils/constants.ts"
 import { Clipboard } from "../base/clipboard.ts"
@@ -167,7 +167,11 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected openGraphImageGenerator?: OpenGraphPreviewImageGenerator; // set the custom preview image generator for open graph cards
 
     get shadow_root() {
-        return this.shadowRoot ?? this.attachShadow({mode: 'open'})
+        if (!this.shadowRoot) {
+            this.attachShadow({mode: 'open'});
+            (<any>this.shadowRoot)![DX_IGNORE] = true;
+        }
+        return this.shadowRoot!;
     }
 
     content_container:HTMLElement; // inner container for element specific and custom content
@@ -1650,11 +1654,10 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
         return this.options.collector;
     }
 
-    #scroll_context:scrollContext
+    #scroll_context:scrollContext = {}
     
     protected makeScrollContainer(element:HTMLElement, scroll_x = true, scroll_y = true) {
         // TODO: save scroll state
-        this.#scroll_context = {};
         return makeScrollContainer(element, scroll_x, scroll_y, this.#scroll_context);
     }
 
@@ -1674,7 +1677,6 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     override remove() {
         logger.debug("remove element ?", this.id || this.constructor.name);
-        console.log(this,Actions.getActiveDialogElement())
         if (this == Actions.getActiveDialogElement()) Actions.closeActiveDialog(); // is dialog element, close dialog
         else if (this.parent) this.parent.removeElement(this); // tell parent to remove
         else super.remove();

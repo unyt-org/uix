@@ -7,7 +7,8 @@ import { Node } from "./node.ts";
 @Component<Node.Options>({
     title: "Node Group",
     icon: 'fa-network-wired',
-    bg_color: '#1f6eb58a'
+    bg_color: '#1f6eb55a',
+    // enable_ctx: false
 }, {
     resizable: true,
     w: 100,
@@ -17,19 +18,19 @@ import { Node } from "./node.ts";
 @NoResources
 export class GroupingNode<O extends Node.Options=Node.Options> extends Node<O> {
 
-    #last_x:number;
-    #last_y:number
+    #last_x?:number;
+    #last_y?:number;
 
     protected override onConstraintsChanged() {
         super.onConstraintsChanged();
 
         // update childs (only if lastx already saved)
         if (this.#last_x!=undefined && this.parent instanceof DragGroup) {
-            const dx = this.constraints.x - this.#last_x;
-            const dy = this.constraints.y - this.#last_y;
+            const dx = (this.constraints.x??0) - (this.#last_x??0);
+            const dy = (this.constraints.y??0) - (this.#last_y??0);
 
-            let els = this.parent.getContainedElements(this);
-            for (let el of els) {
+            const els = this.parent.getContainedElements(this);
+            for (const el of els) {
                 el.constraints.x += dx;
                 el.constraints.y += dy;
             }

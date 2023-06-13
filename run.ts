@@ -18,6 +18,7 @@ import { command_line_options, root_path } from "./utils/args.ts";
 
 const reload = command_line_options.option("reload", {type:"boolean", aliases:["r"]})
 const enableTLS = command_line_options.option("enable-tls", {type:"boolean"})
+const inspect = command_line_options.option("inspect", {type:"boolean"})
 
 const deno_config_path = getExistingFile(root_path, './deno.json');
 
@@ -44,6 +45,7 @@ if (reload) {
 
 // start actual deno process
 
+
 const config_params:string[] = [];
 
 const cmd = [
@@ -56,6 +58,10 @@ if (enableTLS) cmd.push("--unsafely-ignore-certificate-errors=localhost");
 
 if (reload) {
 	cmd.push("--reload");
+}
+
+if (inspect) {
+	cmd.push("--inspect");
 }
 
 if (deno_config_path) {

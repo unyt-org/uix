@@ -1,6 +1,6 @@
 # Entrypoints
 
-In a UIX app, every UI view is provided via default exports from `entrypoint` files located at the root
+In a UIX app, UI is provided via default exports from the `entrypoint.ts`/`entrypoint.tsx` files located at the root
 of the backend or frontend directories.
 
 There is a variety of values that can be exported from an entrypoint to be displayed in the browser client, including strings, HTML Elements, Blobs and [more](#entrypoint-values).
@@ -13,10 +13,10 @@ export default "Hello, this is a simple text displayed on a website and loaded f
 ```tsx
 // frontend/entrypoint.tsx
 export default 
-	<section>
-		<h1>Title</h1>
-		<p>Description...</p>
-	</section>
+    <section>
+        <h1>Title</h1>
+        <p>Description...</p>
+    </section>
 ```
 
 # Entrypoint Configurations
@@ -87,8 +87,8 @@ value.
 A simple Route Map could look like this:
 ```tsx
 export default {
-	'/home': <HomePage/>,
-	'/about': <div>About us...</div>
+    '/home': <HomePage/>,
+    '/about': <div>About us...</div>
 } satisfies UIX.Entrypoint
 ```
 
@@ -96,10 +96,10 @@ Since Route Maps are valid `UIX.Entrypoint` values, multiple Route Maps can be n
 the parent route key must end with `*` so that the route is followed.
 ```tsx
 export default {
-	'/articles/*': {
-		'/first': 'First Article...',
-		'/second': 'Second Article...'
-	}
+    '/articles/*': {
+        '/first': 'First Article...',
+        '/second': 'Second Article...'
+    }
 } satisfies UIX.Entrypoint
 ```
 
@@ -107,12 +107,12 @@ Besides the `*` syntax, many more patterns, like Regular Expressions, are suppor
 
 ```tsx
 export default {
-	// Match user route with name
-	'/user/:name/': (ctx: UIX.Context) => `Hello ${ctx.match.pathname.groups['name']}!`
-	// Match page route using a Regular Expression
-	'/page/(1|2|3)/': (ctx: UIX.Context) => `This is page ${ctx.match.pathname.groups[0]}` 
-	// Fallback if nothing else matches
-	'*': 'Not found' 
+    // Match user route with name
+    '/user/:name/': (ctx: UIX.Context) => `Hello ${ctx.match.pathname.groups['name']}!`
+    // Match page route using a Regular Expression
+    '/page/(1|2|3)/': (ctx: UIX.Context) => `This is page ${ctx.match.pathname.groups[0]}` 
+    // Fallback if nothing else matches
+    '*': 'Not found' 
 } satisfies UIX.Entrypoint
 ```
 
@@ -123,7 +123,7 @@ Dynamic Entrypoint Functions take a single argument, a [`UIX.Context`](#uixconte
 Example:
 ```tsx
 export default (ctx: UIX.Context) => {
-	return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`
+    return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`
 } satisfies UIX.Entrypoint
 ```
 
@@ -135,12 +135,12 @@ When a Component is encountered in the route chain, the `onRoute` method is call
 
 ```typescript
 class UIX.BaseComponent {
-	// return the child element to which the route is resolved
-	// if the route contains more sections, onRoute is called on this child element with the next route
-	// section as the identifier
-	onRoute(identifier:string, is_initial_route:boolean):UIX.BaseComponent|boolean|void
-	// return internal state of last resolved route
-	getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
+    // return the child element to which the route is resolved
+    // if the route contains more sections, onRoute is called on this child element with the next route
+    // section as the identifier
+    onRoute(identifier:string, is_initial_route:boolean):UIX.BaseComponent|boolean|void
+    // return internal state of last resolved route
+    getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
 }
 ```
 
@@ -148,35 +148,35 @@ class UIX.BaseComponent {
 Component Routing can be used to display or focus on different child components depending on the route.
 ```tsx
 class Parent extends UIX.BaseComponent {
-	#activeChild?: HTMLElement
+    #activeChild?: HTMLElement
 
-	override onRoute(identifier:string) {
-		// find the child that has the same id as the identifier
-		this.#activeChild = this.shadowRoot.querySelector(`#${identifier}`);
-		this.#activeChild?.focus();
-		return this.#activeChild;
-	}
+    override onRoute(identifier:string) {
+        // find the child that has the same id as the identifier
+        this.#activeChild = this.shadowRoot.querySelector(`#${identifier}`);
+        this.#activeChild?.focus();
+        return this.#activeChild;
+    }
 
-	override getInternalRoute() {
-		return [this.#activeChild.id]
-	}
+    override getInternalRoute() {
+        return [this.#activeChild.id]
+    }
 }
 
 export default {
-	// content for /about
-	'/about': 'About us', 
-	// content for /version
-	'/version': 1,		  
+    // content for /about
+    '/about': 'About us', 
+    // content for /version
+    '/version': 1,		  
 
-	// content for all other routes
-	// e.g. /a -> div#a is focused
-	'*': <Parent>
-			<div id="a">A</div>
-			<div id="b">B</div>
-			<div id="c">C</div>
-		 </Parent>
+    // content for all other routes
+    // e.g. /a -> div#a is focused
+    '*': <Parent>
+            <div id="a">A</div>
+            <div id="b">B</div>
+            <div id="c">C</div>
+         </Parent>
 }
-	
+    
 ```
 
 
@@ -204,8 +204,8 @@ In contrast to a Dynamic Entrypoint Function, which only take a UIX Context as a
 
 ```typescript
 export interface RouteHandler {
-	// return entrypoint for a route
-	getRoute(route:Path.Route, context:UIX.Context): Entrypoint|Promise<Entrypoint> 
+    // return entrypoint for a route
+    getRoute(route:Path.Route, context:UIX.Context): Entrypoint|Promise<Entrypoint> 
 }
 ```
 
@@ -224,10 +224,10 @@ The `RouteManager` interface is implemented by UIX Components.
 
 ```typescript
 interface RouteManager {
-	// return part of route that could be resolved
-	resolveRoute(route:Path.Route, context:UIX.Context): Path.route_representation|Promise<Path.route_representation> 
-	// return internal state of last resolved route
-	getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
+    // return part of route that could be resolved
+    resolveRoute(route:Path.Route, context:UIX.Context): Path.route_representation|Promise<Path.route_representation> 
+    // return internal state of last resolved route
+    getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
 }
 ```
 
@@ -238,32 +238,32 @@ The abstract `EntrypointProxy` class has two methods that can be implemented:
 
 ```typescript
 abstract class EntrypointProxy implements RouteHandler {
-	/**
-	 * This method is called before a route is resolved by the entrypoint
-	 * It can be used to implement a custom routing behaviour
-	 * for some or all routes, overriding the entrypoint routing
-	 * 
-	 * The returned value replaces the entrypoint, if not null
-	 * 
-	 * @param route requested route
-	 * @param context UIX context
-	 * @returns entrypoint override or null
-	 */
-	abstract intercept?(route:Path.Route, context: UIX.Context): void|Entrypoint|Promise<void|Entrypoint>
+    /**
+     * This method is called before a route is resolved by the entrypoint
+     * It can be used to implement a custom routing behaviour
+     * for some or all routes, overriding the entrypoint routing
+     * 
+     * The returned value replaces the entrypoint, if not null
+     * 
+     * @param route requested route
+     * @param context UIX context
+     * @returns entrypoint override or null
+     */
+    abstract intercept?(route:Path.Route, context: UIX.Context): void|Entrypoint|Promise<void|Entrypoint>
 
-	/**
-	 * This method is called after a route was resolved by the entrypoint
-	 * It can be used to override the content provided for a route by returning 
-	 * a different entrypoint value. 
-	 * When null is returned, the route content is not changed
-	 * 
-	 * @param content content as resolved by entrypoint
-	 * @param render_method render method as resolved by entrypoint
-	 * @param route the requested route
-	 * @param context UIX context
-	 * @returns entrypoint override or null
-	 */
-	abstract transform?(content: Entrypoint, render_method: RenderMethod, route:Path.Route, context: UIX.Context): void|Entrypoint|Promise<void|Entrypoint>
+    /**
+     * This method is called after a route was resolved by the entrypoint
+     * It can be used to override the content provided for a route by returning 
+     * a different entrypoint value. 
+     * When null is returned, the route content is not changed
+     * 
+     * @param content content as resolved by entrypoint
+     * @param render_method render method as resolved by entrypoint
+     * @param route the requested route
+     * @param context UIX context
+     * @returns entrypoint override or null
+     */
+    abstract transform?(content: Entrypoint, render_method: RenderMethod, route:Path.Route, context: UIX.Context): void|Entrypoint|Promise<void|Entrypoint>
 }
 ```
 
@@ -277,9 +277,9 @@ It contains information about the client, about the route, and about the HTTP re
 
 ```typescript
 interface Context {
-	request?: Request & {address:string}
-	path: string
-	match?: URLPatternResult
-	language: string
+    request?: Request & {address:string}
+    path: string
+    match?: URLPatternResult
+    language: string
 }
 ```

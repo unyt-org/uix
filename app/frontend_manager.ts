@@ -8,7 +8,7 @@ import { ALLOWED_ENTRYPOINT_FILE_NAMES, getDirType, normalized_app_options, vali
 import { generateDTS, generateTS } from "./interface_generator.ts";
 import { Path } from "unyt_node/path.ts";
 import { BackendManager } from "./backend_manager.ts";
-import { getExistingFileExclusive } from "../utils/file_utils.ts";
+import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
 import { logger } from "../utils/global_values.ts";
 import { generateHTMLPage } from "../html/render.ts";
 import { HTMLProvider } from "../html/html_provider.ts";
@@ -118,8 +118,8 @@ export class FrontendManager extends HTMLProvider {
 
 
 	getEntrypointCSS(){
-		const entrypoint_css_path = getExistingFileExclusive(this.scope, "entrypoint.css");
-		return entrypoint_css_path ? this.#web_path.getChildPath(new Path(entrypoint_css_path).name) : undefined;
+		const entrypoint_css_path = getExistingFile(this.scope, "entrypoint.css", "entrypoint.scss");
+		return entrypoint_css_path ? this.#web_path.getChildPath(new Path(entrypoint_css_path).getWithFileExtension("css").name) : undefined;
 	}
 
 	#BLANK_PAGE_URL = 'uix/base/blank.ts';
@@ -170,10 +170,11 @@ export class FrontendManager extends HTMLProvider {
 
 		// handle datex-via-http
 		this.server.path(/^\/@uix\/datex\/.*$/, async (req, path)=>{
-			const dx = decodeURIComponent(path.replace("/@uix/datex/", ""));
-			// TODO: rate limiting
-			console.log("datex-via-http:",dx);
 			try {
+				const dx = decodeURIComponent(path.replace("/@uix/datex/", ""));
+				// TODO: rate limiting
+				console.log("datex-via-http:",dx);
+
 				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:Datex.BROADCAST});
 				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON}));
 			}

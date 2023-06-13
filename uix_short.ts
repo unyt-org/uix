@@ -139,9 +139,9 @@ function decodeHTMLEntity(inputStr:string) {
  * @param content 
  * @returns 
  */
-export function HTML(value:any): HTMLElement|DocumentFragment
-export function HTML<R extends HTMLElement|DocumentFragment = HTMLElement|DocumentFragment>(template:TemplateStringsArray|string, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]): R
-export function HTML(template:any, ...content:(HTMLElement|Datex.CompatValue<unknown>)[]) {
+export function HTML(value:any): Element|DocumentFragment
+export function HTML<R extends Element|DocumentFragment = Element|DocumentFragment>(template:TemplateStringsArray|string, ...content:(Element|Datex.CompatValue<unknown>)[]): R
+export function HTML(template:any, ...content:(Element|Datex.CompatValue<unknown>)[]) {
 	const isTemplate = template?.raw instanceof Array && template instanceof Array;
 	// non template value - convert to HTML node
 	if (!isTemplate) {

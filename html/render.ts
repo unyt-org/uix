@@ -64,7 +64,7 @@ function loadInitScript(component:(Element|ShadowRoot) & {getStandaloneInit?:()=
 	}
 }
 
-export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collectedStylsheets?:string[]) {
+export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collectedStylsheets?:string[], standaloneContext = false) {
 	if (!opts?.includeShadowRoots) return el.innerHTML;
 
 	let html = "";
@@ -77,7 +77,7 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 		html += `<template shadowrootmode="${el.shadowRoot.mode}">`
 		// collect stylsheets that children require
 		const collectedStylesheets:string[] = []
-		html += await getInnerHTML(el.shadowRoot, opts, collectedStylesheets);
+		html += await getInnerHTML(el.shadowRoot, opts, collectedStylesheets, standaloneContext);
 		for (const link of collectedStylesheets) html += `<link rel="stylesheet" href="${App.filePathToWebPath(link)}">\n`;
 		// @ts-ignore
 		if (el.getRenderedStyle) html += el.getRenderedStyle();
@@ -90,20 +90,21 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 	}
 
 	for (const child of (el.childNodes as unknown as Node[])) {
-		html += await _getOuterHTML(child, opts, collectedStylsheets);
+		html += await _getOuterHTML(child, opts, collectedStylsheets, standaloneContext);
 	}
 
 	return html || HTMLUtils.escapeHtml((el as HTMLElement).innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
-async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[]):Promise<string> {
-	
+async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[], standaloneContext = false):Promise<string> {
+	standaloneContext = standaloneContext || (<any>el)[STANDALONE];
+
 	if (el instanceof globalThis.Text) return HTMLUtils.escapeHtml(el.textContent ?? ""); // text node
 
 	if (el instanceof DocumentFragment) {
 		const content = [];
 		for (const child of (el.childNodes as unknown as Node[])) {
-			content.push(await _getOuterHTML(child, opts, collectedStylsheets));
+			content.push(await _getOuterHTML(child, opts, collectedStylsheets, standaloneContext));
 		}
 		return content.join("\n");
 	}
@@ -118,7 +119,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 		throw "invalid HTML node"
 	}
 
-	const inner = await getInnerHTML(el, opts, collectedStylsheets);
+	const inner = await getInnerHTML(el, opts, collectedStylsheets, standaloneContext);
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
 
@@ -137,12 +138,20 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 	}
 	attrs.push("data-static");
 
-	const standaloneContext = (<any>el)[STANDALONE];
 
 	// inject event listeners
 	if (dataPtr && opts?._injectedJsData && (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
-		const context = <HTMLElement|undefined>(<any>el)[COMPONENT_CONTEXT];
-		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
+		let context: HTMLElement|undefined;
+		let parent: Element|null = el;
+		do {
+			const ctx = <HTMLElement|undefined>(<any>parent)[COMPONENT_CONTEXT];
+			if (ctx) {
+				context = ctx;
+				break;
+			}
+		} while ((parent = parent?.parentElement));
+
+ 		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
 		let script = `  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
 		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
 			for (const listener of listeners) {
@@ -405,8 +414,8 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 				<template shadowrootmode=open>
 					<slot id=main></slot>
 					${body_style}
-				</template>
-				${prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')}
+				</template>` +
+(prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')) + `
 			</body>
 		</html>
 	`

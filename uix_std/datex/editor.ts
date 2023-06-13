@@ -12,6 +12,8 @@ export namespace DatexEditor {
 		local_interface?: boolean // use local interface
 		expand_header?: boolean // expand header per default
         advanced_view?: boolean // display advanced DATEX settings
+        view_v2?: boolean
+        simple_view?: boolean // only editor, not runnable, not header
 		content?: string
 	}
 }
@@ -35,19 +37,13 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
     public log_buffer = new LogBuffer();
 
     protected override createContextMenu() {
+        if (this.options.simple_view) return {};
         return {
             run: {
                 text: S('run'),
                 shortcut: "f2",
                 handler: ()=> {
                     this.runDatex()
-                }
-            },
-            v4: {
-                text: S('v2'),
-                shortcut: "f4",
-                handler: ()=> {
-                    this.runDatex(true)
                 }
             },
             save: {
@@ -84,7 +80,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
     public override async onCreate() {
 
-        await this.createHeader();
+        if (!this.options.simple_view) await this.createHeader();
 
         if (this.options.local_interface) {
             await Datex.InterfaceManager.enableLocalInterface();
@@ -100,16 +96,30 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
         const header_els:{element:HTMLElement}[] = [
             {element: new UIX.Elements.Button({onClick:()=>this.runDatex(), content:await text`<span>${I`fa-play`} ${S('run')}</span>`, color:'var(--light_blue)', text_color:'#151515'}).css({padding: '2px 6px'})},
-            {element: (this.#testBtn = new UIX.Elements.Button({onClick:()=>this.testDatex(), content:await text`<span>${I`fas-vial`} ${S('test')}</span>`, color:'var(--green)', text_color:'#151515'}).css({padding: '2px 6px', display:'none'}))},
-
-            {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({marginLeft:'10px', padding: '2px 6px'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.openFile(), content:await text`<span>${I`fa-file-invoice`} ${S('open_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
-            {element: new UIX.Elements.Button({onClick:()=>this.saveFile(), content:await text`<span>${I`fa-save`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+            {element: (this.#testBtn = new UIX.Elements.Button({onClick:()=>this.testDatex(), content:await text`<span>${I`fas-vial`} ${S('test')}</span>`, color:'var(--green)', text_color:'#151515'}).css({padding: '2px 6px', display:'none'}))}
         ]
+
+
+        if (this.options.advanced_view && !this.options.view_v2) {
+            header_els.push(
+                {element: new UIX.Elements.Button({onClick:()=>this.parent?.setContent?.(), content:await text`<span>${I`fa-file`} ${S('new_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({marginLeft:'10px', padding: '2px 6px'})},
+                {element: new UIX.Elements.Button({onClick:()=>this.openFile(), content:await text`<span>${I`fa-file-invoice`} ${S('open_file')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+                {element: new UIX.Elements.Button({onClick:()=>this.saveFile(), content:await text`<span>${I`fa-save`} ${S('download_short')}</span>`, color:'var(--text)', text_color:'#151515'}).css({padding: '2px 6px'})},
+            )
+        }
+
+        if (this.options.view_v2) {
+            header_els.push(               
+                {element: new UIX.Elements.DropdownMenu(["V1", "V2"], {title: "Compiler", selected_index:settings.compiler_version})},
+                {element: new UIX.Elements.DropdownMenu(["V1", "V2"], {title: "Runtime", selected_index:settings.runtime_version})}
+            )
+        }
+
+
 
         if (this.options.advanced_view) {
             header_els.push(
-                {element: new UIX.Elements.Button({onClick:()=>this.runDatex(true), content:await text`<span>${I`fa-play`} ${S('v2')}</span>`, color:'var(--green)', text_color:'#151515'}).css({padding: '2px 6px'})},
+                // {element: new UIX.Elements.Button({onClick:()=>this.runDatex(true), content:await text`<span>${I`fa-play`} ${S('v2')}</span>`, color:'var(--green)', text_color:'#151515'}).css({padding: '2px 6px'})},
 
                 {element: new UIX.Elements.DropdownMenu(Datex.ProtocolDataTypesMap, {title:"Type", selected_index:settings.type})},
                 {element: new UIX.Elements.Checkbox({label:'Sign', checked: settings.sign})},
@@ -136,15 +146,15 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
     _first = false;
 
-    runDatex(v2=false):string {
+    runDatex():string {
         const req = this.monaco.getContent();
-        this.sendDatexRequest(req,v2);
+        this.sendDatexRequest(req);
         return req;
     }
 
     testDatex(v2=false): string {
         const req = this.monaco.getContent();
-        this.sendDatexRequest(req,v2, ['test']);
+        this.sendDatexRequest(req, ['test']);
         return req;
     }
 
@@ -260,30 +270,58 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         type: Datex.ProtocolDataType.REQUEST,
         end_of_scope: true,
         intermediate_result: false,
-        sid: Math.round(Math.random()*20000)
+        sid: Math.round(Math.random()*20000),
+        runtime_version: 1,
+        compiler_version: 0
     }
 
-    async sendDatexRequest(request:string, v2=false, extensions?:string[]) {
+    private sendDatexV1(request:string, extensions?:string[]) {
+        const compiler_v2=this.settings.compiler_version == 1;
+
+        // todo send to right receiver
+        return Datex.Runtime.datexOut([
+            request, 
+            globalThis.DX_INSERT,
+            {
+                sign:this.settings.sign, 
+                encrypt:this.settings.encrypt,
+                to:this.endpoint, 
+                type:this.settings.type, 
+                end_of_scope: this.settings.end_of_scope,
+                sid: this.settings.sid,
+                return_index: this.settings.intermediate_result ? Datex.Compiler.getNextReturnIndexForSID(this.settings.sid) : 0,
+                __v2:compiler_v2,
+                required_plugins:extensions
+            }
+        ], this.endpoint, this.settings.sid);
+    }
+
+    private async sendDatexV2(request:string, extensions?:string[]) {
+        const compiler_v2 = this.settings.compiler_version == 1;
+        
+        const dxb = await Datex.Compiler.compile(request, [], {
+            sign:this.settings.sign, 
+                encrypt:this.settings.encrypt,
+                to:this.endpoint, 
+                type:this.settings.type, 
+                end_of_scope: this.settings.end_of_scope,
+                sid: this.settings.sid,
+                return_index: this.settings.intermediate_result ? Datex.Compiler.getNextReturnIndexForSID(this.settings.sid) : 0,
+                __v2:compiler_v2,
+                required_plugins:extensions
+        })
+        console.log("DXB",dxb)
+        const res = await DATEX.runtime.execute(dxb);
+        console.log("RES",res)
+        return res
+    } 
+
+    async sendDatexRequest(request:string, extensions?:string[]) {
         this._first = true;
 
         try {
-            // todo send to right receiver
-            const result = await Datex.Runtime.datexOut([
-                request, 
-                globalThis.DX_INSERT,
-                {
-                    sign:this.settings.sign, 
-                    encrypt:this.settings.encrypt,
-                    to:this.endpoint, 
-                    type:this.settings.type, 
-                    end_of_scope: this.settings.end_of_scope,
-                    sid: this.settings.sid,
-                    return_index: this.settings.intermediate_result ? Datex.Compiler.getNextReturnIndexForSID(this.settings.sid) : 0,
-                    __v2:v2,
-                    required_plugins:extensions
-                }
-            ], this.endpoint, this.settings.sid);
-            
+            const result = await (this.settings.runtime_version == 0 ? this.sendDatexV1(request, extensions) : this.sendDatexV2(request, extensions))
+
             // output global result
             if (result!==Datex.VOID) this.log_buffer.log({data:[await this.format_output(result)], meta: {prepend:"result =", format:"ansi"}});
         }
@@ -374,7 +412,9 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
 
         if (!this.monaco) {
             this.monaco = await MonacoHandler.createTab(this.code_el, null, true);
-            this.monaco.loadText(this.options.content, "datex");
+            const options = {mouseWheelZoom:false};
+            if (this.options.simple_view) options.lineNumbers = "off"
+            this.monaco.loadText(this.options.content, "datex", options);
 
             // save when DATEX Script code changed
             this.monaco.addChangeListener(()=>{

@@ -2035,7 +2035,7 @@ export namespace Elements {
 		private drawBackground(){
 			this.context.clearRect(0, 0, this.width, this.height);
 
-			let gradient = this.context.createConicGradient(0, this.outerRadius, this.outerRadius);
+			const gradient = this.context.createConicGradient(0, this.outerRadius, this.outerRadius);
 			gradient.addColorStop(0, "rgb(255, 0, 0)");
 			gradient.addColorStop(0.15, "rgb(255, 0, 255)");
 			gradient.addColorStop(0.33, "rgb(0, 0, 255)");
@@ -2043,6 +2043,16 @@ export namespace Elements {
 			gradient.addColorStop(0.67, "rgb(0, 255, 0)");
 			gradient.addColorStop(0.84, "rgb(255, 255, 0)");
 			gradient.addColorStop(1, "rgb(255, 0, 0)");
+
+			// TODO: revert, only fixes safari
+			// const gradient = this.context.createConicGradient(0, this.outerRadius, this.outerRadius);
+			// gradient.addColorStop(0.75, "rgb(255, 0, 0)");
+			// gradient.addColorStop(0.9, "rgb(255, 0, 255)");
+			// gradient.addColorStop(0.18, "rgb(0, 0, 255)");
+			// gradient.addColorStop(0.34, "rgb(0, 255, 255)");
+			// gradient.addColorStop(0.52, "rgb(0, 255, 0)");
+			// gradient.addColorStop(0.69, "rgb(255, 255, 0)");
+			// gradient.addColorStop(0.75, "rgb(255, 0, 0)");
 
 			this.context.fillStyle = gradient; 
 			this.context.fillRect(0, 0, this.width, this.height);

@@ -4,6 +4,9 @@
  * https://www.w3schools.com/tags/
  */
 
+import type { Datex } from "unyt_core/datex.ts";
+import type { primitive } from "unyt_core/types/abstract_types.ts"
+
 
 // general html specific types
 
@@ -12,7 +15,6 @@ type integerString = `${bigint}`
 type htmlNumber = numberString|number|bigint
 type htmlPixels = integerString|number|bigint
 type htmlColor = ""
-
 
 // list of all event handler content attributes
 export const elementEventHandlerAttributes = [
@@ -28,7 +30,7 @@ export const defaultElementAttributes = [
 
 // custom attribute values for default attributes (default: string)
 type customDefaultAttributeValues = {
-	"uix-module": string|URL,
+	"uix-module": string|URL|null,
 	"shadow-root": boolean|'open'|'closed',
 	"datex-pointer": boolean
 }
@@ -71,8 +73,11 @@ const alt = "alt" as const;
 /** list of all allowed attributes for HTML elements */
 export const htmlElementAttributes = {
 
+	// TODO replace valueOut, ... with value:out
+
 	a: ["href", "target"],
-	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value"],
+
+	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"]
 
@@ -101,7 +106,10 @@ export type htmlElementAttributeValues = {
 		required: boolean
 		size: htmlNumber,
 		step: htmlNumber,
-		type: "button"|"checkbox"|"color"|"date"|"datetime-local"|"email"|"file"|"hidden"|"image"|"month"|"number"|"password"|"radio"|"range"|"reset"|"search"|"submit"|"tel"|"text"|"time"|"url"|"week"
+		type: "button"|"checkbox"|"color"|"date"|"datetime-local"|"email"|"file"|"hidden"|"image"|"month"|"number"|"password"|"radio"|"range"|"reset"|"search"|"submit"|"tel"|"text"|"time"|"url"|"week",
+
+		value: primitive,
+		valueOut: Datex.Pointer,
 	}
 	img: widthAndHeight & src &  {
 		crossorigin: "anonymous"|"use-credentials"

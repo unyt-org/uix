@@ -18,7 +18,7 @@ export namespace Clipboard {
 	}
 
 	export function putDatexValue(value:any){
-		return putDatex('application/datex-value', Datex.Compiler.encodeValue(value, undefined, true, true, true, true))
+		return putDatex('application/datex-value', Datex.Compiler.encodeValue(value, undefined, true, true, true, false))
 	}
 
 	export function putDatexPointer(value:any){

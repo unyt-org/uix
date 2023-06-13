@@ -7,7 +7,7 @@ import { Theme } from "../base/theme.ts";
 import { HTMLUtils } from "../html/utils.ts";
 import { Elements } from "../elements/main.ts";
 import { Types } from "../utils/global_types.ts";
-import { pointer, props, text, transform } from "unyt_core/datex_short.ts";
+import { always, pointer, props, text, transform } from "unyt_core/datex_short.ts";
 import { DragGroup } from "./drag_group.ts";
 import { constructor, Datex, property, sync } from "unyt_core";
 import { NodeGroup } from "./node_group.ts";
@@ -39,7 +39,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                 text: S('copy'),
                 icon: I('fas-copy'),
                 shortcut: 'copy',
-                handler: async ()=>{
+                handler: ()=>{
                     Clipboard.putDatexValue(this);
                     // let els = this.parent instanceof DragGroup ? this.parent.getSelectedElements() : [this];
                     // for (let el of els) {
@@ -48,16 +48,44 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                     // }
                 }
             },
+            cut: {
+                text: S('cut'),
+                icon: I('fas-scissors'),
+                shortcut: 'cut',
+                handler: ()=>{
+                    Clipboard.putDatexValue(this);
+                    if (this.parent instanceof DragGroup) {
+                        this.parent.removeSelectedElements();
+                        this.parent.content_container.focus()
+                    }
+                    else this.remove();
+                }
+            },
             delete: {
                 text: S('delete'),
                 shortcut: 'delete',
                 handler: ()=>{
-                    if (this.parent instanceof DragGroup) this.parent.removeSelectedElements();
+                    if (this.parent instanceof DragGroup) {
+                        this.parent.removeSelectedElements();
+                        this.parent.content_container.focus()
+                    }
                     else this.remove();
                 }
             },
+            // just to focus parent
+            paste: {
+                text: S('paste'),
+                icon: I('fas-paste'),
+                shortcut: 'paste',
+                handler: (x,y) => {
+                    if (this.parent instanceof DragGroup) {
+                        this.parent.handlePaste(x,y)
+                        this.parent.content_container.focus()
+                    }
+                }
+            },
             toggle: {
-                text: transform([this.options_props.expanded], (v) => v ? S('collapse') : S('expand')) ,
+                text: always(()=>this.options.$.expanded.val ? S('collapse') : S('expand')),
                 shortcut: 'enter',
                 handler: ()=>{
                     if (this.parent instanceof NodeGroup) this.parent.toggleCollapseSelectedElements();
@@ -69,8 +97,8 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
     protected override onRemove() {
         // remove connections
-        for (let connector of this.connectors) {
-            for (let connection of NodeGroup.connections_by_connector.get(connector)??[]) {
+        for (const connector of this.connectors) {
+            for (const connection of NodeGroup.connections_by_connector.get(connector)??[]) {
                 NodeGroup.deleteConnection(connection);
             }
         }
@@ -104,7 +132,20 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         // load fields + connectors
         if (this.options.items) this.loadItems();
 
-        this.addEventListener("dblclick", ()=>this.toggleCollapse());
+        this.addEventListener("dblclick", () => this.toggleCollapse());
+
+        let timeout:number|undefined;
+        let lastTap = 0;
+        this.addEventListener('touchend', () => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            clearTimeout(timeout);
+            if (tapLength < 250 && tapLength > 0) {
+                this.toggleCollapse()
+            }
+            lastTap = currentTime;
+        });
+        
 
         this.updateConnectors()
 
@@ -118,7 +159,9 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         
         // add title
         if (this.options.title) {
+            const prev = this.collapsed_title_div;
             this.collapsed_title_div = this.generateCollapsedTitleContent();
+            if (prev) prev.replaceWith(this.collapsed_title_div);
             // update collapsed title?
             if (this.collapsed_title_div && !this.options.expanded) {
                 this.title_div.replaceWith(this.collapsed_title_div);
@@ -146,6 +189,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
             this.constraints.y += this.height/2
         }
 
+        this.collapsed_title_div = this.generateCollapsedTitleContent();
         // try to load the collapsed title div
         if (this.collapsed_title_div) {
             this.title_div.replaceWith(this.collapsed_title_div);
@@ -233,17 +277,25 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
     protected updateConnectors(){
         let left_connectors = 0,
             right_connectors = 0,
+            top_connectors = 0,
+            bottom_connectors = 0,
             left_index = 0,
             right_index = 0,
-            height = 0;
+            top_index = 0,
+            bottom_index = 0,
+            height = 0,
+            width = 0;
 
         // get number of connectors on each side if collapsed
         if (!this.options.expanded) {
             for (const connector of this.connectors) {
                 if (connector.position == Node.CONNECTOR_POSITION.LEFT) left_connectors++;
                 else if (connector.position == Node.CONNECTOR_POSITION.RIGHT) right_connectors++;
+                else if (connector.position == Node.CONNECTOR_POSITION.TOP) top_connectors++;
+                else if (connector.position == Node.CONNECTOR_POSITION.BOTTOM) bottom_connectors++;
             }
             height = this.offsetHeight;
+            width = this.offsetWidth;
         }
 
         // update each connector
@@ -263,12 +315,19 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
                         
                         // handle collapsed node
                         else {
-                            if (connector.position == Node.CONNECTOR_POSITION.LEFT) connector.translate =  height * (++left_index/(left_connectors+1));
+                            if (connector.position == Node.CONNECTOR_POSITION.LEFT) connector.translate = height * (++left_index/(left_connectors+1));
                             else connector.translate = height * (++right_index/(right_connectors+1));
                         }
                     }
-                    else
-                        connector.translate = Node.connector_item_elements.get(connector)!.offsetLeft + Node.connector_item_elements.get(connector)!.offsetWidth/2 - dom_element.offsetWidth/2 + 15; // TODO why +15 ?
+                    else {
+                        if (this.options.expanded) connector.translate = Node.connector_item_elements.get(connector)!.offsetLeft + Node.connector_item_elements.get(connector)!.offsetWidth/2 - dom_element.offsetWidth/2 + 15; // TODO why +15 ?
+                        // handle collapsed node
+                        else {
+                            if (connector.position == Node.CONNECTOR_POSITION.BOTTOM) connector.translate = width * (++bottom_index/(bottom_connectors+1));
+                            else connector.translate = width * (++top_index/(top_connectors+1));
+                        }
+                    }
+                        
             }
 
             // right position
@@ -286,7 +345,7 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
             else if (connector.position == Node.CONNECTOR_POSITION.BOTTOM) {
                 dom_element.style.bottom = '0';
                 dom_element.style.setProperty(this.connectorAlignToPosition(connector.align??Node.CONNECTOR_ALIGN.START, false), connector.translate+'px');
-                dom_element.style.transform = connector.align==Node.CONNECTOR_ALIGN.END ? 'translate(5px, 5px)':'translate(-5px, -5px)' // correct translation
+                dom_element.style.transform = connector.align==Node.CONNECTOR_ALIGN.END ? 'translate(5px, 5px)':'translate(-5px, 5px)' // correct translation
 
             }
             else if (connector.position == Node.CONNECTOR_POSITION.TOP) {
@@ -334,9 +393,9 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
     }
 
     // remove item = dom element + connectors (+ connections)
-    public removeItem(element:HTMLElement) 
-    public removeItem(index:number) 
-    public removeItem(label:string) 
+    public removeItem(element:HTMLElement): void
+    public removeItem(index:number): void
+    public removeItem(label:string): void
     public removeItem(identifier:string|number|HTMLElement) {
         let item:Node.item_data;
 
@@ -375,8 +434,8 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
         }
 
         // remove connections + connectors
-        for (let connector of item.connectors) {
-            for (let connection of NodeGroup.connections_by_connector.get(connector)??[]) {
+        for (const connector of item.connectors) {
+            for (const connection of NodeGroup.connections_by_connector.get(connector)??[]) {
                 NodeGroup.deleteConnection(connection);
             }
             Node.connector_dom_elements.get(connector).remove();
@@ -391,9 +450,9 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
     // add item dom + save item data in items array, initialize connectors
     addItem(item_data:Node.item_data, focus = false, save = true) {
-        item_data = pointer(item_data);
+        item_data = $$(item_data);
 
-        const generated_content = this.generateItemContent(item_data, props(item_data).value, focus);
+        const generated_content = this.generateItemContent(item_data, item_data.$.value, focus);
         let content_element:HTMLElement;
         let options: {wrap:boolean} = {wrap: true};
 
@@ -496,13 +555,14 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
     }
 
     getCollapseToggleButton(){
-        const chevron = text();
+        const chevron = text("x");
         this.collapse_toggle = new Elements.ToggleButton({
             content: chevron, 
-            checked: <Datex.Value<boolean>> this.options_props.expanded,
+            checked: <Datex.Value<boolean>> this.options.$.expanded,
             onChange: checked => {
-                chevron.value = checked ? I('fas-chevron-down') : I('fas-chevron-right');
-                this.toggleCollapse();
+                chevron.val = checked ? I('fas-chevron-down') : I('fas-chevron-right');
+                if (this.options.expanded) this.expand(true);
+                else this.collapse(true);
             }
         }).css({
             'background':'none',
@@ -541,14 +601,14 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
         const items = {};
         let index = 0;
-        for (let item of this.options.items) {
+        for (const item of this.options.items??[]) {
             let item_data: {node:Node, connection:NodeConnection}[];
 
             own_connectors:
-            for (let connector of item.connectors) {
+            for (const connector of item.connectors) {
                 // does own connector match options?
                 if (own_options) {
-                    for (let [key, value] of Object.entries(own_options)) {
+                    for (const [key, value] of Object.entries(own_options)) {
                         if (value instanceof Array && !value.includes(connector.options?.[key])) continue own_connectors;
                         if (!(value instanceof Array) && value !== connector.options?.[key]) continue own_connectors;
                     }
@@ -556,11 +616,11 @@ export class Node<O extends Node.Options=Node.Options> extends Base<O> {
 
                 // go through all connections for this connector
                 other_connectors:
-                for (let connection of NodeGroup.connections_by_connector.get(connector) || []) {
+                for (const connection of NodeGroup.connections_by_connector.get(connector) || []) {
                     const other_connector = connection.c1 == connector ? connection.c2 : connection.c1;
                     // does other_connector match options?
                     if (other_options) {
-                        for (let [key, value] of Object.entries(other_options)) {
+                        for (const [key, value] of Object.entries(other_options)) {
                             if (value instanceof Array && !value.includes(other_connector.options?.[key])) continue other_connectors;
                             if (!(value instanceof Array) && value !== other_connector.options?.[key]) continue other_connectors;
                         }
@@ -658,20 +718,20 @@ export namespace Node {
 
 @sync("uix:NodeConnector") export class NodeConnector<OPTIONS extends object = any> {
     
-    @property declare position: CONNECTOR_POSITION;
-    @property declare align: CONNECTOR_ALIGN;
+    @property declare position: Node.CONNECTOR_POSITION;
+    @property declare align: Node.CONNECTOR_ALIGN;
     @property declare options: OPTIONS;
 
     active?: boolean;
     translate?: number;
 
     constructor(
-        position?: CONNECTOR_POSITION,
-        align?: CONNECTOR_ALIGN,
+        position?: Node.CONNECTOR_POSITION,
+        align?: Node.CONNECTOR_ALIGN,
         options?: OPTIONS
     ){}
     
-    @constructor construct(position:CONNECTOR_POSITION, align: CONNECTOR_ALIGN, options:OPTIONS) {
+    @constructor construct(position:Node.CONNECTOR_POSITION, align: Node.CONNECTOR_ALIGN, options:OPTIONS) {
         this.position = position;
         this.align = align;
         this.options = options;
@@ -725,7 +785,7 @@ export namespace Node {
     y_start:number
     y_end:number
 
-    get start_facing(){return this.getFacing(this.c1?.position ?? this.temp_c1?.position ?? CONNECTOR_POSITION.RIGHT)}
+    get start_facing(){return this.getFacing(this.c1?.position ?? this.temp_c1?.position ?? Node.CONNECTOR_POSITION.RIGHT)}
     // c2 facing or temp c2 facing opposite c1 facing
     get end_facing(){return this.c2?.position==undefined ? 
         (this.temp_c2?.position==undefined ? {x:-this.start_facing.x, y:-this.start_facing.y} : this.getFacing(this.temp_c2.position)) :
@@ -736,12 +796,12 @@ export namespace Node {
     get delta_y(){return this.y_end - this.y_start}
 
     // get {x,y} from CONNECTOR_POSITION
-    private getFacing(position: CONNECTOR_POSITION): {x:number, y:number} {
+    private getFacing(position: Node.CONNECTOR_POSITION): {x:number, y:number} {
         switch (position) {
-            case CONNECTOR_POSITION.RIGHT: return {x:1, y:0};
-            case CONNECTOR_POSITION.LEFT: return {x:-1, y:0};
-            case CONNECTOR_POSITION.TOP: return {x:0, y:-1};
-            case CONNECTOR_POSITION.BOTTOM: return {x:0, y:1};
+            case Node.CONNECTOR_POSITION.RIGHT: return {x:1, y:0};
+            case Node.CONNECTOR_POSITION.LEFT: return {x:-1, y:0};
+            case Node.CONNECTOR_POSITION.TOP: return {x:0, y:-1};
+            case Node.CONNECTOR_POSITION.BOTTOM: return {x:0, y:1};
             default: return {x:1, y:0};
         }
     }
@@ -850,8 +910,8 @@ export namespace Node {
         this.max_y = Math.max(this.max_y, ...new_ys)
         this.min_y = Math.min(this.min_y, ...new_ys)
 
-        let w = (this.max_x-this.min_x+this.offset*2);
-        let h = (this.max_y-this.min_y+this.offset*2)
+        const w = (this.max_x-this.min_x+this.offset*2);
+        const h = (this.max_y-this.min_y+this.offset*2)
 
         // invalid
         if (isNaN(this.min_x) || !isFinite(this.min_x) || isNaN(this.max_x) || !isFinite(this.max_x) ||
@@ -967,7 +1027,7 @@ export namespace Node {
         line.setAttribute('y1',y_start.toString());
         line.setAttribute('x2',x_end.toString());
         line.setAttribute('y2',y_end.toString());
-        line.setAttribute("stroke", this.options.line_color)
+        line.setAttribute("stroke", this.options.line_color!)
         line.setAttribute("stroke-linecap", "round");
         line.setAttribute("stroke-width", this.options.line_width+"px")
         if (this.options.line_style == NodeConnection.LINE_STYLE.DASHED) line.setAttribute("stroke-dasharray", "10,4")
@@ -982,21 +1042,53 @@ export namespace Node {
         x_end   = this.getSvgX(this.x_end),
         y_end   = this.getSvgY(this.y_end);
 
-        const factor = 0.5;
+        const facing_opposite = this.start_facing.x == -this.end_facing.x && this.start_facing.y == -this.end_facing.y;
+        const facing_horizontal = facing_opposite && this.start_facing.x != 0;
 
-        let p1_x    = x_end - (x_end-x_start)*factor,
-            p1_y    = y_start,
-            p2_x    = x_start + (x_end-x_start)*factor,
-            p2_y    = y_end;
-
-        let path = document.createElementNS('http://www.w3.org/2000/svg','path');
-        path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
-        path.setAttribute("stroke", this.options.line_color)
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute("stroke", this.options.line_color!)
         path.setAttribute("fill", "transparent")
         path.setAttribute("stroke-linecap", "round");
         path.setAttribute("stroke-width", this.options.line_width+"px")
         if (this.options.line_style == NodeConnection.LINE_STYLE.DASHED) path.setAttribute("stroke-dasharray", "10,4")
         else if (this.options.line_style == NodeConnection.LINE_STYLE.DOTTED) path.setAttribute("stroke-dasharray", `1,4`)
+
+        if (facing_opposite) {
+            const factor = 0.5;
+            
+            // -_
+            if (facing_horizontal) {
+                const p1_x  = x_end - (x_end-x_start)*factor,
+                    p1_y    = y_start,
+                    p2_x    = x_start + (x_end-x_start)*factor,
+                    p2_y    = y_end;
+
+                path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
+            }
+
+            // '.
+            else {
+                const p1_x  = x_start,
+                    p1_y    = y_start + (y_end-y_start)*factor,
+                    p2_x    = x_end,
+                    p2_y    = y_end - (y_end-y_start)*factor;
+
+                path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
+            }
+
+        }
+
+        else {
+            const factor = 1;
+
+            const p1_x  = x_start + (x_end-x_start)*factor,
+                p1_y    = y_start,
+                p2_x    = x_end,
+                p2_y    = y_end - (y_end-y_start)*factor;
+            path.setAttribute('d',`M ${x_start} ${y_start} C ${p1_x} ${p1_y}, ${p2_x} ${p2_y}, ${x_end} ${y_end}`);
+
+        }
+
 
         this.element.append(path);
     }
@@ -1130,7 +1222,7 @@ export namespace Node {
         }
 
         path.setAttribute('d', path_string);
-        path.setAttribute("stroke", this.options.line_color);
+        path.setAttribute("stroke", this.options.line_color!);
         path.setAttribute("stroke-linecap", "round");
         path.setAttribute("fill", "transparent");
         path.setAttribute("stroke-width", this.options.line_width+"px");
@@ -1199,10 +1291,10 @@ export namespace NodeConnection {
         group[Datex.DX_IGNORE] = true;
 
         // add temporarily to dom to get bounding box size
-        let tempDiv = document.createElement('div')
+        const tempDiv = document.createElement('div')
         tempDiv.setAttribute('style', "position:absolute; visibility:hidden; width:0; height:0")
         document.body.appendChild(tempDiv)
-        let tempSvg = document.createElementNS("http://www.w3.org/2000/svg", 'svg')
+        const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", 'svg')
         tempDiv.appendChild(tempSvg)
         tempSvg.appendChild(group)
         group_boxes.set(group, group.getBBox())

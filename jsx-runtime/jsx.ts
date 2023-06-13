@@ -15,11 +15,17 @@ export function escapeString(string:string) {
 	return {[JSX_INSERT_STRING]:true, val:string};
 }
 
-export function jsx (type: string | any, config: Record<string,any>): Element {
+export function jsx (type: string | any, config: Record<string,any>): Element|DocumentFragment {
 
 	let element:Element;
-	if (!(config.children instanceof Array)) config.children = [config.children];
+	if ('children' in config && !(config.children instanceof Array)) config.children = [config.children];
 	let { children = [], ...props } = config
+
+	// _debug property to debug jsx
+	if (props._debug) {
+		delete props._debug;
+		console.log(type,children,props,config)
+	}
 
 	for (let i=0; i<children.length; i++) {
 		const child = children[i];
@@ -73,14 +79,18 @@ export function jsx (type: string | any, config: Record<string,any>): Element {
 	}
 
 	if (set_default_attributes) {
+		let module = (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'];
+		// ignore module of is explicitly module===null, otherwise fallback to getCallerFile
+		if (module === undefined) module = getCallerFile();
+		
 		for (let [attr,val] of Object.entries(props)) {
 			if (attr == "style" && (element as HTMLElement).style) UIX.HTMLUtils.setCSS(element as HTMLElement, <any> val);
 			else {
-				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../"))) {
+				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../")) && module !== null) {
 					// TODO: remove 'module'
-					val = new Path(val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile()).toString();
+					val = new Path(val, module).toString();
 				}
-				const valid_attr = UIX.HTMLUtils.setElementAttribute(element, attr, <any>val, (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'] ?? getCallerFile());
+				const valid_attr = UIX.HTMLUtils.setElementAttribute(element, attr, <any>val, module);
 				if (!allow_invalid_attributes && !valid_attr) throw new Error(`Element attribute "${attr}" is not allowed for <${element.tagName.toLowerCase()}>`)
 			}
 		}
@@ -201,7 +211,7 @@ declare global {
 
 		// Common attributes of the standard HTML elements and JSX components
 		type IntrinsicAttributes = {
-			style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number>>>,
+			style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number|undefined>>>,
 		} & htmlAttrs<validHTMLElementAttrs>
 
 		// Common attributes of the UIX components only

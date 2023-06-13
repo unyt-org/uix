@@ -86,7 +86,6 @@ class UIXApp {
 	}
 
 	public async start(options:app_options = {}, base_url?:string|URL) {
-
 		const n_options = <normalized_app_options> {};
 		
 		// determine base url

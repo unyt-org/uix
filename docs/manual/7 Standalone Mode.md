@@ -26,16 +26,16 @@ Any other values, like variables from the module or global scope are not availab
 
 @Component
 export class ButtonComponent extends BaseComponent {
-	// standalone properties
-	@standalone clickCounter = 0;
-	@standalone @id count = <span>{this.options.text}</span>;
-	@standalone @content button = <button onclick={()=>this.handleClick()}>I was clicked {this.count} times</button>;
+    // standalone properties
+    @standalone clickCounter = 0;
+    @standalone @id count = <span>{this.options.text}</span>;
+    @standalone @content button = <button onclick={()=>this.handleClick()}>I was clicked {this.count} times</button>;
 
-	@standalone handleClick() {
-		// standalone context: only standalone properties are available
-		this.clickCounter++;
-		this.count.innerText = this.clickCounter.toString();
-	}
+    @standalone handleClick() {
+        // standalone context: only standalone properties are available
+        this.clickCounter++;
+        this.count.innerText = this.clickCounter.toString();
+    }
 }
 ```
 
@@ -54,9 +54,9 @@ They must be explicitly enabled with `@standalone`.
 @Component
 export class ButtonComponent extends BaseComponent {
 
-	@standalone override onDisplay() {
-		console.log("displayed in standalone mode: " + this.standalone)
-	}
+    @standalone override onDisplay() {
+        console.log("displayed in standalone mode: " + this.standalone)
+    }
 
 }
 ```
@@ -72,10 +72,10 @@ If you want to use JSX, you need to explicitly import the UIX JSX Runtime:
 @Component
 export class ButtonComponent extends BaseComponent {
 
-	@standalone override async onDisplay() {
-		await import("uix/jsx-runtime/jsx.ts");
-		this.append(<div>Content</div>)
-	}
+    @standalone override async onDisplay() {
+        await import("uix/jsx-runtime/jsx.ts");
+        this.append(<div>Content</div>)
+    }
 
 }
 
@@ -90,11 +90,11 @@ import { UIX } from "uix";
 @Component
 export class ButtonComponent extends BaseComponent {
 
-	@standalone override async onDisplay() {
-		// explict import in standalone mode
-		const { UIX } = await import("uix");
-		UIX.Theme.setMode("dark");
-	}
+    @standalone override async onDisplay() {
+        // explict import in standalone mode
+        const { UIX } = await import("uix");
+        UIX.Theme.setMode("dark");
+    }
 
 }
 
@@ -110,14 +110,14 @@ This means that when the HTML element was created on the backend, the event hand
 ```tsx
 // backend/entrypoint.ts
 export default UIX.renderStatic(
-	<input type="button" value="Click me" onclick={()=>console.log("called on the backend")}/>
+    <input type="button" value="Click me" onclick={()=>console.log("called on the backend")}/>
 )
 ```
 
 ```tsx
 // backend/entrypoint.ts
 export default (
-	<input type="button" value="Click me" onclick={()=>console.log("also called on the backend")}/>
+    <input type="button" value="Click me" onclick={()=>console.log("also called on the backend")}/>
 )
 ```
 
@@ -126,7 +126,7 @@ When the element is created on the frontend, the handler is called on the fronte
 ```tsx
 // frontend/entrypoint.ts
 export default (
-	<input type="button" value="Click me" onclick={()=>console.log("called on the frontend")}/>
+    <input type="button" value="Click me" onclick={()=>console.log("called on the frontend")}/>
 )
 ```
 
@@ -136,7 +136,7 @@ handler with `UIX.inDisplayContext()`:
 ```tsx
 // backend/entrypoint.ts
 export default (
-	<input type="button" value="Click me" onclick={UIX.inDisplayContext(()=>console.log("always called on the frontend"))}/>
+    <input type="button" value="Click me" onclick={UIX.inDisplayContext(()=>console.log("always called on the frontend"))}/>
 )
 ```
 
@@ -144,7 +144,7 @@ When an element in a component is decorated with `@standalone`, all handlers for
 ```tsx
 // backend/MyComponent.ts
 export class MyComponent extends UIX.BaseComponent {
-	@standalone button = <button onclick={()=>console.log("click handler in standalone mode, called in the browser context")}>Click Me!</button>
+    @standalone button = <button onclick={()=>console.log("click handler in standalone mode, called in the browser context")}>Click Me!</button>
 }
 ```
 
@@ -156,22 +156,22 @@ Component methods decorated with `@bindOrigin` are always executed in the origin
 // backend/MyComponent.ts
 export class MyComponent extends UIX.BaseComponent {
 
-	// standalone functionality - available in the browser standalone context
-	@standalone button = <button onclick={()=>this.clickHandler()}>Click Me!</button>
+    // standalone functionality - available in the browser standalone context
+    @standalone button = <button onclick={()=>this.clickHandler()}>Click Me!</button>
 
-	// clickHandler is executed in the backend context, but can be called from the
-	// standalone context
-	@bindOrigin clickHandler {
-		console.log("button was clicked");
-		this.clicks++;
-		this.internalHander();
-	}
-	
-	// internal component functionality in the backend context
-	clicks = 0
-	internalHandler() {
-		console.log("doing internal stuff on the backend")
-	}
+    // clickHandler is executed in the backend context, but can be called from the
+    // standalone context
+    @bindOrigin clickHandler {
+        console.log("button was clicked");
+        this.clicks++;
+        this.internalHander();
+    }
+    
+    // internal component functionality in the backend context
+    clicks = 0
+    internalHandler() {
+        console.log("doing internal stuff on the backend")
+    }
 
 }
 ```

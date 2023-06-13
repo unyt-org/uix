@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-namespace
 import { Datex, property, props, text } from "unyt_core";
-import { UIX, I, S, SVAL } from "uix";
+import { UIX, I, S, SVAL, IEL, unsafeHTML } from "uix";
 import MonacoHandler from "../code_editor/monaco.ts";
 import { logger } from "../../utils/global_values.ts";
 
@@ -48,13 +48,13 @@ export class DatexDataFlowViewer extends UIX.Components.List {
             id: index,
             title:`${type} ${header.sender}`,
             body: [
-                outgoing ? I('fa-arrow-right') :  I('fa-arrow-left'), 
-                `<span style='display: flex;align-items:center;justify-content:space-between'><b>${type}</b><span>${encrypted}${unsigned}</span></span>`,
-                `<span style='font-family:Menlo, Monaco, "Courier New", monospace;'>${endpoint}</span>`,
-                `<span style='display: flex; justify-content: end;'>${scope_id}</span>`,
-                `<span style='color:var(--text_color_light);display: flex; justify-content: end;'>${header.return_index}</span>`,
-                `<span style='color:var(--text_color_light);display: flex; justify-content: end;'>${header.inc}</span>`,
-                `<span style='color:var(--text_color_light)'>${time}</span>`,
+                outgoing ? IEL('fa-arrow-right') :  IEL('fa-arrow-left'), 
+                HTML`<span style='display: flex;align-items:center;justify-content:space-between'><b>${type}</b><span>${unsafeHTML(encrypted)}${unsafeHTML(unsigned)}</span></span>` as HTMLElement,
+                HTML`<span style='font-family:Menlo, Monaco, "Courier New", monospace;'>${unsafeHTML(endpoint)}</span>` as HTMLElement,
+                HTML`<span style='display: flex; justify-content: end;'>${scope_id}</span>` as HTMLElement,
+                HTML`<span style='color:var(--text_color_light);display: flex; justify-content: end;'>${header.return_index}</span>` as HTMLElement,
+                HTML `<span style='color:var(--text_color_light);display: flex; justify-content: end;'>${header.inc}</span>` as HTMLElement,
+                HTML`<span style='color:var(--text_color_light)'>${time}</span>` as HTMLElement,
              ]  
         })
     }

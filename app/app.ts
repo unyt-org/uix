@@ -11,9 +11,10 @@ import { UIX_CACHE_PATH } from "../utils/constants.ts";
 let live_frontend:boolean|undefined = false;
 let watch:boolean|undefined = false;
 let watch_backend:boolean|undefined = false;
+let http_via_datex: boolean|undefined = true;
 
 if (globalThis.Deno) {
-	({ live_frontend, watch, watch_backend } = (await import("../utils/args.ts")))
+	({ live_frontend, watch, watch_backend, http_via_datex } = (await import("../utils/args.ts")))
 }
 
 const logger = new Datex.Logger("UIX App");
@@ -58,9 +59,11 @@ class UIXApp {
 
 	frontends = new Map<string, FrontendManager>()
 	#ready_handlers = new Set<()=>void>();
+	#ready = false;
 
 	public onReady(handler:()=>void) {
-		this.#ready_handlers.add(handler);
+		if (this.#ready) handler();
+		else this.#ready_handlers.add(handler);
 	}
 
 	public ready = new Promise<void>(resolve=>this.onReady(()=>resolve()))
@@ -210,12 +213,18 @@ class UIXApp {
 			server.path("/.dx", Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true).replace('"##location##"', '#location'), 'text/datex')
 		}
 
-		await import("./http_over_datex.ts")
+
+		// enable HTTP-over-DATEX
+		if (server && http_via_datex) {
+			const {HTTP} = await import("./http_over_datex.ts")
+			HTTP.setServer(server);
+		}
 		
 		try {
 			for (const handler of this.#ready_handlers) await handler();
 		}
 		catch {}
+		this.#ready = true;
 	}
 
 }

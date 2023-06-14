@@ -11,10 +11,10 @@ import { UIX_CACHE_PATH } from "../utils/constants.ts";
 let live_frontend:boolean|undefined = false;
 let watch:boolean|undefined = false;
 let watch_backend:boolean|undefined = false;
-let http_via_datex: boolean|undefined = true;
+let http_over_datex: boolean|undefined = true;
 
 if (globalThis.Deno) {
-	({ live_frontend, watch, watch_backend, http_via_datex } = (await import("../utils/args.ts")))
+	({ live_frontend, watch, watch_backend, http_over_datex } = (await import("../utils/args.ts")))
 }
 
 const logger = new Datex.Logger("UIX App");
@@ -215,7 +215,7 @@ class UIXApp {
 
 
 		// enable HTTP-over-DATEX
-		if (server && http_via_datex) {
+		if (server && http_over_datex) {
 			const {HTTP} = await import("./http_over_datex.ts")
 			HTTP.setServer(server);
 		}

@@ -22,7 +22,7 @@ export class HTMLProvider {
 
 	resolveImport(path:string|URL, compat_import_map?:boolean, map_to_web_path = true):string {
 		// uix:// paths are absolute web paths without a domain -> return absolute path without protocol
-		if (path instanceof URL && path.protocol == "uix:") return path.pathname;
+		if (path instanceof URL && path.protocol == "uix:") return path.pathname + path.search;
 		// first try to resolve import specifiers
 		const resolved = compat_import_map && !Path.pathIsURL(path) ? this.import_resolver.resolveImportSpecifier(path.toString(), this.base_path) : path.toString();
 		// make sure all paths are converted to web paths

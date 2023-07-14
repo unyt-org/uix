@@ -1,3 +1,4 @@
+import { Path } from "unyt_node/path.ts";
 import { IS_HEADLESS } from "./constants.ts";
 
 // fake CSSStyleDeclaration element with proxy to update css property names
@@ -158,15 +159,22 @@ export function addStyleSheetLink(element:HTMLElement|ShadowRoot, url:string|URL
 
         // onload not working with JSDom
         if (IS_HEADLESS) {
+
+            // handle non existing css file -> try to fetch corresponding scss file
+            const path = new Path(url);
+            if (path.ext == "css" && !path.fs_exists && path.getWithFileExtension("scss").fs_exists) {
+                url = path.getWithFileExtension("scss");
+            }
+
             (async ()=>{
                 try {
                     if ((await fetch(url)).ok) {
                         element.appendChild(link);
                         resolve(link);
                     }
-                    else reject("Failed to load stylesheet " + url);
+                    else reject("Backend failed to load stylesheet " + url);
                 }
-                catch {reject("Failed to load stylesheet " + url);}
+                catch {reject("Backend failed to load stylesheet " + url);}
             })()   
         }
     })
@@ -174,8 +182,11 @@ export function addStyleSheetLink(element:HTMLElement|ShadowRoot, url:string|URL
 
 const globalStyleSheets = new Set<string>();
 
-export async function addGlobalStyleSheetLink(url:URL) {
-    if (document.head.querySelector('link[href="'+url+'"]') || globalStyleSheets.has(url.toString())) return;
+export async function addGlobalStyleSheetLink(url:URL, scope?:string) {
+    if (scope) url = new URL(url + '?scope=' + scope); // add scope query parameter
+    // removes origin, if current origin (to match style sheet hrefs from SSR)
+    const normalizedUrl = url.origin === window.location.origin ? url.pathname + url.search : url.toString()
+    if (document.head.querySelector('link[href="'+normalizedUrl+'"]') || globalStyleSheets.has(url.toString())) return;
     const link = await addStyleSheetLink(document.head, url);
     link.classList.add("global-style");
     globalStyleSheets.add(url.toString())
@@ -187,5 +198,6 @@ export function getGlobalStyleSheetLinks() {
 	document.head.querySelectorAll(".global-style").forEach(el=>{
         if (el instanceof HTMLLinkElement) urls.add(el.href)
     })
+
     return urls;
 }

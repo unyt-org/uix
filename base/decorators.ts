@@ -121,6 +121,7 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 		})
 
 		// define custom DOM element after everything is initialized
+		// TODO: rename, also in BaseComponent.ts
 		if (component_class.prototype instanceof BaseComponent) window.customElements.define("uix2-" + name, component_class)
 		else window.customElements.define("uix-" + name, component_class)
 		

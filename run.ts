@@ -19,6 +19,7 @@ import { command_line_options, root_path } from "./utils/args.ts";
 const reload = command_line_options.option("reload", {type:"boolean", aliases:["r"]})
 const enableTLS = command_line_options.option("enable-tls", {type:"boolean"})
 const inspect = command_line_options.option("inspect", {type:"boolean"})
+const unstable = command_line_options.option("unstable", {type:"boolean"})
 
 const deno_config_path = getExistingFile(root_path, './deno.json');
 
@@ -62,6 +63,10 @@ if (reload) {
 
 if (inspect) {
 	cmd.push("--inspect");
+}
+
+if (unstable) {
+	cmd.push("--unstable");
 }
 
 if (deno_config_path) {

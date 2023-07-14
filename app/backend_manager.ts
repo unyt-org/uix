@@ -1,7 +1,7 @@
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, normalized_app_options } from "./app.ts";
 import {Path} from "unyt_node/path.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
-import { resolveEntrypointRoute, html_content, html_content_or_generator_or_preset, RenderMethod, RenderPreset, raw_content } from "../html/rendering.ts";
+import { resolveEntrypointRoute, html_content, html_content_or_generator_or_preset, RenderMethod, RenderPreset, raw_content, PageProvider } from "../html/rendering.ts";
 import { logger } from "../utils/global_values.ts";
 import { Context, ContextGenerator, HTMLUtils } from "../uix_all.ts";
 import { getOuterHTML } from "../html/render.ts";
@@ -18,6 +18,8 @@ export class BackendManager {
 	#web_path: Path
 	#entrypoint?: Path
 	#web_entrypoint?: Path
+	#pagesDir?: Path
+	virtualEntrypointContent?: string;
 	#watch: boolean
 
 	get watch() {return this.#watch}
@@ -39,14 +41,24 @@ export class BackendManager {
 
 	constructor(app_options:normalized_app_options, scope:Path, base_path:URL, watch = false){
 		this.#scope = scope;
-		this.#base_path = base_path;
+		this.#base_path = new Path(base_path);
 		this.#watch = watch;
 
 		this.#web_path = new Path(`uix://${this.srcPrefix}${this.#scope.name}/`);
 		try {
 			const entrypoint_path = getExistingFileExclusive(this.#scope, ...ALLOWED_ENTRYPOINT_FILE_NAMES);
-			this.#entrypoint = entrypoint_path ? new Path(entrypoint_path) : undefined;
-			this.#web_entrypoint = this.#entrypoint ? this.#web_path.getChildPath(this.#entrypoint.name).replaceFileExtension("dx", "dx.ts") : undefined;
+
+			if (entrypoint_path) {
+				this.#entrypoint = new Path(entrypoint_path);
+				this.#web_entrypoint = this.#web_path.getChildPath(this.#entrypoint.name).replaceFileExtension("dx", "dx.ts");
+			}
+			// no entrypoint, but pages directory mapping
+			else if (app_options.pages) {
+				this.#pagesDir = app_options.pages;
+				this.virtualEntrypointContent = "console.warn('UIX.PageProvider cannot yet be mapped from the backend')"; // TODO UIX.PageProvider
+				this.#web_entrypoint = this.#web_path.getChildPath("entrypoint.ts"); // virtual entrypoint, has no corresponding file in backend dir
+			}
+
 		}
 		catch {
 			logger.error("Only one of the following entrypoint files can exists in a directory: " + ALLOWED_ENTRYPOINT_FILE_NAMES.join(", "));
@@ -76,6 +88,13 @@ export class BackendManager {
 		if (this.#entrypoint) {
 			const module = this.#module = <any> await datex.get(this.#entrypoint);
 			this.#content_provider = module.default ?? (Object.getPrototypeOf(module) !== null ? module : null);
+			// default ts export, or just the result if DX and not ts module
+			await resolveEntrypointRoute(this.#content_provider); // load fully
+			return this.#content_provider;
+		}
+		else if (this.#pagesDir) {
+			logger.info(`Using ${this.#pagesDir} as pages for backend entrypoint`)
+			this.#content_provider = new PageProvider(this.#pagesDir);
 			// default ts export, or just the result if DX and not ts module
 			await resolveEntrypointRoute(this.#content_provider); // load fully
 			return this.#content_provider;

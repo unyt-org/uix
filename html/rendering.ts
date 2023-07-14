@@ -2,7 +2,7 @@ import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import { Path } from "unyt_node/path.ts";
 import { $$, Datex } from "unyt_core";
 import { UIX } from "../uix.ts";
-import { logger } from "../uix_all.ts";
+import { ALLOWED_ENTRYPOINT_FILE_NAMES, logger } from "../uix_all.ts";
 import { URLMatch } from "../base/context.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
 import { indent } from "../utils/indent.ts";
@@ -180,6 +180,9 @@ export interface RouteHandler {
 }
 
 
+/**
+ * Provide static files, backend only
+ */
 export class FileProvider implements RouteHandler {
 
 	#path: Path
@@ -199,6 +202,47 @@ export class FileProvider implements RouteHandler {
 	}
 }
 
+export class PageProvider implements RouteHandler {
+
+	#path: Path
+
+	get path() {return this.#path}
+
+	constructor(path:Path.representation) {
+		this.#path = new Path(path, getCallerFile());
+		if (this.#path.fs_is_dir) this.#path = this.#path.asDir()
+	}
+
+	getRoute(route: Path.route_representation, context: UIX.Context): UIX.Entrypoint|Promise<UIX.Entrypoint> {
+		return this.#findValidEntrypoint(
+			this.#path.getChildPath(route).asDir(), 
+			ALLOWED_ENTRYPOINT_FILE_NAMES
+		) 
+	}
+
+	async #findValidEntrypoint(parentDir: Path, names: string[], redirectRoute:string[] = []) {
+		for (const name of names) {
+			try {
+				const entrypoint = (await datex.get<any>(parentDir.getChildPath(name)))!.default as UIX.Entrypoint;
+				// resolve route for entrypoint
+				if (redirectRoute.length) {
+					const [content, _render_method] = await resolveEntrypointRoute(entrypoint, Path.Route(redirectRoute));
+					return content as UIX.Entrypoint;
+				}
+				// return entrypoint directly
+				return entrypoint;
+			}
+			catch {}
+		}
+
+		// no entrypoint in directory, find entrypoint in parent directory
+		if (parentDir.parent_dir.toString() !== parentDir.toString()) {
+			redirectRoute.unshift(parentDir.name);
+			return this.#findValidEntrypoint(parentDir.parent_dir, names, redirectRoute)
+		}
+	}
+		
+}
 
 /**
  * transforms entrypoint content to a new entrypoint content
@@ -367,7 +411,6 @@ function reconstructMatchedURL(input:string, match:URLPatternResult) {
 
 
 export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false, return_first_routing_handler = false): Promise<[get_content<T>, get_render_method<T>, boolean, Path.Route|undefined]> {
-	
 	if (!context) {
 		context = new UIX.Context()
 		if (route) context.path = route.routename
@@ -400,7 +443,9 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	// @ts-ignore
 	else if (typeof entrypoint?.getRoute == "function") {
 		if (typeof context == "function") context = context();
-		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await (<RouteHandler>entrypoint).getRoute(route, context), route, context, only_return_static_content, return_first_routing_handler)
+		const route2 = await (<RouteHandler>entrypoint).getRoute(route, context);
+		route = Path.Route("/"); // route completely resolved by getRoute
+		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(route2, route, context, only_return_static_content, return_first_routing_handler)
 	}
 	
 	// path object
@@ -477,8 +522,9 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	else {
 		// non routing handler content
 		collapsed = await entrypoint;
-		// @ts-ignore
-		if (typeof collapsed?.resolveRoute !== "function") remaining_route = Path.Route("/");
+		// @ts-ignore TODO: is this if condition required? currently commented out, because paths are overriden incorrectly
+		if (typeof collapsed?.resolveRoute !== "function") 
+			remaining_route = Path.Route("/");
 	}
 
 	// only load once in recursive calls when deepest level reached
@@ -573,6 +619,7 @@ async function resolveRouteForRouteManager(routeManager: RouteManager, route:Pat
  */
 export async function refetchRoute(route: Path.route_representation, entrypoint: Entrypoint, context?:UIX.Context) {
 	const route_path = Path.Route(route);
+
 	const [routing_handler, _render_method, _loaded, remaining_route] = await resolveEntrypointRoute(entrypoint, route_path, context, false, true);
 	if (!remaining_route) throw new Error("could not reconstruct route " + route_path.routename);
 	

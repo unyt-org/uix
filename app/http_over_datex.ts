@@ -23,7 +23,7 @@ logger.success("enabled");
 				respondWith: async (r: Response | PromiseLike<Response>) => {
 					r = await r;
 					resolve({
-						body: await this.streamToBuffer(r.body),
+						body: await this.streamToBuffer(r.body,request),
   						bodyUsed: r.bodyUsed,
 						headers: Object.fromEntries(r.headers.entries()),
 						ok: r.true,
@@ -39,11 +39,31 @@ logger.success("enabled");
 		
 	}
 
-	private static async streamToBuffer(stream: ReadableStream) {
+	private static async streamToBuffer(stream: ReadableStream, request: Request) {
 		if (!stream) return stream;
 		
+		const parts = []
 		for await (const chunk of stream) {
-			return new Uint8Array(chunk)
+			parts.push(new Uint8Array(chunk))
 		}
+		
+		return this.concat(parts)
 	}
+
+	private static concat(arrays:Uint8Array[]) {
+		if (arrays.length == 1) return arrays[0];
+		
+		const totalLength = arrays.reduce((acc, value) => acc + value.length, 0);
+		const result = new Uint8Array(totalLength);
+	  
+		if (!arrays.length) return result;
+
+		let length = 0;
+		for (const array of arrays) {
+		  result.set(array, length);
+		  length += array.length;
+		}
+	  
+		return result;
+	  }
 }

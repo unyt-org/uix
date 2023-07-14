@@ -55,8 +55,17 @@ type Equals<X, Y> =
     (<T>() => T extends X ? 1 : 2) extends
     (<T>() => T extends Y ? 1 : 2) ? true : false;
 
-export type elementGenerator<Options extends Record<string,any>, Children, handleAllProps = true, childrenAsArray = false> =
-	(props: JSX.DatexValueObject<Options> & (handleAllProps extends true ? (JSX.IntrinsicAttributes & (Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: childrenAsArray extends true ? childrenToArray<Children> : Children}))) : unknown)) => Element;
+export type elementGenerator<Options extends Record<string,any>, Children, handleAllProps = true, childrenAsArray = false, Context = unknown> =
+	(
+		this: Context,
+		props: JSX.DatexValueObject<Options> & 
+			(
+				handleAllProps extends true ? 
+					(JSX.IntrinsicAttributes & 
+						(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: childrenAsArray extends true ? childrenToArray<Children> : Children}))
+					) : unknown
+			)
+	) => Element;
 
 
 /**
@@ -90,7 +99,7 @@ export type elementGenerator<Options extends Record<string,any>, Children, handl
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise>(elementGenerator:elementGenerator<Options, never, false>):elementGenerator<Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise, Context = unknown>(elementGenerator:elementGenerator<Options, never, false, false, Context>):elementGenerator<Options, Children>&((cl:typeof HTMLElement)=>any)
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * Default HTML Attributes defined in JSX are also set for the root element.
@@ -108,7 +117,7 @@ export function template(templateOrGenerator:Element|elementGenerator<any, any, 
 	let generator:any;
 	const module = getCallerFile();
 
-	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any) {
+	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
 		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
@@ -116,7 +125,8 @@ export function template(templateOrGenerator:Element|elementGenerator<any, any, 
 		}
 		// jsx
 		else {
-			return templateOrGenerator(propsOrClass);
+			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass)
+			else return templateOrGenerator(propsOrClass);
 		}
 	}
 	else generator = function(propsOrClass:any) {

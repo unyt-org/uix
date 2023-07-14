@@ -79,7 +79,8 @@ export const htmlElementAttributes = {
 
 	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
-	template: ["shadowrootmode"]
+	template: ["shadowrootmode"],
+	iframe: [src]
 
 } as const satisfies {[key in keyof HTMLElementTagNameMap]?: readonly string[]};
 
@@ -120,7 +121,9 @@ export type htmlElementAttributeValues = {
 	},
 	template: {
 		shadowrootmode: 'open'|'closed'
-	}
+	},
+
+	iframe: src
 }
 
 

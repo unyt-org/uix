@@ -683,7 +683,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     private loadTemplate() {
         if ((<typeof BaseComponent> this.constructor).template) {
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
-            const template = (<typeof BaseComponent> this.constructor).template!(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options);
+            const templateFn = (<typeof BaseComponent> this.constructor).template!;
+            const template = templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this);
             HTMLUtils.append(this, template);
         }
     }
@@ -1068,6 +1069,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
                 try {
                     await this.insertStyleSheetLink(url_or_style_sheet);
                 } catch (e) {
+                    //console.debug(e);
                     if (!allow_fail) throw e;
                 }
             })()
@@ -1081,7 +1083,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     protected async insertStyleSheetLink(url:URL) {
         if (this.shadowRoot) await addStyleSheetLink(this.shadowRoot, url);
-        return addGlobalStyleSheetLink(url);
+        const tagName = "uix2-"  + String(this.constructor.name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // TODO: rename
+        return addGlobalStyleSheetLink(url, tagName);
     }
 
     /** shadow dom specific methods */
@@ -1181,7 +1184,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
                 // relative web path (@...)
                 url = App.filePathToWebPath(url);
             }
-            html += `<link rel=stylesheet href="${url}">`;
+            html += `<link rel="stylesheet" href="${url}">`;
         }
 
         // noscript fallback style

@@ -57,6 +57,12 @@ export class FrontendManager extends HTMLProvider {
 
 		// generate entrypoint.ts interface for backend
 		if (this.#backend?.web_entrypoint && this.#backend.entrypoint) this.handleOutOfScopePath(this.#backend.entrypoint, this.scope, new Set(["*"]), false, true);
+		// bind virtual backend entrypoint
+		if (this.#backend?.web_entrypoint && this.#backend?.virtualEntrypointContent) {
+			const path = this.resolveImport(this.#backend?.web_entrypoint);
+			//console.log("PATH:" + this.resolveImport(this.#backend?.web_entrypoint))
+			this.server.path(path, this.#backend.virtualEntrypointContent, 'text/javascript')
+		}
 	}
 
 	initFrontendDir(){
@@ -109,7 +115,18 @@ export class FrontendManager extends HTMLProvider {
 	updateCheckEntrypoint(){
 		try {
 			const entrypoint_path = getExistingFileExclusive(this.scope, ...ALLOWED_ENTRYPOINT_FILE_NAMES);
-			this.#entrypoint = entrypoint_path ? this.#web_path.getChildPath(new Path(entrypoint_path).name) : undefined;
+
+			if (entrypoint_path) {
+				this.#entrypoint = this.#web_path.getChildPath(new Path(entrypoint_path).name);
+			}
+			// no entrypoint, but pages directory mapping
+			else if (this.app_options.pages) {
+				this.#entrypoint = this.#web_path.getChildPath("entrypoint.ts"); // virtual entrypoint, has no corresponding file in backend dir
+				const path = this.resolveImport(this.#entrypoint);
+				console.log("FRONTEND PATH:" + path)
+				this.transpiler.addVirtualFile(path, `import { UIX } from "uix"; export default new UIX.PageProvider("../pages/");`, true)
+			}
+
 		}
 		catch {
 			logger.error("Only one of the following entrypoint files can exists in a directory: " + ALLOWED_ENTRYPOINT_FILE_NAMES.join(", "));

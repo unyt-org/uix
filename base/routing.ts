@@ -173,7 +173,6 @@ export namespace Routing {
 			} 
 
 			const refetched_route = await refetchRoute(route, entrypoint);// Path.Route(await (<RouteManager>current_content).getInternalRoute());
-
 			// check of accepted route matches new calculated current_route
 			if (route_should_equal && !Path.routesAreEqual(route_should_equal, refetched_route)) {
 				logger.warn `new route should be "${Path.Route(route_should_equal).routename}", but was changed to "${refetched_route.routename}". Make sure getInternalRoute() and onRoute() are consistent in all components.`;

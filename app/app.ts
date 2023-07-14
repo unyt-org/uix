@@ -34,7 +34,8 @@ export type app_options = {
 	
 	frontend?: string|URL|(string|URL)[], // directory for frontend code
 	backend?:  string|URL|(string|URL)[] // directory for backend code
-	common?: string|URL|(string|URL)[] // directory with access from both frotend end backend code
+	common?: string|URL|(string|URL)[] // directory with access from both frontend end backend code
+	pages?: string|URL // common directory with access from both frontend end backend code - gets mapped per default with a UIX.PageProvider for all frontends and backends without a entrypoint
 
 	import_map_path?: string|URL, // custom importmap for the frontend
 	import_map?: {imports:Record<string,string>} // prefer over import map path
@@ -44,6 +45,7 @@ export interface normalized_app_options extends app_options {
 	frontend: Path[]
 	backend: Path[]
 	common: Path[],
+	pages?: Path
 	icon_path: string,
 
 	scripts: (Path|string)[],
@@ -82,6 +84,7 @@ class UIXApp {
 
 		if (!this.base_url) throw new Error("Cannot convert file path to web path - no base file path set");
 		const path = new Path(filePath, this.base_url);
+
 		// is /@uix/cache
 		if (path.isChildOf(UIX_CACHE_PATH)) return path.getAsRelativeFrom(UIX_CACHE_PATH).replace(/^\.\//, "/@uix/cache/");
 		// is /@uix/src
@@ -120,6 +123,18 @@ class UIXApp {
 		n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new Path(p,base_url)) : (new Path(options.frontend??'./frontend/', base_url).fs_exists ? [new Path(options.frontend??'./frontend/', base_url)] : []);
 		n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new Path(p,base_url)) :  (new Path(options.backend??'./backend/', base_url).fs_exists ? [new Path(options.backend??'./backend/', base_url)] : []);
 		n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new Path(p,base_url)) :   (new Path(options.common??'./common/', base_url).fs_exists ? [new Path(options.common??'./common/', base_url)] : []);
+		// pages dir or default pages dir
+		if (options.pages) n_options.pages = new Path(options.pages,base_url)
+		else {
+			const defaultPagesDir = new Path('./pages/', base_url);
+			if (defaultPagesDir.fs_exists) n_options.pages = defaultPagesDir;
+		}
+
+		// make sure pages are also a common dir (TODO: also option for only backend/frontend?)
+		if (n_options.pages) {
+			n_options.common.push(n_options.pages)
+		}
+
 		this.options = n_options;
 
 		if (!n_options.frontend.length) {
@@ -149,7 +164,7 @@ class UIXApp {
 			catch {}
 		}
 
-		// logger.info("options", {...n_options, import_map:{imports:n_options.import_map.imports}})
+		// logger.info("options", {...n_options})
 
 		// for unyt log
 		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:n_options.stage})

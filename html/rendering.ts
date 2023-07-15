@@ -1,6 +1,6 @@
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import { Path } from "unyt_node/path.ts";
-import { $$, Datex } from "unyt_core";
+import { $$, Datex, constructor } from "unyt_core";
 import { UIX } from "../uix.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, logger } from "../uix_all.ts";
 import { URLMatch } from "../base/context.ts";
@@ -10,6 +10,7 @@ import { indent } from "../utils/indent.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
 import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
+import { client_type } from "unyt_core/datex_all.ts";
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -202,20 +203,30 @@ export class FileProvider implements RouteHandler {
 	}
 }
 
+export const KEEP_CONTENT = Symbol("KEEP_CONTENT")
+
+
 export class PageProvider implements RouteHandler {
 
-	#path: Path
+	path!: Path
+	useDirective?: string
 
-	get path() {return this.#path}
-
-	constructor(path:Path.representation) {
-		this.#path = new Path(path, getCallerFile());
-		if (this.#path.fs_is_dir) this.#path = this.#path.asDir()
+	/**
+	 * 
+	 * @param path 
+	 * @param useDirective optional use directive required for a entrypoint to be loaded (e.g. "use backend")
+	 *	If a use directive is present in an entrypoint file, but not useDirective value is set, the entrypoint is not loaded.
+	 */
+	constructor(path:Path.representation, useDirective?: string) {
+		this.useDirective = useDirective;
+		this.path = new Path(path, getCallerFile());
+		if (this.path.fs_is_dir) this.path = this.path.asDir()
 	}
 
 	getRoute(route: Path.route_representation, context: UIX.Context): UIX.Entrypoint|Promise<UIX.Entrypoint> {
+		if (!this.path) return KEEP_CONTENT // loaded a PageProvider from backend, path not known, cannot resolve (TODO)
 		return this.#findValidEntrypoint(
-			this.#path.getChildPath(route).asDir(), 
+			this.path.getChildPath(route).asDir(), 
 			ALLOWED_ENTRYPOINT_FILE_NAMES
 		) 
 	}
@@ -223,9 +234,26 @@ export class PageProvider implements RouteHandler {
 	async #findValidEntrypoint(parentDir: Path, names: string[], redirectRoute:string[] = []) {
 		for (const name of names) {
 			try {
-				const entrypoint = (await datex.get<any>(parentDir.getChildPath(name)))!.default as UIX.Entrypoint;
+				const url = parentDir.getChildPath(name);
+				// make sure use directive matches
+				
+				// browser: fetch file only if useDirective is present in file, otherwise not found is returned
+				if (client_type == "browser") url.searchParams.append("useDirective", this.useDirective??"")
+				// deno: read file and check if use directive matches, otherwise return null
+				else {
+					if (url.fs_exists && !await PageProvider.useDirectiveMatchesForFile(url, this.useDirective)) {
+						console.log("use directive '" + (this.useDirective??'') + "' does not match for " + url)
+						return null;
+					}
+				}
+			
+				// make sure another directive
+
+				
+				const entrypoint = (await datex.get<any>(url))!.default as UIX.Entrypoint;
 				// resolve route for entrypoint
 				if (redirectRoute.length) {
+					// TODO: #14
 					const [content, _render_method] = await resolveEntrypointRoute(entrypoint, Path.Route(redirectRoute));
 					return content as UIX.Entrypoint;
 				}
@@ -240,6 +268,19 @@ export class PageProvider implements RouteHandler {
 			redirectRoute.unshift(parentDir.name);
 			return this.#findValidEntrypoint(parentDir.parent_dir, names, redirectRoute)
 		}
+	}
+
+	static async useDirectiveMatchesForFile(path: Path, directive?:string) {
+		const file = (await Deno.readTextFile(path.normal_pathname)).trimStart();
+		if (directive) {
+			// does not have the required use directive
+			if (!file.startsWith(`"use ${directive}"`)) return false;
+		} 
+		else {
+			// has a use directive, although know use directive should be present
+			if (file.match(/^"use [\w-]+"/)) return false;
+		}
+		return true;
 	}
 		
 }

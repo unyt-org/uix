@@ -55,7 +55,7 @@ export class BackendManager {
 			// no entrypoint, but pages directory mapping
 			else if (app_options.pages) {
 				this.#pagesDir = app_options.pages;
-				this.virtualEntrypointContent = "console.warn('UIX.PageProvider cannot yet be mapped from the backend')"; // TODO UIX.PageProvider
+				this.virtualEntrypointContent = "console.warn('UIX.PageProvider cannot yet be properly mapped from the backend'); export default {};"; // TODO UIX.PageProvider
 				this.#web_entrypoint = this.#web_path.getChildPath("entrypoint.ts"); // virtual entrypoint, has no corresponding file in backend dir
 			}
 

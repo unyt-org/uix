@@ -106,6 +106,16 @@ if (!IS_HEADLESS) {
 	if (!IS_HEADLESS && document.body.shadowRoot && !document.body.shadowRoot.querySelector("link[href='"+body_style_url+"']")) addStyleSheetLink(document.body.shadowRoot, body_style_url);
 }
 
+// uix.stage
+const stage = await datex`
+	function (options) (
+		use currentStage from #public.uix;
+
+		printf options;
+		always options.(currentStage) default @@local
+	);
+`
+
 @scope("uix") class UIXDatexScope {
     @expose static setMode(theme:"light"|"dark"){
         console.log("setting UIX mode: " + theme);
@@ -126,6 +136,10 @@ if (!IS_HEADLESS) {
     }
 
     @expose static LANG = "en";
+
+	@expose static stage = stage
+
+	@expose static currentStage = "dev"
 }
 globalThis.UIXDatexScope = UIXDatexScope
 

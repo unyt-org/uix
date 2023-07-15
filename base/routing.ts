@@ -2,7 +2,7 @@
 
 import { Path } from "unyt_node/path.ts";
 import { Logger } from "unyt_core/datex_all.ts";
-import { resolveEntrypointRoute, Entrypoint, html_content_or_generator, provideError, RenderMethod, refetchRoute } from "../html/rendering.ts";
+import { resolveEntrypointRoute, Entrypoint, html_content_or_generator, provideError, RenderMethod, refetchRoute, KEEP_CONTENT } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
 import { Datex } from "unyt_core/datex.ts";
 
@@ -50,18 +50,20 @@ export namespace Routing {
 		if (frontend_entrypoint || backend_entrypoint) {
 			enableFrontendRouting();
 		}
-		
+
 		const backend_available = backend_entrypoint ? await initEndpointContent(backend_entrypoint) : false;
 		const frontend_available = frontend_entrypoint ? await initEndpointContent(frontend_entrypoint) : false;
 		// no content for path found after initial loading
-		if (!frontend_available && !backend_available) {
+		if (!frontend_available && !backend_entrypoint) {
+		// TODO: should be 'if (!frontend_available && !backend_available) {'
+		// relaxed check only checks for any existing baclend entrypoint
 			document.body.innerHTML = await (await provideError("No content for this path")).text();
 		}
 	}
 
 	async function initEndpointContent(entrypoint:Entrypoint) {
 		const content = await getContentFromEntrypoint(entrypoint)
-		if (content != null) await setContent(content, entrypoint)
+		if (content != null && content !== KEEP_CONTENT) await setContent(content, entrypoint)
 		return content != null
 	}
 

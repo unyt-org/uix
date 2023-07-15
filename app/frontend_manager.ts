@@ -122,9 +122,8 @@ export class FrontendManager extends HTMLProvider {
 			// no entrypoint, but pages directory mapping
 			else if (this.app_options.pages) {
 				this.#entrypoint = this.#web_path.getChildPath("entrypoint.ts"); // virtual entrypoint, has no corresponding file in backend dir
-				const path = this.resolveImport(this.#entrypoint);
-				console.log("FRONTEND PATH:" + path)
-				this.transpiler.addVirtualFile(path, `import { UIX } from "uix"; export default new UIX.PageProvider("../pages/");`, true)
+				// TODO: custom pages name
+				this.transpiler.addVirtualFile('entrypoint.ts', `import { UIX } from "uix"; export default new UIX.PageProvider("../pages/", "frontend");`, true)
 			}
 
 		}

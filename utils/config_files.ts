@@ -5,10 +5,16 @@ import { command_line_options } from "./args.ts";
 const default_importmap = "https://cdn.unyt.org/importmap.json";
 const arg_import_map = command_line_options.option("import-map", {type:"URL", description: "Import map path"});
 
+export interface AppPlugin {
+	name: string
+	apply(data:any): Promise<void>|void
+}
+
+
 /**
  * get combined config of app.dx and deno.json and command line args
  */
-export async function getAppConfig(root_path:URL) {
+export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 	const config_path = getExistingFile(root_path, './app.dx', './app.json');
 	let config:Record<string,unknown> = {}
 	
@@ -18,6 +24,15 @@ export async function getAppConfig(root_path:URL) {
 			throw "Invalid config file"
 		}
 		config = Object.fromEntries(Datex.DatexObject.entries(<Record<string, unknown>>raw_config));
+
+		// handle plugins
+		if (plugins?.length) {
+			const pluginData = await datex.get<Record<string,any>>(config_path, undefined, undefined, plugins.map(p=>p.name));
+			for (const plugin of plugins) {
+				await plugin.apply(pluginData[plugin.name])
+			}
+		}
+
 	}
 	// else throw "Could not find an app.dx or app.json config file in the root directory " + root_path
 

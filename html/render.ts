@@ -6,7 +6,13 @@ import { indent } from "../utils/indent.ts";
 import type { HTMLProvider } from "./html_provider.ts";
 import { HTMLUtils } from "./utils.ts";
 import { COMPONENT_CONTEXT, STANDALONE } from "../snippets/bound_content_properties.ts";
-import { BACKEND_EXPORT } from "../app/interface_generator.ts";
+
+let stage:string|undefined = '?'
+
+if (globalThis.Deno) {
+	({ stage } = (await import("../utils/args.ts")))
+}
+
 
 await import("./deno_dom.ts");
 
@@ -316,7 +322,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 
 
 		// set app info
-		files += indent(4) `\n\nUIX.State._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${provider.app_options.stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")});`
+		files += indent(4) `\n\nUIX.State._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")});`
 
 		for (const file of js_files) {
 			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file, compat_import_map).toString()}");`

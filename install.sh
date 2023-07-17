@@ -1,11 +1,11 @@
 #!/bin/sh
 # Copyright 2023 unyt.org
-# Install: curl -s https://cdn.unyt.org/uix/install.sh | sh
+# Install: curl -s https://dev.cdn.unyt.org/uix/install.sh | sh
 
 #!/bin/bash
 
 # URL of the file to be downloaded
-uix_script_url="https://cdn.unyt.org/uix/run.sh"
+uix_script_url="https://dev.cdn.unyt.org/uix/run.sh"
 
 dest_dir="/usr/local/bin"
 file_name="uix"

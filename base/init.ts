@@ -10,10 +10,15 @@ import { State } from "./state.ts";
 import { Theme } from "./theme.ts";
 import { Datex, expose, scope } from "unyt_core";
 import { Actions } from "./actions.ts";
-import { Components } from "../components/main.ts";
 import { Debug } from "./debug.ts";
 import { UnytPen } from "./unyt_pen.ts";
 import { addStyleSheetLink } from "../uix_all.ts";
+
+let stage:string|undefined = '?'
+
+if (globalThis.Deno) {
+	({ stage } = (await import("../utils/args.ts")))
+}
 
 // enable DATEX CLI
 if (globalThis.Deno) Datex.enableCLI();
@@ -107,11 +112,9 @@ if (!IS_HEADLESS) {
 }
 
 // uix.stage
-const stage = await datex`
+const stageTransformFunction = await datex`
 	function (options) (
 		use currentStage from #public.uix;
-
-		printf options;
 		always options.(currentStage) default @@local
 	);
 `
@@ -137,9 +140,9 @@ const stage = await datex`
 
     @expose static LANG = "en";
 
-	@expose static stage = stage
+	@expose static stage = stageTransformFunction
 
-	@expose static currentStage = "dev"
+	@expose static currentStage = stage
 }
 globalThis.UIXDatexScope = UIXDatexScope
 

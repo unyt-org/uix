@@ -9,4 +9,4 @@ if ! [ -x "$(command -v git)" ]; then
 	deno upgrade --version 1.21.3
 fi
 
-deno run --allow-all --no-check -q https://cdn.unyt.org/uix/run.ts "$@"
+deno run --importmap https://dev.cdn.unyt.org/importmap.json -Aqr https://dev.cdn.unyt.org/uix/run.ts "$@"

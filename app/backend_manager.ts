@@ -1,4 +1,4 @@
-import { ALLOWED_ENTRYPOINT_FILE_NAMES, normalized_app_options } from "./app.ts";
+import { ALLOWED_ENTRYPOINT_FILE_NAMES } from "./app.ts";
 import {Path} from "unyt_node/path.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
 import { resolveEntrypointRoute, html_content, html_content_or_generator_or_preset, RenderMethod, RenderPreset, raw_content, PageProvider } from "../html/rendering.ts";
@@ -7,6 +7,7 @@ import { Context, ContextGenerator, HTMLUtils } from "../uix_all.ts";
 import { getOuterHTML } from "../html/render.ts";
 import { Datex } from "unyt_core";
 import { OPEN_GRAPH } from "../base/open_graph.ts";
+import type { normalized_app_options } from "./options.ts";
 
 
 export class BackendManager {
@@ -93,7 +94,7 @@ export class BackendManager {
 			return this.#content_provider;
 		}
 		else if (this.#pagesDir) {
-			logger.info(`Using ${this.#pagesDir} as pages for backend entrypoint`)
+			logger.debug(`Using ${this.#pagesDir} as pages for backend entrypoint`)
 			this.#content_provider = new PageProvider(this.#pagesDir);
 			// default ts export, or just the result if DX and not ts module
 			await resolveEntrypointRoute(this.#content_provider); // load fully

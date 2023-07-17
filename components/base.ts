@@ -1118,7 +1118,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     /**
      * add a default adopted CSSStyleSheet which is referenced by this.style
      */
-    protected addBaseStyle(){
+    private addBaseStyle(){
         this.adoptStyle(":host:host {}", true); // use ':host:host' for higher specificity (should behave like inline style)
     }
 

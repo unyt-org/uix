@@ -8,3 +8,5 @@ export const watch_backend = command_line_options.option("watch-backend", {alias
 export const live_frontend = command_line_options.option("live", {aliases:["l"],  type:"boolean", default: false, description: "Automatically reload connected browsers tabs when files are modified (also enables --watch)"});
 export const watch = command_line_options.option("watch", {aliases:["w"],  type:"boolean", default: false, description: "Recompile frontend scripts when files are modified"}) || live_frontend;
 export const http_over_datex = command_line_options.option("http-over-datex", {aliases:["hod"], type:"boolean", default: true, description: "Enable HTTP-over-DATEX"});
+
+export const stage = command_line_options.option("stage", {type:"string", default: "dev", description: "Current deployment stage"});

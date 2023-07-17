@@ -11,87 +11,81 @@
  *  - app.dx
  */
 
-import { Datex } from "https://dev.cdn.unyt.org/unyt_core/no_init.ts"; // required by getAppConfig
-import { getAppConfig } from "./utils/config_files.ts";
+import { Datex, datex } from "unyt_core/no_init.ts"; // required by getAppConfig
+
+import { getAppOptions } from "./utils/config_files.ts";
 import { getExistingFile } from "./utils/file_utils.ts";
-import { command_line_options, root_path } from "./utils/args.ts";
-
-const reload = command_line_options.option("reload", {type:"boolean", aliases:["r"]})
-const enableTLS = command_line_options.option("enable-tls", {type:"boolean"})
-const inspect = command_line_options.option("inspect", {type:"boolean"})
-const unstable = command_line_options.option("unstable", {type:"boolean"})
-
-const deno_config_path = getExistingFile(root_path, './deno.json');
+import { command_line_options, root_path, stage } from "./utils/args.ts";
+import { normalizeAppOptions, normalized_app_options } from "./app/options.ts";
+import { runLocal } from "./run-local.ts";
+import { runRemote } from "./run-remote.ts";
+import { GitDeployPlugin } from "./plugins/git-deploy.ts";
 
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
-const run_script_url = "app/run.ts";
+
+
+
+/**
+ * command line params + files
+ */
+export type runParams = {
+    reload: boolean | undefined;
+    enableTLS: boolean | undefined;
+    inspect: boolean | undefined;
+    unstable: boolean | undefined;
+    deno_config_path: string | URL | null;
+}
+
+const params: runParams = {
+	reload: command_line_options.option("reload", {type:"boolean", aliases:["r"]}),
+	enableTLS: command_line_options.option("enable-tls", {type:"boolean"}),
+	inspect: command_line_options.option("inspect", {type:"boolean"}),
+	unstable: command_line_options.option("unstable", {type:"boolean"}),
+
+	deno_config_path: getExistingFile(root_path, './deno.json')
+}
+
+/**
+ * Mock #public.uix
+ */
+await datex`
+	#public.uix = {
+		stage: function (options) (
+			options.${stage} default @@local
+		)
+	}
+`
 
 // find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
-const config = await getAppConfig(root_path);
-
-const importmap_path = <string> (<any> config.import_map_path)?.toString();
-const import_map = importmap_path ? JSON.parse(importmap_path.startsWith("http") ? await (await fetch(importmap_path)).text() : Deno.readTextFileSync(<string>config.import_map_path)) : config.import_map;
-const run_script_abs_url = import_map.imports?.['uix/'] + run_script_url;
+const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(root_path, [new GitDeployPlugin()]), root_path);
+await runBackends(options);
 
 
-// reload cache
-if (reload) {
-	const deno_lock_path = getExistingFile(root_path, './deno.lock');
-	if (deno_lock_path) {
-		console.log("removing " + deno_lock_path);
-		await Deno.remove(deno_lock_path)
+async function runBackends(options: normalized_app_options) {
+
+	for (const backend of options.backend) {
+		const dxFile = backend.getChildPath(".dx");
+		if (dxFile.fs_exists) {
+			try {
+				const dx = await datex.get(dxFile);
+				const requiredLocation = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
+				const stageEndpoint = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
+				let customDomain = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
+				if (customDomain === Datex.LOCAL_ENDPOINT) customDomain = undefined;
+
+				// run on a remote host
+				if (requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation.toString() !== Deno.env.get("UIX_HOST_ENDPOINT")) {
+					runRemote(params, new_base_url, options, backend, requiredLocation, stageEndpoint, customDomain);
+				}
+				// run locally
+				else {
+					runLocal(params, new_base_url, options)
+				}
+			}
+			catch (e) {
+				console.log(e)
+			}
+		}
 	}
 }
-
-// start actual deno process
-
-
-const config_params:string[] = [];
-
-const cmd = [
-	"deno",
-	"run",
-	"-Aq"
-];
-
-if (enableTLS) cmd.push("--unsafely-ignore-certificate-errors=localhost");
-
-if (reload) {
-	cmd.push("--reload");
-}
-
-if (inspect) {
-	cmd.push("--inspect");
-}
-
-if (unstable) {
-	cmd.push("--unstable");
-}
-
-if (deno_config_path) {
-	config_params.push("--config", deno_config_path instanceof URL && deno_config_path.protocol=="file:" ? deno_config_path.pathname : deno_config_path.toString())
-}
-if (config.import_map_path) {
-	config_params.push("--import-map", config.import_map_path instanceof URL && config.import_map_path.protocol=="file:" ? config.import_map_path.pathname : config.import_map_path.toString())
-}
-
-await run();
-
-async function run() {
-
-	const exitStatus = await Deno.run({
-		cmd: [
-			...cmd,
-			...config_params,
-			run_script_abs_url,
-			...config_params, // pass --import-map and --config also as runtime args to reconstruct the command when the backend restarts
-			...Deno.args,
-		]
-	}).status();
-	if (exitStatus.code == 42) {
-		console.log(".....");
-		await run();
-	}
-}
-

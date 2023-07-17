@@ -1,6 +1,7 @@
 import type { TypescriptImportResolver } from "unyt_node/ts_import_resolver.ts";
 import { Path } from "unyt_node/path.ts";
-import { App, normalized_app_options } from "../app/app.ts";
+import { App } from "../app/app.ts";
+import type { normalized_app_options } from "../app/options.ts";
 
 /**
  * base class for frontendmanager, can be used as standlone provider to generate HTML Pages

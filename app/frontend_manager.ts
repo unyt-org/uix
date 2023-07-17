@@ -4,7 +4,7 @@ import { TypescriptImportResolver } from "unyt_node/ts_import_resolver.ts";
 import { $$, Datex } from "unyt_core";
 import { Server } from "unyt_node/server.ts";
 import { UIX } from "../uix.ts";
-import { ALLOWED_ENTRYPOINT_FILE_NAMES, getDirType, normalized_app_options, validateDirExists } from "./app.ts";
+import { ALLOWED_ENTRYPOINT_FILE_NAMES, getDirType, validateDirExists } from "./app.ts";
 import { generateDTS, generateTS } from "./interface_generator.ts";
 import { Path } from "unyt_node/path.ts";
 import { BackendManager } from "./backend_manager.ts";
@@ -17,6 +17,7 @@ const {serveDir} = globalThis.Deno ? (await import("https://deno.land/std@0.164.
 import { UIX_CACHE_PATH } from "../utils/constants.ts";
 import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
 import { provideError, provideValue } from "../html/rendering.ts";
+import type { normalized_app_options } from "./options.ts";
 
 export class FrontendManager extends HTMLProvider {
 
@@ -373,7 +374,7 @@ export class FrontendManager extends HTMLProvider {
 
 		// imports changed, update file
 		if (changed) {
-			this.#logger.info(`exposed exports of ${this.getShortPathName(import_path)} have changed: ${new_combined_imports.size ? `\n#color(green)  + ${[...new_combined_imports].join(", ")}` :' '}${removed.size ? `\n#color(red)  - ${[...removed].join(", ")}` : ''}`)
+			this.#logger.info(`exposed exports of ${this.getShortPathName(import_path)}: ${new_combined_imports.size ? `\n#color(green)  + ${[...new_combined_imports].join(", ")}` :' '}${removed.size ? `\n#color(red)  - ${[...removed].join(", ")}` : ''}`)
 			await this.createTypescriptInterfaceFiles(web_path, import_path, import_pseudo_path, module_path, new_combined_imports)
 		}
 

@@ -1,6 +1,6 @@
 import {Datex} from "unyt_core";
 import {UIX} from "uix";
-import { getAppConfig } from "../utils/config_files.ts";
+import { getAppOptions } from "../utils/config_files.ts";
 import { root_path } from "../utils/args.ts";
 const logger = new Datex.Logger("UIX App Runner");
 
@@ -10,5 +10,5 @@ if (!globalThis.Deno) {
 }
 
 // get app.dx / app.json
-const config = await getAppConfig(root_path);
+const config = await getAppOptions(root_path);
 UIX.App.start(config, root_path)

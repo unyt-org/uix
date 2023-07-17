@@ -1091,7 +1091,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     /**
      * add a default adopted CSSStyleSheet which is referenced by this.shadowStyle
      */
-    protected addBaseStyle(){
+    private addBaseStyle(){
         this.adoptStyle(":host:host {}", true); // use ':host:host' for higher specificity (should behave like inline style)
     }
 

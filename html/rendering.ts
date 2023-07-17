@@ -242,7 +242,7 @@ export class PageProvider implements RouteHandler {
 				// deno: read file and check if use directive matches, otherwise return null
 				else {
 					if (url.fs_exists && !await PageProvider.useDirectiveMatchesForFile(url, this.useDirective)) {
-						console.log("use directive '" + (this.useDirective??'') + "' does not match for " + url)
+						// console.log("use directive '" + (this.useDirective??'') + "' does not match for " + url)
 						return null;
 					}
 				}
@@ -260,7 +260,14 @@ export class PageProvider implements RouteHandler {
 				// return entrypoint directly
 				return entrypoint;
 			}
-			catch {}
+			catch (e){
+				// Error 406, because the use directive of the file does not match
+				// -> don't go up further in the file tree, just stop here and return null content
+				// TODO: better way?
+				if (e.message.endsWith("(406)")) return null;
+				// Any other unexpected error besides 404/not found, throw error
+				if (!e.message.endsWith("(404)") && !e.message.includes("No such file or directory")) throw e;
+			}
 		}
 
 		// no entrypoint in directory, find entrypoint in parent directory

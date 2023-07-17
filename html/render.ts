@@ -322,7 +322,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 
 
 		// set app info
-		files += indent(4) `\n\nUIX.State._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")});`
+		files += indent(4) `\n\nUIX.State._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")${Datex.Unyt.endpoint_info.app?.host ? `, host:f("${Datex.Unyt.endpoint_info.app.host}")`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}});`
 
 		for (const file of js_files) {
 			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file, compat_import_map).toString()}");`

@@ -1,10 +1,12 @@
-import { OutputMode, exec as _exec } from "https://deno.land/x/exec/mod.ts";
+import { OutputMode, exec as _exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
+import { Path } from "unyt_node/path.ts";
 
 const CMD = {
 	GET_BRANCH: 'git rev-parse --abbrev-ref HEAD',
 	GET_ORIGIN: 'git config --get remote.origin.url',
 	GET_UNADDED_FILES: 'git ls-files --deleted --modified --others --exclude-standard -- :/',
 	GET_UNCOMMITTED_CHANGES: 'git diff HEAD  --name-only',
+	GET_ROOT_PATH: 'git rev-parse --show-toplevel',
 	GET_STATUS: 'git status'
 } as const;
 
@@ -29,6 +31,10 @@ export class GitRepo {
 		return this.branch
 	}
 
+	public async getRootPath() {
+		return Path.File(await exec(CMD.GET_ROOT_PATH)).asDir();
+	}
+
 	public async getUnaddedFiles() {
 		return await exec(CMD.GET_UNADDED_FILES);
 	}
@@ -50,6 +56,13 @@ export class GitRepo {
 	}
 
 
+	public async initWorkflowDirectory() {
+		// TODO: also support gitlab
+		const root = await this.getRootPath()
+		const workflowDir = root.getChildPath(".github/workflows").asDir();
+		if (!workflowDir.fs_exists) await Deno.mkdir(workflowDir, {recursive: true});
+		return workflowDir;
+	}
 	
 }
 

@@ -25,8 +25,8 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 		}
 		config = Object.fromEntries(Datex.DatexObject.entries(<Record<string, unknown>>raw_config));
 
-		// handle plugins
-		if (plugins?.length) {
+		// handle plugins (only if in dev environment, not on host, TODO: better solution)
+		if (plugins?.length && !Deno.env.has("UIX_HOST_ENDPOINT")) {
 			const pluginData = await datex.get<Record<string,any>>(config_path, undefined, undefined, plugins.map(p=>p.name));
 			for (const plugin of plugins) {
 				await plugin.apply(pluginData[plugin.name])

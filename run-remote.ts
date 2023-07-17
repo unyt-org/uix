@@ -14,7 +14,8 @@ enum ContainerStatus {
 	RUNNING = 2,
 	STOPPING = 3,
 	FAILED = 4,
-	INITIALIZING = 5
+	INITIALIZING = 5,
+	ONLINE = 6
 }
 
 
@@ -59,7 +60,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 
 	console.log('Deploying "'+options.name+'" ('+stage+')...');
 
-	const container = await datex `
+	const container = await datex<any> `
 		use ContainerManager from ${requiredLocation};
 		ContainerManager.createUIXAppContainer(
 			${repo.origin}, 
@@ -72,8 +73,18 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 	// logger.error(container)
 
 	// observe container status and exit
-	Datex.Value.observeAndInit(await datex `${container}->status`, (status: ContainerStatus) => {
-		if (status == ContainerStatus.RUNNING) {
+	Datex.Value.observeAndInit(await datex `${container}->status`, async (status: ContainerStatus) => {
+		// As soon as container is running, keep process alive, show remote container logs
+		if (!params.detach && status == ContainerStatus.RUNNING) {
+			const stream = (await container.getLogs());
+			// @ts-ignore TODO: only workaround, make persistent
+			globalThis.__stream = stream;
+
+			const logs = stream.getReader() as ReadableStreamDefaultReader;
+			streamLogs(logs)
+		}
+		// As soon as endpoint is online: don't stream logs, close process
+		else if (params.detach && status == ContainerStatus.ONLINE) {
 			console.log(ESCAPE_SEQUENCES.GREEN + stageEndpoint + (customDomain ? ` (https://${customDomain})` : '') +" is running on " + requiredLocation + ESCAPE_SEQUENCES.RESET);
 			Deno.exit(0)
 		}
@@ -83,4 +94,25 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 		}
 	})
 
+}
+
+function streamLogs(reader: ReadableStreamDefaultReader) {
+	function readStream() {
+		reader.read().then(({ done, value }) => {
+		  if (done) {
+			// Stream ended, exit the loop
+			console.log("Stream ended");
+			return;
+		  }
+	  
+		  // Process and print the data
+		  Deno.stdout.writeSync(value)
+	  
+		  // Continue reading the stream
+		  readStream();
+		});
+	  }
+	  
+	  // Start reading the stream
+	  readStream();
 }

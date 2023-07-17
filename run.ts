@@ -34,6 +34,7 @@ export type runParams = {
     enableTLS: boolean | undefined;
     inspect: boolean | undefined;
     unstable: boolean | undefined;
+	detach: boolean | undefined;
     deno_config_path: string | URL | null;
 }
 
@@ -42,6 +43,7 @@ const params: runParams = {
 	enableTLS: command_line_options.option("enable-tls", {type:"boolean"}),
 	inspect: command_line_options.option("inspect", {type:"boolean"}),
 	unstable: command_line_options.option("unstable", {type:"boolean"}),
+	detach: command_line_options.option("detach", {type:"boolean", aliases: ["d"], default: false}),
 
 	deno_config_path: getExistingFile(root_path, './deno.json')
 }

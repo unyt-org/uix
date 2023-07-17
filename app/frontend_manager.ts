@@ -108,6 +108,7 @@ export class FrontendManager extends HTMLProvider {
 
 		this.server = new Server(this.scope, {
 			resolve_index_html: false,
+			directory_indices: true,
 			cors: true,
 			transpilers
 		});

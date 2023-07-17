@@ -1,4 +1,4 @@
-import { Datex } from "unyt_core";
+import { Datex, f } from "unyt_core";
 
 import { FrontendManager } from "./frontend_manager.ts";
 import { BackendManager } from "./backend_manager.ts";
@@ -75,7 +75,7 @@ class UIXApp {
 		// logger.info("options", {...n_options})
 
 		// for unyt log
-		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:stage})
+		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:stage, host:f(Deno.env.get("UIX_HOST_ENDPOINT") as any), domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
 
 		// set .dx path to backend
 		if (n_options.backend.length) {

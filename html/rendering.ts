@@ -476,8 +476,8 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		collapsed = "";
 	}
 
-	// handle generator functions
-	else if (typeof entrypoint == "function") {
+	// handle generator functions (exclude class)
+	else if (typeof entrypoint == "function" && !/^\s*class/.test(entrypoint.toString())) {
 		if (typeof context == "function") context = context();
 		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await entrypoint(context!), route, context, only_return_static_content, return_first_routing_handler)
 	}

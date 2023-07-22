@@ -19,8 +19,9 @@ import { DX_IGNORE, INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css_style_compat.ts";
 import { indent } from "../utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize_js.ts";
-import { ORIGIN_PROPS, Theme, elementGenerator } from "../uix_all.ts"
+import { ORIGIN_PROPS, Theme, jsxInputGenerator } from "../uix_all.ts"
 import { bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
+import type { DynamicCSSStyleSheet } from "../utils/css_template_strings.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -34,7 +35,6 @@ export namespace BaseComponent {
         title?: string
     }
 }
-
 
 @template("uix:basecomponent") 
 export abstract class BaseComponent<O extends BaseComponent.Options = BaseComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends HTMLElement implements RouteManager {
@@ -625,7 +625,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     #anchor_lifecycle_ready_resolve?:Function
     #anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
 
-    private static template?:elementGenerator<any,any,any>
+    private static template?:jsxInputGenerator<Element,any,any,any>
+    private static style_template?:jsxInputGenerator<CSSStyleSheet,any,any,any>
 
     /**
      * Promise that resolves after onConstruct is finished
@@ -666,6 +667,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
             HTMLUtils.setElementAttribute(this, "class", this.options.$.class);
 
         this.loadTemplate();
+        this.loadDefaultStyle()
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in ShadowDOMComponent.init
         await this.init(true);
         await this.onConstructed?.();
@@ -675,11 +677,15 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     // called when created from saved state
     @replicator async replicate() {
         // this.loadTemplate();
+        this.loadDefaultStyle()
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
         await this.init();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
 
+    /**
+     * load template (@UIX.template)
+     */
     private loadTemplate() {
         if ((<typeof BaseComponent> this.constructor).template) {
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
@@ -689,9 +695,22 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         }
     }
 
+    /**
+     * load stylesheet from @UIX.style
+     */
+    private loadDefaultStyle() {
+        if ((<typeof BaseComponent> this.constructor).style_template) {
+            // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
+            const templateFn = (<typeof BaseComponent> this.constructor).style_template!;
+            const stylesheet = templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this) as DynamicCSSStyleSheet;
+            if (stylesheet.activate) stylesheet.activate(this.shadowRoot??document);
+            else this.addStyleSheet(stylesheet)
+        }
+    }
+
     private initOptions(options?: Datex.DatexObjectInit<O>){
         if (this.options) {
-            console.log("alread option");
+            console.log("already has options");
             return;
         }
         const default_options = (<any>this.constructor).DEFAULT_OPTIONS;

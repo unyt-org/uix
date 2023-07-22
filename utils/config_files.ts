@@ -1,6 +1,7 @@
 // no explicit imports, should also work without import maps...
 import {getExistingFile} from "./file_utils.ts";
 import { command_line_options } from "./args.ts";
+import { Path } from "unyt_node/path.ts";
 
 const default_importmap = "https://cdn.unyt.org/importmap.json";
 const arg_import_map = command_line_options.option("import-map", {type:"URL", description: "Import map path"});
@@ -19,6 +20,7 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 	let config:Record<string,unknown> = {}
 	
 	if (config_path) {
+
 		const raw_config = await datex.get(config_path);
 		if (typeof raw_config != "object" || !raw_config) {
 			throw "Invalid config file"
@@ -29,12 +31,14 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 		if (plugins?.length && !Deno.env.has("UIX_HOST_ENDPOINT")) {
 			const pluginData = await datex.get<Record<string,any>>(config_path, undefined, undefined, plugins.map(p=>p.name));
 			for (const plugin of plugins) {
-				await plugin.apply(pluginData[plugin.name])
+				if (pluginData[plugin.name]) {
+					await plugin.apply(pluginData[plugin.name])
+				}
 			}
 		}
 
 	}
-	// else throw "Could not find an app.dx or app.json config file in the root directory " + root_path
+	else throw "Could not find an app.dx or app.json config file in " + root_path.pathname
 
 	// set import map from deno.json if exists
 	const deno_path = getExistingFile(root_path, './deno.json');

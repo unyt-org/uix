@@ -214,6 +214,10 @@ export class FrontendManager extends HTMLProvider {
 			await this.createLiveScript()
 			this.handleFrontendReload() // reload frontends from before backend restart
 		}
+
+		if (this.app_options.expose_deno){
+			await this.createExposeDenoScript()
+		}
 	}
 
 	#backend_virtual_files = new Map<string, Map<string, Set<string>>>()
@@ -223,7 +227,7 @@ export class FrontendManager extends HTMLProvider {
 	// if no_side_effects is true, don't update any files
 	private async handleOutOfScopePath(import_path:Path|string, module_path:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean){
 		
-		if (typeof import_path == "string") return this.handleAtImport(import_path, module_path, imports, no_side_effects, compat);
+		if (typeof import_path == "string") return this.handleEndpointImport(import_path, module_path, imports, no_side_effects, compat);
 
 		// map .dx -> .dx.ts
 		let mapped_import_path = import_path;
@@ -242,14 +246,16 @@ export class FrontendManager extends HTMLProvider {
 
 				if (!no_side_effects) await this.updateBackendInterfaceFile(web_path, import_pseudo_path, import_path, module_path, imports);
 
-				return web_path
+				return this.normalizeImportFilExt(web_path);
 			}
 	
 			else if (import_type == "common") {
+
 				for (const [path, [transpiler, web_root_path]] of this.#common_transpilers) {
 					if (import_path.isChildOf(path)) {
+						// TODO: fix getDistPath for .dx files
 						const web_path = web_root_path + transpiler.getDistPath(import_path, false, false)?.getAsRelativeFrom(transpiler.dist_dir).slice(2);
-						return web_path
+						return this.normalizeImportFilExt(web_path);
 					}
 				}
 			}
@@ -263,12 +269,12 @@ export class FrontendManager extends HTMLProvider {
 					// add d.ts. TODO: fill with content
 					if (!no_side_effects) {
 						let dts = generateDTS(rel_path, rel_path, []);
-						dts += "\n// TODO: convert static dx to d.ts";
+						dts += "\n// TODO: convert static dx to d.ts\ndeclare const _default: any; export default _default;";
 						const actual_path = await this.transpiler.addVirtualFile(mapped_import_path.replaceFileExtension("ts", "d.ts"), dts, true);
 						this.app_options.import_map.addEntry(import_path,actual_path);
 					}
 					
-					return rel_path;
+					return this.normalizeImportFilExt(rel_path);
 				}
 				else if (module_type == "backend") {
 					return "[ERROR: TODO resolve frontend paths from backend dir]"
@@ -276,7 +282,17 @@ export class FrontendManager extends HTMLProvider {
 				// resolve from common
 				else if (module_type == "common") {
 					const web_path = this.srcPrefix + mapped_import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
-					return web_path
+					const rel_path = mapped_import_path.getAsRelativeFrom(module_path);
+
+					// add d.ts. TODO: fill with content
+					if (!no_side_effects) {
+						let dts = generateDTS(rel_path, rel_path, []);
+						dts += "\n// TODO: convert static dx to d.ts\ndeclare const _default: any; export default _default;";
+						const actual_path = await this.transpiler.addVirtualFile(mapped_import_path.replaceFileExtension("ts", "d.ts"), dts, true);
+						this.app_options.import_map.addEntry(import_path,actual_path);
+					}
+
+					return this.normalizeImportFilExt(web_path);
 				}
 
 			}
@@ -296,8 +312,14 @@ export class FrontendManager extends HTMLProvider {
 
 	}
 
+	/**
+	 * Removes the '.ts' extension from placeholder .dx.ts / .dxb.ts files 
+	 */
+	private normalizeImportFilExt(web_path: string) {
+		return web_path.replace(/\.dx.ts$/, '.dx').replace(/\.dxb.ts$/, '.dxb')
+	}
 
-	private async handleAtImport(specifier:string, module_path:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) {
+	private handleEndpointImport(specifier:string, module_path:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) {
 
 		const module_type = getDirType(this.app_options, module_path);
 
@@ -498,6 +520,22 @@ catch {
 		this.#client_scripts.push(this.debugPrefix+"live.ts")
 
 	}
+
+	private async createExposeDenoScript() {
+		if (!this.server) return;
+
+		this.#logger.success("exposing Deno namespace to frontend");
+		const {sharedDeno} = await import("./shared-deno.ts");
+
+		const script = `
+		${"import"} {datex} from "unyt_core";
+		globalThis.Deno = await datex \`${Datex.Pointer.getByValue(sharedDeno)?.idString()}\`
+		`
+		await this.transpiler.addVirtualFile(this.debugPrefix.slice(1)+"deno.ts", script);
+
+		this.#client_scripts.push(this.debugPrefix+"deno.ts")
+	}
+
 
 	#ignore_reload = false;
 

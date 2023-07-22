@@ -7,6 +7,7 @@ import { Path } from "unyt_node/path.ts";
 import { TypescriptImportResolver } from "unyt_node/ts_import_resolver.ts";
 import { ImportMap } from "unyt_node/importmap.ts";
 import type {Browser} from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
+import { App } from "../app/app.ts";
 
 const logger = new Datex.Logger("HTML Image Renderer");
 
@@ -40,7 +41,7 @@ const renderHTMLProvider = new HTMLProvider(new Path("/tmp"), {import_map}, new 
 	import_map
 }), false);
 
-type renderOptions = {
+export type renderOptions = {
 	width?: number,
 	height?: number,
 	scale?:number,
@@ -62,7 +63,7 @@ export async function renderHTMLAsImage(element: HTMLElement|DocumentFragment, o
 	const path = UIX_CACHE_PATH.getChildPath(name);
 
 	// preview image already cached
-	if (options?.useCache && path.fs_exists) return path;
+	if (options?.useCache && path.fs_exists) return App.filePathToWebPath(path, true);
 
 	const headless = !options?._debug;
 	const args = [
@@ -70,6 +71,7 @@ export async function renderHTMLAsImage(element: HTMLElement|DocumentFragment, o
 		'--disable-dev-shm-usage'
 	]
 	// use /usr/lib/chromium/chrome if installed in docker, otherwise install chromium with deno installer
+
 	const executablePath = Path.File("/usr/lib/chromium/chrome").fs_exists ? "/usr/lib/chromium/chrome" : undefined;
 
 	if (!browser) {
@@ -105,7 +107,8 @@ export async function renderHTMLAsImage(element: HTMLElement|DocumentFragment, o
 			browser = undefined;
 		}, 60_000)
 	}
-	return path;
+
+	return App.filePathToWebPath(path, true);
 }
 
 async function installPuppeteer(){

@@ -207,7 +207,7 @@ declare global {
 		// enable as workaround to allow {...[elements]} type checking to work correctly
 		// type childrenOrChildrenPromise = _childrenOrChildrenPromise|_childrenOrChildrenPromise[]
 
-		type htmlAttrs<T extends Record<string,unknown>> = DatexValueObject<Omit<Partial<T>, 'children'|'style'>>
+		type htmlAttrs<T extends Record<string,unknown>, allowPromises extends boolean = false> = DatexValueObject<Omit<Partial<T>, 'children'|'style'>, allowPromises>
 
 		// Common attributes of the standard HTML elements and JSX components
 		type IntrinsicAttributes = {
@@ -217,18 +217,18 @@ declare global {
 		// Common attributes of the UIX components only
 		interface IntrinsicClassAttributes<C extends BaseComponent> {}
 
-		type DatexValueObject<T extends Record<string|symbol,unknown>> = {
-			[key in keyof T]: T[key] extends (...args:any)=>any ? T[key] : Datex.CompatValue<T[key]>
+		type DatexValueObject<T extends Record<string|symbol,unknown>, allowPromises extends boolean = false> = {
+			[key in keyof T]: T[key] extends (...args:any)=>any ? T[key] : Datex.CompatValue<T[key]>|(allowPromises extends true ? Promise<Datex.CompatValue<T[key]>> : never)
 		}
 		
 		type IntrinsicElements = 
 		// html elements
 		{
-			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise} & htmlAttrs<validHTMLElementSpecificAttrs<key>>
+			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise} & htmlAttrs<validHTMLElementSpecificAttrs<key>, true>
 		} 
 		// svg elements
 		& {
-			readonly [key in keyof SVGElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise} & htmlAttrs<validSVGElementSpecificAttrs<key>>
+			readonly [key in keyof SVGElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise} & htmlAttrs<validSVGElementSpecificAttrs<key>, true>
 		} 
 		// other custom elements
 		& {

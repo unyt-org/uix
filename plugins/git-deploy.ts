@@ -38,30 +38,65 @@ export class GitDeployPlugin implements AppPlugin {
 				}
 			}
 
+
+			const testJob = {
+				'runs-on': 'ubuntu-latest',
+				steps: [
+					{
+						name: 'Checkout Repo',
+						uses: 'actions/checkout@v3'
+					},
+					{
+						name: 'Setup Deno',
+						uses: 'denoland/setup-deno@v1',
+						with: {
+							'deno-version': '1.32.5'
+						}
+					},
+					{
+						name: 'Run Tests',
+						run: 'deno run -Aq --import-map https://dev.cdn.unyt.org/importmap.json https://dev.cdn.unyt.org/unyt_tests/run.ts -s --reportfile testreport.xml'
+					},
+					{
+						name: 'Publish Test Report',
+						uses: 'mikepenz/action-junit-report@v3',
+						if: 'success() || failure()',
+						with: {
+							report_paths: 'testreport.xml'
+						}
+					}
+			
+				]
+			}
+
+			const deployJob = {
+				'runs-on': 'ubuntu-latest',
+				needs: 'test',
+				steps: [
+					{
+						name: 'Checkout Repo',
+						uses: 'actions/checkout@v3'
+					},
+					{
+						name: 'Setup Deno',
+						uses: 'denoland/setup-deno@v1',
+						with: {
+							'deno-version': '1.32.5'
+						}
+					},
+					{
+						name: 'Deploy UIX App',
+						run: `deno run --importmap https://dev.cdn.unyt.org/importmap.json -Aqr https://dev.cdn.unyt.org/uix/run.ts --stage ${stage} --detach`
+					}
+				]
+			}
+
 			const workflow = {
 				name: `Deploy ${stage}`,
 				on,
 				jobs: {
-					deploy: {
-						'runs-on': 'ubuntu-latest',
-						steps: [
-							{
-								name: 'Checkout Repo',
-								uses: 'actions/checkout@v3'
-							},
-							{
-								name: 'Setup Deno',
-								uses: 'denoland/setup-deno@v1',
-								with: {
-									'deno-version': '1.32.5'
-								}
-							},
-							{
-								name: 'Deploy UIX App',
-								run: `cd src && deno run --importmap https://dev.cdn.unyt.org/importmap.json -Aqr https://dev.cdn.unyt.org/uix/run.ts --stage ${stage} --detach`
-							}
-						]
-					}
+					test: testJob,
+					deploy: deployJob,
 				}
 			}
 

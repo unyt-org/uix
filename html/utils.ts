@@ -257,9 +257,16 @@ export namespace HTMLUtils {
         // invalid :out attributes here
         else if (attr == "valueOut") throw new Error("Invalid value for valueOut attribute - must be a pointer");
 
-        // normal attribute
+        // special attribute values
         else if (val === false) element.removeAttribute(attr);
         else if (val === true || val === undefined) element.setAttribute(attr,"");
+
+        // video src => srcObject
+        else if (element instanceof HTMLVideoElement && attr === "src" && val instanceof MediaStream) {
+            element.srcObject = val;
+        }
+
+        // event listener
         else if (attr.startsWith("on")) {
             for (const handler of ((val instanceof Array || val instanceof Set) ? val : [val])) {
                 if (typeof handler == "function") {
@@ -273,7 +280,7 @@ export namespace HTMLUtils {
             }
             
         }
-        
+        // normal attribute
         else element.setAttribute(attr, formatAttributeValue(val,root_path));
 
         return true;

@@ -2,23 +2,46 @@
 # Copyright 2023 unyt.org
 # Install: curl -s https://dev.cdn.unyt.org/uix/install.sh | sh
 
-#!/bin/bash
 
 # URL of the file to be downloaded
 uix_script_url="https://dev.cdn.unyt.org/uix/run.sh"
 
-dest_dir="/usr/local/bin"
-file_name="uix"
-file_path="$dest_dir/$file_name"
+# First install deno
+if ! [ -x "$(command -v deno)" ]; then
+	echo 'Installing deno...'
+	curl -fsSL https://deno.land/x/install/install.sh | sh
+
+	# add deno to bashrc
+	echo "export DENO_INSTALL="\$HOME/.deno"" >> ~/.bashrc
+	echo "export PATH=\"\$DENO_INSTALL/bin:\$PATH\"" >> ~/.bashrc
+	. ~/.bashrc
+fi
+
+name="uix"
+uix_dir="$HOME/.uix"
+exe="$uix_dir/$name"
+
+if [ ! -d "$uix_dir" ]; then
+    mkdir -p "$uix_dir"
+fi
+
 
 # Download
-curl -o "$file_path" "$uix_script_url"
+curl --fail --location --progress-bar -o "$exe" "$uix_script_url"
 # Make executable
-chmod +x "$file_path"
+chmod +x "$exe"
 
 # Add to the PATH variable
-echo "export PATH=$PATH:$dest_dir" >> ~/.bashrc
-# make the change effective immediately
-. ~/.bashrc
+if command -v uix >/dev/null; then
+	echo "export UIX_DIR="\$HOME/.uix"" >> ~/.bashrc
+	echo "export PATH=\$UIX_DIR:\$PATH" >> ~/.bashrc
+	# make the change effective immediately
+	. ~/.bashrc
+fi
 
-echo "uix was installed successfully"
+echo "\n";
+echo " \e[32m\e[1muix\e[0m\e[32m was installed successfully to $exe\e[0m"
+echo "\n";
+echo " Run 'uix --help' to get started"
+echo " Need more help? Join the unyt.org Discord: \e[4mhttps://unyt.org/discord\e[0m"
+echo "\n";

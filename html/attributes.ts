@@ -80,7 +80,9 @@ export const htmlElementAttributes = {
 	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
-	iframe: [src]
+	iframe: [src],
+	source: [src],
+	video: [src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload"]
 
 } as const satisfies {[key in keyof HTMLElementTagNameMap]?: readonly string[]};
 
@@ -123,7 +125,18 @@ export type htmlElementAttributeValues = {
 		shadowrootmode: 'open'|'closed'
 	},
 
-	iframe: src
+	iframe: src,
+
+	source: src,
+
+	video: widthAndHeight & (src | {src: MediaStream}) & {
+		autoplay: boolean,
+		controls: boolean,
+		loop: boolean,
+		muted: boolean,
+		poster: string|URL,
+		preload: "auto"|"metadata"|"none"
+	}
 }
 
 

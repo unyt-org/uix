@@ -47,7 +47,7 @@ class UIXApp {
 	 * @param filePath file path (e.g. "file://", "./xy", "/xy")
 	 * @returns web path (e.g. "/@uix/src/xy")
 	 */
-	public filePathToWebPath(filePath:URL|string){
+	public filePathToWebPath(filePath:URL|string, includeDefaultDomain = false){
 		// keep import aliases
 		if (typeof filePath == "string" && !(filePath.startsWith("./")||filePath.startsWith("../")||filePath.startsWith("/")||filePath.startsWith("file://"))) return filePath;
 
@@ -58,9 +58,13 @@ class UIXApp {
 		const path = new Path(filePath, this.base_url);
 
 		// is /@uix/cache
-		if (path.isChildOf(UIX_CACHE_PATH)) return path.getAsRelativeFrom(UIX_CACHE_PATH).replace(/^\.\//, "/@uix/cache/");
+		if (path.isChildOf(UIX_CACHE_PATH)) return (includeDefaultDomain ? this.getDefaultDomainPrefix() : '') + path.getAsRelativeFrom(UIX_CACHE_PATH).replace(/^\.\//, "/@uix/cache/");
 		// is /@uix/src
-		else return path.getAsRelativeFrom(this.base_url).replace(/^\.\//, "/@uix/src/")
+		else return (includeDefaultDomain ? this.getDefaultDomainPrefix() : '') + path.getAsRelativeFrom(this.base_url).replace(/^\.\//, "/@uix/src/")
+	}
+
+	public getDefaultDomainPrefix() {
+		return Datex.Unyt.endpointDomains()[0] ?? '';
 	}
 
 	public async start(options:app_options = {}, base_url?:string|URL) {
@@ -75,7 +79,7 @@ class UIXApp {
 		// logger.info("options", {...n_options})
 
 		// for unyt log
-		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:stage, host:f(Deno.env.get("UIX_HOST_ENDPOINT") as any), domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
+		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
 
 		// set .dx path to backend
 		if (n_options.backend.length) {

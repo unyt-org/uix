@@ -10,6 +10,7 @@ export type app_options = {
 	version?: string, // app version
 	installable?: boolean, // can be installed as standalone web app
 	offline_support?: boolean, // add a service worker with offline cache
+	expose_deno?: boolean, // access Deno namespace from the frontend context
 	
 	frontend?: string|URL|(string|URL)[], // directory for frontend code
 	backend?:  string|URL|(string|URL)[] // directory for backend code
@@ -46,6 +47,7 @@ export async function normalizeAppOptions(options:app_options = {}, base_url?:st
 	n_options.version = options.version?.replaceAll("\n","");
 	n_options.offline_support = options.offline_support ?? true;
 	n_options.installable = options.installable ?? false;
+	n_options.expose_deno = options.expose_deno ?? false;
 	
 	// import map or import map path
 	if (options.import_map_path) {

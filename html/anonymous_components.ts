@@ -1,4 +1,3 @@
-import { X } from "https://jspm.dev/npm:@jspm/core@2.0.1/_/57403c48.js";
 import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../jsx-runtime/jsx.ts";
 import { UIX } from "../uix.ts";
 import { HTMLUtils } from "./utils.ts";
@@ -55,7 +54,7 @@ type Equals<X, Y> =
     (<T>() => T extends X ? 1 : 2) extends
     (<T>() => T extends Y ? 1 : 2) ? true : false;
 
-export type elementGenerator<Options extends Record<string,any>, Children, handleAllProps = true, childrenAsArray = false, Context = unknown> =
+export type jsxInputGenerator<Return, Options extends Record<string,any>, Children, handleAllProps = true, childrenAsArray = false, Context = unknown> =
 	(
 		this: Context,
 		props: JSX.DatexValueObject<Options> & 
@@ -65,7 +64,7 @@ export type elementGenerator<Options extends Record<string,any>, Children, handl
 						(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: childrenAsArray extends true ? childrenToArray<Children> : Children}))
 					) : unknown
 			)
-	) => Element;
+	) => Return;
 
 
 /**
@@ -99,7 +98,7 @@ export type elementGenerator<Options extends Record<string,any>, Children, handl
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise, Context = unknown>(elementGenerator:elementGenerator<Options, never, false, false, Context>):elementGenerator<Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise, Context = unknown>(elementGenerator:jsxInputGenerator<Element, Options, never, false, false, Context>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * Default HTML Attributes defined in JSX are also set for the root element.
@@ -111,9 +110,9 @@ export function template<Options extends Record<string, any> = {}, Children = JS
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise>(element:Element):elementGenerator<Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
 
-export function template(templateOrGenerator:Element|elementGenerator<any, any, any>) {
+export function template(templateOrGenerator:Element|jsxInputGenerator<Element, any, any, any>) {
 	let generator:any;
 	const module = getCallerFile();
 
@@ -169,8 +168,47 @@ export function template(templateOrGenerator:Element|elementGenerator<any, any, 
  * ```
  * @param elementGenerator 
  */
-export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise>(elementGenerator:elementGenerator<Options, Children, true, true>):elementGenerator<Options, Children> {
+export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise>(elementGenerator:jsxInputGenerator<Element, Options, Children, true, true>):jsxInputGenerator<Element, Options, Children> {
 	return function(props:any) {
 		return elementGenerator(props) 
 	}
+}
+
+
+
+export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise, Context = unknown>(styleGenerator:jsxInputGenerator<CSSStyleSheet, Options, never, false, false, Context>):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
+
+export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise>(style:CSSStyleSheet):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
+
+export function style(templateOrGenerator:CSSStyleSheet|jsxInputGenerator<CSSStyleSheet, any, any, any>) {
+	let generator:any;
+	const module = getCallerFile();
+
+	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
+		// decorator
+		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
+			propsOrClass._init_module = module;
+			propsOrClass.style_template = generator
+		}
+		// jsx
+		else {
+			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass)
+			else return templateOrGenerator(propsOrClass);
+		}
+	}
+	else generator = function(propsOrClass:any) {
+
+		// decorator
+		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
+			propsOrClass._init_module = module;
+			propsOrClass.style_template = generator
+		}
+		// jsx
+		else {
+			return templateOrGenerator;
+		}
+	};
+
+	return generator;
+
 }

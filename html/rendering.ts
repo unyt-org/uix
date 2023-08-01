@@ -74,7 +74,7 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
 }
 
 
-export function once<T extends html_generator>(generator: T): T {
+export function lazy<T extends html_generator>(generator: T): T {
 	let result:Awaited<ReturnType<T>>|undefined;
 	let loaded = false;
 	return <any> (async function(ctx: UIX.Context) {
@@ -87,6 +87,8 @@ export function once<T extends html_generator>(generator: T): T {
 	})
 }
 
+// TODO: remove, deprecated
+export const once = lazy
 
 /**
  * serve a value as raw content (DX, DXB, JSON format)
@@ -131,6 +133,16 @@ export async function provideContent(content:string|ArrayBuffer, type:mime_type 
 }
 
 /**
+ * serve a file
+ * @param path local file path
+ * @returns content FSFile
+ */
+export function provideFile(path:string|URL) {
+	const resolvedPath = new Path(path, getCallerFile());
+	return () => Deno.open(resolvedPath);
+}
+
+/**
  * serve an errror with a status code and message
  * @param message error message
  * @param status http status code
@@ -164,6 +176,7 @@ export function provideError(message: string, status = 500) {
 	`;
 	return provideContent(content, "text/html", status);
 }
+
 
 /**
  * handles routes internally
@@ -389,8 +402,9 @@ export async function createSnapshot<T extends Element|DocumentFragment>(content
 
 
 // collapse RenderPreset, ... to HTML element or other content
-export type raw_content = Blob|Response
-export type html_content = Datex.CompatValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|raw_content;
+export type raw_content = Blob|Response // sent as raw Response
+export type special_content = URL|Deno.FsFile // gets converted to a Response
+export type html_content = Datex.CompatValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|raw_content|special_content;
 export type html_generator = (ctx:UIX.Context)=>html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 export type html_content_or_generator = html_content|html_generator;
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
@@ -496,8 +510,8 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(route2, route, context, only_return_static_content, return_first_routing_handler)
 	}
 	
-	// path object
-	else if (!(entrypoint instanceof Element || entrypoint instanceof Datex.Markdown) && entrypoint && typeof entrypoint == "object" && Object.getPrototypeOf(entrypoint) == Object.prototype) {
+	// path object, not element/markdown/special_content
+	else if (!(entrypoint instanceof Element || entrypoint instanceof Datex.Markdown || entrypoint instanceof URL || (globalThis.Deno && entrypoint instanceof globalThis.Deno.FsFile)) && entrypoint && typeof entrypoint == "object" && Object.getPrototypeOf(entrypoint) == Object.prototype) {
 		// find longest matching route
 		let closest_match_key:string|null = null;
 		let closest_match_route:Path.Route|null = null;
@@ -570,6 +584,20 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	else {
 		// non routing handler content
 		collapsed = await entrypoint;
+
+		// special content to raw
+		// URL 
+		if (collapsed instanceof URL) {
+			collapsed = new Response(null, {
+				status: 302,
+				headers: new Headers({ location: collapsed.toString() })
+			})
+		}
+		else if (globalThis.Deno && collapsed instanceof Deno.FsFile) {
+			collapsed = new Response(collapsed.readable)
+		}
+
+
 		// @ts-ignore TODO: is this if condition required? currently commented out, because paths are overriden incorrectly
 		if (typeof collapsed?.resolveRoute !== "function") 
 			remaining_route = Path.Route("/");

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 # Copyright 2023 unyt.org
 # Install: curl -s https://dev.cdn.unyt.org/uix/install.sh | sh
 
@@ -39,9 +39,9 @@ if command -v uix >/dev/null; then
 	. ~/.bashrc
 fi
 
-echo "\n";
-echo " \e[32m\e[1muix\e[0m\e[32m was installed successfully to $exe\e[0m"
-echo "\n";
+echo "\n"
+echo " \x1B[32m\x1B[1muix\x1B[0m\x1B[32m was installed successfully to $exe\x1B[0m"
+echo "\n"
 echo " Run 'uix --help' to get started"
-echo " Need more help? Join the unyt.org Discord: \e[4mhttps://unyt.org/discord\e[0m"
-echo "\n";
+echo " Need more help? Join the unyt.org Discord: \x1B[4mhttps://unyt.org/discord\x1B[0m"
+echo "\n"

@@ -262,7 +262,7 @@ export namespace HTMLUtils {
         else if (val === true || val === undefined) element.setAttribute(attr,"");
 
         // video src => srcObject
-        else if (element instanceof HTMLVideoElement && attr === "src" && val instanceof MediaStream) {
+        else if (element instanceof globalThis.HTMLVideoElement && attr === "src" && val instanceof MediaStream) {
             element.srcObject = val;
         }
 

@@ -666,9 +666,12 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         if (this.options?.class) 
             HTMLUtils.setElementAttribute(this, "class", this.options.$.class);
 
+        
+        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in ShadowDOMComponent.init
+        // make sure static component data (e.g. datex module imports) is loaded
+        await (<typeof BaseComponent>this.constructor).init();
         this.loadTemplate();
         this.loadDefaultStyle()
-        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in ShadowDOMComponent.init
         await this.init(true);
         await this.onConstructed?.();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
@@ -676,9 +679,11 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     // called when created from saved state
     @replicator async replicate() {
+        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
+        // make sure static component data (e.g. datex module imports) is loaded
+        await (<typeof BaseComponent>this.constructor).init();
         // this.loadTemplate();
         this.loadDefaultStyle()
-        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
         await this.init();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
@@ -758,7 +763,6 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         // @id, @content, @layout
         this.handleIdProps(constructed);
    
-        await (<typeof BaseComponent>this.constructor).loadModuleDatexImports();
         // @standlone props only relevant for backend
         if (IS_HEADLESS) this.loadStandaloneProps();
 

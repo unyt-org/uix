@@ -1,9 +1,11 @@
 // deno-lint-ignore-file no-control-regex
 import { Datex, text } from "unyt_core";
 import { Res, Theme, HTMLUtils, logger } from "./uix_all.ts";
-import { escapeString, jsx } from "./jsx-runtime/jsx.ts";
 import { HTML } from "./utils/html_template_strings.ts";
 import { SCSS } from "./utils/css_template_strings.ts";
+
+export { HTML } from "./utils/html_template_strings.ts";
+export { SCSS } from "./utils/css_template_strings.ts";
 
 export {content, id, use, Component, NoResources, Element} from "./uix_all.ts";
 

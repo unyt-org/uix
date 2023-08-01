@@ -82,8 +82,8 @@ export const htmlElementAttributes = {
 	template: ["shadowrootmode"],
 	iframe: [src],
 	source: [src],
-	video: [src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload"]
-
+	video: [src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload"],
+	textarea: ["placeholder"]
 } as const satisfies {[key in keyof HTMLElementTagNameMap]?: readonly string[]};
 
 
@@ -136,6 +136,9 @@ export type htmlElementAttributeValues = {
 		muted: boolean,
 		poster: string|URL,
 		preload: "auto"|"metadata"|"none"
+	},
+	textarea: widthAndHeight & {
+		placeholder: string
 	}
 }
 

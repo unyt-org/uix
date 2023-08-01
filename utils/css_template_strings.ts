@@ -1,14 +1,13 @@
 import { Datex, always } from "unyt_core/datex.ts";
 import { HTMLUtils } from "../html/utils.ts";
-import { escapeString, jsx } from "../jsx-runtime/jsx.ts";
+import { primitive } from "unyt_core/datex_all.ts";
 import { logger } from "../uix_all.ts";
-
 
 const LOCAL_VAR_PREFIX = '--uix-local-value-'
 const GLOBAL_VAR_PREFIX = '--uix-global-value-'
 
 type cssGeneratorFunction = (it:HTMLElement)=>string|number;
-type cssParam = Datex.CompatValue<any> | cssGeneratorFunction;
+type cssParam = Datex.CompatValue<primitive> | cssGeneratorFunction;
 
 export interface DynamicCSSStyleSheet extends CSSStyleSheet {
 	activate(document: Document|ShadowRoot): void
@@ -69,7 +68,7 @@ export function SCSS(template:any, ...params:cssParam[]) {
 		}
 
 		styleSheet.activate = (document: Document|ShadowRoot) => {
-			console.log("activating stylesheet for", document)
+			logger.debug("activating stylesheet for", document)
 			
 			// enable stylesheet for document
 			document.adoptedStyleSheets = [...document.adoptedStyleSheets, styleSheet];
@@ -167,7 +166,6 @@ function extractVar(property: string, styleDeclaration: CSSStyleDeclaration) {
 	const value = styleDeclaration.getPropertyValue(property)
 	if (value.includes('var('+LOCAL_VAR_PREFIX)) {
 		const name = value.match(/var\((--uix-local-value-(?:[\d-]+))\)/)![1];
-		console.log('>',property, value, name)
 		return name;
 	}
 }

@@ -20,6 +20,7 @@
     "https://deno.land/x/input@2.0.3/types.ts": "915079a7187073c9c9c99863ab4e4a4c7341e25bf5d4a2e02c33f8b896dd0c69",
     "https://deno.land/x/mimetypes@v1.0.0/mod.ts": "abd1ea614b32cfa7fd50b46f6e070617696664698b8a34935dc807f3035ad408",
     "https://deno.land/x/mimetypes@v1.0.0/src/mime.ts": "7cd7590eae6127dc1abfe710900fc749e94d5c715ffe8a148e59fe20ee21a9a5",
+    "https://dev.cdn.unyt.org/unyt_core": "7c2650d72628c643fa87d8a0c5ffd8d45ca542a4363e1f3f4c5f88d440f09801",
     "https://dev.cdn.unyt.org/unyt_core/compiler/binary_codes.ts": "594620d51dc9a675678a4c0d2e5265ac47f6f67ecaacf7e884d1411a87e8dd35",
     "https://dev.cdn.unyt.org/unyt_core/compiler/compiler.ts": "a9cb919204254bd0161ec61e9697fb658ccbe0fd38b5c0ffc353a08d7580da98",
     "https://dev.cdn.unyt.org/unyt_core/compiler/protocol_types.ts": "98114be167ae672773d6176b6014e1710838d6bcb81a3686c1525e95e18fb815",

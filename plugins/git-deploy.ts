@@ -38,6 +38,14 @@ export class GitDeployPlugin implements AppPlugin {
 				}
 			}
 
+			const env:Record<string,string> = {};
+			const env_strings:string[] = []
+			if (config.secrets) {
+				for (const secret of config.secrets) {
+					env[secret] = `$\{{secrets.${secret}}}`
+					env_strings.push(`--env ${secret}=$${secret}`)
+				}
+			}
 
 			const testJob = {
 				'runs-on': 'ubuntu-latest',
@@ -86,7 +94,7 @@ export class GitDeployPlugin implements AppPlugin {
 					},
 					{
 						name: 'Deploy UIX App',
-						run: `deno run --importmap https://dev.cdn.unyt.org/importmap.json -Aqr https://dev.cdn.unyt.org/uix/run.ts --stage ${stage} --detach`
+						run: `deno run --importmap https://dev.cdn.unyt.org/importmap.json -Aqr https://dev.cdn.unyt.org/uix/run.ts --stage ${stage} --detach` + (env_strings ? ' ' + env_strings.join(" ") : '')
 					}
 				]
 			}
@@ -94,6 +102,7 @@ export class GitDeployPlugin implements AppPlugin {
 			const workflow = {
 				name: `Deploy ${stage}`,
 				on,
+				env,
 				jobs: {
 					test: testJob,
 					deploy: deployJob,

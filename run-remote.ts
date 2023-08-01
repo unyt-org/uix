@@ -1,7 +1,6 @@
 import { normalized_app_options } from "./app/options.ts";
 import type {runParams} from "./run.ts";
-import { OutputMode, exec } from "https://deno.land/x/exec/mod.ts";
-import { stage } from "./utils/args.ts";
+import { stage, env } from "./utils/args.ts";
 import { ESCAPE_SEQUENCES } from "unyt_core/utils/logger.ts";
 import { GitRepo } from "./utils/git.ts";
 
@@ -27,7 +26,6 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 	const logger = new Datex.Logger();
 
 	const repo = await GitRepo.get();
-
 
 	// Git: All changes have to be added
 	const unaddedFiles = await repo.getUnaddedFiles();
@@ -67,7 +65,8 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 			${repo.branch}, 
 			${stageEndpoint},
 			${stage},
-			${customDomain}
+			${customDomain},
+			${env}
 		)
 	`
 	// logger.error(container)

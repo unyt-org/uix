@@ -21,3 +21,16 @@ export const watch = command_line_options.option("watch", {aliases:["w"],  type:
 export const http_over_datex = command_line_options.option("http-over-datex", {aliases:["hod"], type:"boolean", default: true, description: "Enable HTTP-over-DATEX"});
 
 export const stage = command_line_options.option("stage", {type:"string", default: "dev", description: "Current deployment stage"});
+export const env = command_line_options.option("env", {type:"string", multiple: true, description: "Exposed environment variables (for remote deployment)"});
+
+export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});
+
+
+// const login = command_line_options.command("login", {
+
+// });
+
+// if (login) {
+// 	console.log("LOGIN")
+// 	Deno.exit(0);
+// }

@@ -1,7 +1,6 @@
 // no explicit imports, should also work without import maps...
 import {getExistingFile} from "./file_utils.ts";
 import { command_line_options } from "./args.ts";
-import { Path } from "unyt_node/path.ts";
 
 const default_importmap = "https://cdn.unyt.org/importmap.json";
 const arg_import_map = command_line_options.option("import-map", {type:"URL", description: "Import map path"});
@@ -40,6 +39,10 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 	}
 	else throw "Could not find an app.dx or app.json config file in " + root_path.pathname
 
+
+	// overwrite --import-map path
+	if (arg_import_map) config.import_map_path = arg_import_map;
+
 	// set import map from deno.json if exists
 	const deno_path = getExistingFile(root_path, './deno.json');
 	if (!config.import_map_path && !config.import_map && deno_path) {
@@ -48,7 +51,8 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 			
 			// imports
 			if (deno.imports) {
-				config.import_map = {imports:deno.imports};
+				//config.import_map = {imports:deno.imports};
+				config.import_map_path = new URL(deno_path);
 			}
 			// importMap path
 			else if (deno.importMap) {
@@ -57,14 +61,12 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 		} catch {}
 	} 
 
-	// overwrite --import-map path
-	if (arg_import_map) config.import_map_path = arg_import_map;
 
 	if (!config.import_map && !config.import_map_path) config.import_map_path = default_importmap;
-	if (config.import_map) throw "embeded import maps are not yet supported for uix apps";
+	// if (config.import_map) throw "embeded import maps are not yet supported for uix apps";
 
 	// todo: fix
-	if (!config.import_map_path) throw '"import_map_path" in app.dx or "importMap" in deno.json required';
+	if (!config.import_map_path) throw '"import_map_path" in app.dx or "importMap"/"imports" in deno.json required';
 	
 	return config
 }

@@ -18,6 +18,7 @@ if (IS_HEADLESS) {
 	globalThis.HTMLElement = window.HTMLElement;
 	globalThis.SVGElement = window.SVGElement;
 	globalThis.HTMLTemplateElement = window.HTMLTemplateElement;
+	globalThis.HTMLVideoElement = window.HTMLVideoElement;
 	globalThis.MathMLElement = window.MathMLElement;
 	globalThis.HTMLLinkElement = window.HTMLLinkElement;
 	globalThis.HTMLInputElement = window.HTMLInputElement;

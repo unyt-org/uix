@@ -115,7 +115,7 @@ class UIXApp {
 			server = frontend_manager.server;
 			this.frontends.set(frontend.toString(), frontend_manager);
 		}
-		// no frontend, but has backend with default export -> create empty frontedn
+		// no frontend, but has backend with default export -> create empty frontend
 		if (!n_options.frontend.length && backend_with_default_export) {
 			// TODO: remove tmp dir on exit
 			const dir = new Path(Deno.makeTempDirSync()).asDir();

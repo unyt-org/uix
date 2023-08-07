@@ -29,7 +29,18 @@ if (login) await triggerLogin();
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
 
+const CI_INDICATOR_VARS = [
+	'CI',
+	'GITLAB_CI',
+	'GITHUB_ACTIONS'
+]
 
+function isCIRunner() {
+	for (const ciVar of CI_INDICATOR_VARS) {
+		if (Deno.env.has(ciVar)) return true;
+	}
+	return false;
+}
 
 /**
  * command line params + files
@@ -68,6 +79,27 @@ await datex`
 const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(root_path, [new GitDeployPlugin()]), root_path);
 await runBackends(options);
 
+async function getDXConfigData(path: URL) {
+	const dx = await datex.get(path) as Record<string,any>;
+	const requiredLocation: DatexType.Endpoint = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
+	const stageEndpoint: DatexType.Endpoint = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
+	const port: number = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'port'), true, true);
+
+	let domains:string[] = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
+	// make sure customDomains is a string array
+	if (domains instanceof Datex.Tuple) domains = domains.toArray();
+	else if (typeof domains == "string") domains = [domains];
+	else if (domains === Datex.LOCAL_ENDPOINT) domains = [];
+	domains = domains.filter(d=>d!==Datex.LOCAL_ENDPOINT)
+
+	return {
+		port,
+		requiredLocation,
+		stageEndpoint,
+		domains
+	}
+}
+
 async function runBackends(options: normalized_app_options) {
 
 	// no backends defined, can just run local
@@ -77,25 +109,57 @@ async function runBackends(options: normalized_app_options) {
 	}
 
 	for (const backend of options.backend) {
-		const dxFile = backend.getChildPath(".dx");
+		const backendDxFile = backend.getChildPath(".dx");
 		
 		try {
 			let requiredLocation: DatexType.Endpoint|undefined;
 			let stageEndpoint: DatexType.Endpoint|undefined;
-			let customDomain: string|undefined;
-			if (dxFile.fs_exists) {
-				const dx = await datex.get(dxFile) as Record<string,any>;
-				requiredLocation = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
-				stageEndpoint = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
-				customDomain = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
-				if (customDomain === Datex.LOCAL_ENDPOINT) customDomain = undefined;
+			const domains:Record<string, number|null> = {}; // domain name -> internal port
+			if (backendDxFile.fs_exists) {
+				let backendDomains: string[]|undefined;
+				({requiredLocation, stageEndpoint, domains: backendDomains} = await getDXConfigData(backendDxFile))
+				for (const domain of backendDomains) {
+					domains[domain] = null; // no port mapping specified per default
+				}
 			}
+
+			let autoPort = 80;
+			for (const frontend of options.frontend) {
+				const frontendDxFile = frontend.getChildPath(".dx");
+				if (frontendDxFile.fs_exists) {
+					const {domains: frontendDomains, port} = await getDXConfigData(frontendDxFile);
+
+					if (frontendDomains) {
+						const domainPort = port ?? autoPort++;
+						for (const domain of frontendDomains) {
+							domains[domain] = domainPort; // no port mapping specified per default
+						}
+					}
+				}
+			}
+
+			// console.log(domains)
+
 			// run on a remote host
 			if (requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation?.toString() !== Deno.env.get("UIX_HOST_ENDPOINT")) {
-				runRemote(params, new_base_url, options, backend, requiredLocation, stageEndpoint, customDomain);
+				runRemote(params, new_base_url, options, backend, requiredLocation, stageEndpoint, domains);
 			}
 			// run locally
 			else {
+				// local run in CI not allowed
+				if (isCIRunner()) {
+					const example = `
+ ===================================
+ use stage from # public.uix;
+
+ location: stage {
+     ${stage}: @+unyt_eu1
+ }
+ ===================================
+`;
+					(new Datex.Logger()).error("Cannot run the UIX app directly on the CI Runner.\n Make sure your .dx configuration is correct.\n The 'location' option for the '"+stage+"' stage must be a host endpoint, but is currently unset (defaults to local)\n Example .dx configuration: \n" + example)
+					Deno.exit(1);
+				}
 				runLocal(params, new_base_url, options)
 			}
 		}

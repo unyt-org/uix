@@ -12,7 +12,7 @@ let live_frontend:boolean|undefined = false;
 let watch:boolean|undefined = false;
 let watch_backend:boolean|undefined = false;
 let http_over_datex: boolean|undefined = true;
-let stage:string|undefined = '?'
+let stage = '?'
 
 if (globalThis.Deno) {
 	({ stage, live_frontend, watch, watch_backend, http_over_datex } = (await import("../utils/args.ts")))
@@ -34,6 +34,10 @@ class UIXApp {
 	frontends = new Map<string, FrontendManager>()
 	#ready_handlers = new Set<()=>void>();
 	#ready = false;
+
+	get stage(){
+		return stage;
+	}
 
 	public onReady(handler:()=>void) {
 		if (this.#ready) handler();

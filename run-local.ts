@@ -55,7 +55,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	await run();
 
 	async function run() {
-		const exitStatus = await Deno.run({
+		const process = Deno.run({
 			cmd: [
 				...cmd,
 				...config_params,
@@ -63,7 +63,14 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				...config_params, // pass --import-map and --config also as runtime args to reconstruct the command when the backend restarts
 				...Deno.args,
 			]
-		}).status();
+		})
+		// detach, continues in background
+		// TODO: fix child process does not keep running correctly
+		if (params.detach) {
+			console.log(`UIX App running in background (PID ${process.pid})`);
+			Deno.exit(0);
+		}
+		const exitStatus = await process.status();
 		if (exitStatus.code == 42) {
 			console.log(".....");
 			await run();

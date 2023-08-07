@@ -12,9 +12,14 @@ if ! [ -x "$(command -v deno)" ]; then
 	curl -fsSL https://deno.land/x/install/install.sh | sh
 
 	# add deno to bashrc
-	echo "export DENO_INSTALL="\$HOME/.deno"" >> ~/.bashrc
-	echo "export PATH=\"\$DENO_INSTALL/bin:\$PATH\"" >> ~/.bashrc
-	. ~/.bashrc
+	echo "export DENO_INSTALL="\$HOME/.deno"" >> ~/.bash_profile
+	echo "export PATH=\"\$DENO_INSTALL/bin:\$PATH\"" >> ~/.bash_profile
+
+	echo "export DENO_INSTALL="\$HOME/.deno"" >> ~/.zprofile
+	echo "export PATH=\"\$DENO_INSTALL/bin:\$PATH\"" >> ~/.zprofile
+
+	. ~/.bash_profile
+	. ~/.zprofile
 fi
 
 name="uix"
@@ -32,12 +37,20 @@ curl --fail --location --progress-bar -o "$exe" "$uix_script_url"
 chmod +x "$exe"
 
 # Add to the PATH variable
-if command -v uix >/dev/null; then
-	echo "export UIX_DIR="\$HOME/.uix"" >> ~/.bashrc
-	echo "export PATH=\$UIX_DIR:\$PATH" >> ~/.bashrc
+if ! [ -x "$(command -v uix)" ]; then
+	echo "\nexport UIX_DIR="\$HOME/.uix"" >> ~/.bash_profile
+	echo "\nexport PATH=\$UIX_DIR:\$PATH" >> ~/.bash_profile
+
+	echo "\nexport UIX_DIR="\$HOME/.uix"" >> ~/.zprofile
+	echo "\nexport PATH=\$UIX_DIR:\$PATH" >> ~/.zprofile
+
 	# make the change effective immediately
-	. ~/.bashrc
+	echo " > uix was added to the PATH"
+
+	. ~/.bash_profile
+	. ~/.zprofile
 fi
+
 
 echo "\n"
 echo " \x1B[32m\x1B[1muix\x1B[0m\x1B[32m was installed successfully to $exe\x1B[0m"

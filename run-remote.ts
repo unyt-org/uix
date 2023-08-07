@@ -22,7 +22,7 @@ enum ContainerStatus {
  * Run UIX app on a remote host
  * Currently using git for file sync with remote
  */
-export async function runRemote(params: runParams, root_path: URL, options: normalized_app_options, backend: URL, requiredLocation: Datex.Endpoint, stageEndpoint: Datex.Endpoint, customDomain?: string) {
+export async function runRemote(params: runParams, root_path: URL, options: normalized_app_options, backend: URL, requiredLocation: Datex.Endpoint, stageEndpoint: Datex.Endpoint, customDomains: Record<string,number|null> = {}) {
 	const logger = new Datex.Logger();
 
 	const repo = await GitRepo.get();
@@ -65,7 +65,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 			${repo.branch}, 
 			${stageEndpoint},
 			${stage},
-			${customDomain},
+			${customDomains},
 			${env}
 		)
 	`
@@ -84,11 +84,11 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 		}
 		// As soon as endpoint is online: don't stream logs, close process
 		else if (params.detach && status == ContainerStatus.ONLINE) {
-			console.log(ESCAPE_SEQUENCES.GREEN + stageEndpoint + (customDomain ? ` (https://${customDomain})` : '') +" is running on " + requiredLocation + ESCAPE_SEQUENCES.RESET);
+			console.log(ESCAPE_SEQUENCES.GREEN + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" is running on " + requiredLocation + ESCAPE_SEQUENCES.RESET);
 			Deno.exit(0)
 		}
 		else if (status == ContainerStatus.FAILED) {
-			logger.error('❌ Failed to start ' + stageEndpoint + (customDomain ? ` (https://${customDomain})` : '') +" on " + requiredLocation);
+			logger.error('❌ Failed to start ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation);
 			Deno.exit(1)
 		}
 	})

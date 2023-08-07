@@ -16,6 +16,13 @@ export class GitDeployPlugin implements AppPlugin {
 		// TODO: also support gitlab
 		const workflows = this.generateGithubWorkflows(data);
 
+		// first delete all old uix-deploy.yml files
+		for await (const entry of Deno.readDir(workflowDir)) {
+			if (entry.isFile && entry.name.startsWith("uix-deploy-") && entry.name.endsWith(".yml")) {
+				await Deno.remove(workflowDir.getChildPath(entry.name))
+			}
+		}
+
 		for (const [fileName, content] of Object.entries(workflows)) {
 			await Deno.writeTextFile(workflowDir.getChildPath(fileName), content)
 		}
@@ -57,9 +64,9 @@ export class GitDeployPlugin implements AppPlugin {
 					{
 						name: 'Setup Deno',
 						uses: 'denoland/setup-deno@v1',
-						with: {
-							'deno-version': '1.32.5'
-						}
+						// with: {
+						// 	'deno-version': '1.32.5'
+						// }
 					},
 					{
 						name: 'Run Tests',
@@ -88,9 +95,9 @@ export class GitDeployPlugin implements AppPlugin {
 					{
 						name: 'Setup Deno',
 						uses: 'denoland/setup-deno@v1',
-						with: {
-							'deno-version': '1.32.5'
-						}
+						// with: {
+						// 	'deno-version': '1.32.5'
+						// }
 					},
 					{
 						name: 'Deploy UIX App',

@@ -20,7 +20,7 @@ export const live_frontend = command_line_options.option("live", {aliases:["l"],
 export const watch = command_line_options.option("watch", {aliases:["w"],  type:"boolean", default: false, description: "Recompile frontend scripts when files are modified"}) || live_frontend;
 export const http_over_datex = command_line_options.option("http-over-datex", {aliases:["hod"], type:"boolean", default: true, description: "Enable HTTP-over-DATEX"});
 
-export const stage = command_line_options.option("stage", {type:"string", default: "dev", description: "Current deployment stage"});
+export const stage = command_line_options.option("stage", {type:"string", default: "dev", description: "Current deployment stage"})!;
 export const env = command_line_options.option("env", {type:"string", multiple: true, description: "Exposed environment variables (for remote deployment)"});
 
 export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});

@@ -37,7 +37,7 @@ export namespace BaseComponent {
 }
 
 @template("uix:basecomponent") 
-export abstract class BaseComponent<O extends BaseComponent.Options = BaseComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends HTMLElement implements RouteManager {
+export abstract class BaseComponent<O = BaseComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -519,9 +519,9 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
     /************************************ END STATIC ***************************************/
 
     // options
-    @property declare options:Datex.JSValueWith$<O>; // uses element.DEFAULT_OPTIONS as default options (also for all child elements)
+    @property declare options:Datex.JSValueWith$<O & BaseComponent.Options>; // uses element.DEFAULT_OPTIONS as default options (also for all child elements)
 
-    declare public props: Datex.DatexObjectInit<O> & {children?:ChildElement|ChildElement[]}
+    declare public props: Datex.DatexObjectInit<O & BaseComponent.Options> & {children?:ChildElement|ChildElement[]}
 
     declare $:Datex.Proxy$<this> // reference to value (might generate pointer property, if no underlying pointer reference)
     declare $$:Datex.PropertyProxy$<this> // always returns a pointer property reference
@@ -542,7 +542,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
     protected is_skeleton = false // true if component not yet fully initialized, still displayed as skeleton and not associated with DATEX object
 
-    constructor(options?:Datex.DatexObjectInit<O>) {
+    constructor(options?:Datex.DatexObjectInit<O & BaseComponent.Options>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
 
@@ -653,13 +653,13 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
      * Only executed after component was added to DOM and onCreate was called
      * @param handler function to execute
      */
-    async defer(handler:Function):Promise<void> {
+    async defer(handler:(...args:unknown[])=>unknown):Promise<void> {
         await this.anchored;
         await handler(); 
     }
 
     // default constructor
-    @constructor async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
+    @constructor async construct(options?:Datex.DatexObjectInit<O & BaseComponent.Options>): Promise<void> {
         // options already handled in constructor
 
         // handle default component options (class, ...)
@@ -674,6 +674,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         this.loadDefaultStyle()
         await this.init(true);
         await this.onConstructed?.();
+
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
     }
 
@@ -713,7 +714,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         }
     }
 
-    private initOptions(options?: Datex.DatexObjectInit<O>){
+    private initOptions(options?: Datex.DatexObjectInit<O & BaseComponent.Options>){
         if (this.options) {
             console.log("already has options");
             return;
@@ -722,8 +723,8 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         const clone_option_keys = (<any>this.constructor).CLONE_OPTION_KEYS;
 
         // get options from html attributes
-        if (!options) options = <O>{}; 
-        options = <Datex.DatexObjectInit<O>> $$(options);           
+        if (!options) options = <O & BaseComponent.Options>{}; 
+        options = <Datex.DatexObjectInit<O & BaseComponent.Options>> $$(options);           
         for (let i=0;i < this.attributes.length; i++) {
             const name = this.attributes[i].name;
             // don't override provided options object
@@ -734,7 +735,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
                 } 
                 // string
                 catch {
-                    options[<keyof typeof options>name] = <Datex.CompatValue<O[keyof O]>> this.attributes[i].value;
+                    options[<keyof typeof options>name] = <Datex.CompatValue<O & BaseComponent.Options[keyof O & BaseComponent.Options]>> this.attributes[i].value;
                 }
             }
         }
@@ -910,6 +911,15 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
        
     }
 
+    /**
+     * Only executed after all components were fully constructed (DATEX initialized)
+     * @param handler function to execute
+     */
+    static async deferConstructed(components:BaseComponent[], handler:(...args:unknown[])=>unknown):Promise<void> {
+        await Promise.all(components.map(c => c.constructed))
+        await handler(); 
+    }
+
     disconnectedCallback() {
 
         // reset anchor lifecycle
@@ -920,7 +930,9 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
         // handle child on parent
         if (this.parentElement instanceof BaseComponent) {
-            this.parentElement.onChildRemoved(this);
+            BaseComponent.deferConstructed([this, this.parentElement], ()=>{
+                (this.parentElement as BaseComponent).onChildRemoved(this)
+            })
         }
     
     }
@@ -931,7 +943,9 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
 
         // handle child on parent
         if (this.parentElement instanceof BaseComponent) {
-            this.parentElement.onChildAdded(this);
+            BaseComponent.deferConstructed([this, this.parentElement], ()=>{
+                (this.parentElement as BaseComponent).onChildAdded(this)
+            })
         }
         
         // call onAnchor, init with options dialog, etc.; async
@@ -990,7 +1004,7 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         const initial_route = !this.route_initialized;
         this.route_initialized = true;
 
-        const child = await (<BaseComponent<O, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
+        const child = await (<BaseComponent<O & BaseComponent.Options, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
 
         if (child == false) return []; // route not valid
         else if (typeof (<any>child)?.focus == "function") {
@@ -1048,10 +1062,10 @@ export abstract class BaseComponent<O extends BaseComponent.Options = BaseCompon
         return this.parentElement?.replaceChild(element, this);
     }
 
-    public observeOption(key:keyof O, handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
+    public observeOption(key:keyof O & BaseComponent.Options, handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
         Datex.Value.observeAndInit(this.options.$$[key], handler, this);
     }
-    public observeOptions(keys:(keyof O)[], handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
+    public observeOptions(keys:(keyof O & BaseComponent.Options)[], handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
         for (const key of keys) this.observeOption(key, handler);
     }
 

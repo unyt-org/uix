@@ -35,6 +35,8 @@ class UIXApp {
 	#ready_handlers = new Set<()=>void>();
 	#ready = false;
 
+	defaultServer?: Server
+
 	get stage(){
 		return stage;
 	}
@@ -150,12 +152,15 @@ class UIXApp {
 			const {HTTP} = await import("./http_over_datex.ts")
 			HTTP.setServer(server);
 		}
+
+		this.defaultServer = server;
 		
 		try {
 			for (const handler of this.#ready_handlers) await handler();
 		}
 		catch {}
 		this.#ready = true;
+
 	}
 
 }

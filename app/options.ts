@@ -60,11 +60,11 @@ export async function normalizeAppOptions(options:app_options = {}, base_url?:st
 	if (options.backend instanceof Datex.Tuple) options.backend = options.backend.toArray();
 	if (options.common instanceof Datex.Tuple) options.common = options.common.toArray();
 
-	n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new Path(p,base_url)) : (new Path(options.frontend??'./frontend/', base_url).fs_exists ? [new Path(options.frontend??'./frontend/', base_url)] : []);
-	n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new Path(p,base_url)) :  (new Path(options.backend??'./backend/', base_url).fs_exists ? [new Path(options.backend??'./backend/', base_url)] : []);
-	n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new Path(p,base_url)) :   (new Path(options.common??'./common/', base_url).fs_exists ? [new Path(options.common??'./common/', base_url)] : []);
+	n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new Path(p,base_url).asDir()) : (new Path(options.frontend??'./frontend/', base_url).fs_exists ? [new Path(options.frontend??'./frontend/', base_url).asDir()] : []);
+	n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new Path(p,base_url).asDir()) :  (new Path(options.backend??'./backend/', base_url).fs_exists ? [new Path(options.backend??'./backend/', base_url).asDir()] : []);
+	n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new Path(p,base_url).asDir()) :   (new Path(options.common??'./common/', base_url).fs_exists ? [new Path(options.common??'./common/', base_url).asDir()] : []);
 	// pages dir or default pages dir
-	if (options.pages) n_options.pages = new Path(options.pages,base_url)
+	if (options.pages) n_options.pages = new Path(options.pages,base_url).asDir()
 	else {
 		const defaultPagesDir = new Path('./pages/', base_url);
 		if (defaultPagesDir.fs_exists) n_options.pages = defaultPagesDir;

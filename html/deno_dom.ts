@@ -10,7 +10,9 @@ if (IS_HEADLESS) {
 	// globalThis.customElements = customElements
 	// globalThis.HTMLElement = linkedom.HTMLElement
 
-	const JSDOM = (await import("https://jspm.dev/npm:jsdom-deno@19.0.1")).JSDOM;
+	// const JSDOM = (await import("https://jspm.dev/npm:jsdom-deno@19.0.1")).JSDOM;
+	const JSDOM = (await import("https://jspm.dev/npm:jsdom-deno@19.0.2")).JSDOM;
+	
 
 	const { window } = new JSDOM(`<!DOCTYPE html><html><head></head><body style="color:red"></body></html>`);
 

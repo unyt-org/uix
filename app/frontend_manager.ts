@@ -252,10 +252,12 @@ export class FrontendManager extends HTMLProvider {
 			else if (import_type == "common") {
 
 				for (const [path, [transpiler, web_root_path]] of this.#common_transpilers) {
+					console.log("common import " + import_path)
 					if (import_path.isChildOf(path)) {
 						// TODO: fix getDistPath for .dx files
 						const web_path = web_root_path + transpiler.getDistPath(import_path, false, false)?.getAsRelativeFrom(transpiler.dist_dir).slice(2);
-						return this.normalizeImportFilExt(web_path);
+						// return this.normalizeImportFilExt(web_path);
+						return null;
 					}
 				}
 			}
@@ -586,11 +588,11 @@ catch {
 			// TODO:
 			// Datex.Runtime.ENV.LANG = lang;
 			// await Datex.Runtime.ENV.$.LANG.setVal(lang);
-			const [prerendered_content, render_method, open_graph_meta_tags] = await this.#backend?.getEntrypointHTMLContent(pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
+			const [prerendered_content, render_method, status_code, open_graph_meta_tags] = await this.#backend?.getEntrypointHTMLContent(pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
 				if (prerendered_content instanceof Response) await requestEvent.respondWith(prerendered_content.clone());
-				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain;charset=utf-8" : (<any>prerendered_content).type, <any>prerendered_content);
+				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain;charset=utf-8" : (<any>prerendered_content).type, <any>prerendered_content, undefined, status_code);
 			}
 
 			// serve normal page
@@ -599,7 +601,7 @@ catch {
 					requestEvent, 
 					"text/html", 
 					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css', entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
-					undefined, undefined,
+					undefined, status_code,
 					{
 						'content-language': lang
 					}

@@ -2,7 +2,7 @@ import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import { Path } from "unyt_node/path.ts";
 import { $$, Datex, constructor } from "unyt_core";
 import { UIX } from "../uix.ts";
-import { ALLOWED_ENTRYPOINT_FILE_NAMES, logger } from "../uix_all.ts";
+import { ALLOWED_ENTRYPOINT_FILE_NAMES, App, logger } from "../uix_all.ts";
 import { URLMatch } from "../base/context.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
 import { indent } from "../utils/indent.ts";
@@ -11,6 +11,7 @@ import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
 import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 import { client_type } from "unyt_core/datex_all.ts";
+import { HTTPStatus } from "./http_status.ts";
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -140,6 +141,35 @@ export async function provideContent(content:string|ArrayBuffer, type:mime_type 
 export function provideFile(path:string|URL) {
 	const resolvedPath = new Path(path, getCallerFile());
 	return () => Deno.open(resolvedPath);
+}
+
+/**
+ * Just returns a URL, which is interpreted as redirect by the entrypoint resolver
+ * @param path local file path or URL
+ * @returns resolved URL
+ */
+export function provideRedirect(path:string|URL) {
+	return path instanceof URL ? path : new Path(path, getCallerFile());
+}
+
+/**
+ * Similar to UIX.provideRedirect/returning a URL, but no redirect on the client - the
+ * content is just served for the current URL
+ * uses the internal UIX server to resolve a url to a response
+ * @param path local file path or URL
+ * @returns redirect response
+ */
+export function provideVirtualRedirect(path:string|URL) {
+	const resolvedPath = path instanceof URL ? path : new Path(path, getCallerFile());
+	const webPath = App.filePathToWebPath(resolvedPath);
+
+	return (ctx: UIX.Context) => {
+		// a URL is required, the domain is not really relevant, but copied from request origin
+		const origin = new URL(ctx.request?.url??'https://_virtual_redirect.unyt.org').origin
+		// request headers also copied from request
+		const request = new Request(new URL(origin + webPath), {headers:ctx.request?.headers})
+		return UIX.App.defaultServer!.getResponse(request)
+	}
 }
 
 /**
@@ -403,7 +433,7 @@ export async function createSnapshot<T extends Element|DocumentFragment>(content
 
 // collapse RenderPreset, ... to HTML element or other content
 export type raw_content = Blob|Response // sent as raw Response
-export type special_content = URL|Deno.FsFile // gets converted to a Response
+export type special_content = URL|Deno.FsFile|HTTPStatus // gets converted to a Response
 export type html_content = Datex.CompatValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|raw_content|special_content;
 export type html_generator = (ctx:UIX.Context)=>html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 export type html_content_or_generator = html_content|html_generator;
@@ -472,7 +502,8 @@ function reconstructMatchedURL(input:string, match:URLPatternResult) {
 }
 
 
-export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false, return_first_routing_handler = false): Promise<[get_content<T>, get_render_method<T>, boolean, Path.Route|undefined]> {
+export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false, return_first_routing_handler = false): Promise<[get_content<T>, get_render_method<T>, number, boolean, Path.Route|undefined]> {
+
 	if (!context) {
 		context = new UIX.Context()
 		if (route) context.path = route.routename
@@ -483,6 +514,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	let render_method:RenderMethod = RenderMethod.HYDRATION;
 	let remaining_route:Path.Route|undefined = route;
 	let loaded = false;
+	let status_code = 200;
 
 
 	if (only_return_static_content && entrypoint && (<any> entrypoint).__render_method == RenderMethod.DYNAMIC) {
@@ -493,11 +525,24 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	// handle generator functions (exclude class)
 	else if (typeof entrypoint == "function" && !/^\s*class/.test(entrypoint.toString())) {
 		if (typeof context == "function") context = context();
-		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await entrypoint(context!), route, context, only_return_static_content, return_first_routing_handler)
+		
+		let returnValue: Entrypoint|undefined;
+		try {
+			returnValue = await entrypoint(context!);
+		}
+		// return error as response with HTTPStatus error 500
+		catch (e) {
+			if (e instanceof HTTPStatus) returnValue = e;
+			// TODO: fix instance check if transmitted via datex, currently just force converted to HTTPStatus
+			else if (typeof e == "object" && "code" in e && "content" in e && Object.keys(e).length == 2) returnValue = new HTTPStatus(e.code, e.content);
+			else returnValue = HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
+		}
+
+		[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(returnValue, route, context, only_return_static_content, return_first_routing_handler)
 	}
 	// handle presets
 	else if (entrypoint instanceof RenderPreset || (entrypoint && typeof entrypoint == "object" && !(entrypoint instanceof Element) && '__content' in entrypoint)) {
-		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(<html_content_or_generator>await entrypoint.__content, route, context, only_return_static_content, return_first_routing_handler);
+		[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(<html_content_or_generator>await entrypoint.__content, route, context, only_return_static_content, return_first_routing_handler);
 		render_method = <RenderMethod> entrypoint.__render_method;
 	}
 
@@ -507,7 +552,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		if (typeof context == "function") context = context();
 		const route2 = await (<RouteHandler>entrypoint).getRoute(route, context);
 		route = Path.Route("/"); // route completely resolved by getRoute
-		[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(route2, route, context, only_return_static_content, return_first_routing_handler)
+		[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(route2, route, context, only_return_static_content, return_first_routing_handler)
 	}
 	
 	// path object, not element/markdown/special_content
@@ -575,7 +620,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 			let val = <any> entrypoint.$ ? (<any>entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypoint)[closest_match_key];
 			if (val instanceof Datex.Value && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
 			const new_path = closest_match_route ? Path.Route(route.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");
-			[collapsed, render_method, loaded, remaining_route] = await resolveEntrypointRoute(await val, new_path, context, only_return_static_content, return_first_routing_handler);
+			[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(await val, new_path, context, only_return_static_content, return_first_routing_handler);
 			if (!handle_children_separately) remaining_route = Path.Route("/");
 		} 
 	}
@@ -590,7 +635,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		if (collapsed instanceof URL) {
 			collapsed = new Response(null, {
 				status: 302,
-				headers: new Headers({ location: collapsed.toString() })
+				headers: new Headers({ location: App.filePathToWebPath(collapsed) })
 			})
 		}
 		else if (globalThis.Deno && collapsed instanceof Deno.FsFile) {
@@ -613,7 +658,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		// routing handler?
 		// @ts-ignore
 		if (return_first_routing_handler && typeof collapsed?.getInternalRoute == "function") {
-			return [<get_content<T>>collapsed, <any>render_method, loaded, remaining_route];
+			return [<get_content<T>>collapsed, <any>render_method, status_code, loaded, remaining_route];
 		}
 
 		// @ts-ignore
@@ -630,7 +675,15 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		loaded = true;
 	}
 
-	return [<get_content<T>>collapsed, <any>render_method, loaded, remaining_route];
+
+	// extract status code from HTTPStatus
+	if (collapsed instanceof HTTPStatus) {
+		status_code = collapsed.code;
+		collapsed = collapsed.content;
+	}
+
+	return [<get_content<T>>collapsed, <any>render_method, status_code, loaded, remaining_route];
+	
 }
 
 
@@ -696,7 +749,7 @@ async function resolveRouteForRouteManager(routeManager: RouteManager, route:Pat
 export async function refetchRoute(route: Path.route_representation, entrypoint: Entrypoint, context?:UIX.Context) {
 	const route_path = Path.Route(route);
 
-	const [routing_handler, _render_method, _loaded, remaining_route] = await resolveEntrypointRoute(entrypoint, route_path, context, false, true);
+	const [routing_handler, _render_method, _status_code, _loaded, remaining_route] = await resolveEntrypointRoute(entrypoint, route_path, context, false, true);
 	if (!remaining_route) throw new Error("could not reconstruct route " + route_path.routename);
 	
 	// valid part of route before potential RouteManager

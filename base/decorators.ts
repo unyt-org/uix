@@ -30,6 +30,7 @@ function _Element(element_class:typeof Elements.Base, name:context_name, kind:co
 
 /**
  * @Component decorators for custom new elements and default elements
+ * @deprecated use @UIX.defaultOptions (todo)
  */
 export function Component<T extends Components.Base.Options|BaseComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>, initial_constraints:Partial<Datex.DatexObjectPartialInit<Types.component_constraints>>):any
 export function Component<T extends Components.Base.Options|BaseComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>):any
@@ -40,13 +41,15 @@ export function Component<C>(...args:any[]):any {
 	return handleDecoratorArgs(args, (...args)=>_Component(url, ...args));
 }
 
+// use instead of @UIX.Component
+export const defaultOptions = Component;
 
 function _Component(url:string, component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
 	
 	url = component_class._init_module ?? url;
 	if (!url) {
 		console.log(new Error().stack)
-		throw new Error("Could not get the location of a the UIX component '"+component_class.name+"'. This should not happen");
+		throw new Error("Could not get the location of the UIX component '"+component_class.name+"'. This should not happen");
 	}
 
 	// deprecated message

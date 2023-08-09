@@ -131,10 +131,50 @@ const ListView = UIX.template(()=>{
 
 
 
+const ExampleImage = () => <img src="https://picsum.photos/536/354"/> as HTMLImageElement;
+const exampleObject = $$({
+	map: new Map<string, string>([['a','b']])
+})
+
+
+const TemplateWithOptions = UIX.template<{image:HTMLImageElement, x: number, map: Map<string, string>}>(({image, x, map})=> {
+	console.log("TemplateWithOptions image", val(image), image)
+	console.log("TemplateWithOptions x", val(x), x)
+	console.log("TemplateWithOptions map", val(map), map)
+	return (
+		<div>
+			X = {x}
+			{image}
+		</div>
+	)
+})
+
+@UIX.style(SCSS`
+	:host {
+		background: green;
+	}
+`)
+@TemplateWithOptions
+export class CompontentWithOptions extends UIX.BaseComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
+	protected override onCreate() {
+		console.log("CompontentWithOptions image", this.options.image, this.options.$.image)
+		console.log("CompontentWithOptions x", this.options.x, this.options.$.x)
+		console.log("CompontentWithOptions map", this.options.map, this.options.$.map)
+	}
+}
+
+
 export const testComponents = {
 
 	textInput: 		<Container><div>&copy; <span>2023 unyt.org</span></div><ValueInput placeholder="text 1..."/></Container>,
 	dropdownMenu: 	<Container><DropdownMenu/></Container>,
+
+	templateAndComponent: UIX.lazy(() => 
+		<Container>
+			<TemplateWithOptions   x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></TemplateWithOptions>
+			<CompontentWithOptions x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></CompontentWithOptions>
+		</Container>
+	),
 
 	/** 
 	 * Contexts demo:

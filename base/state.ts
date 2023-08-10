@@ -77,7 +77,7 @@ export namespace State {
     }
 
 
-    export function loadingScreen(title?:string, icon_path = "https://cdn.unyt.org/unyt_core@dev/assets/skeleton_grey.svg", border_path?:string) { // "/unyt_web/assets/logo_icon_2_border.svg"
+    export function loadingScreen(title?:string, icon_path = "https://dev.cdn.unyt.org/unyt_core@dev/assets/skeleton_grey.svg", border_path?:string) { // "/unyt_web/assets/logo_icon_2_border.svg"
         const bg_color = "var(--bg_loading)";
         document.body.insertAdjacentHTML('beforeend', `
         <div id="loader" style="${bg_color ? 'background-color:'+bg_color+';':''}left:0;top:0;position:fixed;width: 100vw; height: 100vh;">

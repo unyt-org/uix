@@ -81,7 +81,7 @@ export default class MonacoHandler {
             script.onload = function () {
                 resolve();
             };
-            script.src = "https://cdn.unyt.org/uix/uix_std/code_editor/vs/loader.js";
+            script.src = "https://dev.cdn.unyt.org/uix/uix_std/code_editor/vs/loader.js";
             document.head.appendChild(script);
         })
     }
@@ -717,7 +717,7 @@ export default class MonacoHandler {
 
     static async _useEspruinoScope(){
 
-        let espruino_definitions = await (await fetch('https://cdn.unyt.org/uix/uix_std/espruino/espruino.d.js')).text()
+        let espruino_definitions = await (await fetch('https://dev.cdn.unyt.org/uix/uix_std/espruino/espruino.d.js')).text()
 
         // todo setExtraLibs each time an editor is focused to add espruino lib only where required??
         MonacoHandler.monaco.languages.typescript.typescriptDefaults.addExtraLib(`
@@ -765,8 +765,8 @@ export default class MonacoHandler {
 
         await this.getMonaco();
 
-        const dark_theme = await (await fetch('https://cdn.unyt.org/uix/uix_std/code_editor/themes/DARK.json')).json()
-        const light_theme = await (await fetch('https://cdn.unyt.org/uix/uix_std/code_editor/themes/LIGHT.json')).json()
+        const dark_theme = await (await fetch('https://dev.cdn.unyt.org/uix/uix_std/code_editor/themes/DARK.json')).json()
+        const light_theme = await (await fetch('https://dev.cdn.unyt.org/uix/uix_std/code_editor/themes/LIGHT.json')).json()
 
         MonacoHandler.monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
             target: MonacoHandler.monaco.languages.typescript.ScriptTarget.ES2020,

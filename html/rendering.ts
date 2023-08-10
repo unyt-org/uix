@@ -12,6 +12,7 @@ import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
 import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 import { client_type } from "unyt_core/datex_all.ts";
 import { HTTPStatus } from "./http_status.ts";
+import { convertANSIToHTML } from "../utils/ansi_to_html.ts";
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -89,6 +90,9 @@ export function lazy<T extends html_generator>(generator: T): T {
 }
 
 // TODO: remove, deprecated
+/**
+ * @deprecated, use lazy instead
+ */
 export const once = lazy
 
 /**
@@ -112,8 +116,85 @@ export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FI
 }
 
 
+/**
+ * Show an interactive value view in the browser, including syntax highlighting
+ * @param value 
+ */
+export function provideValueDebugView(value: unknown) {
+ 	const dxString = Datex.Runtime.valueToDatexStringExperimental(value, true, true, true, true);
+	const html = `<html style="color: white;background: #111111;padding: 10px;line-height: 1.2rem;">
+		<head>	
+			<meta charset="UTF-8">
+			<style>
+				body span {
+					line-height: 1.2rem!important;
+				}
+			</style>
+		</head>
+		${convertANSIToHTML(dxString)}
+	</html>`
+	return provideResponse(html, "text/html;charset=utf-8");
+}
+// export function provideValueDebugView(value: unknown) {
+// 	const dxString = Datex.Runtime.valueToDatexStringExperimental(value);
+// 	const page = `
+// 	<!DOCTYPE html>
+// 	<html lang="en">
+// 		<head>
+// 			<meta charset="UTF-8">
+// 			<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+// 			<title>UXI Value Debug View</title>
+// 			<link rel="icon" href="https://dev.cdn.unyt.org/unyt_core/assets/square_dark.png">
+// 			<script type="importmap">
+				
+// 			{
+// 				"imports": {
+// 					"unyt_core": "https://dev.cdn.unyt.org/unyt_core/datex.ts",
+// 					"uix": "https://dev.cdn.unyt.org/uix/uix.ts",
+// 					"unyt_core/": "https://dev.cdn.unyt.org/unyt_core/",
+// 					"uix/": "https://dev.cdn.unyt.org/uix/",
+// 					"uix_std/": "https://dev.cdn.unyt.org/uix/uix_std/",
+// 					"unyt_tests/": "https://dev.cdn.unyt.org/unyt_tests/",
+// 					"unyt_web/": "https://dev.cdn.unyt.org/unyt_web/",
+// 					"unyt_node/": "https://dev.cdn.unyt.org/unyt_node/",
+// 					"unyt_cli/": "https://dev.cdn.unyt.org/unyt_cli/",
+// 					"supranet/": "https://portal.unyt.org/ts_module_resolver/",
+// 					"uix/jsx-runtime": "https://dev.cdn.unyt.org/uix/jsx-runtime/jsx.ts",
+// 					"backend/": "/@uix/src/backend/",
+// 					"common/": "/@uix/src/common/",
+// 					"frontend/": "/@uix/src/frontend/"
+// 				}
+// 			}
+			
+// 			</script>
+// 			<script type="module">
+// 				import { datex, Datex } from "unyt_core";
+// 				import { DatexValueTreeView } from "uix_std/datex/value_tree_view.ts"
+// 				import { dx_value_manager } from "uix_std/datex/resource_manager.ts";
+
+// 				await Datex.Supranet.connect();
+// 				const value = await datex \`${dxString}\`;
+
+// 				console.log("${dxString}", value);
+// 				const tree_view = new DatexValueTreeView({
+// 					root_resource_path:(await dx_value_manager.getResourceForValue(value)).path,
+// 					header:false, 
+// 					enable_drop:false,
+// 					display_root: true
+// 				}, {dynamic_size:false});
+// 				document.body.append(tree_view)
+// 			</script>
+// 		</head>
+// 	</html>	
+// 	`
+// 	return provideResponse(page, "text/html");
+// }
+
+
+
 export function provideResponse(content:ReadableStream | XMLHttpRequestBodyInit, type:mime_type, status = 200, cookies?:Cookie[], headers:Record<string, string> = {}, cors = false) {
-	if (cors) Object.assign(headers, {"Content-Type": type, "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*"});
+	if (cors) Object.assign(headers, {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*"});
+	Object.assign(headers, {"Content-Type": type});
 	const res = new Response(content, {headers, status});
 	if (cookies) {
 		for (const cookie of cookies) setCookie!(res.headers, cookie);
@@ -233,16 +314,25 @@ export class FileProvider implements RouteHandler {
 
 	get path() {return this.#path}
 
-	constructor(path:Path.representation) {
+	constructor(path:Path.representation, public resolveIndexHTML = true) {
 		this.#path = new Path(path, getCallerFile());
 		if (this.#path.fs_is_dir) this.#path = this.#path.asDir()
 	}
 
 	getRoute(route:Path.route_representation|string, context: UIX.Context) {
-		const path = this.#path.getChildPath(route);
-		if (!path.fs_exists) return provideError("File not found", 404);
 		if (!context.request) return provideError("Cannot serve file");
-		else return fileServer!.serveFile(context.request, path.normal_pathname);
+
+		let path = this.#path.getChildPath(route);
+		
+		// dir path -> index.html
+		if (path.fs_is_dir && this.resolveIndexHTML) {
+			path = path.getChildPath("index.html");
+		}
+
+		// file not found
+		if (!path.fs_exists) return provideError("Not found", 404);
+
+		return fileServer!.serveFile(context.request, path.normal_pathname);
 	}
 }
 

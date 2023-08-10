@@ -252,7 +252,8 @@ export class FrontendManager extends HTMLProvider {
 			else if (import_type == "common") {
 
 				for (const [path, [transpiler, web_root_path]] of this.#common_transpilers) {
-					console.log("common import " + import_path)
+					// TODO: import map update
+					// console.log("common import " + import_path)
 					if (import_path.isChildOf(path)) {
 						// TODO: fix getDistPath for .dx files
 						const web_path = web_root_path + transpiler.getDistPath(import_path, false, false)?.getAsRelativeFrom(transpiler.dist_dir).slice(2);

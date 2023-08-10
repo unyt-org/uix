@@ -2,7 +2,7 @@
 import {getExistingFile} from "./file_utils.ts";
 import { command_line_options } from "./args.ts";
 
-const default_importmap = "https://cdn.unyt.org/importmap.json";
+const default_importmap = "https://dev.cdn.unyt.org/importmap.json";
 const arg_import_map = command_line_options.option("import-map", {type:"URL", description: "Import map path"});
 
 export interface AppPlugin {

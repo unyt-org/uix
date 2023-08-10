@@ -90,7 +90,7 @@ async function getDXConfigData(path: URL) {
 	if (domains instanceof Datex.Tuple) domains = domains.toArray();
 	else if (typeof domains == "string") domains = [domains];
 	else if (domains === Datex.LOCAL_ENDPOINT) domains = [];
-	domains = domains.filter(d=>d!==Datex.LOCAL_ENDPOINT)
+	domains = domains?.filter(d=>d!==Datex.LOCAL_ENDPOINT) ?? [];
 
 	return {
 		port,

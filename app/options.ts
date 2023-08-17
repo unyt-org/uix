@@ -43,7 +43,7 @@ export async function normalizeAppOptions(options:app_options = {}, base_url?:st
 
 	n_options.name = options.name;
 	n_options.description = options.description;
-	n_options.icon_path = options.icon_path ?? 'https://cdn.unyt.org/unyt_core/assets/skeleton_light.svg'
+	n_options.icon_path = options.icon_path ?? 'https://dev.cdn.unyt.org/unyt_core/assets/skeleton_light.svg'
 	n_options.version = options.version?.replaceAll("\n","");
 	n_options.offline_support = options.offline_support ?? true;
 	n_options.installable = options.installable ?? false;

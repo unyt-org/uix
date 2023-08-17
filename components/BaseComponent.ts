@@ -72,7 +72,7 @@ export abstract class BaseComponent<O = BaseComponent.Options, ChildElement = JS
         if (this._use_resources) {
             const dx_url = this._module.replace(/\.m?(ts|js)x?$/, '.dx');
             this._dx_files = [...this._dx_files]; // create new dx module array are for this class
-            this._dx_files.push(dx_url)
+            this._dx_files.unshift(dx_url)
         }
     }
 
@@ -82,7 +82,7 @@ export abstract class BaseComponent<O = BaseComponent.Options, ChildElement = JS
     private static async loadModuleDatexImports(){
 
         // return promise if loaded / loading
-        if (this._dx_loaded_promise) return this._dx_loaded_promise;
+        if (Object.hasOwn(this, '_dx_loaded_promise') && this._dx_loaded_promise) return this._dx_loaded_promise;
         this._dx_loaded_promise = new Promise(resolve=>this._dx_loaded_resolve=resolve);
 
         this.findModuleBoundDatexScripts();

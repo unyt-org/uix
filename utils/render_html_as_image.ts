@@ -37,9 +37,11 @@ const import_map = new ImportMap({
 	}
 })
 
-const renderHTMLProvider = new HTMLProvider(new Path("/tmp"), {import_map}, new TypescriptImportResolver(new Path("/tmp"), {
+const basePath = new Path(await Deno.makeTempDir()).asDir()
+
+const renderHTMLProvider = new HTMLProvider(basePath, {import_map}, new TypescriptImportResolver(basePath, {
 	import_map
-}), false);
+}), false, basePath);
 
 export type renderOptions = {
 	width?: number,

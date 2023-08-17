@@ -36,6 +36,7 @@ export class GitDeployPlugin implements AppPlugin {
 			config = Object.fromEntries(Datex.DatexObject.entries(config));
 
 			let on = config.on;
+			const args = config.args;
 			const branch = config.branch;
 			if (branch && branch !== "*") {
 				on = {
@@ -47,11 +48,15 @@ export class GitDeployPlugin implements AppPlugin {
 
 			const env:Record<string,string> = {};
 			const env_strings:string[] = []
-			if (config.secrets) {
-				for (const secret of config.secrets) {
-					env[secret] = `$\{{secrets.${secret}}}`
-					env_strings.push(`--env ${secret}=$${secret}`)
-				}
+
+			if (!config.secrets) config.secrets = []
+
+			// expose GITHUB_TOKEN;
+			env["GITHUB_TOKEN"] = `$\{{secrets.GITHUB_TOKEN}}`
+
+			for (const secret of config.secrets) {
+				env[secret] = `$\{{secrets.${secret}}}`
+				env_strings.push(`--env ${secret}=$${secret}`)
 			}
 
 			const testJob = {
@@ -101,7 +106,7 @@ export class GitDeployPlugin implements AppPlugin {
 					},
 					{
 						name: 'Deploy UIX App',
-						run: `deno run --importmap https://dev.cdn.unyt.org/importmap.json -Aqr https://dev.cdn.unyt.org/uix/run.ts --stage ${stage} --detach` + (env_strings ? ' ' + env_strings.join(" ") : '')
+						run: `deno run --importmap https://dev.cdn.unyt.org/importmap.json -Aqr https://dev.cdn.unyt.org/uix/run.ts --stage ${stage} --detach` + (args ? ' ' + args.join(" ") : '') + (env_strings ? ' ' + env_strings.join(" ") : '')
 					}
 				]
 			}

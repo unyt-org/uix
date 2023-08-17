@@ -267,7 +267,8 @@ export class FrontendManager extends HTMLProvider {
 				// only relevant for .dx files
 				if (module_type == "frontend") {
 					const rel_path = mapped_import_path.getAsRelativeFrom(module_path);
-					if (!no_side_effects) await this.updateDxMapFile(import_path.getAsRelativeFrom(this.scope), mapped_import_path, import_path, compat);
+					// TODO: remove? no longer needed
+					// if (!no_side_effects) await this.updateDxMapFile(import_path.getAsRelativeFrom(this.scope), mapped_import_path, import_path, compat);
 
 					// add d.ts. TODO: fill with content
 					if (!no_side_effects) {
@@ -351,8 +352,9 @@ export class FrontendManager extends HTMLProvider {
 	}
 
 	// TODO: currently only default import working
-	private async updateDxMapFile(dx_import_relative:string, ts_map_path:Path, dx_import_path?:Path,  compat = false) {
-		const content = `import "${this.resolveImport("unyt_core", compat)}";\nexport default await datex.get("${dx_import_relative}")` ;
+	private async updateDxMapFile(dx_import_relative:string, ts_map_path:Path, dx_import_path?:Path, compat = false) {
+		console.log("updx",dx_import_relative.toString(), dx_import_path.toString())
+		const content = `import { datex } from "unyt_core";\n\nconst exports = await datex.get("${dx_import_relative}");\nexport default exports;` ;
 		await this.transpiler.addVirtualFile(ts_map_path, content, true);
 
 	}

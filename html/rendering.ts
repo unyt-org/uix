@@ -314,7 +314,7 @@ export class FileProvider implements RouteHandler {
 
 	get path() {return this.#path}
 
-	constructor(path:Path.representation, public resolveIndexHTML = true) {
+	constructor(path:Path.representation, public resolveIndexHTML = true, public allowHTMLWithoutExtension = true) {
 		this.#path = new Path(path, getCallerFile());
 		if (this.#path.fs_is_dir) this.#path = this.#path.asDir()
 	}
@@ -330,7 +330,13 @@ export class FileProvider implements RouteHandler {
 		}
 
 		// file not found
-		if (!path.fs_exists) return provideError("Not found", 404);
+		if (!path.fs_exists) {
+			// .html?
+			if (this.allowHTMLWithoutExtension && path.getWithFileExtension("html").fs_exists) {
+				path = path.getWithFileExtension("html");
+			}
+			else return provideError("Not found", 404);
+		}
 
 		return fileServer!.serveFile(context.request, path.normal_pathname);
 	}

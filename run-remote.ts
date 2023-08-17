@@ -1,6 +1,6 @@
 import { normalized_app_options } from "./app/options.ts";
 import type {runParams} from "./run.ts";
-import { stage, env } from "./utils/args.ts";
+import { stage, env, watch } from "./utils/args.ts";
 import { ESCAPE_SEQUENCES } from "unyt_core/utils/logger.ts";
 import { GitRepo } from "./utils/git.ts";
 
@@ -58,40 +58,69 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 
 	console.log('Deploying "'+options.name+'" ('+stage+')...');
 
-	const container = await datex<any> `
-		use ContainerManager from ${requiredLocation};
-		ContainerManager.createUIXAppContainer(
-			${repo.origin}, 
-			${repo.branch}, 
-			${stageEndpoint},
-			${stage},
-			${customDomains},
-			${env}
-		)
-	`
-	// logger.error(container)
+	// sanitized uix args
+	const args = [];
+	if (watch) args.push("--watch");
 
-	// observe container status and exit
-	Datex.Value.observeAndInit(await datex `${container}->status`, async (status: ContainerStatus) => {
-		// As soon as container is running, keep process alive, show remote container logs
-		if (!params.detach && status == ContainerStatus.RUNNING) {
-			const stream = (await container.getLogs());
-			// @ts-ignore TODO: only workaround, make persistent
-			globalThis.__stream = stream;
+	try {
+		let loaded = false;
 
-			const logs = stream.getReader() as ReadableStreamDefaultReader;
-			streamLogs(logs)
-		}
-		// As soon as endpoint is online: don't stream logs, close process
-		else if (params.detach && status == ContainerStatus.ONLINE) {
-			console.log(ESCAPE_SEQUENCES.GREEN + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" is running on " + requiredLocation + ESCAPE_SEQUENCES.RESET);
-			Deno.exit(0)
-		}
-		else if (status == ContainerStatus.FAILED) {
-			logger.error('❌ Failed to start ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation);
-			Deno.exit(1)
-		}
-	})
+		setTimeout(()=>{
+			if (!loaded) {
+				logger.error('❌ Timeout ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation);
+				Deno.exit(1)
+			}
+		}, 80_000);
+
+		const container = await datex<any> `
+			use ContainerManager from ${requiredLocation};
+			ContainerManager.createUIXAppContainer(
+				${repo.origin}, 
+				${repo.branch}, 
+				${stageEndpoint},
+				${stage},
+				${customDomains},
+				${env},
+				${args},
+				${Deno.env.get("GITHUB_TOKEN")}
+			)
+		`
+		// console.log("");
+		// logger.error(container)
+
+
+		// observe container status and exit
+		Datex.Value.observeAndInit(await datex `${container}->status`, async (status: ContainerStatus) => {
+			// As soon as container is running, keep process alive, show remote container logs
+			if (!params.detach && status == ContainerStatus.RUNNING) {
+				loaded = true;
+				const stream = (await container.getLogs());
+				// @ts-ignore TODO: only workaround, make persistent
+				globalThis.__stream = stream;
+
+				const logs = stream.getReader() as ReadableStreamDefaultReader;
+				streamLogs(logs)
+			}
+			// As soon as endpoint is online: don't stream logs, close process
+			else if (params.detach && status == ContainerStatus.ONLINE) {
+				loaded = true;
+				console.log(ESCAPE_SEQUENCES.GREEN + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" is running on " + requiredLocation + ESCAPE_SEQUENCES.RESET);
+				Deno.exit(0)
+			}
+			else if (status == ContainerStatus.FAILED) {
+				loaded = true;
+				logger.error('❌ Failed to start ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation);
+				Deno.exit(1)
+			}
+		})
+	}
+
+	catch (e) {
+		console.log(e.message);
+		logger.error('❌ Failed to start ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation);
+		Deno.exit(1)
+	}
+	
 
 }
 

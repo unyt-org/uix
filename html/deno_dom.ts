@@ -11,7 +11,12 @@ if (IS_HEADLESS) {
 	// globalThis.HTMLElement = linkedom.HTMLElement
 
 	// const JSDOM = (await import("https://jspm.dev/npm:jsdom-deno@19.0.1")).JSDOM;
-	const JSDOM = (await import("https://jspm.dev/npm:jsdom-deno@19.0.2")).JSDOM;
+	let JSDOM:any;
+	try {
+		JSDOM = (await import("https://jspm.dev/npm:jsdom-deno@19.0.1")).JSDOM
+	} catch {
+		JSDOM = (await import("https://jspm.dev.webproxy.unyt.org/npm:jsdom-deno@19.0.1")).JSDOM
+	}
 	
 
 	const { window } = new JSDOM(`<!DOCTYPE html><html><head></head><body style="color:red"></body></html>`);

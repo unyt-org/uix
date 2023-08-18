@@ -61,6 +61,8 @@ const params: runParams = {
 // forced command line args capture, exit after this point
 if (CommandLineOptions.collecting) await CommandLineOptions.capture()
 
+console.log("params",params)
+
 /**
  * Mock #public.uix
  */

@@ -455,8 +455,6 @@ export namespace Path {
 		return getPathWithProtocol(path, Protocol.File)
 	}
 	export function Route(path?: representation) {
-		// relative path
-		if (typeof path == "string" && !path.startsWith("/")) path = new Path(path, getCallerFile())
 		return getPathWithProtocol(path, RouteProtocol)
 	}
 

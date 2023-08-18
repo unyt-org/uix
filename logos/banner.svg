@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 161 49" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-521.037,-332.432)">
+        <g id="Artboard3" transform="matrix(3.81528,0,0,1.15349,127.3,332.328)">
+            <rect x="103.2" y="0.091" width="42.116" height="42.116" style="fill:none;"/>
+            <g transform="matrix(0.361158,0,0,0.97973,-85.0569,-327.923)">
+                <path d="M637.83,339.965C637.83,337.117 635.934,334.806 633.598,334.806L525.522,334.806C523.187,334.806 521.291,337.117 521.291,339.965L521.291,372.623C521.291,375.471 523.187,377.783 525.522,377.783L633.598,377.783C635.934,377.783 637.83,375.471 637.83,372.623L637.83,339.965Z" style="fill:rgb(13,17,23);"/>
+            </g>
+            <g transform="matrix(0.236831,0,0,0.783345,116.59,28.6617)">
+                <text x="0px" y="7.5px" style="font-family:'Roboto-Medium', 'Roboto';font-weight:500;font-size:10px;fill:white;">The F<tspan x="24.863px " y="7.5px ">u</tspan>llstack F<tspan x="67.734px 71.104px " y="7.5px 7.5px ">ra</tspan>mework</text>
+            </g>
+            <g transform="matrix(0.207986,0,0,0.687936,101.985,-374.976)">
+                <g transform="matrix(1.08818,0,0,1.08818,0.292156,-169.452)">
+                    <path d="M15.32,686.171C15.32,697.165 24.232,706.078 35.227,706.078C46.222,706.078 55.134,697.165 55.134,686.171L35.227,686.171L15.32,686.171Z" style="fill:white;"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0701575,-93.6415)">
+                    <path d="M48.278,668.517L49.107,643.921L55.958,665.051L59.396,668.517L48.278,668.517Z" style="fill:rgb(255,0,89);"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0701575,-93.6415)">
+                    <path d="M46.533,668.517L22,668.517L22,653.517C30.178,662.464 38.355,664.147 46.533,653.517L46.533,668.517Z" style="fill:rgb(159,230,255);"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0701575,-93.6415)">
+                    <path d="M35.343,668.517L26.8,668.517L26.789,650.513L35.367,650.513L35.343,668.517Z" style="fill:rgb(42,170,215);"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0701575,-93.6415)">
+                    <path d="M28.412,668.517L17.36,668.517L17.347,665.82L28.441,665.82L28.412,668.517Z" style="fill:rgb(42,170,215);"/>
+                </g>
+            </g>
+            <g transform="matrix(0.262104,0,0,0.866938,-33.6276,-185.884)">
+                <text x="572.243px" y="242.812px" style="font-family:'Roboto-Medium', 'Roboto';font-weight:500;font-size:24px;fill:white;">UI<tspan x="594.86px " y="242.812px ">X</tspan></text>
+            </g>
+        </g>
+    </g>
+</svg>

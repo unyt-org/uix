@@ -1,8 +1,8 @@
-# UIX - Extendable UI Framework based on DATEX
+# ![UIX - The Fullstack Framework](./logos/banner.svg)
 
 ## What is UIX?
 
-With UIX, you can create reactive, responsive web apps with restorable and shared state. UIX supports both single- and multipage applications and uses modern web app features.
+UIX is a fullstack web framework that allows you to create reactive web apps with restorable and shared state. UIX supports both single- and multi page applications and uses modern web app features.
 
 There are four main ways to design UIX components and create UIX applications:
  * using the **TypeScript/JavaScript UIX Library** (focus of the documentation)

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 108 43" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-526.045,-216.24)">
+        <g id="Artboard3" transform="matrix(2.5562,0,0,1,262.245,216.15)">
+            <rect x="103.2" y="0.091" width="42.116" height="42.116" style="fill:none;"/>
+            <g transform="matrix(0.310431,0,0,0.793524,99.4268,-434.293)">
+                <g transform="matrix(1.08818,0,0,1.08818,0.292156,-169.452)">
+                    <path d="M15.32,686.171C15.32,697.165 24.232,706.078 35.227,706.078C46.222,706.078 55.134,697.165 55.134,686.171L35.227,686.171L15.32,686.171Z" style="fill:rgb(27,27,27);"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0701575,-93.6415)">
+                    <path d="M48.278,668.517L49.107,643.921L55.958,665.051L59.396,668.517L48.278,668.517Z" style="fill:rgb(255,0,89);"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0701575,-93.6415)">
+                    <path d="M46.533,668.517L22,668.517L22,653.517C30.178,662.464 38.355,664.147 46.533,653.517L46.533,668.517Z" style="fill:rgb(159,230,255);"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0701575,-93.6415)">
+                    <path d="M35.343,668.517L26.8,668.517L26.789,650.513L35.367,650.513L35.343,668.517Z" style="fill:rgb(42,170,215);"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0701575,-93.6415)">
+                    <path d="M28.412,668.517L17.36,668.517L17.347,665.82L28.441,665.82L28.412,668.517Z" style="fill:rgb(42,170,215);"/>
+                </g>
+            </g>
+            <g transform="matrix(0.391205,0,0,0.999999,-102.982,-216.178)">
+                <text x="572.243px" y="251.812px" style="font-family:'Roboto-Medium', 'Roboto';font-weight:500;font-size:36px;fill:rgb(27,27,27);">UI<tspan x="606.168px " y="251.812px ">X</tspan></text>
+            </g>
+        </g>
+    </g>
+</svg>

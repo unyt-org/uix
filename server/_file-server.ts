@@ -1,4 +1,4 @@
-import { Path } from "./path.ts";
+import { Path } from "../utils/path.ts";
 import { Server } from "./server.ts";
 import { TypescriptImportResolver } from "./ts_import_resolver.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";

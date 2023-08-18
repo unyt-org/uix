@@ -3,7 +3,7 @@
 ## Adding and testing new components
 
  1. Add a new module in the `components/` directory that exports the component class or function with the same name as the module file
- 2. Test the new component by adding an example instance to the testComponents object in `common/testComponents.tsx`
+ 2. Test the new component by adding an example instance to the testComponents object in `common/test-components.tsx`
  4. Expose the local UIX library on `localhost:4200` by running `deno task expose-uix`
  3. Start the test app on `localhost:4201` with `deno task run-test-app` from the root directory
 

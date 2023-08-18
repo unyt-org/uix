@@ -1,5 +1,5 @@
 import { UIX } from "uix";
-import { testComponents } from "../common/testComponents.tsx";
+import { testComponents } from "../common/test-components.tsx";
 import { invalid, notFound } from "../common/errors.tsx";
 
 

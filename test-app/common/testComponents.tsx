@@ -3,7 +3,6 @@ import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
 import { add, always, and } from "unyt_core/datex.ts";
-import { sub, transform } from "https://dev.cdn.unyt.org/unyt_core/datex_short.ts";
 
 /**
  * Put examples for all components in the testComponents object.

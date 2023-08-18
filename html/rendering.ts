@@ -4,6 +4,7 @@ import { UIX } from "../uix.ts";
 import { logger } from "../uix_all.ts";
 import { URLMatch } from "../base/context.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
+import { Entrypoint, EntrypointRouteMap, RouteHandler } from "./entrypoints.ts"
 
 import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 import { HTTPStatus } from "./http-status.ts";
@@ -221,6 +222,12 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 	else {
 		// non routing handler content
 		collapsed = await entrypoint;
+
+		// module (prototype null)? get default value
+		if (typeof collapsed == "object" && collapsed && Object.getPrototypeOf(collapsed) == null) {
+			if (!(collapsed as any).default) throw new Error("invalid module as entrypoint: no default export")
+			collapsed = (collapsed as any).default;
+		}
 
 		// special content to raw
 		// URL 

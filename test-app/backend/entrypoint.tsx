@@ -8,5 +8,6 @@ export default {
 	'/:component/backend\\+static'  : ctx => UIX.renderStatic(testComponents[ctx.match?.pathname.groups['component'] as keyof typeof testComponents] || notFound),
 	'/:component/backend\\+hydrated': ctx => UIX.renderWithHydration(testComponents[ctx.match?.pathname.groups['component'] as keyof typeof testComponents] || notFound),
 	'/:component/frontend': null,
+	'/x/*': null,
 	'*': invalid
 } satisfies UIX.Entrypoint;

@@ -1,5 +1,45 @@
 # Getting Started with UIX
 
+## ✏️ Creating a new UIX Project
+
+You can get started by cloning a simple UIX example project from https://github.com/unyt-org/uix-base-project:
+```bash
+git clone git@github.com:unyt-org/uix-base-project.git
+```
+
+If you are using VS Code, you can also install the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) extension
+for UIX and DATEX support.
+
+
+
+## 🔌 Running a UIX Project
+
+To run the UIX project, run the following command in the project root directory (where the `app.dx` is located):
+```bash
+deno run -Aq --importmap https://dev.cdn.unyt.org/importmap.json https://dev.cdn.unyt.org/uix/run.ts
+```
+Alternatively, you can install the UIX command line tool.
+
+### The UIX command line tool
+
+#### Install on Linux / MacOS
+```bash
+curl -s https://dev.cdn.unyt.org/uix/install.sh | sh
+```
+If the `uix` command is not available afterwards, you might have to run `source ~/.bash_profile`.
+
+#### Install on MacOS
+On MacOS, UIX can also be installed with homebrew:
+```bash
+brew tap unyt-org/uix
+brew install uix
+```
+
+After installation, you can just run the `uix` command in your project root directory.
+
+
+
+
 ## 🧩 Architecture of a UIX Project
 
 With UIX, frontend and backend source code or other resources can be put into a single project.
@@ -9,71 +49,7 @@ Files in the `frontend` directory of the project are only available to frontend 
 However, a key feature of UIX is that backend modules can be imported from frontend modules and vice versa.
 Files in the `common` directory are accessible from the frontend and backend.
 
-## ✏️ Creating a new UIX Project
 
-### Option 1: Using the UIX Project Template
-You can clone a simple UIX Base Project from https://github.com/unyt-org/uix-base-project:
-```bash
-git clone git@github.com:unyt-org/uix-base-project.git
-```
-
-If you are using VS Code, you can also install the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) extension
-for UIX and DATEX support.
-
-### Option 2: Creating a new UIX Project from Scratch
-
-A UIX Project requires at least three files:
-
- *  An `app.dx` or `app.json` config file that contains information about the app.
-    All properties in this config file are optional, but we recommend to set at least an app name:
-    ```datex
-    name: "My cool new app"
-    description: "This is my cool new app"
-    ```
- *	A `deno.json` file containing an import map and JSX settings:
-    ```json
-    {
-           
-        "imports": {
-            "unyt/": "https://dev.cdn.unyt.org/",
-            "unyt_core": "https://dev.cdn.unyt.org/unyt_core/datex.ts",
-            "uix": "./uix.ts",
-            "unyt_core/": "https://dev.cdn.unyt.org/unyt_core/",
-            "uix/": "./",
-            "uix_std/": "./uix_std/",
-            "unyt_tests/": "https://dev.cdn.unyt.org/unyt_tests/",
-            "unyt_web/": "https://dev.cdn.unyt.org/unyt_web/",
-            "unyt_node/": "https://dev.cdn.unyt.org/unyt_node/",
-            "unyt_cli/": "https://dev.cdn.unyt.org/unyt_cli/",
-            "uix/jsx-runtime": "./jsx-runtime/jsx.ts"
-        },
-        
-        "compilerOptions": {
-            "jsx": "react-jsx",
-            "jsxImportSource": "uix",
-        }
-    }
-    ```
- *  An `entrypoint.ts` file, located in the `backend/` or `frontend/` directory.
-
-
-Per default, frontend code goes into a directory named `frontend`, backend code in a directory named
-`backend`, and common library code into a directory named `common`.<br>
-These names can be changed in the app configuration file (`app.dx`), and additional directories can be defined.
-
-
-## 🔌 Running a UIX Project
-
-### Runtime Requirements
-The designated backend runtime for UIX is [deno](https://deno.land/manual@v1.32.3/getting_started/installation), because it provides the greatest compatibility with Web APIs and browsers. Node.JS is currently not supported.
-
-On the frontend, UIX currently requires at least Chromium 90, Firefox 108 or Safari 16.4.
-
-### Run Command
-The UIX utility script can be installed with `curl -s https://cdn.unyt.org/uix/install.sh | sh` on Linux and MacOS.
-To run a UIX project, just run `uix` in the project root directory (where the `app.dx` is located).
-
-If you don't want to install `uix`, you can alternatively run `deno run -Aq https://cdn.unyt.org/uix/run.ts`
 
 ## 🏝 UIX as a Frontend Library
 UIX was designed as a fullstack framework, but it can also be used as a standalone frontend library.
@@ -124,7 +100,7 @@ When `.ts` files are requested by a Deno runtime, the server still returns the o
 The server can be started with:
 
 ```bash
-deno run -Aq https://cdn.unyt.org/unyt_node/file_server.ts
+deno run -Aq https://cdn.unyt.org/uix/server/standalone-file-server.ts
 ```
 
 The root directory for the served files can be specified with the `-p` option.

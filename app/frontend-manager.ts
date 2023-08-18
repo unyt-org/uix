@@ -140,8 +140,8 @@ export class FrontendManager extends HTMLProvider {
 	}
 
 
-	getEntrypointCSS(){
-		const entrypoint_css_path = getExistingFile(this.scope, "entrypoint.css", "entrypoint.scss");
+	getEntrypointCSS(scope: Path.File){
+		const entrypoint_css_path = getExistingFile(scope, "entrypoint.css", "entrypoint.scss");
 		return entrypoint_css_path ? this.#web_path.getChildPath(new Path(entrypoint_css_path).getWithFileExtension("css").name) : undefined;
 	}
 
@@ -167,6 +167,11 @@ export class FrontendManager extends HTMLProvider {
 		'uix/app/client-scripts/default.ts'
 	]
 
+	getTranspilerForPath(path: Path.File) {
+		for (const transpiler of [...[...this.#common_transpilers.values()].map(t=>t[0]), this.transpiler]) {
+			if (path.isChildOf(transpiler.src_dir) || Path.equals(path, transpiler.src_dir)) return transpiler;
+		}
+	}
 
 	async run(){
 
@@ -589,7 +594,8 @@ catch {
 		const lang = UIX.ContextBuilder.getRequestLanguage(requestEvent.request);
 		try {
 			this.updateCheckEntrypoint();
-			const entrypoint_css = this.getEntrypointCSS();
+			const entrypoint_css = [this.getEntrypointCSS(this.scope)];
+			if (this.#backend) entrypoint_css.push(this.getEntrypointCSS(this.#backend.scope))
 
 			// TODO:
 			// Datex.Runtime.ENV.LANG = lang;
@@ -606,7 +612,7 @@ catch {
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
-					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css', entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
+					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css', ...entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', ...entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
 					undefined, status_code,
 					{
 						'content-language': lang

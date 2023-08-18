@@ -120,11 +120,13 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		if (typeof context == "function") context = context();
 		
 		let returnValue: Entrypoint|undefined;
+		let hasError = false;
 		try {
 			returnValue = await entrypoint(context!);
 		}
 		// return error as response with HTTPStatus error 500
 		catch (e) {
+			hasError = true;
 			if (e instanceof HTTPStatus) returnValue = e;
 			// TODO: fix instance check if transmitted via datex, currently just force converted to HTTPStatus
 			else if (typeof e == "object" && "code" in e && "content" in e && Object.keys(e).length == 2) returnValue = new HTTPStatus(e.code, e.content);
@@ -132,6 +134,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|
 		}
 
 		[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(returnValue, route, context, only_return_static_content, return_first_routing_handler)
+		if (hasError) render_method = RenderMethod.STATIC; // override: render errors as static
 	}
 	// handle presets
 	else if (entrypoint instanceof RenderPreset || (entrypoint && typeof entrypoint == "object" && !(entrypoint instanceof Element) && '__content' in entrypoint)) {

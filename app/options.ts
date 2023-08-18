@@ -1,3 +1,4 @@
+import type { Tuple } from "unyt_core/types/tuple.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import { Path } from "../utils/path.ts";
 
@@ -56,13 +57,21 @@ export async function normalizeAppOptions(options:appOptions = {}, base_url?:str
 	else if (options.import_map) n_options.import_map = new ImportMap(options.import_map);
 	else throw new Error("No importmap found or set in the app configuration") // should not happen
 
-	if (options.frontend instanceof Datex.Tuple) options.frontend = (options.frontend as any).toArray();
-	if (options.backend instanceof Datex.Tuple) options.backend = (options.backend as any).toArray();
-	if (options.common instanceof Datex.Tuple) options.common = (options.common as any).toArray();
+	// default frontend, backend, common
+	if (options.frontend==undefined && new Path('./frontend/', base_url).fs_exists) options.frontend = [new Path('./frontend/', base_url)]
+	if (options.backend==undefined && new Path('./backend/', base_url).fs_exists)   options.backend  = [new Path('./backend/', base_url)]
+	if (options.common==undefined && new Path('./common/', base_url).fs_exists)     options.common   = [new Path('./common/', base_url)]
 
-	n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir()) : (new Path<Path.Protocol.File>(options.frontend??'./frontend/', base_url).fs_exists ? [new Path<Path.Protocol.File>(options.frontend??'./frontend/', base_url).asDir()] : []);
-	n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir()) :  (new Path<Path.Protocol.File>(options.backend??'./backend/', base_url).fs_exists ? [new Path<Path.Protocol.File>(options.backend??'./backend/', base_url).asDir()] : []);
-	n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir()) :   (new Path<Path.Protocol.File>(options.common??'./common/', base_url).fs_exists ? [new Path<Path.Protocol.File>(options.common??'./common/', base_url).asDir()] : []);
+	// convert to arrays
+	const frontends = options.frontend instanceof Array ? options.frontend : options.frontend instanceof Datex.Tuple ? (options.frontend as unknown as Tuple<string>).toArray() : [options.frontend]
+	const backends  = options.backend instanceof Array ? options.backend : options.backend instanceof Datex.Tuple ? (options.backend as unknown as Tuple<string>).toArray() : [options.backend]
+	const commons   = options.common instanceof Array ? options.common : options.common instanceof Datex.Tuple ? (options.common as unknown as Tuple<string>).toArray() : [options.common]
+
+	// convert to absolute paths
+	n_options.frontend = frontends.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir().fsCreateIfNotExists());
+	n_options.backend  = backends.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir().fsCreateIfNotExists());
+	n_options.common   = commons.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir().fsCreateIfNotExists());
+
 	// pages dir or default pages dir
 	if (options.pages) n_options.pages = new Path<Path.Protocol.File>(options.pages,base_url).asDir()
 	else {

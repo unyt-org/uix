@@ -1,0 +1,12 @@
+on:
+  release:
+    types: [published]
+
+jobs:
+  trigger-cdn-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Make CDN Update Request
+        run: |
+          curl "https://cdn.unyt.org/update/$GITHUB_REPOSITORY"

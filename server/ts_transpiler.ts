@@ -183,8 +183,15 @@ export class TypescriptTranspiler {
     // clone required files from src to dist, transpile
     public async initDistDir() {
         // console.log("... cloning to dist dir: " + this.#src_dir.pathname);
+        await this.transpileDir(this.src_dir)
+    }
+
+    /**
+     * pre-transpile all files in directory (recursive)
+     */
+    public async transpileDir(dir: Path.File) {
         const promises = []
-        for await (const e of walk!(this.src_dir,{includeDirs: false, exts: this.#transpile_exts.map(x=>'.'+x)})) {
+        for await (const e of walk!(dir, {includeDirs: false, exts: this.#transpile_exts.map(x=>'.'+x)})) {
             promises.push(this.updateFile(new Path(e.path), true, true));
         }
         await Promise.all(promises)

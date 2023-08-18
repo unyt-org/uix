@@ -54,6 +54,13 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	}
 
 	/**
+	 * @returns true if both paths are equal
+	 */
+	static equals(a: URL, b: Path) {
+		return a.toString() === b.toString()
+	}
+
+	/**
 	 * converts Path.representation to URL for absolute paths, or string for relative paths
 	 * @param path 
 	 * @returns 
@@ -396,6 +403,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 		catch {
 			Deno.mkdirSync(this, {recursive: true});
 		}
+		return this;
 	}
 
 }
@@ -432,15 +440,23 @@ export namespace Path {
 	}
 
 	export function HTTP(path?: representation) {
+		// relative path
+		if (typeof path == "string" && !path.startsWith("/")) path = new Path(path, getCallerFile())
 		return getPathWithProtocol(path, Protocol.HTTP)
 	}
 	export function HTTPS(path?: representation) {
+		// relative path
+		if (typeof path == "string" && !path.startsWith("/")) path = new Path(path, getCallerFile())
 		return getPathWithProtocol(path, Protocol.HTTPS)
 	}
 	export function File(path?: representation) {
+		// relative path
+		if (typeof path == "string" && !path.startsWith("/")) path = new Path(path, getCallerFile())
 		return getPathWithProtocol(path, Protocol.File)
 	}
 	export function Route(path?: representation) {
+		// relative path
+		if (typeof path == "string" && !path.startsWith("/")) path = new Path(path, getCallerFile())
 		return getPathWithProtocol(path, RouteProtocol)
 	}
 

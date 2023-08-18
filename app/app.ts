@@ -45,6 +45,19 @@ class UIXApp {
 		return stage;
 	}
 
+
+	/**
+	 * find a transpiler that can transpile files for a given path
+	 * @param path
+	 * @returns 
+	 */
+	getTranspilerForPath(path: Path.File) {
+		for (const frontend of this.frontends.values()) {
+			const transpiler = frontend.getTranspilerForPath(path);
+			if (transpiler) return transpiler;
+		}
+	}
+
 	/**
 	 * Register a callback function that is called when the app is fully loaded
 	 * @param handler 
@@ -56,6 +69,7 @@ class UIXApp {
 
 	/**
 	 * Resolved when the app is fully loaded
+	 * Dont await this in top level of a backend module!
 	 */
 	public ready = new Promise<void>(resolve=>this.onReady(()=>resolve()))
 
@@ -115,6 +129,7 @@ class UIXApp {
 			const frontend_manager = new FrontendManager(n_options, dir, this.base_url, backend_with_default_export, watch, live_frontend)
 			await frontend_manager.run();
 			server = frontend_manager.server;
+			this.frontends.set(dir.toString(), frontend_manager);
 		}
 
 		// expose DATEX interfaces

@@ -3,11 +3,12 @@ import { UIX_CACHE_PATH } from "./constants.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
 import { createSnapshot, RenderMethod } from "../html/rendering.ts";
 import { HTMLProvider } from "../html/html_provider.ts";
-import { Path } from "unyt_node/path.ts";
-import { TypescriptImportResolver } from "unyt_node/ts_import_resolver.ts";
-import { ImportMap } from "unyt_node/importmap.ts";
+import { Path } from "../utils/path.ts";
+import { TypescriptImportResolver } from "../server/ts_import_resolver.ts";
+import { ImportMap } from "../utils/importmap.ts";
 import type {Browser} from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
-import { App } from "../app/app.ts";
+import { app } from "../app/app.ts";
+import { convertToWebPath } from "../app/utils.ts";
 
 const logger = new Datex.Logger("HTML Image Renderer");
 
@@ -65,7 +66,7 @@ export async function renderHTMLAsImage(element: HTMLElement|DocumentFragment, o
 	const path = UIX_CACHE_PATH.getChildPath(name);
 
 	// preview image already cached
-	if (options?.useCache && path.fs_exists) return App.filePathToWebPath(path, true);
+	if (options?.useCache && path.fs_exists) return convertToWebPath(path, true);
 
 	const headless = !options?._debug;
 	const args = [
@@ -94,7 +95,7 @@ export async function renderHTMLAsImage(element: HTMLElement|DocumentFragment, o
 	})
 
 	await createSnapshot(element);
-	const html = await generateHTMLPage(renderHTMLProvider, await getOuterHTML(element), RenderMethod.STATIC, ['uix/app/client_default.ts'], ['uix/style/document.css'], ['uix/style/body.css'])
+	const html = await generateHTMLPage(renderHTMLProvider, await getOuterHTML(element), RenderMethod.STATIC, ['uix/app/client-scripts/default.ts'], ['uix/style/document.css'], ['uix/style/body.css'])
 	logger.info("loading page");
 
 	await page.setContent(html);
@@ -110,7 +111,7 @@ export async function renderHTMLAsImage(element: HTMLElement|DocumentFragment, o
 		}, 60_000)
 	}
 
-	return App.filePathToWebPath(path, true);
+	return convertToWebPath(path, true);
 }
 
 async function installPuppeteer(){

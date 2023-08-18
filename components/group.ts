@@ -5,7 +5,6 @@ import { Base } from "./base.ts";
 import { logger } from "../utils/global_values.ts"
 import { Actions } from "../base/actions.ts"
 import { S } from "../uix_short.ts"
-import { Sounds } from "../base/sounds.ts";
 import { Clipboard } from "../base/clipboard.ts";
 import { ComponentSettings } from "./component_settings.ts";
 import { Utils } from "../base/utils.ts"
@@ -354,8 +353,6 @@ export abstract class Group<O extends Group.Options = any, ChildElement extends 
     public replaceElement(movable:ChildElement, with_movable:ChildElement)
     public replaceElement(index:number|ChildElement, with_index:number|ChildElement)
     public replaceElement(index:number|ChildElement, with_index:number|ChildElement): number {
-
-        Sounds.play(Sounds.DROP)
 
         let element = index instanceof Base ? index : this.elements[index];
         let with_element = with_index instanceof Base ? with_index : this.elements[with_index];

@@ -1,4 +1,4 @@
-const { deleteCookie, setCookie, getCookies }  = globalThis.Deno ? await import("https://deno.land/std/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
+const { getCookies }  = globalThis.Deno ? await import("https://deno.land/std/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
 
 export type RequestData = Request & {address:string}
 
@@ -17,7 +17,22 @@ export class URLMatch {
 
 const emptyMatch = new URLMatch({} as URLPatternResult);
 
-
+/**
+ * Context passed to callback functions in entrypoints, e,g.:
+ * ```ts
+ * // entrypoint.ts
+ * export default (ctx: Context) => {
+ *    console.log("url: " + ctx.request.url)
+ * } satisfies Entrypoint
+ * ```
+ * The match/urlMatch property contains the values for a preceding url pattern:
+ * ```ts
+ * // entrypoint.ts
+ * export default {
+ *    '/:id/:name': (ctx: Context) => ctx.urlMatch.get('name')
+ * } satisfies Entrypoint
+ * ```
+ */
 export class Context {
 	request?: RequestData
 	path!: string
@@ -60,4 +75,4 @@ export class ContextBuilder {
 }
 
 
-export type ContextGenerator = ()=>Context
+export type ContextGenerator = () => Context

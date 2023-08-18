@@ -1,19 +1,19 @@
-import type { TypescriptImportResolver } from "unyt_node/ts_import_resolver.ts";
-import { Path } from "unyt_node/path.ts";
-import { App } from "../app/app.ts";
-import type { normalized_app_options } from "../app/options.ts";
+import type { TypescriptImportResolver } from "../server/ts_import_resolver.ts";
+import { Path } from "../utils/path.ts";
+import type { normalizedAppOptions } from "../app/options.ts";
+import { convertToWebPath } from "../app/utils.ts";
 
 /**
- * base class for frontendmanager, can be used as standlone provider to generate HTML Pages
+ * Standlone provider to generate HTML Pages
  */
 export class HTMLProvider {
 	live: boolean;
-	app_options: normalized_app_options
+	app_options: normalizedAppOptions
 	import_resolver: TypescriptImportResolver
-	scope:Path
-	base_path:Path
+	scope:Path.File
+	base_path:Path.File
 
-	constructor(scope:Path, app_options:normalized_app_options, import_resolver:TypescriptImportResolver, live:boolean, base_path:Path) {
+	constructor(scope:Path.File, app_options:normalizedAppOptions, import_resolver:TypescriptImportResolver, live:boolean, base_path:Path.File) {
 		this.scope = scope;
 		this.app_options = app_options;
 		this.import_resolver = import_resolver;
@@ -28,7 +28,7 @@ export class HTMLProvider {
 		const resolved = compat_import_map && !Path.pathIsURL(path) ? this.import_resolver.resolveImportSpecifier(path.toString(), this.base_path) : path.toString();
 		// make sure all paths are converted to web paths
 		if (map_to_web_path) {
-			return App.filePathToWebPath(resolved);
+			return convertToWebPath(resolved);
 		}
 		
 		else return resolved
@@ -38,7 +38,7 @@ export class HTMLProvider {
 		const import_map = {imports: {...this.app_options.import_map.static_imports}};
 
 		for (const [key, value] of Object.entries(import_map.imports)) {
-			import_map.imports[key] = App.filePathToWebPath(value);
+			import_map.imports[key] = convertToWebPath(value);
 		}
 
 		return import_map;

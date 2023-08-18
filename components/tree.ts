@@ -10,7 +10,6 @@ import { Types } from "../utils/global_types.ts";
 import { Resource, ResourceManger } from "../utils/resources.ts";
 import { Semaphore } from "../utils/semaphore.ts";
 import { logger } from "../utils/global_values.ts";
-import { Sounds } from "../base/sounds.ts";
 import { Handlers } from "../base/handlers.ts";
 import { TabGroup } from "./tab_group.ts";
 import { Files } from "../base/files.ts";
@@ -394,9 +393,6 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
             await this.updateEntryFilter(resource, parent_references);
 
 
-            header.querySelector("div").addEventListener("dragend", e=>{
-                if (e.dataTransfer.dropEffect == "none") Sounds.play(Sounds.ERROR_2)
-            });
 
             if (this.options.enable_entry_drag) Handlers.handleDrag(header.querySelector("div"), {
                 [Types.DRAGGABLE.TREE_ITEM]: resource.path,
@@ -505,10 +501,6 @@ export class Tree<O extends Tree.Options = Tree.Options> extends Base<O> {
                 [Types.DRAGGABLE.ELEMENT_CREATOR]: file_el_creator
             })
 
-
-            header.querySelector("div").addEventListener("dragend", e=>{
-                if (e.dataTransfer.dropEffect == "none") Sounds.play(Sounds.ERROR_2)
-            });
 
             Handlers.contextMenu(header.querySelector("div"), ...this.createEntryContextMenu(resource));
 

@@ -1,4 +1,4 @@
-import { AppPlugin } from "../utils/config_files.ts";
+import { AppPlugin } from "../app/config-files.ts";
 import { GitRepo } from "../utils/git.ts";
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
 

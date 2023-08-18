@@ -1,9 +1,9 @@
-import { ImportMap } from "unyt_node/importmap.ts";
-import { Path } from "unyt_node/path.ts";
+import { ImportMap } from "../utils/importmap.ts";
+import { Path } from "../utils/path.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 
-export type app_options = {
+export type appOptions = {
 	name?: string,  // app name
 	description?: string, // app description
 	icon_path?: string, // path to app icon / favicon
@@ -21,19 +21,19 @@ export type app_options = {
 	import_map?: {imports:Record<string,string>} // prefer over import map path
 }
 
-export interface normalized_app_options extends app_options {
-	frontend: Path[]
-	backend: Path[]
-	common: Path[],
-	pages?: Path
+export interface normalizedAppOptions extends appOptions {
+	frontend: Path.File[]
+	backend: Path.File[]
+	common: Path.File[],
+	pages?: Path.File
 	icon_path: string,
 
 	scripts: (Path|string)[],
 	import_map_path: never
 	import_map: ImportMap
 }
-export async function normalizeAppOptions(options:app_options = {}, base_url?:string|URL): Promise<[normalized_app_options, URL]> {
-	const n_options = <normalized_app_options> {};
+export async function normalizeAppOptions(options:appOptions = {}, base_url?:string|URL): Promise<[normalizedAppOptions, URL]> {
+	const n_options = <normalizedAppOptions> {};
 		
 	// determine base url
 	if (typeof base_url == "string" && !base_url.startsWith("file://")) base_url = 'file://' + base_url;
@@ -56,17 +56,17 @@ export async function normalizeAppOptions(options:app_options = {}, base_url?:st
 	else if (options.import_map) n_options.import_map = new ImportMap(options.import_map);
 	else throw new Error("No importmap found or set in the app configuration") // should not happen
 
-	if (options.frontend instanceof Datex.Tuple) options.frontend = options.frontend.toArray();
-	if (options.backend instanceof Datex.Tuple) options.backend = options.backend.toArray();
-	if (options.common instanceof Datex.Tuple) options.common = options.common.toArray();
+	if (options.frontend instanceof Datex.Tuple) options.frontend = (options.frontend as any).toArray();
+	if (options.backend instanceof Datex.Tuple) options.backend = (options.backend as any).toArray();
+	if (options.common instanceof Datex.Tuple) options.common = (options.common as any).toArray();
 
-	n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new Path(p,base_url).asDir()) : (new Path(options.frontend??'./frontend/', base_url).fs_exists ? [new Path(options.frontend??'./frontend/', base_url).asDir()] : []);
-	n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new Path(p,base_url).asDir()) :  (new Path(options.backend??'./backend/', base_url).fs_exists ? [new Path(options.backend??'./backend/', base_url).asDir()] : []);
-	n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new Path(p,base_url).asDir()) :   (new Path(options.common??'./common/', base_url).fs_exists ? [new Path(options.common??'./common/', base_url).asDir()] : []);
+	n_options.frontend = options.frontend instanceof Array ? options.frontend.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir()) : (new Path<Path.Protocol.File>(options.frontend??'./frontend/', base_url).fs_exists ? [new Path<Path.Protocol.File>(options.frontend??'./frontend/', base_url).asDir()] : []);
+	n_options.backend  = options.backend instanceof Array  ? options.backend.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir()) :  (new Path<Path.Protocol.File>(options.backend??'./backend/', base_url).fs_exists ? [new Path<Path.Protocol.File>(options.backend??'./backend/', base_url).asDir()] : []);
+	n_options.common   = options.common instanceof Array   ? options.common.filter(p=>!!p).map(p=>new Path<Path.Protocol.File>(p,base_url).asDir()) :   (new Path<Path.Protocol.File>(options.common??'./common/', base_url).fs_exists ? [new Path<Path.Protocol.File>(options.common??'./common/', base_url).asDir()] : []);
 	// pages dir or default pages dir
-	if (options.pages) n_options.pages = new Path(options.pages,base_url).asDir()
+	if (options.pages) n_options.pages = new Path<Path.Protocol.File>(options.pages,base_url).asDir()
 	else {
-		const defaultPagesDir = new Path('./pages/', base_url);
+		const defaultPagesDir = new Path<Path.Protocol.File>('./pages/', base_url);
 		if (defaultPagesDir.fs_exists) n_options.pages = defaultPagesDir;
 	}
 
@@ -77,7 +77,7 @@ export async function normalizeAppOptions(options:app_options = {}, base_url?:st
 
 	if (!n_options.frontend.length) {
 		// try to find the frontend dir
-		const frontend_dir = new Path("./frontend/",base_url);
+		const frontend_dir = new Path<Path.Protocol.File>("./frontend/",base_url);
 		try {
 			if (!Deno.statSync(frontend_dir).isFile) n_options.frontend.push(frontend_dir)
 		}
@@ -86,7 +86,7 @@ export async function normalizeAppOptions(options:app_options = {}, base_url?:st
 
 	if (!n_options.backend.length) {
 		// try to find the backend dir
-		const backend_dir = new Path("./backend/",base_url);
+		const backend_dir = new Path<Path.Protocol.File>("./backend/",base_url);
 		try {
 			if (!Deno.statSync(backend_dir).isFile) n_options.backend.push(backend_dir)
 		}
@@ -95,7 +95,7 @@ export async function normalizeAppOptions(options:app_options = {}, base_url?:st
 
 	if (!n_options.common.length) {
 		// try to find the common dir
-		const common_dir = new Path("./common/",base_url);
+		const common_dir = new Path<Path.Protocol.File>("./common/",base_url);
 		try {
 			if (!Deno.statSync(common_dir).isFile) n_options.common.push(common_dir)
 		}

@@ -8,7 +8,7 @@ import { Res } from "./res.ts";
 
 import { State } from "./state.ts";
 import { Theme } from "./theme.ts";
-import { Datex, expose, scope } from "unyt_core";
+import { Datex, f, expose, scope } from "unyt_core";
 import { Actions } from "./actions.ts";
 import { Debug } from "./debug.ts";
 import { UnytPen } from "./unyt_pen.ts";
@@ -17,7 +17,17 @@ import { addStyleSheetLink } from "../uix_all.ts";
 let stage:string|undefined = '?'
 
 if (globalThis.Deno) {
-	({ stage } = (await import("../utils/args.ts")))
+	({ stage } = (await import("../app/args.ts")))
+}
+
+
+// @ts-ignore use pre injected uix app metadata
+if (globalThis._UIX_appdata) {
+	// @ts-ignore globalThis app data
+	const appdata = globalThis._UIX_appdata
+	if (appdata.backend) appdata.backend = f(appdata.backend);
+	if (appdata.host) appdata.host = f(appdata.host);
+	State._setMetadata(appdata)
 }
 
 // enable DATEX CLI

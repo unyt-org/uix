@@ -1,4 +1,4 @@
-import { Path } from "unyt_node/path.ts";
+import { Path } from "../utils/path.ts";
 import { IS_HEADLESS } from "./constants.ts";
 
 // fake CSSStyleDeclaration element with proxy to update css property names

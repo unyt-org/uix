@@ -1,0 +1,32 @@
+// set specifc styles for dark or light mode
+@mixin mode($light-or-dark) {
+
+	// default theme is light
+	@if $light-or-dark == light {
+		@content;
+	}
+
+	// outer context theme
+	:host-context([data-color-scheme=#{$light-or-dark}]) {
+		@content;
+	}
+
+	// inner parent overrides theme
+	[data-color-scheme=#{$light-or-dark}] {
+		@content;
+	}
+
+	// inner parent overrides theme with higher specitivity
+	:host-context([data-color-scheme=dark]), :host-context([data-color-scheme=light]) {
+		[data-color-scheme=#{$light-or-dark}] {
+			@content;
+		}
+	}
+}
+
+// set specific styles for a theme
+@mixin theme($theme-name) {
+	.theme-#{$theme-name}, :host-context(.theme-#{$theme-name}) {
+		@content;
+	}
+}

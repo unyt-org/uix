@@ -1,6 +1,5 @@
 // Global constants
-import { Path } from "unyt_node/path.ts";
-import { cwdURL } from "unyt_core/utils/global_values.ts";
+import { Path } from "../utils/path.ts";
 import { cache_path } from "unyt_core/runtime/cache_path.ts";
 
 export const IS_HEADLESS = !!globalThis.Deno;

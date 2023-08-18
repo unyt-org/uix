@@ -8,8 +8,8 @@ import "./render.ts";
 import { $$, Datex } from "unyt_core";
 import { HTMLUtils } from "../html/utils.ts";
 import { DX_VALUE, INIT_PROPS, logger } from "unyt_core/datex_all.ts";
-import { STANDALONE } from "../snippets/bound_content_properties.ts";
-import { DX_IGNORE } from "https://dev.cdn.unyt.org/unyt_core/runtime/constants.ts";
+import { STANDALONE } from "../standalone/bound_content_properties.ts";
+import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
 
 
 // handle htmlfragment (DocumentFragment)

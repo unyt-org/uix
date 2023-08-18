@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-control-regex
-import { Datex, text } from "unyt_core";
-import { Res, Theme, HTMLUtils, logger } from "./uix_all.ts";
+import { Datex } from "unyt_core";
+import { Res, Theme, HTMLUtils } from "./uix_all.ts";
 import { HTML } from "./utils/html_template_strings.ts";
 import { SCSS } from "./utils/css_template_strings.ts";
 

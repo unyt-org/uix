@@ -1,7 +1,7 @@
 import type { Datex } from "unyt_core"
 
 import { DX_PTR } from "unyt_core/runtime/constants.ts";
-import { STANDALONE } from "../snippets/bound_content_properties.ts";
+import { STANDALONE } from "../standalone/bound_content_properties.ts";
 
 /**
  * Wraps a function so that it is always called in the original context.

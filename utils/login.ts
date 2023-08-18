@@ -1,6 +1,6 @@
 import { Datex,f } from "unyt_core/datex.ts";
 import home_dir from "https://deno.land/x/dir@1.5.1/home_dir/mod.ts";
-import { Path } from "unyt_node/path.ts";
+import { Path } from "../utils/path.ts";
 
 const logger = new Datex.Logger("Developer Login", true)
 export async function triggerLogin() {

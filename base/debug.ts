@@ -27,7 +27,7 @@ export namespace Debug {
     let rule_start_index = 0;
     let rule_count = 0;
 
-    let document_debug_style = new window.CSSStyleSheet();
+    const document_debug_style = new window.CSSStyleSheet();
     if (!IS_HEADLESS) document.adoptedStyleSheets = [...document.adoptedStyleSheets, document_debug_style];
 
     export function toggleDebugMode(){
@@ -77,9 +77,9 @@ export namespace Debug {
         rule_count = 6;
 
         // custom rules
-        for (let handler of debug_mode_style_creators) {
+        for (const handler of debug_mode_style_creators) {
             const rules = handler();
-            for(let rule of rules) {
+            for (const rule of rules) {
                 document_debug_style.insertRule(rule,document_debug_style.cssRules.length)
                 rule_count ++;
             }

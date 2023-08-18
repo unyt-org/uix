@@ -1,0 +1,24 @@
+{
+  "fmt": {
+    "files": {
+      "exclude": [
+        "lib",
+        "static",
+        "target"
+      ]
+    }
+  },
+  "lint": {
+    "files": {
+      "exclude": [
+        "lib",
+        "static/*.js",
+        "target"
+      ]
+    }
+  },
+  "tasks": {
+    "test": "deno test --allow-read --allow-net --allow-env --allow-write",
+    "build": "deno run -A --unstable https://deno.land/x/wasmbuild@0.8.3/main.ts"
+  }
+}

@@ -118,7 +118,7 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
-		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
+		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			Component(propsOrClass).template = generator
 		}
@@ -131,7 +131,7 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 	else generator = function(propsOrClass:any) {
 
 		// decorator
-		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
+		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			Component(propsOrClass).template = generator
 		}
@@ -186,7 +186,7 @@ export function style(templateOrGenerator:CSSStyleSheet|jsxInputGenerator<CSSSty
 
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
-		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
+		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			propsOrClass.style_template = generator
 		}
@@ -199,7 +199,7 @@ export function style(templateOrGenerator:CSSStyleSheet|jsxInputGenerator<CSSSty
 	else generator = function(propsOrClass:any) {
 
 		// decorator
-		if (UIX.BaseComponent.isPrototypeOf(propsOrClass)) {
+		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			propsOrClass.style_template = generator
 		}

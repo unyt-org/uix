@@ -18,22 +18,23 @@ import type { Group } from "./group.ts"
 import { Components } from "./main.ts"
 import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, ORIGIN_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import { bindObserver } from "../html/datex_binding.ts";
-import { Path } from "unyt_node/path.ts";
-import { RouteManager } from "../html/rendering.ts";
+import { Path } from "../utils/path.ts";
+import { RouteManager } from "../html/entrypoints.ts";
 import { Context } from "../base/context.ts";
-import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../snippets/scroll_container.ts";
-import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open_graph.ts";
-import { App } from "../app/app.ts";
-import { bindContentProperties } from "../snippets/bound_content_properties.ts";
-import { propInit, standaloneContentPropertyData, standaloneProperties } from "./BaseComponent.ts";
+import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../standalone/scroll_container.ts";
+import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open-graph.ts";
+import { app } from "../app/app.ts";
+import { bindContentProperties } from "../standalone/bound_content_properties.ts";
+import { propInit, standaloneContentPropertyData, standaloneProperties } from "./UIXComponent.ts";
 import { indent } from "../utils/indent.ts";
 import { serializeJSValue } from "../utils/serialize_js.ts";
 import { bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
+import { convertToWebPath } from "../app/utils.ts";
 
 
 // deno-lint-ignore no-namespace
 /**
- * @deprecated Please use UIX.BaseComponent or UIX.ShadowDOMComponent
+ * @deprecated Please use UIXComponent
  */
 export namespace Base {
     export interface Options extends Elements.Base.Options {
@@ -114,7 +115,7 @@ export namespace Base {
 
 @template("uix:component")
 /**
- * @deprecated Please use UIX.BaseComponent or UIX.ShadowDOMComponent
+ * @deprecated Please use UIXComponent
  */
 export abstract class Base<O extends Base.Options = Base.Options> extends Elements.Base implements RouteManager {
 
@@ -181,7 +182,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
     protected is_skeleton = false // true if component not yet fully initialized, still displayed as skeleton and not associated with DATEX object
 
     /**
-     * @deprecated Please use UIX.BaseComponent or UIX.ShadowDOMComponent
+     * @deprecated Please use UIXComponent
      */
     constructor(options?:Datex.DatexObjectInit<O>, constraints?:Datex.DatexObjectInit<Types.component_constraints>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
@@ -339,7 +340,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             this.content.style.height = "auto"
             this.content_container.append(this.makeScrollContainer(this.content));
             this.addStandaloneHandler(async ()=>{
-                const {enableScrollContainer} = await import("uix/snippets/scroll_container.ts");
+                const {enableScrollContainer} = await import("uix/standalone/scroll_container.ts");
                 enableScrollContainer(this.shadowRoot!.querySelector(".uix-scrollbar-container")!)
             })
         }
@@ -528,7 +529,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 		for (let url of this.#style_sheets_urls) {
             if (url.toString().startsWith("file://")) {
                 // relative web path (@...)
-                url = App.filePathToWebPath(url);
+                url = convertToWebPath(url);
             }
             html += `<link rel=stylesheet href="${url}">`;
         }
@@ -1019,7 +1020,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
             const relImport = g2 ?? g4;
             const absImport = new Path(relImport, this._module);
 
-            return `${g1}("${App.filePathToWebPath(absImport)}")`
+            return `${g1}("${convertToWebPath(absImport)}")`
         })
        
     }
@@ -1394,7 +1395,7 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
 
     // implements resolveRoute per default, can be overriden for more custom routing behaviour
     public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
-        const {Path} = await import("unyt_node/path.ts");
+        const {Path} = await import("uix/utils/path.ts");
 
         const delegate = this.routeDelegate??this;
 

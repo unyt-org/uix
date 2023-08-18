@@ -60,7 +60,7 @@ const TemplateCompWithOptions = UIX.template<{a:number, b?:number}, never>(({a,b
 	predefined child
 </>
 )
-class ClassComponent extends UIX.BaseComponent {
+class ClassComponent extends UIX.UIXComponent {
     @UIX.id declare header: HTMLHeadingElement
     @UIX.id declare description: HTMLElement
 
@@ -155,7 +155,7 @@ const TemplateWithOptions = UIX.template<{image:HTMLImageElement, x: number, map
 	}
 `)
 @TemplateWithOptions
-export class CompontentWithOptions extends UIX.BaseComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
+export class CompontentWithOptions extends UIX.UIXComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
 	protected override onCreate() {
 		console.log("CompontentWithOptions image", this.options.image, this.options.$.image)
 		console.log("CompontentWithOptions x", this.options.x, this.options.$.x)

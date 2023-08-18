@@ -1,10 +1,10 @@
 // deno-lint-ignore-file no-namespace
 import { htmlElementAttributeValues } from "../html/attributes.ts"
 import { UIX } from "uix";
-import { BaseComponent } from "./BaseComponent.ts"
+import { UIXComponent } from "./UIXComponent.ts"
 
 export namespace DropdownMenu {
-	export interface Options extends BaseComponent.Options {
+	export interface Options extends UIXComponent.Options {
 
 	}
 }
@@ -12,6 +12,6 @@ export namespace DropdownMenu {
 @Component<DropdownMenu.Options>({
 	
 })
-export class DropdownMenu extends BaseComponent<DropdownMenu.Options, never> {
+export class DropdownMenu extends UIXComponent<DropdownMenu.Options, never> {
 
 }

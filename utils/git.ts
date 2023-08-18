@@ -1,5 +1,5 @@
 import { OutputMode, exec as _exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
-import { Path } from "unyt_node/path.ts";
+import { Path } from "../utils/path.ts";
 
 const CMD = {
 	GET_BRANCH: 'git rev-parse --abbrev-ref HEAD',

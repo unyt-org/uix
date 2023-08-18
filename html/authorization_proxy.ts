@@ -1,12 +1,15 @@
-import { Path } from "unyt_node/path.ts";
-import { UIX } from "uix";
+import { Context } from "../base/context.ts";
+import { Path } from "../utils/path.ts";
+import { Entrypoint, EntrypointProxy } from "./entrypoints.ts";
 
 export type Credentials = {
 	username: string,
 	password: string
 }
 
-export class AuthorizationProxy extends UIX.EntrypointProxy {
+export class AuthorizationProxy extends EntrypointProxy {
+	
+	override redirect = undefined
 
 	static readonly LOGIN_DIALOG = new Response("", {
 		status: 401,
@@ -17,15 +20,15 @@ export class AuthorizationProxy extends UIX.EntrypointProxy {
 	})
 
 	#credentials: Credentials[]
-	#unauthorizedEntrypoint?: UIX.Entrypoint
+	#unauthorizedEntrypoint?: Entrypoint
 
-	constructor(credentials: Credentials[], authorizedEntrypoint?: UIX.Entrypoint, unauthorizedEntrypoint?: UIX.Entrypoint) {
+	constructor(credentials: Credentials[], authorizedEntrypoint?: Entrypoint, unauthorizedEntrypoint?: Entrypoint) {
 		super(authorizedEntrypoint);
 		this.#credentials = credentials;
 		this.#unauthorizedEntrypoint = unauthorizedEntrypoint;
 	}
 	
-	intercept(_route: Path, context: UIX.Context) {
+	intercept(_route: Path, context: Context) {
 		const credentials = context.request?.headers.get("Authorization");
 	
 		// has credentials

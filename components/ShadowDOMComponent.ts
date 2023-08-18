@@ -1,9 +1,9 @@
 // deno-lint-ignore-file no-async-promise-executor
-import { BaseComponent } from "./BaseComponent.ts"
+import { UIXComponent } from "./UIXComponent.ts"
 
 // deno-lint-ignore no-namespace
 export namespace ShadowDOMComponent {
-    export interface Options extends BaseComponent.Options {
+    export interface Options extends UIXComponent.Options {
 
     }
 }
@@ -11,9 +11,9 @@ export namespace ShadowDOMComponent {
 
 @Component
 /**
- * @deprecated use UIX.BaseComponent
+ * @deprecated use UIXComponent
  */
-export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOMComponent.Options, ChildElement extends HTMLElement = HTMLElement> extends BaseComponent<O, ChildElement> {
+export class ShadowDOMComponent<O extends ShadowDOMComponent.Options = ShadowDOMComponent.Options, ChildElement extends HTMLElement = HTMLElement> extends UIXComponent<O, ChildElement> {
     
 
 }

@@ -1,6 +1,9 @@
 // html - experimental
 export * from "./html/datex_binding.ts"
 export * from "./html/rendering.ts"
+export * from "./html/render-methods.ts"
+export * from "./html/entrypoints.ts"
+export * from "./html/entrypoint-providers.ts"
 export * from "./html/utils.ts"
 export * from "./html/anonymous_components.ts"
 
@@ -16,10 +19,8 @@ export * from "./base/dom_pointer_source.ts"
 export * from "./base/files.ts"
 export * from "./base/handlers.ts"
 export * from "./base/init.ts"
-export * from "./base/markdown_parser.ts"
 export * from "./base/res.ts"
 export * from "./base/snippets.ts"
-export * from "./base/sounds.ts"
 export * from "./base/state.ts"
 export * from "./base/std_loader.ts"
 export * from "./base/theme.ts"
@@ -29,10 +30,10 @@ export * from "./base/routing.ts"
 export * from "./base/context.ts"
 
 // sw
-export * from "./sw/sw_installer.ts"
+export * from "./sw/sw-installer.ts"
 
 // components
-export * from "./components/BaseComponent.ts"
+export * from "./components/UIXComponent.ts"
 export * from "./components/ShadowDOMComponent.ts"
 export * from "./components/main.ts"
 

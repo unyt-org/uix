@@ -1,12 +1,12 @@
 // deno-lint-ignore-file no-namespace
 import { htmlElementAttributeValues } from "../html/attributes.ts"
 import { UIX } from "uix";
-import { BaseComponent } from "./BaseComponent.ts"
+import { UIXComponent } from "./UIXComponent.ts"
 import { HTMLUtils } from "../html/utils.ts";
 import { bindToOrigin } from "../utils/datex_over_http.ts";
 
 export namespace ValueInput {
-	export interface Options extends BaseComponent.Options {
+	export interface Options extends UIXComponent.Options {
 		type?: htmlElementAttributeValues['input']['type'],
 		placeholder?: string
 	}
@@ -16,7 +16,7 @@ export namespace ValueInput {
 	class: "value-input",
 	type: "text"
 })
-export class ValueInput extends BaseComponent<ValueInput.Options, never> {
+export class ValueInput extends UIXComponent<ValueInput.Options, never> {
 
 	@standalone @property count = 0;
 	@standalone @layout input = <input onclick={()=>this.onClick()} type={this.options.type} placeholder={this.options.placeholder}/>

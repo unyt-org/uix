@@ -1,11 +1,13 @@
 // deno-lint-ignore-file no-namespace
 
-import { Path } from "unyt_node/path.ts";
+import { Path } from "../utils/path.ts";
 import { Logger } from "unyt_core/datex_all.ts";
-import { resolveEntrypointRoute, Entrypoint, html_content_or_generator, provideError, RenderMethod, refetchRoute, KEEP_CONTENT } from "../html/rendering.ts";
+import { resolveEntrypointRoute,  refetchRoute } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
 import { Datex } from "unyt_core/datex.ts";
-
+import { Entrypoint, html_content_or_generator } from "../html/entrypoints.ts";
+import { KEEP_CONTENT, provideError } from "../html/entrypoint-providers.ts";
+import { RenderMethod } from "../html/render-methods.ts";
 /**
  * Generalized implementation for setting the route in the current tab URL
  * Used in combination with components

@@ -2,7 +2,7 @@
 import { datex, Datex, pointer, $$ } from "unyt_core";
 import { logger } from "../utils/global_values.ts";
 import { Components} from "../components/main.ts";
-import { ServiceWorker } from "../sw/sw_installer.ts";
+import { ServiceWorker } from "../sw/sw-installer.ts";
 
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { displayInit } from "unyt_core/runtime/display.ts";

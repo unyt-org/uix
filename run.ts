@@ -1,25 +1,18 @@
 /**
- * This script starts a UIX app.
- * 
- * Default project structure:
- * 	- backend/  (optional)
- * 	  - entrypoint.ts
- *  - common/   (optional)
- *    - ....
- *  - frontend/ (optional)
- *    - entrypoint.ts
- *  - app.dx
+ * This script starts a UIX app
  */
 
 import { Datex, datex } from "unyt_core/no_init.ts"; // required by getAppConfig
+import type { Datex as _Datex } from "unyt_core"; // required by getAppConfig
+
 import type {Datex as DatexType} from "unyt_core";
 
-import { getAppOptions } from "./utils/config_files.ts";
+import { getAppOptions } from "./app/config-files.ts";
 import { getExistingFile } from "./utils/file_utils.ts";
-import { command_line_options, login, root_path, stage } from "./utils/args.ts";
-import { normalizeAppOptions, normalized_app_options } from "./app/options.ts";
-import { runLocal } from "./run-local.ts";
-import { runRemote } from "./run-remote.ts";
+import { command_line_options, login, root_path, stage } from "./app/args.ts";
+import { normalizeAppOptions, normalizedAppOptions } from "./app/options.ts";
+import { runLocal } from "./runners/run-local.ts";
+import { runRemote } from "./runners/run-remote.ts";
 import { GitDeployPlugin } from "./plugins/git-deploy.ts";
 import { triggerLogin } from "./utils/login.ts";
 
@@ -89,6 +82,7 @@ async function getDXConfigData(path: URL) {
 	// make sure customDomains is a string array
 	if (domains instanceof Datex.Tuple) domains = domains.toArray();
 	else if (typeof domains == "string") domains = [domains];
+	// @ts-ignore check for default @@local
 	else if (domains === Datex.LOCAL_ENDPOINT) domains = [];
 	domains = domains?.filter(d=>d!==Datex.LOCAL_ENDPOINT) ?? [];
 
@@ -100,7 +94,7 @@ async function getDXConfigData(path: URL) {
 	}
 }
 
-async function runBackends(options: normalized_app_options) {
+async function runBackends(options: normalizedAppOptions) {
 
 	// no backends defined, can just run local
 	if (!options.backend.length) {

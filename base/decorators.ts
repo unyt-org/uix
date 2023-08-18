@@ -7,7 +7,7 @@ import { Components} from "../components/main.ts";
 import { Elements} from "../elements/main.ts";
 import { Files } from "./files.ts";
 import "../html/datex_binding.ts";
-import { BaseComponent } from "../components/BaseComponent.ts";
+import { UIXComponent } from "../components/UIXComponent.ts";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 
 //export const customElements = <typeof globalThis.customElements> globalThis.customElements ? globalThis.customElements : {define:()=>null};
@@ -32,8 +32,8 @@ function _Element(element_class:typeof Elements.Base, name:context_name, kind:co
  * @Component decorators for custom new elements and default elements
  * @deprecated use @UIX.defaultOptions (todo)
  */
-export function Component<T extends Components.Base.Options|BaseComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>, initial_constraints:Partial<Datex.DatexObjectPartialInit<Types.component_constraints>>):any
-export function Component<T extends Components.Base.Options|BaseComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>):any
+export function Component<T extends Components.Base.Options|UIXComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>, initial_constraints:Partial<Datex.DatexObjectPartialInit<Types.component_constraints>>):any
+export function Component<T extends Components.Base.Options|UIXComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>):any
 export function Component():any
 export function Component<C>(target: Function & { prototype: C }):any
 export function Component<C>(...args:any[]):any {
@@ -54,10 +54,10 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 
 	// deprecated message
 	// if (component_class.prototype instanceof Components.Base) {
-	// 	logger.warn("UIX.Components.Base is deprecated - please use UIX.BaseComponent or UIX.ShadowDOMComponent")
+	// 	logger.warn("UIX.Components.Base is deprecated - please use UIXComponent")
 	// }
 
-	if (component_class.prototype instanceof Components.Base || component_class.prototype instanceof BaseComponent) {
+	if (component_class.prototype instanceof Components.Base || component_class.prototype instanceof UIXComponent) {
 
 		// set auto module (url from stack trace), not if module === null => resources was disabled with @NoResources
 		if (url && component_class._module !== null) component_class._module = url;
@@ -124,13 +124,13 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 		})
 
 		// define custom DOM element after everything is initialized
-		// TODO: rename, also in BaseComponent.ts
-		if (component_class.prototype instanceof BaseComponent) window.customElements.define("uix2-" + name, component_class)
+		// TODO: rename, also in UIXComponent.ts
+		if (component_class.prototype instanceof UIXComponent) window.customElements.define("uix2-" + name, component_class)
 		else window.customElements.define("uix-" + name, component_class)
 		
 		return new_class //element_class
 	}
-	else throw new Error("Invalid @UIX.Component - class must extend UIX.Components.Base or UIX.BaseComponent")
+	else throw new Error("Invalid @UIX.Component - class must extend UIX.Components.Base or UIXComponent")
 }
 
 /**

@@ -1,16 +1,16 @@
 import { Datex } from "unyt_core";
-import { App } from "../app/app.ts";
-import { OpenGraphInformation } from "../base/open_graph.ts";
+import { OpenGraphInformation } from "../base/open-graph.ts";
 import { UIX } from "../uix.ts";
 import { indent } from "../utils/indent.ts";
 import type { HTMLProvider } from "./html_provider.ts";
 import { HTMLUtils } from "./utils.ts";
-import { COMPONENT_CONTEXT, STANDALONE } from "../snippets/bound_content_properties.ts";
+import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_properties.ts";
+import { convertToWebPath } from "../app/utils.ts";
 
 let stage:string|undefined = '?'
 
 if (globalThis.Deno) {
-	({ stage } = (await import("../utils/args.ts")))
+	({ stage } = (await import("../app/args.ts")))
 }
 
 
@@ -84,7 +84,7 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 		// collect stylsheets that children require
 		const collectedStylesheets:string[] = []
 		html += await getInnerHTML(el.shadowRoot, opts, collectedStylesheets, standaloneContext);
-		for (const link of collectedStylesheets) html += `<link rel="stylesheet" href="${App.filePathToWebPath(link)}">\n`;
+		for (const link of collectedStylesheets) html += `<link rel="stylesheet" href="${convertToWebPath(link)}">\n`;
 		// @ts-ignore
 		if (el.getRenderedStyle) html += el.getRenderedStyle();
 		html += '</template>'
@@ -135,7 +135,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 		const attrib = el.attributes[i];
 		let val = attrib.value;
 		// relative web path (@...)
-		if (val.startsWith("file://")) val = App.filePathToWebPath(val);
+		if (val.startsWith("file://")) val = convertToWebPath(val);
 		// blob -> data url
 		else if (val.startsWith("blob:")) {
 			val = await blobToBase64(val) as string;
@@ -225,9 +225,9 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 
 	let script = `<script type="module">\n`
 	// global imports and definitions
-	script += `import {querySelector, querySelectorAll} from "uix/snippets/shadow_dom_selector.ts";\n`
-	script += `import {bindPrototype} from "uix/snippets/get_prototype_properties.ts";\n`
-	script += `import {bindContentProperties} from "uix/snippets/bound_content_properties.ts";\n`
+	script += `import {querySelector, querySelectorAll} from "uix/standalone/shadow_dom_selector.ts";\n`
+	script += `import {bindPrototype} from "uix/standalone/get_prototype_properties.ts";\n`
+	script += `import {bindContentProperties} from "uix/standalone/bound_content_properties.ts";\n`
 	script += `globalThis.querySelector = querySelector;\nglobalThis.querySelectorAll = querySelectorAll;\n`
 	script += `globalThis.bindPrototype = bindPrototype;\n`
 	script += `globalThis.bindContentProperties = bindContentProperties;\n`
@@ -352,6 +352,11 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 			files += `\n\nawait UIX.Routing.setEntrypoints(frontend_entrypoint, undefined)`
 
 		files += '\n</script>'
+	}
+
+	// no js, only inject some UIX app metadata
+	else {
+		files += indent(4) `<script type="module">\nglobalThis._UIX_appdata = {name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:"${Datex.Runtime.endpoint.toString()}"${Datex.Unyt.endpoint_info.app?.host ? `, host:"${Datex.Unyt.endpoint_info.app.host}"`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}};\n</script>`
 	}
 
 	if (add_importmap) importmap = `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;

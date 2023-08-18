@@ -1,8 +1,8 @@
-import { Path } from "unyt_node/path.ts";
+import { Path } from "../utils/path.ts";
 import { $$, Datex } from "unyt_core";
 import { UIX } from "uix";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
-import { BaseComponent } from "../components/BaseComponent.ts";
+import { UIXComponent } from "../components/UIXComponent.ts";
 import { validHTMLElementSpecificAttrs, validHTMLElementAttrs, validSVGElementSpecificAttrs, svgTags, mathMLTags } from "../html/attributes.ts";
 import { HTMLUtils, logger } from "../uix_all.ts";
 
@@ -215,7 +215,7 @@ declare global {
 		} & htmlAttrs<validHTMLElementAttrs>
 
 		// Common attributes of the UIX components only
-		interface IntrinsicClassAttributes<C extends BaseComponent> {}
+		interface IntrinsicClassAttributes<C extends UIXComponent> {}
 
 		type DatexValueObject<T extends Record<string|symbol,unknown>, allowPromises extends boolean = false> = {
 			[key in keyof T]: T[key] extends (...args:any)=>any ? T[key] : Datex.CompatValue<T[key]>|(allowPromises extends true ? Promise<Datex.CompatValue<T[key]>> : never)

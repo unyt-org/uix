@@ -1,4 +1,4 @@
-<img alt="UIX - The Fullstack Framework" src="./logos/banner_reverse.svg" style="max-width:400px">
+<img alt="UIX - The Fullstack Framework" src="./logos/banner.svg" style="max-width:400px">
 
 ## What is UIX?
 

@@ -15,6 +15,7 @@ import { runLocal } from "./runners/run-local.ts";
 import { runRemote } from "./runners/run-remote.ts";
 import { GitDeployPlugin } from "./plugins/git-deploy.ts";
 import { triggerLogin } from "./utils/login.ts";
+import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
 
 // login flow
 if (login) await triggerLogin();
@@ -48,14 +49,17 @@ export type runParams = {
 }
 
 const params: runParams = {
-	reload: command_line_options.option("reload", {type:"boolean", aliases:["r"]}),
-	enableTLS: command_line_options.option("enable-tls", {type:"boolean"}),
-	inspect: command_line_options.option("inspect", {type:"boolean"}),
-	unstable: command_line_options.option("unstable", {type:"boolean"}),
-	detach: command_line_options.option("detach", {type:"boolean", aliases: ["d"], default: false}),
+	reload: command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
+	enableTLS: command_line_options.option("enable-tls", {type:"boolean", description: "Run the web server with TLS"}),
+	inspect: command_line_options.option("inspect", {type:"boolean", description: "Enable debugging for the deno process"}),
+	unstable: command_line_options.option("unstable", {type:"boolean", description: "Enable unstable deno features"}),
+	detach: command_line_options.option("detach", {type:"boolean", aliases: ["d"], default: false, description: "Keep the app running in background"}),
 
 	deno_config_path: getExistingFile(root_path, './deno.json')
 }
+
+// forced command line args capture, exit after this point
+if (CommandLineOptions.collecting) await CommandLineOptions.capture()
 
 /**
  * Mock #public.uix

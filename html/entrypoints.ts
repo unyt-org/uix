@@ -4,6 +4,7 @@ import { Path } from "../utils/path.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts";
 import { KEEP_CONTENT } from "./entrypoint-providers.ts";
+import { resolveEntrypointRoute } from "./rendering.ts";
 
 
 export type raw_content = Blob|Response // sent as raw Response

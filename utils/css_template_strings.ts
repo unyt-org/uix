@@ -71,7 +71,7 @@ export function SCSS(template:any, ...params:cssParam[]) {
 			logger.debug("activating stylesheet for", document)
 			
 			// enable stylesheet for document
-			document.adoptedStyleSheets = [...document.adoptedStyleSheets, styleSheet];
+			document.adoptedStyleSheets = [...(document.adoptedStyleSheets??[]), styleSheet];
 
 			// set all global css vars for document
 			for (const [prop, val] of globalCSSVars) {

@@ -3,6 +3,7 @@ import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
 import { add, always, and } from "unyt_core/datex.ts";
+import { style } from "uix/html/anonymous_components.ts";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -19,7 +20,7 @@ const Container = UIX.template(<div style={{display:"flex", gap:5, margin:5}}></
 
 const a = $$(0);
 const b = $$(0);
-const helloWorld = "Hello World";
+
 setInterval(()=>a.val = Math.round(Math.random()*100), 1000);
 setInterval(()=>b.val = Math.round(Math.random()*100), 2000);
 
@@ -137,9 +138,9 @@ const exampleObject = $$({
 
 
 const TemplateWithOptions = UIX.template<{image:HTMLImageElement, x: number, map: Map<string, string>}>(({image, x, map})=> {
-	console.log("TemplateWithOptions image", val(image), image)
-	console.log("TemplateWithOptions x", val(x), x)
-	console.log("TemplateWithOptions map", val(map), map)
+	console.debug("TemplateWithOptions image", val(image), image)
+	console.debug("TemplateWithOptions x", val(x), x)
+	console.debug("TemplateWithOptions map", val(map), map)
 	return (
 		<div>
 			X = {x}
@@ -148,7 +149,7 @@ const TemplateWithOptions = UIX.template<{image:HTMLImageElement, x: number, map
 	)
 })
 
-@UIX.style(SCSS`
+@style(SCSS`
 	:host {
 		background: green;
 	}
@@ -156,9 +157,9 @@ const TemplateWithOptions = UIX.template<{image:HTMLImageElement, x: number, map
 @TemplateWithOptions
 export class CompontentWithOptions extends UIX.UIXComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
 	protected override onCreate() {
-		console.log("CompontentWithOptions image", this.options.image, this.options.$.image)
-		console.log("CompontentWithOptions x", this.options.x, this.options.$.x)
-		console.log("CompontentWithOptions map", this.options.map, this.options.$.map)
+		console.debug("CompontentWithOptions image", this.options.image, this.options.$.image)
+		console.debug("CompontentWithOptions x", this.options.x, this.options.$.x)
+		console.debug("CompontentWithOptions map", this.options.map, this.options.$.map)
 	}
 }
 

@@ -18,6 +18,7 @@ import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";
+import { addCSSScopeSelector } from "uix/utils/css-scoping.ts";
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -394,7 +395,7 @@ export class Server {
         // UIX special query parameters (TODO: move)
         // special scoped css
         if (url.searchParams.has("scope") && (url.ext === "scss" || url.ext === "css")) {
-            const scopedCSS = this.addCSSScopeSelector(await Deno.readTextFile(filepath.normal_pathname), url.searchParams.get("scope")!);
+            const scopedCSS = addCSSScopeSelector(await Deno.readTextFile(filepath.normal_pathname), url.searchParams.get("scope")!);
             return this.getContentResponse("text/css", scopedCSS);
         }
         if (url.searchParams.has("useDirective") && (url.ext === "tsx" || url.ext === "ts" || url.ext === "js" || url.ext === "jsx")) {
@@ -485,23 +486,6 @@ export class Server {
         return filepath;
     }
 
-    protected addCSSScopeSelector(css: string, scope: string) {
-        const scopedCSS = css.replace(/^[^@\n]+{[^}]*}/gm, (part) => {
-            if (part.match(/^(to|from|\d+%|[\s,\n])+{[^}]*}$/)) return part; // is inside @keyframe (e.g. "50% {}""), ignore
-            else {
-                // for each selectors (e.g. ':host, a#b'), add the scope, e.g. 'scope, scope a#b'
-                return part.replace(/^[^@\n]+(?={)/, (s) => {
-                    const selectors = s.split(/, */g).map(selector => 
-                        (selector.includes(":host") || selector.includes(":root")) ? 
-                            selector.trimEnd().replaceAll(":host", scope).replaceAll(":root", scope) : 
-                            scope + ' ' + selector.trimEnd()
-                        );
-                    return selectors.join(", ") + ' '
-                })
-            }
-        });
-        return scopedCSS;
-    }
 
     protected async generateDirectoryIndex(path: Path.File) {
         const dirs:directoryIndex = []

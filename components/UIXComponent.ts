@@ -22,6 +22,7 @@ import { ORIGIN_PROPS, Theme, jsxInputGenerator } from "../uix_all.ts"
 import { bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
 import type { DynamicCSSStyleSheet } from "../utils/css_template_strings.ts";
 import { convertToWebPath } from "../app/utils.ts";
+import { addCSSScopeSelector } from "uix/utils/css-scoping.ts"
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -709,6 +710,12 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
             const templateFn = (<typeof UIXComponent> this.constructor).style_template!;
             const stylesheet = templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this) as DynamicCSSStyleSheet;
+            // inject css scoping if component has no shadow root
+            if (!this.shadowRoot) {
+                const css = [...(stylesheet.cssRules as any)].map(r=>r.cssText).join("\n");
+                const scopedCSS = addCSSScopeSelector(css, this.tagName)
+                stylesheet.replaceSync(scopedCSS)
+            }
             if (stylesheet.activate) stylesheet.activate(this.shadowRoot??document);
             else this.addStyleSheet(stylesheet)
         }

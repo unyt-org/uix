@@ -1,4 +1,4 @@
-# ![UIX - The Fullstack Framework](./logos/banner.svg)
+<img alt="UIX - The Fullstack Framework" src="./logos/banner_reverse.svg" style="max-width:400px">
 
 ## What is UIX?
 

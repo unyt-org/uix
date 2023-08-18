@@ -3,6 +3,7 @@ export function getExistingFile(root_path:URL, ...paths:(string|URL)[]):string|U
 		const path = paths.shift();
 		if (!path) return null;
 		const abs_path = new URL(path, root_path);
+		console.log("Get " + abs_path, path, root_path)
 		Deno.openSync(abs_path)
 		return abs_path;
 	}

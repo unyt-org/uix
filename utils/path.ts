@@ -187,9 +187,12 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 
 	/**
 	 * get pathname for filesystems, not encoded for URLs
+	 * also handles windows absolute paths (e.g. C:/)
 	 */
 	get normal_pathname() {
-		return decodeURIComponent(this.pathname)
+		const path = decodeURIComponent(this.pathname);
+		if (path.match(/^\/.\:\//)) return path.slice(1)
+		return path
 	}
 
 	/**

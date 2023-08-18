@@ -1,10 +1,11 @@
+import { Path } from "./path.ts";
+
 export function getExistingFile(root_path:URL, ...paths:(string|URL)[]):string|URL|null {
 	try {
 		const path = paths.shift();
 		if (!path) return null;
-		const abs_path = new URL(path, root_path);
-		console.log("Get " + abs_path, path, root_path)
-		Deno.openSync(abs_path)
+		const abs_path = new Path(path, root_path);
+		Deno.openSync(abs_path.normal_pathname)
 		return abs_path;
 	}
 	catch {

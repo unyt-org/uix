@@ -17,6 +17,10 @@ enum ContainerStatus {
 	ONLINE = 6
 }
 
+// workaround, ignore modified deno.json
+function onlyDenoFileChanges(fileOutput: string) {
+	return !fileOutput.includes("\n") && fileOutput.endsWith("deno.json");
+}
 
 /**
  * Run UIX app on a remote host
@@ -29,14 +33,14 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 
 	// Git: All changes have to be added
 	const unaddedFiles = await repo.getUnaddedFiles();
-	if (unaddedFiles) {
+	if (unaddedFiles && !onlyDenoFileChanges(unaddedFiles)) {
 		logger.error(`You have changed files that are not yet updated on the git origin:\n${unaddedFiles}\nPlease add, commit, and push all changes first.`)
 		Deno.exit(1)
 	}
 
 	// Git: All changes have to be committed
 	const uncommitedChanges = await repo.getUncommittedChanges();
-	if (uncommitedChanges) {
+	if (uncommitedChanges && !onlyDenoFileChanges(uncommitedChanges)) {
 		logger.error(`You have uncommitted changes:\n${uncommitedChanges}\nPlease commit all changes (git commit -m "commit message") first.`)
 		Deno.exit(1)
 	}

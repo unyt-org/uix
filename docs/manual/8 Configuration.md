@@ -32,9 +32,6 @@ Per default, the frontend path is `./frontend/`, the backend path is `./backend/
 The `git_deploy` DATEX plugin can be used in the `app.dx` file to automate app deployment:
 
 ```datex
-name: 'My App'
-/* ... */;
-
 plugin git_deploy (
     // deployment for 'prod' stage
     prod: {
@@ -60,7 +57,14 @@ description: "I made a thing",
 installable: true,
 offline_support: true,
 
-common: [./lib, ./common] // multiple common paths
+common: [./lib, ./common]; // multiple common paths
+
+plugin git_deploy (
+    staging: {
+        branch: 'main',
+        on: 'push'
+    }
+)
 ```
 ## App Deployment Stages
 

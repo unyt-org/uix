@@ -16,7 +16,7 @@ The following options provide some general information or behaviour of the app.
 * `installable`: (boolean) The app can be installed as standalone web app
 * `offline_support`: (boolean) Adds a service worker with offline cache
 * `expose_deno`: (boolean) Experimental, allows access for the Deno namespace from frontend contexts
-	
+    
 ### Paths
 
 The paths for frontend, backend and shared (common) files can be explicitly set in the `app.dx` files.
@@ -36,12 +36,12 @@ name: 'My App'
 /* ... */;
 
 plugin git_deploy (
-	// deployment for 'prod' stage
-	prod: {
-		branch: 'main',
-		on: 'push',
-		secrets: ['MY_SECRET_TOKEN']
-	}
+    // deployment for 'prod' stage
+    prod: {
+        branch: 'main',
+        on: 'push',
+        secrets: ['MY_SECRET_TOKEN']
+    }
 )
 ```
 
@@ -94,9 +94,9 @@ the `#public.uix.stage` helper function can be used:
 use stage from #public.uix; // import the 'stage' helper function
 
 endpoint: stage {
-	dev: 		@+my_app_dev,  // selected when running in 'dev' stage
-	staging:	@+my_app_stag, // selected when running in 'staging' stage
-	prod: 		@+my_app_prod  // selected when running in 'prod' stage
+    dev: 		@+my_app_dev,  // selected when running in 'dev' stage
+    staging:	@+my_app_stag, // selected when running in 'staging' stage
+    prod: 		@+my_app_prod  // selected when running in 'prod' stage
 }
 ```
 
@@ -105,19 +105,19 @@ endpoint: stage {
 use stage from #public.uix;
 
 endpoint: stage {
-	dev: 		@+my_app_dev,
-	staging:	@+my_app_stag,
-	prod: 		@+my_app_prod
+    dev: 		@+my_app_dev,
+    staging:	@+my_app_stag,
+    prod: 		@+my_app_prod
 },
 
 location: stage {
-	staging: 	@+unyt_eu1,
-	prod: 		@+unyt_eu2
+    staging: 	@+unyt_eu1,
+    prod: 		@+unyt_eu2
 },
 
 domain: stage {
-	staging:  ['staging.example.io'],
-	prod:     ['example.io']
+    staging:  ['staging.example.io'],
+    prod:     ['example.io']
 },
 
 volumes: [../data]

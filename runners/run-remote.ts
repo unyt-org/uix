@@ -3,6 +3,7 @@ import type {runParams} from "../run.ts";
 import { stage, env, watch } from "../app/args.ts";
 import { ESCAPE_SEQUENCES } from "unyt_core/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
+import { Path } from "../utils/path.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 
@@ -26,7 +27,7 @@ function onlyDenoFileChanges(fileOutput: string) {
  * Run UIX app on a remote host
  * Currently using git for file sync with remote
  */
-export async function runRemote(params: runParams, root_path: URL, options: normalizedAppOptions, backend: URL, requiredLocation: Datex.Endpoint, stageEndpoint: Datex.Endpoint, customDomains: Record<string,number|null> = {}) {
+export async function runRemote(params: runParams, root_path: URL, options: normalizedAppOptions, backend: URL, requiredLocation: Datex.Endpoint, stageEndpoint: Datex.Endpoint, customDomains: Record<string,number|null> = {}, volumes?:URL[] = []) {
 	const logger = new Datex.Logger();
 
 	const repo = await GitRepo.get();
@@ -76,6 +77,14 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 			}
 		}, 80_000);
 
+		const normalizedVolumes = []
+		const repoRoot = await repo.getRootPath();
+		for (const volume of volumes) {
+			const relativeVolumePath = new Path(volume).getAsRelativeFrom(repoRoot)
+			normalizedVolumes.push(relativeVolumePath)
+		}
+	
+
 		const container = await datex<any> `
 			use ContainerManager from ${requiredLocation};
 			ContainerManager.createUIXAppContainer(
@@ -86,6 +95,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 				${customDomains},
 				${env},
 				${args},
+				${normalizedVolumes},
 				${Deno.env.get("GITHUB_TOKEN")}
 			)
 		`

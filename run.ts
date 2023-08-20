@@ -78,9 +78,12 @@ await runBackends(options);
 
 async function getDXConfigData(path: URL) {
 	const dx = await datex.get(path) as Record<string,any>;
-	const requiredLocation: DatexType.Endpoint = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
-	const stageEndpoint: DatexType.Endpoint = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
+	const requiredLocation: DatexType.Endpoint = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
+	const stageEndpoint: DatexType.Endpoint = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
 	const port: number = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'port'), true, true);
+	let volumes: URL[]|undefined = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'volumes'), true, true);
+	if (!volumes) volumes = []
+	else if (!(volumes instanceof Array)) volumes = [volumes];
 
 	let domains:string[] = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
 	// make sure customDomains is a string array
@@ -94,7 +97,8 @@ async function getDXConfigData(path: URL) {
 		port,
 		requiredLocation,
 		stageEndpoint,
-		domains
+		domains,
+		volumes
 	}
 }
 
@@ -112,10 +116,11 @@ async function runBackends(options: normalizedAppOptions) {
 		try {
 			let requiredLocation: DatexType.Endpoint|undefined;
 			let stageEndpoint: DatexType.Endpoint|undefined;
+			let volumes: URL[]|undefined
 			const domains:Record<string, number|null> = {}; // domain name -> internal port
 			if (backendDxFile.fs_exists) {
 				let backendDomains: string[]|undefined;
-				({requiredLocation, stageEndpoint, domains: backendDomains} = await getDXConfigData(backendDxFile))
+				({requiredLocation, stageEndpoint, domains: backendDomains, volumes} = await getDXConfigData(backendDxFile))
 				for (const domain of backendDomains) {
 					domains[domain] = null; // no port mapping specified per default
 				}
@@ -140,7 +145,7 @@ async function runBackends(options: normalizedAppOptions) {
 
 			// run on a remote host
 			if (requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation?.toString() !== Deno.env.get("UIX_HOST_ENDPOINT")) {
-				runRemote(params, new_base_url, options, backend, requiredLocation, stageEndpoint, domains);
+				runRemote(params, new_base_url, options, backend, requiredLocation, stageEndpoint, domains, volumes);
 			}
 			// run locally
 			else {

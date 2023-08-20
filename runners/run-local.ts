@@ -47,10 +47,24 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		config_params.push("--import-map", options.import_map.path?.is_web ? options.import_map.path.toString() : options.import_map.path?.normal_pathname)
 	}
 
+	let process: Deno.Process;
+
+	// explicitly kill child process to trigger SIG event on child process
+	// (required for saving state on exit)
+	addEventListener("unload", ()=>{
+		if (process) {
+			process.kill();
+		}
+	}, {capture: true});
+
+	Deno.addSignalListener("SIGINT", ()=>Deno.exit())
+    Deno.addSignalListener("SIGTERM", ()=>Deno.exit())
+    Deno.addSignalListener("SIGQUIT", ()=>Deno.exit())
+
 	await run();
 
 	async function run() {
-		const process = Deno.run({
+		process = Deno.run({
 			cmd: [
 				...cmd,
 				...config_params,

@@ -53,7 +53,10 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	// (required for saving state on exit)
 	addEventListener("unload", ()=>{
 		if (process) {
-			process.kill();
+			try {
+				process.kill();
+			}
+			catch {}
 		}
 	}, {capture: true});
 

@@ -1,6 +1,6 @@
 # Getting Started with UIX
 
-## ✏️ Creating a new UIX Project
+## Creating a new UIX Project
 
 You can get started by cloning a simple UIX example project from https://github.com/unyt-org/uix-base-project:
 ```bash
@@ -12,7 +12,7 @@ for UIX and DATEX support.
 
 
 
-## 🔌 Running a UIX Project
+## Running a UIX Project
 
 To run the UIX project, run the following command in the project root directory (where the `app.dx` is located):
 ```bash
@@ -40,7 +40,7 @@ After installation, you can just run the `uix` command in your project root dire
 
 
 
-## 🧩 Architecture of a UIX Project
+## Architecture of a UIX Project
 
 With UIX, frontend and backend source code or other resources can be put into a single project.
 
@@ -51,7 +51,7 @@ Files in the `common` directory are accessible from the frontend and backend.
 
 
 
-## 🏝 UIX as a Frontend Library
+## UIX as a Frontend Library
 UIX was designed as a fullstack framework, but it can also be used as a standalone frontend library.
 
 ### Import Map

@@ -81,7 +81,7 @@ export const htmlElementAttributes = {
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
 	iframe: [src],
-	source: [src],
+	source: [src, "type"],
 	video: [src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload"],
 	textarea: ["placeholder"]
 } as const satisfies {[key in keyof HTMLElementTagNameMap]?: readonly string[]};

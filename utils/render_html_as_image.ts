@@ -1,7 +1,8 @@
 import { Datex } from "unyt_core";
 import { UIX_CACHE_PATH } from "./constants.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
-import { createSnapshot, RenderMethod } from "../html/rendering.ts";
+import { createSnapshot } from "../html/rendering.ts";
+import { RenderMethod } from "../html/render-methods.ts";
 import { HTMLProvider } from "../html/html_provider.ts";
 import { Path } from "../utils/path.ts";
 import { TypescriptImportResolver } from "../server/ts_import_resolver.ts";

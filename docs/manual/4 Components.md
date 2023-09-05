@@ -412,4 +412,18 @@ The best way to create this stylesheet is using the `SCSS` template function.
 
 #### The `SCSS` template function
 
-The `SCSS` function creates a
+The `SCSS` function creates a `CSSStylesheet` from any valid (s)css string (@import directives are not allowed).
+Additionally, it supports reactive properties:
+
+```ts
+const fontSize = $$("10px")
+SCSS `
+  h1.big {
+    font-size: ${fontSize};
+    color: ${it => it.myColor};
+  }
+`
+fontSize.val = "20px"
+```
+
+In this example, the `font-size` property is bound to a pointer, and the color is bound to a computed value, where `it` references an element for which the selector is applied.

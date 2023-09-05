@@ -416,8 +416,8 @@ The `SCSS` function creates a `CSSStylesheet` from any valid (s)css string (@imp
 Additionally, it supports reactive properties:
 
 ```ts
-const fontSize = $$("10px")
-SCSS `
+const fontSize: Datex.Ref<string> = $$("10px")
+const stylesheet: CSSStylesheet = SCSS `
   h1.big {
     font-size: ${fontSize};
     color: ${it => it.myColor};

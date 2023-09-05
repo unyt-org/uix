@@ -376,7 +376,9 @@ export default <ParentComponent/>
 
 ```
 
-## CSS styles
+## Component styles
+
+### External style files
 
 To apply css styles to a component in a module `my_component.ts`, you can create a file next to the module file, called `my_component.css`. 
 
@@ -387,3 +389,27 @@ For components that don't extend `UIX.ShadowDOMComponent`, the styles from `my_c
 case it is your responsibility to make sure that your style declarations don't have any side effects for other components.
 
 For general global styles, you can add an `entrypoint.css` file next to the `entrypoint.ts` file.
+
+### Inline styles
+
+Another way to add css rules to a component is to use inline styles with the `@style` decorator:
+
+```ts
+@style(SCSS `
+  div {
+    background: red;
+    font-size: 2em;
+  }
+`)
+@template(...)
+class MyComponent extends UIXComponent {
+   ...
+}
+```
+
+The `@style` decorator accepts a `CSSStylesheet` as a parameter.
+The best way to create this stylesheet is using the `SCSS` template function.
+
+#### The `SCSS` template function
+
+The `SCSS` function creates a

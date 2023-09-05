@@ -1,4 +1,3 @@
-
 # Components
 
 ## Anonymous components (templates)
@@ -380,15 +379,14 @@ export default <ParentComponent/>
 
 ### External style files
 
-To apply css styles to a component in a module `my_component.ts`, you can create a file next to the module file, called `my_component.css`. 
+To apply css styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
 
-If the component extends `UIX.ShadowDOMComponent`, the styles declared in this file are automatically adopted for all instances of the component and are not exposed
+The styles declared in this file are automatically adopted for all instances of the component and are not exposed
 to other components.
 
-For components that don't extend `UIX.ShadowDOMComponent`, the styles from `my_component.css` are added as to the global style declaration. In this
-case it is your responsibility to make sure that your style declarations don't have any side effects for other components.
+You can use the `:host` selector to access the component root element (also when not using a shadow dom).
 
-For general global styles, you can add an `entrypoint.css` file next to the `entrypoint.ts` file.
+For general global styles, you can add an `entrypoint.(s)css` file next to the `entrypoint.ts` file.
 
 ### Inline styles
 

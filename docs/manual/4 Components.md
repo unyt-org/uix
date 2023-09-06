@@ -14,7 +14,7 @@ const CustomComponent = UIX.template(<div class='class1'></div>)
 const CustomComponent2 = UIX.template<{customAttr:number}>(({customAttr}) => <div class='class2'><b>the customAttr is {customAttr}</b></div>)
 
 // create elements:
-const comp1 = <CustomComponent id='c1'/> // returns: <div class='class1 class2' id='c1'></div>
+const comp1 = <CustomComponent id='c1'/> // returns: <div class='class1' id='c1'></div>
 const comp2 = <CustomComponent id='c2' customAttr={42}/> // returns: <div class='class2' id='c2'><b>the customAttr is 42</b></div>
 ```
 
@@ -97,7 +97,6 @@ const MyComponent = UIX.template<{background: 'red'|'green', countstart: number}
     // return component content
     return <div style={{background}}>
                 Count: {counter}
-                {...props.children}
            </div>
 });
 

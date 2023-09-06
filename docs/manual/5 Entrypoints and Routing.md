@@ -69,13 +69,6 @@ content.val = "new content"
 ```
 (If you only want to display plain text without a parent HTML document and CSS styles, you can use `UIX.provideContent("text content")`)
 
-## Blobs
-Blobs are directly displayed as files in the browser.
-
-Example:
-```typescript
-export default datex.get('./image.png') satisfies UIX.Entrypoint
-```
 
 ## Route Maps
 
@@ -116,6 +109,42 @@ export default {
 } satisfies UIX.Entrypoint
 ```
 
+
+## Blobs
+Blobs are directly displayed as files in the browser (Creating a file response with the correct mime type).
+
+Example:
+```typescript
+export default datex.get('./image.png') satisfies UIX.Entrypoint
+```
+
+## Filesystem Files
+In a deno environment, `Deno.FSFile` values can be returned as entrypoint values. They create a file response with the correct mime type.
+
+The `UIX.provideFile()` function can also be used to return files from the local file system.
+
+```typescript
+export default UIX.provideFile('./image.png') satisfies UIX.Entrypoint
+```
+
+## Redirects
+
+`URL` objects result in a redirect response (HTTP Status Code **304**) to the given URL.
+This can also be achieved with `UIX.provideRedirect()`:
+
+```typescript
+export default UIX.provideRedirect('https://example.unyt.app') satisfies UIX.Entrypoint
+```
+
+
+## Virtual Redirects
+
+Virtual redirects are similar to normal redirects, but they directly return a response with the content of the redirect URL, not a redirect response (HTTP Status **304**).
+
+```typescript
+export default UIX.provideVirtualRedirect('/example/home') satisfies UIX.Entrypoint
+```
+
 ## Dynamic Entrypoint Functions
 In the example above, a Dynamic Entrypoint Function is used to return custom content based on the context of a route.
 Dynamic Entrypoint Functions take a single argument, a [`UIX.Context`](#uixcontext) object and return a `UIX.Entrypoint` or `Promise<UIX.Entrypoint>` 
@@ -126,6 +155,8 @@ export default (ctx: UIX.Context) => {
     return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`
 } satisfies UIX.Entrypoint
 ```
+
+When an entrypoint function throws an error, the error value is returned like a normal return value, but with an HTTP Status Code **500**.
 
 ## UIX Components
 

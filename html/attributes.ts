@@ -81,6 +81,7 @@ export const htmlElementAttributes = {
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
 	iframe: [src],
+	details: ["open"],
 	source: [src, "type"],
 	label: ["for"],
 	video: [src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload", "playsinline"],

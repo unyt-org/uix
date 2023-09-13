@@ -99,10 +99,11 @@ export function jsx (type: string | any, config: Record<string,any>): Element|Do
 	if (set_default_children) {
 		if (shadow_root) {
 			const template = jsx("template", {children, shadowrootmode:shadow_root});
-			UIX.HTMLUtils.append(element, template);
+			UIX.HTMLUtils.appendDynamic(element, template);
 		}
 		else {
-			UIX.HTMLUtils.append(element, ...children);
+			UIX.HTMLUtils.appendDynamic(element, children);
+			// UIX.HTMLUtils.append(element, ...children);
 		}
 		
 	}

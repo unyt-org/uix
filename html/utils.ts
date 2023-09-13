@@ -1,9 +1,10 @@
 import "unyt_core";
-import { DX_VALUE } from "unyt_core/datex_all.ts";
+import { DATEX_ERROR, DX_VALUE } from "unyt_core/datex_all.ts";
 import { Datex, decimal, pointer } from "unyt_core";
 import { Theme } from "../base/theme.ts";
 import { defaultElementAttributes, elementEventHandlerAttributes, htmlElementAttributes, mathMLTags, svgElementAttributes, svgTags } from "./attributes.ts";
 import { JSX_INSERT_STRING } from "../jsx-runtime/jsx.ts";
+import { Task, TaskScheduler } from "uix/utils/scheduling.ts";
 
 
 // deno-lint-ignore no-namespace
@@ -394,8 +395,98 @@ export namespace HTMLUtils {
 
     type appendableContentBase = Datex.CompatValue<Element|DocumentFragment|string|number|bigint|boolean>|Promise<appendableContent>;
     type appendableContent = appendableContentBase|Promise<appendableContentBase>;
+    export function appendDynamic<T extends Element|DocumentFragment>(parent:T, children:appendableContent|appendableContent[]):T | undefined {
+        if (children instanceof Element || Array.isArray(children)) {
+            const scheduler = new TaskScheduler(true);
+            let lastChildren: Node[] = [];
+
+            Datex.Ref.observeAndInit(children, (...args) => 
+                {
+                    if (Datex.Pointer.isReference(children)) 
+                        console.info("observeAndInit triggered ", children, args)
+                    scheduler.schedule(
+                        Task((r)=>{
+                            appendNew(parent, Array.isArray(children) ? children : [children], lastChildren, (e) => {
+                                lastChildren = e;
+                                if (Datex.Pointer.isReference(children)) 
+                                    console.log("Setting new children", lastChildren)
+                                r(null);
+                            });
+                        })
+                    ); 
+                },
+                undefined,
+                null, 
+                {
+                    recursive: false,
+                    types: [Datex.Ref.UPDATE_TYPE.INIT]
+                }
+            )
+        } else 
+            return appendNew(parent, Array.isArray(children) ? children : [children]);
+    }
+
+    export function appendNew<T extends Element|DocumentFragment>(parent:T, children:appendableContent[], oldChildren?: Node[], onAppend?: ((list: Node[]) => void)):T {
+        // use content if parent is <template>
+        const element = parent instanceof HTMLTemplateElement ? parent.content : parent;
+        console.log("old chilren", oldChildren);
+        if (globalThis.a) debugger;
+
+        let lastAnchor: Node | undefined = oldChildren?.at(-1);
+
+        const lastChildren: Node[] = [];
+        const loadingPromised: Promise<void>[] = [];
+        for (let child of children) {
+            child = (child as any)?.[JSX_INSERT_STRING] ? (child as any).val : child; // collapse safely injected strings
+
+            // wait for promise
+            if (child instanceof Promise) {
+                const placeholder = document.createElement("div")
+                placeholder.setAttribute("data-async-placeholder", "");
+                if (!lastAnchor)
+                    element.append(placeholder);
+                else {
+                    element.insertBefore(placeholder, lastAnchor.nextSibling);
+                    lastAnchor = placeholder;
+                }
+                loadingPromised.push(child);
+                child.then(v=>{
+                    const dom = valuesToDOMElement(v);
+                    // set shadow root or replace
+                    if (!appendElementOrShadowRoot(element, dom, false, false, e => (lastChildren.push(...e)))) placeholder.replaceWith(dom)
+                })
+                // return parent;
+            } else {
+                const dom = valuesToDOMElement(child);
+                // set shadow root or append
+                if (lastAnchor) {
+
+                    appendElementOrShadowRoot(lastAnchor, dom, undefined, true, (e) => (lastChildren.push(...e)));
+                    lastAnchor = dom;
+                }
+                else 
+                    appendElementOrShadowRoot(element, dom, undefined, false, (e) => (lastChildren.push(...e)));
+            }
+        }
+
+        // remove old children 
+        for (const child of oldChildren ?? [])
+            parent.removeChild(child);
+
+        Promise.all(loadingPromised).then(()=>{
+            onAppend?.(lastChildren);
+        });
+        return parent;
+    }
 
     // append an element or text to an element
+    /**
+     * @deprecated use appendNew!
+     * @param parent @
+     * @param children 
+     * @param onAppend 
+     * @returns 
+     */
     export function append<T extends Element|DocumentFragment>(parent:T, ...children:appendableContent[]):T {
         // use content if parent is <template>
         const element = parent instanceof HTMLTemplateElement ? parent.content : parent;
@@ -419,29 +510,37 @@ export namespace HTMLUtils {
             // set shadow root or append
             appendElementOrShadowRoot(element, dom);
         }
-        
         return parent;
     }
 
     /**
      * 
-     * @param parent 
+     * @param anchor 
      * @param element 
      * @param appendAll if false, only shadowRoot is set, other elements are ignored
      * @returns true if element appended
      */
-    export function appendElementOrShadowRoot(parent: Element|DocumentFragment, element: Element|DocumentFragment|Text, appendAll = true) {
+    export function appendElementOrShadowRoot(anchor: Element|DocumentFragment, element: Element|DocumentFragment|Text, appendAll = true, insertAfterAnchor = false, onAppend?: ((list: (Node)[]) => void)) {
+        const appendedContent: Node[] = [];
         for (const candidate of (element instanceof DocumentFragment ? [...(element.childNodes as any)] : [element]) as unknown as Node[]) {
-            if (parent instanceof Element && candidate instanceof HTMLTemplateElement && candidate.hasAttribute("shadowrootmode")) {
-                if (parent.shadowRoot) throw new Error("element <"+parent.tagName.toLowerCase()+"> already has a shadow root")
-                const shadowRoot = parent.attachShadow({mode: (candidate.getAttribute("shadowrootmode")??"open") as "open"|"closed"})
+            if (anchor instanceof Element && candidate instanceof HTMLTemplateElement && candidate.hasAttribute("shadowrootmode")) {
+                if (anchor.shadowRoot) throw new Error("element <"+anchor.tagName.toLowerCase()+"> already has a shadow root")
+                const shadowRoot = anchor.attachShadow({mode: (candidate.getAttribute("shadowrootmode")??"open") as "open"|"closed"})
                 shadowRoot.append((candidate as HTMLTemplateElement).content);
-                if (!appendAll) return true;
+                appendedContent.push(shadowRoot);
+                if (!appendAll) {
+                    onAppend?.(appendedContent);
+                    return true;
+                }
             }
             else if (appendAll) {
-                parent.append(candidate);
+                if (insertAfterAnchor)
+                    anchor.parentElement?.insertBefore(candidate, anchor.nextSibling); // anchor is sibbling (e.g. old elem)
+                else anchor.append(candidate); // anchor is parent
+                appendedContent.push(candidate)
             }
         }
+        onAppend?.(appendedContent);
         return appendAll;
     }
 

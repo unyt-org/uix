@@ -218,17 +218,15 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
         for (const name of Object.values(props)) {
             // prototype has methods
+            console.log(">>>", originProps?.[name], typeof originProps?.[name], name, "<--")
             if (scope[<keyof typeof scope>name]) {
                 // also bound to origin
                 if (originProps?.[name]) {
-                    // @ts-ignore
-                    scope[<keyof typeof scope>name] = bindToOrigin(scope[<keyof typeof scope>name], undefined, name, originProps[name].datex);
-                }
-                this.addStandaloneMethod(name, scope[<keyof typeof scope>name]);
+                    this.addStandaloneProperty(name, originProps?.[name]);
+                } else this.addStandaloneMethod(name, scope[<keyof typeof scope>name]);
             }
             // otherwise, instace property
-            else 
-            this.addStandaloneProperty(name, originProps?.[name]);
+            else this.addStandaloneProperty(name, originProps?.[name]);
         }
     }
 
@@ -237,8 +235,8 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     }
 
     // add methods that run in standalone mode
-    private static standaloneMethods:Record<string,Function> = {};
-    protected static addStandaloneMethod(name: string, value:Function) {
+    private static standaloneMethods:Record<string, Function> = {};
+    protected static addStandaloneMethod(name: string, value: Function) {
         this.standaloneMethods[name] = value;
         // add inferred methods
         for (const method of this.inferredStandaloneMethods[name]??[]) this.addStandaloneMethod(method, this.prototype[<keyof typeof this.prototype>method]);
@@ -294,7 +292,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         let js_code = `class ${this.name}${parent ? ` extends globalThis.UIX_Standalone.${parent.name}`:''} {${Object.values(this.standaloneMethods).length?'\n':''}`;
         js_code += this.getStandaloneConstructor();
         for (const [_name, content] of Object.entries(this.standaloneMethods)) {
-            js_code += this.getStandloneMethodContentWithMappedImports(content) + '\n';
+            js_code += this.getStandaloneMethodContentWithMappedImports(content) + '\n';
         }
         js_code += '}'
 
@@ -313,14 +311,16 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     /**
      * maps file import paths (datex.get or import) in JS source code to web paths
      */
-    private static getStandloneMethodContentWithMappedImports(method:Function){
-        return method.toString().replace(/(import|datex\.get) *\((?:'((?:\.(\.)?\/).*)'|"((?:\.(\.)?\/).*)")\)/g, (m,g1,g2,g3,g4)=>{
+    private static getStandaloneMethodContentWithMappedImports(method:Function, name?: string){
+        const content = method.toString().replace(/(import|datex\.get) *\((?:'((?:\.(\.)?\/).*)'|"((?:\.(\.)?\/).*)")\)/g, (m,g1,g2,g3,g4)=>{
             const relImport = g2 ?? g4;
             const absImport = new Path(relImport, this._module);
 
             return `${g1}("${convertToWebPath(absImport)}")`
         })
-       
+        if (name)
+            return content.replace("function", name);
+        return content;
     }
 
     protected static standaloneEnabled() {
@@ -754,7 +754,6 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
     // init for base element (and every element)
     protected async init(constructed = false) {
-
         // handle shadow root setup
         if (this.shadowRoot) this.initShadowRootStyle();
 
@@ -775,8 +774,9 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         if (IS_HEADLESS) this.loadStandaloneProps();
 
         if (constructed) await this.onConstruct?.();
-        await this.onInit?.() // element was constructed, not fully loaded / added to DOM!
+        // this.bindOriginMethods();
 
+        await this.onInit?.() // element was constructed, not fully loaded / added to DOM!
         this.enableDefaultOpenGraphGenerator();
 
         //await Promise.all(loaders); // TODO: await stylesheet loading? leads to errors
@@ -827,10 +827,22 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
         js_code += `bindPrototype(self, globalThis.UIX_Standalone.${this.constructor.name});\n`
 
+        const scope = this.constructor.prototype;
+        const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
+
         // init props with current values
         for (const [name, data] of Object.entries((this.constructor as typeof UIXComponent).standaloneProperties)) {
+            // check if prop is method
+            if (typeof this[<keyof this>name] === "function") {
+                if (originProps[name]) {
+                    // @ts-ignore $
+                    this[<keyof typeof this>name] = bindToOrigin(this[<keyof typeof this>name], this, null, originProps[name].datex);
+                }
+                js_code += `self["${name}"] = ${UIXComponent.getStandaloneMethodContentWithMappedImports(this[<keyof this>name] as Function)};\n`;
+            }
+            
             // init from origin context (via datex)
-            if (data.init) {
+            else if (data.init) {
                 js_code += `self["${name}"] = ${getValueInitializer(this[<keyof this>name], data.init.datex)};\n`
             }
             // normal property init
@@ -842,7 +854,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         // call custom standalone handlers
         for (const handler of this.standalone_handlers) {
             // workaround to always set 'this' context to UIX component, even when handler is an arrow function
-            js_code += `await (function (){return (${(<typeof UIXComponent>this.constructor).getStandloneMethodContentWithMappedImports(handler)})()}).apply(self);\n`;
+            js_code += `await (function (){return (${(<typeof UIXComponent>this.constructor).getStandaloneMethodContentWithMappedImports(handler)})()}).apply(self);\n`;
         }
         
         // standalone constructor + lifecycle
@@ -942,6 +954,20 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
             })
         }
     
+    }
+
+    bindOriginMethods() {
+        const scope = this.constructor.prototype;
+        const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
+
+        for (const [name, content] of Object.entries((this.constructor as typeof UIXComponent).standaloneMethods)) {
+            console.log("bindtoirigin", name, originProps?.[name])
+            if (originProps?.[name]) {
+                // @ts-ignore
+                this[<keyof typeof scope>name] = bindToOrigin(scope[<keyof typeof scope>name], this, name, originProps[name].datex);
+                console.log(this[name]?.toString?.(), "<--- name")
+            }
+        }
     }
     
     // called when added to DOM

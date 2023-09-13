@@ -1,4 +1,3 @@
-
 # Components
 
 ## Anonymous components (templates)
@@ -15,7 +14,7 @@ const CustomComponent = UIX.template(<div class='class1'></div>)
 const CustomComponent2 = UIX.template<{customAttr:number}>(({customAttr}) => <div class='class2'><b>the customAttr is {customAttr}</b></div>)
 
 // create elements:
-const comp1 = <CustomComponent id='c1'/> // returns: <div class='class1 class2' id='c1'></div>
+const comp1 = <CustomComponent id='c1'/> // returns: <div class='class1' id='c1'></div>
 const comp2 = <CustomComponent id='c2' customAttr={42}/> // returns: <div class='class2' id='c2'><b>the customAttr is 42</b></div>
 ```
 
@@ -98,7 +97,6 @@ const MyComponent = UIX.template<{background: 'red'|'green', countstart: number}
     // return component content
     return <div style={{background}}>
                 Count: {counter}
-                {...props.children}
            </div>
 });
 
@@ -376,14 +374,53 @@ export default <ParentComponent/>
 
 ```
 
-## CSS styles
+## Component styles
 
-To apply css styles to a component in a module `my_component.ts`, you can create a file next to the module file, called `my_component.css`. 
+### External style files
 
-If the component extends `UIX.ShadowDOMComponent`, the styles declared in this file are automatically adopted for all instances of the component and are not exposed
+To apply css styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
+
+The styles declared in this file are automatically adopted for all instances of the component and are not exposed
 to other components.
 
-For components that don't extend `UIX.ShadowDOMComponent`, the styles from `my_component.css` are added as to the global style declaration. In this
-case it is your responsibility to make sure that your style declarations don't have any side effects for other components.
+You can use the `:host` selector to access the component root element (also when not using a shadow dom).
 
-For general global styles, you can add an `entrypoint.css` file next to the `entrypoint.ts` file.
+For general global styles, you can add an `entrypoint.(s)css` file next to the `entrypoint.ts` file.
+
+### Inline styles
+
+Another way to add css rules to a component is to use inline styles with the `@style` decorator:
+
+```ts
+@style(SCSS `
+  div {
+    background: red;
+    font-size: 2em;
+  }
+`)
+@template(...)
+class MyComponent extends UIXComponent {
+   ...
+}
+```
+
+The `@style` decorator accepts a `CSSStylesheet` as a parameter.
+The best way to create this stylesheet is using the `SCSS` template function.
+
+#### The `SCSS` template function
+
+The `SCSS` function creates a `CSSStylesheet` from any valid (s)css string (@import directives are not allowed).
+Additionally, it supports reactive properties:
+
+```ts
+const fontSize: Datex.Ref<string> = $$("10px")
+const stylesheet: CSSStylesheet = SCSS `
+  h1.big {
+    font-size: ${fontSize};
+    color: ${it => it.myColor};
+  }
+`
+fontSize.val = "20px"
+```
+
+In this example, the `font-size` property is bound to a pointer, and the color is bound to a computed value, where `it` references an element for which the selector is applied.

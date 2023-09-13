@@ -402,14 +402,10 @@ export namespace HTMLUtils {
 
             Datex.Ref.observeAndInit(children, (...args) => 
                 {
-                    if (Datex.Pointer.isReference(children)) 
-                        console.info("observeAndInit triggered ", children, args)
                     scheduler.schedule(
                         Task((r)=>{
                             appendNew(parent, Array.isArray(children) ? children : [children], lastChildren, (e) => {
                                 lastChildren = e;
-                                if (Datex.Pointer.isReference(children)) 
-                                    console.log("Setting new children", lastChildren)
                                 r(null);
                             });
                         })
@@ -429,8 +425,6 @@ export namespace HTMLUtils {
     export function appendNew<T extends Element|DocumentFragment>(parent:T, children:appendableContent[], oldChildren?: Node[], onAppend?: ((list: Node[]) => void)):T {
         // use content if parent is <template>
         const element = parent instanceof HTMLTemplateElement ? parent.content : parent;
-        console.log("old chilren", oldChildren);
-        if (globalThis.a) debugger;
 
         let lastAnchor: Node | undefined = oldChildren?.at(-1);
 

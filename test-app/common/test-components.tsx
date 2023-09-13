@@ -2,7 +2,7 @@ import { UIX, unsafeHTML } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
-import { add, always, and } from "unyt_core/datex.ts";
+import { add, always, and, map, select } from "unyt_core/functions.ts";
 import { style } from "uix/html/anonymous_components.ts";
 
 /**
@@ -20,6 +20,8 @@ const Container = UIX.template(<div style={{display:"flex", gap:5, margin:5}}></
 
 const a = $$(0);
 const b = $$(0);
+
+const toggle1 = $$(true);
 
 setInterval(()=>a.val = Math.round(Math.random()*100), 1000);
 setInterval(()=>b.val = Math.round(Math.random()*100), 2000);
@@ -109,6 +111,32 @@ const list = [
 		url: 'https://unyt.org/3'
 	}
 ]
+
+let count = 2;
+let deleteCounter = 0;
+const entryList = $$([
+	$$({
+		name: 'Example 1',
+		description: 'The first example',
+		color: 'green'
+	})
+])
+
+setInterval(()=>{
+	entryList.push($$({
+		name: `The ${count++}. example`,
+		description: "Some description text",
+		color: 'green'
+	}))
+}, 2000)
+
+setInterval(()=>{
+	console.log("remove item",deleteCounter)
+	// entryList.splice(deleteCounter++, 1);
+	delete entryList[deleteCounter++];
+}, 3500)
+
+console.log(entryList)
 
 
 const ListView = UIX.template(()=>{
@@ -216,6 +244,31 @@ export const testComponents = {
 	list: <Container>
 		<ListView></ListView>
 	</Container>,
+
+
+	// dynamically map a live ref array to a DOM element list
+	dynamicList: UIX.lazy(() => <div>
+		<h2>My List ({always(()=>entryList.reduce((p,v)=>(v===undefined ? 0 : 1)+p, 0))} entries)</h2>
+		<ul>
+			{map(entryList, entry =>
+				 <li style={{color:entry.$.color}} onclick={()=>entry.color="blue"}>{entry.name}</li>
+			)}
+		</ul>
+		<button onclick={()=>entryList.push($$({name:'New Item ' + new Date(), description: "", color: "orange"}))}>Add Entry</button>
+	</div>),
+
+	// same as dynamicList, but using always and the built-in array map method (less efficient)
+	dynamicList2: UIX.lazy(() => <div>
+		<h2>My List ({always(()=>entryList.reduce((p,v)=>(v===undefined ? 0 : 1)+p, 0))} entries)</h2>
+		<ul>
+			{always(() => entryList.map(entry =>
+				<li style={{color:entry.$.color}} onclick={()=>entry.color="blue"}>{entry.name}</li>
+			))}
+		</ul>
+		<button onclick={()=>entryList.push($$({name:'New Item ' + new Date(), description: "", color: "orange"}))}>Add Entry</button>
+	</div>),
+
+
 
 	datex:
 		<Container>

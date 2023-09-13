@@ -103,7 +103,6 @@ export function jsx (type: string | any, config: Record<string,any>): Element|Do
 		}
 		else {
 			UIX.HTMLUtils.appendDynamic(element, children);
-			// UIX.HTMLUtils.append(element, ...children);
 		}
 		
 	}
@@ -203,7 +202,7 @@ declare global {
 		}
 
 		type singleChild = Datex.CompatValue<Element|DocumentFragment|string|number|boolean|bigint|null|undefined>;
-		type singleOrMultipleChildren = singleChild|singleChild[];
+		type singleOrMultipleChildren = singleChild|singleChild[]|Map<number, singleChild>;
 		type childrenOrChildrenPromise = singleOrMultipleChildren|Promise<singleOrMultipleChildren>
 		// enable as workaround to allow {...[elements]} type checking to work correctly
 		// type childrenOrChildrenPromise = _childrenOrChildrenPromise|_childrenOrChildrenPromise[]

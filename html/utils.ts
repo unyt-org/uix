@@ -5,6 +5,7 @@ import { Theme } from "../base/theme.ts";
 import { defaultElementAttributes, elementEventHandlerAttributes, htmlElementAttributes, mathMLTags, svgElementAttributes, svgTags } from "./attributes.ts";
 import { JSX_INSERT_STRING } from "../jsx-runtime/jsx.ts";
 import { Task, TaskScheduler } from "uix/utils/scheduling.ts";
+import { IterableHandler } from "unyt_core/utils/iterable-handler.ts";
 
 
 // deno-lint-ignore no-namespace
@@ -393,40 +394,95 @@ export namespace HTMLUtils {
         return element;
     }
 
-    type appendableContentBase = Datex.CompatValue<Element|DocumentFragment|string|number|bigint|boolean>|Promise<appendableContent>;
+    type appendableContentBase = Datex.RefOrValue<Element|DocumentFragment|string|number|bigint|boolean>|Promise<appendableContent>;
     type appendableContent = appendableContentBase|Promise<appendableContentBase>;
+    /**
+     * Append children to a parent, updates children dynamically if pointer of iterable provided
+     * @param parent 
+     * @param children 
+     * @returns 
+     */
     export function appendDynamic<T extends Element|DocumentFragment>(parent:T, children:appendableContent|appendableContent[]):T | undefined {
-        if (children instanceof Element || Array.isArray(children)) {
-            const scheduler = new TaskScheduler(true);
-            let lastChildren: Node[] = [];
+        // is ref and iterable/element
+        if (Datex.Pointer.isReference(children) && (children instanceof Array || children instanceof Map || children instanceof Set || children instanceof Element)) {
+            // is iterable ref
+            // TODO: support promises
+            if (children instanceof Array || children instanceof Map || children instanceof Set) {
+                const startAnchor = new Comment("start " + Datex.Pointer.getByValue(children)?.idString())
+                const endAnchor = new Comment("end " + Datex.Pointer.getByValue(children)?.idString())
+                parent.append(startAnchor, endAnchor)
 
-            Datex.Ref.observeAndInit(children, (...args) => 
-                {
+                const iterableHandler = new IterableHandler(children, {
+                    map: (v,k) => {
+                        const el = valuesToDOMElement(v);
+                        return el;
+                    },
+                    onEntryRemoved: (v,k) => {
+                        if (parent.contains(v)) parent.removeChild(v);
+                    },
+                    onNewEntry: (v,k) => {
+                        let previous:Node = startAnchor;
+
+                        for (let prevIndex = k - 1; prevIndex >= 0; prevIndex--) {
+                            if (iterableHandler.entries.has(prevIndex)) {
+                                previous = iterableHandler.entries.get(prevIndex)!;
+                                break;
+                            }
+                        }
+                        parent.insertBefore(v, previous.nextSibling)
+                    },
+                    onEmpty: () => {
+                        let current:Node|null|undefined = startAnchor.nextSibling;
+                        while (current && current !== endAnchor) {
+                            const removing = current;
+                            current = current?.nextSibling
+                            parent.removeChild(removing);
+                        }
+                    }
+                })
+            }
+
+            // TODO: improve
+            else if (children instanceof Element) {
+                const scheduler = new TaskScheduler(true);
+                let lastChildren: Node[] = [];
+    
+                Datex.Ref.observeAndInit(children, () => {
                     scheduler.schedule(
-                        Task((r)=>{
-                            appendNew(parent, Array.isArray(children) ? children : [children], lastChildren, (e) => {
-                                lastChildren = e;
-                                r(null);
-                            });
-                        })
-                    ); 
-                },
-                undefined,
-                null, 
-                {
-                    recursive: false,
-                    types: [Datex.Ref.UPDATE_TYPE.INIT]
-                }
-            )
-        } else 
-            return appendNew(parent, Array.isArray(children) ? children : [children]);
+                            Task(resolve => {
+                                appendNew(parent, Array.isArray(children) ? children : [children], lastChildren, (e) => {
+                                    lastChildren = e;
+                                    resolve();
+                                });
+                            })
+                        ); 
+                    },
+                    undefined,
+                    null, 
+                    {
+                        recursive: false,
+                        types: [Datex.Ref.UPDATE_TYPE.INIT]
+                    }
+                )
+            }
+        }
+
+        // is iterable (no ref, collapse recursive)
+        else if (children instanceof Array) {
+            for (const child of children) {
+                appendDynamic(parent, child);
+            }
+        }
+
+        // is not a ref iterable
+        else return appendNew(parent, Array.isArray(children) ? children : [children]);
     }
 
     export function appendNew<T extends Element|DocumentFragment>(parent:T, children:appendableContent[], oldChildren?: Node[], onAppend?: ((list: Node[]) => void)):T {
         // use content if parent is <template>
         const element = parent instanceof HTMLTemplateElement ? parent.content : parent;
 
-        let lastAnchor: Node | undefined = oldChildren?.at(-1);
+        let lastAnchor: Node | undefined = oldChildren?.at(-1);
 
         const lastChildren: Node[] = [];
         const loadingPromised: Promise<void>[] = [];

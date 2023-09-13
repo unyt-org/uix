@@ -40,7 +40,7 @@ export class TaskScheduler<T = unknown> {
 	}
 }
 
-export function Task<T>(method: (resolve: (res: T) => void, reject?: (e: unknown) => void) => Promise<T> | T) {
+export function Task<T>(method: (resolve: (res?: T) => void, reject?: (e?: unknown) => void) => Promise<T> | T) {
 	return () => new Promise(async (resolve, reject) => {
 		try {
 			await method(resolve, reject);

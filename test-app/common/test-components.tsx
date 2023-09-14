@@ -2,7 +2,7 @@ import { UIX, unsafeHTML } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
 import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
-import { add, always, and, map, select } from "unyt_core/functions.ts";
+import { add, always, and, map, not, select } from "unyt_core/functions.ts";
 import { style } from "uix/html/anonymous_components.ts";
 
 /**
@@ -158,6 +158,9 @@ const ListView = UIX.template(()=>{
 })
 
 
+const likesCheese = $$(true);
+console.log("likes cheese", likesCheese)
+
 
 const ExampleImage = () => <img src="https://picsum.photos/536/354"/> as HTMLImageElement;
 const exampleObject = $$({
@@ -245,6 +248,12 @@ export const testComponents = {
 		<ListView></ListView>
 	</Container>,
 
+	select: <div>
+		<div class="preference">
+			<label for="cheese" data-likes-cheese={likesCheese}>Do you like cheese?</label>
+			<input type="checkbox" id="cheese" checked={likesCheese}/>
+		</div>
+	</div>,
 
 	// dynamically map a live ref array to a DOM element list
 	dynamicList: UIX.lazy(() => <div>

@@ -297,20 +297,31 @@ export namespace HTMLUtils {
         if (!element) return false;
         // DatexValue
         value = Datex.Pointer.pointerifyValue(value)
-        if (value instanceof Datex.Value) {
+        if (value instanceof Datex.Ref) {
+
+            const isInputElement = element.tagName.toLowerCase() === "input";
+            const type = Datex.Type.ofValue(value);
 
             // :out attributes
-            if (attr == "valueOut") {
-                if ((!(value instanceof Datex.Pointer))) throw new Error("only pointers can be used for the valueOut attribute");
-                if (!(element instanceof HTMLInputElement)) throw new Error("the valueOut attribute is only supported for <input> elements");
+            if (isInputElement && (attr == "valueOut" || attr == "value")) {
+                // if ((!(value instanceof Datex.Pointer))) throw new Error("only Pointers can be used for the valueOut attribute");
+                if (!(element instanceof HTMLInputElement)) throw new Error("the 'valueOut'/'value' attribute is only supported for <input> elements");
                 
-                if (value.type.matchesType(Datex.Type.std.text)) element.addEventListener('input', () => value.val = element.value)
-                else if (value.type.matchesType(Datex.Type.std.decimal)) element.addEventListener('input', () => value.val = Number(element.value))
-                else if (value.type.matchesType(Datex.Type.std.integer)) element.addEventListener('input', () => value.val = BigInt(element.value))
-                else if (value.type.matchesType(Datex.Type.std.boolean)) element.addEventListener('input', () => value.val = Boolean(element.value))
-                else throw new Error("The type "+value.type+" is not supported for the valueOut attribute of the <input> element");
+                if (type.matchesType(Datex.Type.std.text)) element.addEventListener('change', () => value.val = element.value)
+                else if (type.matchesType(Datex.Type.std.decimal)) element.addEventListener('change', () => value.val = Number(element.value))
+                else if (type.matchesType(Datex.Type.std.integer)) element.addEventListener('change', () => value.val = BigInt(element.value))
+                else if (type.matchesType(Datex.Type.std.boolean)) element.addEventListener('change', () => value.val = Boolean(element.value))
+                else throw new Error("The type "+type+" is not supported for the 'valueOut' attribute of the <input> element");
 
                 return true;
+            }
+
+            // checked attribute
+            if (isInputElement && element.getAttribute("type") === "checkbox" && attr == "checked") {
+                if (!(element instanceof HTMLInputElement)) throw new Error("the 'checked' attribute is only supported for <input> elements");
+
+                if (type.matchesType(Datex.Type.std.boolean)) element.addEventListener('change', () => value.val = element.checked)
+                else throw new Error("The type "+type+" is not supported for the 'checked' attribute of the <input> element");
             }
 
             // default attributes

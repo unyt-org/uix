@@ -17,7 +17,7 @@ components as needed.
 ## Benefits of the UIX/DATEX ecosystem
 
 In general, a UIX front-end can be integrated seamlessly into complex full-stack applications thanks to DATEX.
-If you are developing a unyt-based application, the UIX library is a good choice for a front-end framework
+If you are developing a unyt.org-based application, the UIX library is a good choice for a front-end framework
 since it is designed to work great in combination with DATEX.
 UIX also supports seamless transitions between server- and client-side rendering.
  

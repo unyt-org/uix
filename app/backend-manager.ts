@@ -97,14 +97,14 @@ export class BackendManager {
 			const module = this.#module = <any> await datex.get(this.#entrypoint);
 			this.#content_provider = module.default ?? (Object.getPrototypeOf(module) !== null ? module : null);
 			// default ts export, or just the result if DX and not ts module
-			await resolveEntrypointRoute(this.#content_provider); // load fully
+			await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			return this.#content_provider;
 		}
 		else if (this.#pagesDir) {
 			logger.debug(`Using ${this.#pagesDir} as pages for backend entrypoint`)
 			this.#content_provider = new PageProvider(this.#pagesDir);
 			// default ts export, or just the result if DX and not ts module
-			await resolveEntrypointRoute(this.#content_provider); // load fully
+			await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			return this.#content_provider;
 		}
 		return null;
@@ -120,7 +120,12 @@ export class BackendManager {
 	 */
 	public async getEntrypointContent(path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined]> {
 		// extract content from provider, depending on path
-		const [content, render_method, status_code, _0, _1] = await resolveEntrypointRoute(this.#content_provider, Path.Route(path), context, true);
+		const {content, render_method, status_code} = await resolveEntrypointRoute({
+			entrypoint: this.#content_provider,
+			route: Path.Route(path), 
+			context, 
+			only_return_static_content: true
+		});
 
 		const openGraphData = (content as any)?.[OPEN_GRAPH];
 

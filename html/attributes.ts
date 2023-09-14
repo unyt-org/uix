@@ -24,6 +24,7 @@ export const elementEventHandlerAttributes = [
 // list of all default element attributes
 export const defaultElementAttributes = [
 	"accesskey", "class", "contenteditable", "contextmenu", "dir", "draggable", "dropzone", "hidden", "id", "lang", "spellcheck", "style", "tabindex", "title",
+	"role",
 	// uix specific
 	"uix-module", "datex-pointer", "shadow-root"
 ] as const;
@@ -76,8 +77,11 @@ export const htmlElementAttributes = {
 	// TODO replace valueOut, ... with value:out
 
 	a: ["href", "target"],
+	link: ["rel", "href"],
 
 	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
+	button: ["type"],
+	form: ["method"],
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
 	iframe: [src],
@@ -92,6 +96,10 @@ export const htmlElementAttributes = {
 /** custom values for specific element attributes (default: string) */
 export type htmlElementAttributeValues = {
 	a: {
+		href: string|URL
+	},
+
+	link: {
 		href: string|URL
 	},
 
@@ -115,7 +123,16 @@ export type htmlElementAttributeValues = {
 
 		value: primitive,
 		valueOut: Datex.Pointer,
-	}
+	},
+
+	button: {
+		type: "button"|"submit"|"reset"
+	},
+
+	form: {
+		method: "get"|"post"
+	},
+
 	img: widthAndHeight & src &  {
 		crossorigin: "anonymous"|"use-credentials"
 		ismap: boolean,
@@ -160,7 +177,7 @@ export const svgTags = new Set(["animate", "animateMotion", "animateTransform", 
 /** list of all allowed attributes for HTML elements */
 export const svgElementAttributes = {
 	circle: [...cXY, "fill", "r"],
-	svg: [...widthAndHeight, "xmlns", "viewBox", "preserveAspectRatio"],
+	svg: [...widthAndHeight, "xmlns", "viewBox", "preserveAspectRatio", "fill"],
 	path: ["stroke", "stroke-width", "fill", "d"]
 } as const satisfies {[key in keyof SVGElementTagNameMap]?: readonly string[]};
 

@@ -70,8 +70,8 @@ export namespace Routing {
 	}
 
 	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL()) {
-		const [collapsed_content, _render_method] = <[html_content_or_generator, RenderMethod]><any> await resolveEntrypointRoute(entrypoint, route, undefined, false);
-		return collapsed_content;
+		const { content } = await resolveEntrypointRoute({entrypoint, route});
+		return content;
 	}
 
 	async function setContent(content: html_content_or_generator, entrypoint:Entrypoint) {

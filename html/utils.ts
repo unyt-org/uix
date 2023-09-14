@@ -420,14 +420,20 @@ export namespace HTMLUtils {
                     onEntryRemoved: (v,k) => {
                         if (parent.contains(v)) parent.removeChild(v);
                     },
-                    onNewEntry: (v,k) => {
+                    onNewEntry: function(v,k) {
                         let previous:Node = startAnchor;
 
                         for (let prevIndex = k - 1; prevIndex >= 0; prevIndex--) {
-                            if (iterableHandler.entries.has(prevIndex)) {
-                                previous = iterableHandler.entries.get(prevIndex)!;
-                                break;
+                            try {
+                                if (this.entries.has(prevIndex)) {
+                                    previous = this.entries.get(prevIndex)!;
+                                    break;
+                                }
                             }
+                            catch (e) {
+                                console.log("TODO fix", e)
+                            }
+                            
                         }
                         parent.insertBefore(v, previous.nextSibling)
                     },

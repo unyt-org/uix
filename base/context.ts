@@ -1,6 +1,6 @@
 const { getCookies }  = globalThis.Deno ? await import("https://deno.land/std/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
 
-export type RequestData = Request & {address:string}
+export type RequestData = Request & {address:string, params: () => Promise<URLSearchParams>|URLSearchParams}
 
 
 export class URLMatch {
@@ -63,6 +63,12 @@ export class ContextBuilder {
 				(con.remoteAddr as Deno.NetAddr)?.hostname;
 		// TODO: remove
 		this.#ctx.request!.path = path;
+
+		this.#ctx.request!.params = async () => {
+			if (this.#ctx.request!.method == "POST") return new URLSearchParams(await this.#ctx.request!.text());
+			else return new URL(this.#ctx.request!.url).searchParams
+		}
+		
 
 		this.#ctx.language = ContextBuilder.getRequestLanguage(req.request);
 

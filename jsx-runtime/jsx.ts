@@ -90,6 +90,10 @@ export function jsx (type: string | any, config: Record<string,any>): Element|Do
 					// TODO: remove 'module'
 					val = new Path(val, module).toString();
 				}
+				// keep route: paths relative, remove route: prefix
+				else if (typeof val == "string" && val.startsWith("route:") && (attr == "href" || attr == "src")) {
+					val = val.replace("route:", "");
+				}
 				const valid_attr = UIX.HTMLUtils.setElementAttribute(element, attr, <any>val, module);
 				if (!allow_invalid_attributes && !valid_attr) throw new Error(`Element attribute "${attr}" is not allowed for <${element.tagName.toLowerCase()}>`)
 			}
@@ -201,7 +205,7 @@ declare global {
 			children: Element[]|Element
 		}
 
-		type singleChild = Datex.CompatValue<Element|DocumentFragment|string|number|boolean|bigint|null|undefined>;
+		type singleChild = Datex.RefOrValue<Element|DocumentFragment|string|number|boolean|bigint|null|undefined>;
 		type singleOrMultipleChildren = singleChild|singleChild[]|Map<number, singleChild>;
 		type childrenOrChildrenPromise = singleOrMultipleChildren|Promise<singleOrMultipleChildren>
 		// enable as workaround to allow {...[elements]} type checking to work correctly
@@ -211,14 +215,14 @@ declare global {
 
 		// Common attributes of the standard HTML elements and JSX components
 		type IntrinsicAttributes = {
-			style?: Datex.CompatValue<string|Record<string,Datex.CompatValue<string|number|undefined>>>,
+			style?: Datex.RefOrValue<string|Record<string,Datex.RefOrValue<string|number|undefined>>>,
 		} & htmlAttrs<validHTMLElementAttrs>
 
 		// Common attributes of the UIX components only
 		interface IntrinsicClassAttributes<C extends UIXComponent> {}
 
 		type DatexValueObject<T extends Record<string|symbol,unknown>, allowPromises extends boolean = false> = {
-			[key in keyof T]: T[key] extends (...args:any)=>any ? T[key] : Datex.CompatValue<T[key]>|(allowPromises extends true ? Promise<Datex.CompatValue<T[key]>> : never)
+			[key in keyof T]: T[key] extends (...args:any)=>any ? T[key] : Datex.RefOrValue<T[key]>|(allowPromises extends true ? Promise<Datex.RefOrValue<T[key]>> : never)
 		}
 		
 		type IntrinsicElements = 

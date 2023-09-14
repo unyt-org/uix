@@ -2,14 +2,15 @@ import { Path } from "../utils/path.ts";
 import { $$, Datex, constructor } from "unyt_core";
 import { UIX } from "../uix.ts";
 import { logger } from "../uix_all.ts";
-import { URLMatch } from "../base/context.ts";
+import { Context, URLMatch } from "../base/context.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
-import { Entrypoint, EntrypointRouteMap, RouteHandler } from "./entrypoints.ts"
+import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_content_or_generator, html_generator } from "./entrypoints.ts"
 
 import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts"
+import { RequestMethod, contextMatchesRequestMethod } from "./request-methods.ts";
 
 
 // URLPattern polyfill
@@ -68,11 +69,28 @@ type get_render_method<C extends Entrypoint, Path extends string = string> =
 			) :
 			RenderMethod.HYDRATION
 		)
-	)
+	);
+
+
+type entrypointData<T extends Entrypoint = Entrypoint> = {
+	entrypoint: T,
+	route?:Path.Route, 
+	context?:UIX.ContextGenerator|UIX.Context, 
+	only_return_static_content?: boolean
+	return_first_routing_handler?: boolean
+}
+
+type resolvedEntrypointData<T extends Entrypoint = Entrypoint> = {
+	content: get_content<T>,
+	render_method: UIX.RenderMethod, // get_render_method<T>, 
+	status_code: number, 
+	loaded: boolean, 
+	remaining_route?: Path.Route
+}
 
 function reconstructMatchedURLPart(input:string, partResult:URLPatternComponentResult) {
 	for (const [name,val] of Object.entries(partResult.groups)) {
-		input = input.replace(':'+name, val);
+		input = input.replace(':'+name, val??'');
 	}
 	return input
 }
@@ -94,198 +112,254 @@ function reconstructMatchedURL(input:string, match:URLPatternResult) {
 	return input
 }
 
+function resolveContext(entrypointData: entrypointData): asserts entrypointData is entrypointData & {context: Context} {
+	if (typeof entrypointData.context == "function") entrypointData.context = entrypointData.context();
+	if (!entrypointData.context) throw new Error("missing UIX context for generator function")
+}
 
-export async function resolveEntrypointRoute<T extends Entrypoint>(entrypoint:T|undefined, route?:Path.Route, context?:UIX.ContextGenerator|UIX.Context, only_return_static_content = false, return_first_routing_handler = false): Promise<[get_content<T>, get_render_method<T>, number, boolean, Path.Route|undefined]> {
+async function resolveGeneratorFunction(entrypointData: entrypointData<html_generator>): Promise<resolvedEntrypointData> {
+	resolveContext(entrypointData)
 
-	if (!context) {
-		context = new UIX.Context()
-		if (route) context.path = route.routename
+	let returnValue: Entrypoint|undefined;
+	let hasError = false;
+	try {
+		returnValue = await entrypointData.entrypoint(entrypointData.context);
 	}
-	route ??= Path.Route();
-
-	let collapsed:unknown;
-	let render_method:RenderMethod = RenderMethod.HYDRATION;
-	let remaining_route:Path.Route|undefined = route;
-	let loaded = false;
-	let status_code = 200;
-
-
-	if (only_return_static_content && entrypoint && (<any> entrypoint).__render_method == RenderMethod.DYNAMIC) {
-		remaining_route = Path.Route("/");
-		collapsed = "";
+	// return error as response with HTTPStatus error 500
+	catch (e) {
+		hasError = true;
+		if (e instanceof HTTPStatus) returnValue = e;
+		// TODO: fix instance check if transmitted via datex, currently just force converted to HTTPStatus
+		else if (typeof e == "object" && "code" in e && "content" in e && Object.keys(e).length == 2) returnValue = new HTTPStatus(e.code, e.content);
+		else returnValue = HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
 	}
 
-	// handle generator functions (exclude class)
-	else if (typeof entrypoint == "function" && !/^\s*class/.test(entrypoint.toString())) {
-		if (typeof context == "function") context = context();
-		
-		let returnValue: Entrypoint|undefined;
-		let hasError = false;
-		try {
-			returnValue = await entrypoint(context!);
+	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: returnValue})
+	if (hasError) resolved.render_method = RenderMethod.STATIC; // override: render errors as static
+
+	return resolved;
+}
+
+async function resolveRenderPreset(entrypointData: entrypointData<RenderPreset>): Promise<resolvedEntrypointData> {
+	const content = await entrypointData.entrypoint.__content;
+	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: content});
+	resolved.render_method = entrypointData.entrypoint.__render_method;
+	return resolved;
+}
+
+async function resolveRouteHandler(entrypointData: entrypointData<RouteHandler>): Promise<resolvedEntrypointData> {
+	resolveContext(entrypointData)
+	if (!entrypointData.route) throw new Error("missing entrypoint route (required for RouteHandler")
+	const route2 = await entrypointData.entrypoint.getRoute(entrypointData.route, entrypointData.context);
+	entrypointData.route = Path.Route("/"); // route completely resolved by getRoute
+	return resolveEntrypointRoute({...entrypointData, entrypoint: route2})
+}
+
+function resolveModule(entrypointData: entrypointData<{default?:Entrypoint}>): Promise<resolvedEntrypointData> {
+	if (!entrypointData.entrypoint.default) throw new Error("invalid module as entrypoint: no default export")
+	const content = entrypointData.entrypoint.default
+	return resolveEntrypointRoute({...entrypointData, entrypoint: content});
+}
+
+async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>): Promise<resolvedEntrypointData|undefined> {
+	resolveContext(entrypointData)
+
+	// find longest matching route
+	let closest_match_key:string|symbol|null = null;
+	let closest_match_route:Path.Route|null = null;
+
+	const isBetterMatch = (potential_route_key: string) => {
+		// compare length of current closest_match with potential_route, ignoring *
+		if (!closest_match_route) return true;
+		return potential_route_key.replace(/\*$/, '').length > closest_match_route.routename.replace(/\*$/, '').length
+	}
+	// if true, the remaing '*' child routes are resolved in the next layer
+	let handle_children_separately = false;
+
+	// handle symbol keys (request methods)
+	let matchingSymbol = false;
+	for (const symbolKey of Object.getOwnPropertySymbols(entrypointData.entrypoint)) {
+		if (contextMatchesRequestMethod(symbolKey, entrypointData.context)) {
+			matchingSymbol = true;
+			closest_match_key = symbolKey;
 		}
-		// return error as response with HTTPStatus error 500
-		catch (e) {
-			hasError = true;
-			if (e instanceof HTTPStatus) returnValue = e;
-			// TODO: fix instance check if transmitted via datex, currently just force converted to HTTPStatus
-			else if (typeof e == "object" && "code" in e && "content" in e && Object.keys(e).length == 2) returnValue = new HTTPStatus(e.code, e.content);
-			else returnValue = HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
-		}
-
-		[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(returnValue, route, context, only_return_static_content, return_first_routing_handler)
-		if (hasError) render_method = RenderMethod.STATIC; // override: render errors as static
-	}
-	// handle presets
-	else if (entrypoint instanceof RenderPreset || (entrypoint && typeof entrypoint == "object" && !(entrypoint instanceof Element) && '__content' in entrypoint)) {
-		[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(<html_content_or_generator>await entrypoint.__content, route, context, only_return_static_content, return_first_routing_handler);
-		render_method = <RenderMethod> entrypoint.__render_method;
 	}
 
-	// routing adapter TODO: better checks for interfaces? (not just 'getRoute')
-	// @ts-ignore
-	else if (typeof entrypoint?.getRoute == "function") {
-		if (typeof context == "function") context = context();
-		const route2 = await (<RouteHandler>entrypoint).getRoute(route, context);
-		route = Path.Route("/"); // route completely resolved by getRoute
-		[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(route2, route, context, only_return_static_content, return_first_routing_handler)
-	}
-	
-	// path object, not element/markdown/special_content
-	else if (!(entrypoint instanceof Element || entrypoint instanceof Datex.Markdown || entrypoint instanceof URL || (globalThis.Deno && entrypoint instanceof globalThis.Deno.FsFile)) && entrypoint && typeof entrypoint == "object" && Object.getPrototypeOf(entrypoint) == Object.prototype) {
-		// find longest matching route
-		let closest_match_key:string|null = null;
-		let closest_match_route:Path.Route|null = null;
-
-		const isBetterMatch = (potential_route_key: string) => {
-			// compare length of current closest_match with potential_route, ignoring *
-			if (!closest_match_route) return true;
-			return potential_route_key.replace(/\*$/, '').length > closest_match_route.routename.replace(/\*$/, '').length
-		}
-		// if true, the remaing '*' child routes are resolved in the next layer
-		let handle_children_separately = false;
-
-		for (const potential_route_key of Object.keys(entrypoint)) {
-
-			let matchWith = route;
+	if (!matchingSymbol) {
+		for (const potential_route_key of Object.keys(entrypointData.entrypoint)) {
+			let matchWith = entrypointData.route!;
 
 			let urlPattern:URLPattern;
 			// url with http - match with base origin
 			if (potential_route_key.startsWith("http://") || potential_route_key.startsWith("https://")) {
 				urlPattern = new URLPattern(potential_route_key);
-				matchWith = new Path(route.routename, globalThis.location?.href??'http:///unknown')
+				matchWith = new Path(entrypointData.route!.routename, globalThis.location?.href??'http:///unknown')
 			}
 			// just match a generic route
 			else {
-				const [pathname, hash] = potential_route_key.split("#");
+				let normalized_route_key = potential_route_key;
+				if (!potential_route_key.startsWith("/")) normalized_route_key = "/" + potential_route_key
+				const [pathname, hash] = normalized_route_key.split("#");
 				urlPattern = new URLPattern({pathname, hash})
 			}
 			
 			let match:URLPatternResult|null;
 			if ((match=urlPattern.exec(matchWith.toString())) && isBetterMatch(potential_route_key)) {
-				if (typeof context == "function") context = context();
 				closest_match_key = potential_route_key;
 				closest_match_route = Path.Route(reconstructMatchedURL(potential_route_key, match));
 				// route ends with * -> allow child routes
 				handle_children_separately = potential_route_key.endsWith("*");
 		
-				context.urlMatch = new URLMatch(match);
-				context.match = match;	
+				entrypointData.context.urlMatch = new URLMatch(match);
+				entrypointData.context.match = match;	
 			}
-
-			// const potential_route = Path.Route(potential_route_key);
-
-			// // match beginning
-			// if (potential_route.routename.endsWith("*")) {
-			// 	if (route.routename.startsWith(potential_route.routename.slice(0,-1)) && isBetterMatch(potential_route)) {
-			// 		closest_match_route = potential_route;
-			// 		closest_match_key = potential_route_key;
-			// 	}
-			// }
-			// // exact match
-			// else {
-			// 	if (Path.routesAreEqual(route, potential_route) && isBetterMatch(potential_route)) {
-			// 		closest_match_route = potential_route;
-			// 		closest_match_key = potential_route_key;
-			// 	}
-			// }
 		}
+	}
+	
+	
+	if (closest_match_key!==null) {
+		let val = <any> entrypointData.entrypoint.$ ? (<any>entrypointData.entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypointData.entrypoint)[closest_match_key];
+		if (val instanceof Datex.Ref && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
+		val = await val;
+		const new_path = closest_match_route ? Path.Route(entrypointData.route!.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");
 		
-		if (closest_match_key!==null) {
-			// @ts-ignore
-			let val = <any> entrypoint.$ ? (<any>entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypoint)[closest_match_key];
-			if (val instanceof Datex.Value && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
-			const new_path = closest_match_route ? Path.Route(route.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");
-			[collapsed, render_method, status_code, loaded, remaining_route] = await resolveEntrypointRoute(await val, new_path, context, only_return_static_content, return_first_routing_handler);
-			if (!handle_children_separately) remaining_route = Path.Route("/");
-		} 
-	}
-
-	// collapsed content
+		const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: val, route: new_path});
+		if (!handle_children_separately) resolved.remaining_route = Path.Route("/");
+		return resolved;
+	} 
 	else {
-		// non routing handler content
-		collapsed = await entrypoint;
-
-		// module (prototype null)? get default value
-		if (typeof collapsed == "object" && collapsed && Object.getPrototypeOf(collapsed) == null) {
-			if (!(collapsed as any).default) throw new Error("invalid module as entrypoint: no default export")
-			collapsed = (collapsed as any).default;
+		return {
+			status_code: 404,
+			content: "Route not found",
+			loaded: true,
+			render_method: RenderMethod.RAW_CONTENT
 		}
-
-		// special content to raw
-		// URL 
-		if (collapsed instanceof URL) {
-			collapsed = new Response(null, {
-				status: 302,
-				headers: new Headers({ location: convertToWebPath(collapsed) })
-			})
-		}
-		else if (globalThis.Deno && collapsed instanceof Deno.FsFile) {
-			collapsed = new Response(collapsed.readable)
-		}
-
-
-		// @ts-ignore TODO: is this if condition required? currently commented out, because paths are overriden incorrectly
-		if (typeof collapsed?.resolveRoute !== "function") 
-			remaining_route = Path.Route("/");
+		// throw new Error("no match in path map for " + entrypointData.route)
 	}
+}
+
+
+export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointData: entrypointData<T>): Promise<resolvedEntrypointData<Entrypoint>> {
+
+	// init context if missing
+	if (!entrypointData.context) {
+		entrypointData.context = new UIX.Context()
+		if (entrypointData.route) entrypointData.context.path = entrypointData.route.routename
+	}
+	// init route if missing
+	entrypointData.route ??= Path.Route();
+
+	// make sure entrypoint Promise is awaited
+	entrypointData.entrypoint = await entrypointData.entrypoint;
+
+	let resolved: resolvedEntrypointData = {
+		content: undefined,
+		render_method: RenderMethod.HYDRATION,
+		remaining_route: entrypointData.route,
+		loaded: false,
+		status_code: 200
+	}
+
+	// handle only return static
+	if (entrypointData.only_return_static_content && entrypointData.entrypoint && (<any> entrypointData.entrypoint).__render_method == RenderMethod.DYNAMIC) {
+		resolved.remaining_route = Path.Route("/");
+		resolved.content = "";
+	}
+
+	// handle generator functions (exclude class)
+	else if (typeof entrypointData.entrypoint == "function" && !/^\s*class/.test(entrypointData.entrypoint.toString())) {
+		resolved = await resolveGeneratorFunction(entrypointData as entrypointData<html_generator>);
+	}
+
+	// handle render presets
+	else if (entrypointData.entrypoint instanceof RenderPreset || (entrypointData.entrypoint && typeof entrypointData.entrypoint == "object" && !(entrypointData.entrypoint instanceof Element) && '__content' in entrypointData.entrypoint)) {
+		resolved = await resolveRenderPreset(entrypointData as entrypointData<RenderPreset>);
+	}
+
+	// handle RouteHandler TODO: better checks for interfaces? (not just 'getRoute')
+	else if (typeof (entrypointData.entrypoint as any)?.getRoute == "function") {
+		resolved = await resolveRouteHandler(entrypointData as entrypointData<RouteHandler>);
+	}
+	
+	// handle path object, not element/markdown/special_content
+	else if (!(entrypointData.entrypoint instanceof Element || entrypointData.entrypoint instanceof Datex.Markdown || entrypointData.entrypoint instanceof URL || (globalThis.Deno && entrypointData.entrypoint instanceof globalThis.Deno.FsFile)) && entrypointData.entrypoint && typeof entrypointData.entrypoint == "object" && Object.getPrototypeOf(entrypointData.entrypoint) == Object.prototype) {
+		resolved = await resolvePathMap(entrypointData as entrypointData<EntrypointRouteMap>) ?? resolved;
+	}
+
+	// handle module (prototype null) - get default value
+	else if (typeof entrypointData.entrypoint == "object" && entrypointData.entrypoint && Object.getPrototypeOf(entrypointData.entrypoint) == null) {
+		resolved = await resolveModule(entrypointData as entrypointData<{default?:Entrypoint}>);
+	}
+
+	// handle URL
+	else if (entrypointData.entrypoint instanceof URL) {
+		resolved.content = new Response(null, {
+			status: 302,
+			headers: new Headers({ location: convertToWebPath(entrypointData.entrypoint) })
+		})
+	}
+
+	// handle FsFile
+	else if (globalThis.Deno && entrypointData.entrypoint instanceof Deno.FsFile) {
+		resolved.content = new Response(entrypointData.entrypoint.readable)
+	}
+
+	// handle status code from HTTPStatus
+	else if (entrypointData.entrypoint instanceof HTTPStatus) {
+		resolved.status_code = entrypointData.entrypoint.code;
+		resolved.content = entrypointData.entrypoint.content;
+	}
+
+	// else just return current entrypoint
+	else {
+		resolved.content = entrypointData.entrypoint
+		// if (entrypointData.entrypoint != null) {
+			
+		// }
+		// else {
+		// 	resolved = {
+		// 		status_code: 404,
+		// 		content: "No Content",
+		// 		loaded: true,
+		// 		render_method: RenderMethod.RAW_CONTENT
+		// 	}
+		// }
+		
+		
+	}
+
+	// @ts-ignore TODO: is this if condition required? currently commented out, because paths are overriden incorrectly
+	// if (typeof entrypointData.entrypoint?.resolveRoute !== "function") 
+	// 	resolved.remaining_route = Path.Route("/");
 
 	// only load once in recursive calls when deepest level reached
-	if (!loaded) {
+	if (!resolved.loaded) {
 		// preload in deno, TODO: better solution?
-		if (IS_HEADLESS && (entrypoint instanceof Element || entrypoint instanceof DocumentFragment)) {
-			await preloadElementOnBackend(entrypoint)
+		if (IS_HEADLESS && (entrypointData.entrypoint instanceof Element || entrypointData.entrypoint instanceof DocumentFragment)) {
+			await preloadElementOnBackend(entrypointData.entrypoint)
 		}
 
 		// routing handler?
 		// @ts-ignore
-		if (return_first_routing_handler && typeof collapsed?.getInternalRoute == "function") {
-			return [<get_content<T>>collapsed, <any>render_method, status_code, loaded, remaining_route];
+		if (entrypointData.return_first_routing_handler && typeof resolved.content?.getInternalRoute == "function") {
+			// return [<get_content<T>>collapsed, <any>render_method, status_code, loaded, remaining_route];
 		}
 
 		// @ts-ignore
-		else if (route && typeof collapsed?.resolveRoute == "function") {
+		else if (entrypointData.route && typeof resolved.content?.resolveRoute == "function") {
 
 			// wait until at least construct lifecycle finished
-			if (entrypoint instanceof UIX.Components.Base) await entrypoint.constructed
+			if (entrypointData.entrypoint instanceof UIX.Components.Base) await entrypointData.entrypoint.constructed
 
-			if (!await resolveRouteForRouteManager(<RouteManager> collapsed, route, context)) {
-				collapsed = null; // reset content, route could not be resolved
+			if (!await resolveRouteForRouteManager(resolved.content as RouteManager, entrypointData.route, entrypointData.context)) {
+				resolved.content = null; // reset content, route could not be resolved
 			}
 		}
 
-		loaded = true;
+		resolved.loaded = true;
 	}
 
-
-	// extract status code from HTTPStatus
-	if (collapsed instanceof HTTPStatus) {
-		status_code = collapsed.code;
-		collapsed = collapsed.content;
-	}
-
-	return [<get_content<T>>collapsed, <any>render_method, status_code, loaded, remaining_route];
-	
+	return resolved;
 }
 
 
@@ -351,7 +425,7 @@ async function resolveRouteForRouteManager(routeManager: RouteManager, route:Pat
 export async function refetchRoute(route: Path.route_representation, entrypoint: Entrypoint, context?:UIX.Context) {
 	const route_path = Path.Route(route);
 
-	const [routing_handler, _render_method, _status_code, _loaded, remaining_route] = await resolveEntrypointRoute(entrypoint, route_path, context, false, true);
+	const {content: routing_handler, remaining_route} = await resolveEntrypointRoute({entrypoint, route: route_path, context, return_first_routing_handler: true});
 	if (!remaining_route) throw new Error("could not reconstruct route " + route_path.routename);
 	
 	// valid part of route before potential RouteManager

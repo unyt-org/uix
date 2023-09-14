@@ -5,15 +5,16 @@ import { HTTPStatus } from "./http-status.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts";
 import { KEEP_CONTENT } from "./entrypoint-providers.ts";
 import { resolveEntrypointRoute } from "./rendering.ts";
+import { requestMethod } from "uix/html/request-methods.ts";
 
 
 export type raw_content = Blob|Response // sent as raw Response
 export type special_content = URL|Deno.FsFile|HTTPStatus // gets converted to a Response
-export type html_content = Datex.RefOrValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|raw_content|special_content;
+export type html_content = Datex.RefOrValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|undefined|raw_content|special_content;
 export type html_content_or_generator = html_content|html_generator;
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
 
-export type EntrypointRouteMap = {[route:string]:Entrypoint}
+export type EntrypointRouteMap = {[route:string|requestMethod]:Entrypoint}
 export type html_generator = (ctx:Context)=>Entrypoint // html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 
 type _Entrypoint = html_content_or_generator_or_preset | EntrypointRouteMap | typeof KEEP_CONTENT
@@ -71,7 +72,7 @@ export abstract class EntrypointProxy<E extends Entrypoint = Entrypoint> impleme
 		route = Path.Route(await this.redirect?.(route, context) ?? route);
 		const intercepted = await this.intercept?.(route, context);
 		if (intercepted != null) entrypoint = intercepted as E;
-		const [content, render_method] = await resolveEntrypointRoute(entrypoint, route, context);
+		const {content, render_method} = await resolveEntrypointRoute({entrypoint, route, context});
 		return this.transform?.(content, render_method, route, context) ?? <any> new RenderPreset<RenderMethod, html_content_or_generator>(render_method, content);
 	}
 

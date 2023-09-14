@@ -6,8 +6,10 @@ import { ServiceWorker } from "../sw/sw-installer.ts";
 
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { displayInit } from "unyt_core/runtime/display.ts";
-import { resolveEntrypointRoute, html_content, html_content_or_generator_or_preset } from "../html/rendering.ts";
+import { resolveEntrypointRoute } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
+import { Path } from "../utils/path.ts";
+import { html_content_or_generator_or_preset } from "../html/entrypoints.ts";
 
 let current_uix_state_name = 'default';
 
@@ -200,7 +202,7 @@ export namespace State {
 
     // use instead of State.saved
     export async function set(content:html_content_or_generator_or_preset, path = window.location.pathname) {
-        const [collapsed_content, _render_method] = await resolveEntrypointRoute(content, path, undefined, false);
+        const {content: collapsed_content} = await resolveEntrypointRoute({entrypoint: content, route: Path.Route(path)});
         if (collapsed_content == null) return; // no change, ignore
 
         current_state = collapsed_content;

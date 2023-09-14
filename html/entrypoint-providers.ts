@@ -217,8 +217,8 @@ export function provideError(message: string, status = 500) {
 				font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 				font-size: 1.5em;
 				color: var(--text_highlight);">
-				<div>
-					<h2 style="margin-bottom:0">Error</h2>
+				<div style="text-align:center">
+					<h2 style="margin-bottom:0; background: linear-gradient(to right, #ea2b51, #8557a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Error ${status}</h2>
 					<div>${message}</div>
 				</div>
 			</div>
@@ -318,7 +318,7 @@ export class PageProvider implements RouteHandler {
 				// resolve route for entrypoint
 				if (redirectRoute.length) {
 					// TODO: #14
-					const [content, _render_method] = await resolveEntrypointRoute(entrypoint, Path.Route(redirectRoute));
+					const { content } = await resolveEntrypointRoute({entrypoint, route: Path.Route(redirectRoute)});
 					return content as Entrypoint;
 				}
 				// return entrypoint directly

@@ -444,7 +444,7 @@ export class FrontendManager extends HTMLProvider {
 
 		// create ts
 		if (is_dx) exports = new Set(['default', ...exports]); // add default for DATEX modules
-		const ts = await generateTSModuleForRemoteAccess(path_or_specifier, exports, web_path, this.getShortPathName(module_path));
+		const ts = await generateTSModuleForRemoteAccess(path_or_specifier, exports, true, web_path, this.getShortPathName(module_path));
 
 		// create d.ts for dx file
 		const dts = is_dx ? await generateDTSModuleForRemoteAccess(path_or_specifier, undefined, web_path, this.getShortPathName(module_path)) : null;

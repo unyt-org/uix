@@ -127,7 +127,7 @@ export namespace Routing {
 			// check of accepted route matches new calculated current_route
 			if (!Path.routesAreEqual(getCurrentRouteFromURL(), refetched_route)) {
 				logger.warn `invalid route from inferred frontend entrypoint, reloading page from backend`; 
-				if (allowReload) window.location.reload()
+				if (allowReload) window?.location?.reload?.()
 				return false
 			}
 			// window.location.reload()
@@ -138,7 +138,7 @@ export namespace Routing {
 		// still nothing found - route could not be fully resolved on frontend, try to reload from backend
 		if (content == null) {
 			logger.warn `no content for ${getCurrentRouteFromURL().routename}, reloading page from backend`; 
-			if (allowReload) window.location.reload()
+			if (allowReload) window?.location?.reload?.()
 			return false;
 		}
 

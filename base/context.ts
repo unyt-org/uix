@@ -1,17 +1,16 @@
-const { getCookies }  = globalThis.Deno ? await import("https://deno.land/std/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
+const { getCookies } = globalThis.Deno ? await import("https://deno.land/std/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
 
 export type RequestData = Request & {address:string, params: () => Promise<URLSearchParams>|URLSearchParams}
 
-
 export class URLMatch {
-	constructor(public matches: URLPatternResult) {}
+	constructor(public matches: URLPatternResult) {} 
 
-	public get(identifier:string|number):string|null {
-		if (!this.matches) return null;
+	public get(identifier:string|number): string {
+		if (!this.matches) throw new Error("Missing URL parameter ':" + identifier + "'");
 		for (const group of Object.values(this.matches)) {
 			if (group.groups?.[identifier] != undefined) return group.groups[identifier];
 		}
-		return null;
+		 throw new Error("Missing URL parameter ':" + identifier + "'");;
 	}
 }
 
@@ -68,7 +67,7 @@ export class ContextBuilder {
 			if (this.#ctx.request!.method == "POST") return new URLSearchParams(await this.#ctx.request!.text());
 			else return new URL(this.#ctx.request!.url).searchParams
 		}
-		
+	
 
 		this.#ctx.language = ContextBuilder.getRequestLanguage(req.request);
 

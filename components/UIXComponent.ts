@@ -218,7 +218,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
         for (const name of Object.values(props)) {
             // prototype has methods
-            console.log(">>>", originProps?.[name], typeof originProps?.[name], name, "<--")
+            // console.log(">>>", originProps?.[name], typeof originProps?.[name], name, "<--")
             if (scope[<keyof typeof scope>name]) {
                 // also bound to origin
                 if (originProps?.[name]) {

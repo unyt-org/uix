@@ -5,7 +5,6 @@ import { $$, Datex } from "unyt_core";
 import { Server } from "../server/server.ts";
 import { UIX } from "../uix.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES } from "./app.ts";
-import { generateDTS, generateTS } from "./interface-generator.ts";
 import { Path } from "../utils/path.ts";
 import { BackendManager } from "./backend-manager.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
@@ -19,6 +18,7 @@ import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
 import { provideError, provideValue } from "../html/entrypoint-providers.ts";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
+import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "unyt_core/utils/interface-generator.ts"
 
 export class FrontendManager extends HTMLProvider {
 
@@ -282,7 +282,7 @@ export class FrontendManager extends HTMLProvider {
 
 					// add d.ts. TODO: fill with content
 					if (!no_side_effects) {
-						let dts = generateDTS(rel_path, rel_path, []);
+						let dts = await generateDTSModuleForRemoteAccess(rel_path);
 						dts += "\n// TODO: convert static dx to d.ts\ndeclare const _default: any; export default _default;";
 						const actual_path = await this.transpiler.addVirtualFile(mapped_import_path.replaceFileExtension("ts", "d.ts"), dts, true);
 						this.app_options.import_map.addEntry(import_path,actual_path);
@@ -300,7 +300,7 @@ export class FrontendManager extends HTMLProvider {
 
 					// add d.ts. TODO: fill with content
 					if (!no_side_effects) {
-						let dts = generateDTS(rel_path, rel_path, []);
+						let dts = await generateDTSModuleForRemoteAccess(rel_path);
 						dts += "\n// TODO: convert static dx to d.ts\ndeclare const _default: any; export default _default;";
 						const actual_path = await this.transpiler.addVirtualFile(mapped_import_path.replaceFileExtension("ts", "d.ts"), dts, true);
 						this.app_options.import_map.addEntry(import_path,actual_path);
@@ -444,56 +444,14 @@ export class FrontendManager extends HTMLProvider {
 
 		// create ts
 		if (is_dx) exports = new Set(['default', ...exports]); // add default for DATEX modules
-		const ts = generateTS(web_path, path_or_specifier, await this.getModuleExports(path_or_specifier, module_path, exports));
+		const ts = await generateTSModuleForRemoteAccess(path_or_specifier, exports, web_path, this.getShortPathName(module_path));
 
 		// create d.ts for dx file
-		const dts = is_dx ? generateDTS(web_path, path_or_specifier, await this.getModuleExports(path_or_specifier, module_path, new Set(['default', ...await this.getAllExportNames(path_or_specifier)]))) : null;
+		const dts = is_dx ? await generateDTSModuleForRemoteAccess(path_or_specifier, undefined, web_path, this.getShortPathName(module_path)) : null;
 
 		return {ts, dts};
 	}
-
-	// TODO: better solution (currently also targets other objects than uix default exports) exceptions for values that should not be converted to pointers when exported
-	private dontConvertValueToPointer(name:string, value:any){
-		return name == "default" && Datex.Type.ofValue(value) == Datex.Type.std.Object;
-	}
-
-	private async getModuleExports(path_or_specifier:Path|string, module_path:Path, exports:Set<string>) {
-		const values:[string, unknown, boolean, boolean][] = [];
-
-		try {
-			const module = <any> await datex.get(path_or_specifier);
-			const is_dx = typeof path_or_specifier == "string" || path_or_specifier.hasFileExtension("dx", "dxb");
-		
-			// add default export for imported dx
-			const inject_default = exports.has("default") && is_dx;
 	
-			const dx_type = Datex.Type.ofValue(module)
-			const module_is_collapsable_obj = dx_type == Datex.Type.std.Object
-			
-			if (module_is_collapsable_obj) {
-				for (const exp of exports) {
-					if (exp == "default" && inject_default) continue;
-					const exists = !!exp && typeof module == "object" && exp in module;
-					if (!exists) {
-						if (typeof path_or_specifier == "string") this.#logger.error(this.getShortPathName(module_path) + ": '" + exp + "' is currently not a exported value in " + path_or_specifier)
-						else this.#logger.error(this.getShortPathName(module_path) + ": '" + exp + "' is currently not a exported value in module " + this.getShortPathName(path_or_specifier) + " - backend restart might be required")
-					}
-					const val = module[exp];
-					values.push([exp, val, exists, this.dontConvertValueToPointer(exp, val)]);
-				}
-			}
-	
-			if (inject_default) {
-				values.push(["default", module, true, true]); // export default wrapper object, no pointer
-			}
-		}
-		catch (e) {
-			logger.error("error loading module:", e?.message??e);
-		} // network error, etc.., TODO: show warning somewhere
-		
-
-		return values;
-	}
 
 	private async getAllExportNames(path:Path|string) {
 		try {

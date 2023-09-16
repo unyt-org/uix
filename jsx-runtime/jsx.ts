@@ -123,7 +123,9 @@ export function jsx (type: string | any, config: Record<string,any>): Element|Do
 
 export function Fragment({children}:{children:Element[]}) {
 	const fragment = new DocumentFragment();
-	children.map(c=>HTMLUtils.append(fragment, c));
+	HTMLUtils.appendNew(fragment, children);
+	// @ts-ignore remember uix children array
+	if (Datex.Pointer.isReference(children)) fragment._uix_children = children;
 	return fragment;
 }
  
@@ -228,15 +230,15 @@ declare global {
 		type IntrinsicElements = 
 		// html elements
 		{
-			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise} & htmlAttrs<validHTMLElementSpecificAttrs<key>, true>
+			readonly [key in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise|childrenOrChildrenPromise[]} & htmlAttrs<validHTMLElementSpecificAttrs<key>, true>
 		} 
 		// svg elements
 		& {
-			readonly [key in keyof SVGElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise} & htmlAttrs<validSVGElementSpecificAttrs<key>, true>
+			readonly [key in keyof SVGElementTagNameMap]: IntrinsicAttributes & {children?: childrenOrChildrenPromise|childrenOrChildrenPromise[]} & htmlAttrs<validSVGElementSpecificAttrs<key>, true>
 		} 
 		// other custom elements
 		& {
-			'shadow-root': {children?: childrenOrChildrenPromise} & {[key in keyof IntrinsicAttributes]: never} & {mode?:'open'|'closed'}
+			'shadow-root': {children?: childrenOrChildrenPromise|childrenOrChildrenPromise[]} & {[key in keyof IntrinsicAttributes]: never} & {mode?:'open'|'closed'}
 		}
 	}
   }

@@ -414,6 +414,9 @@ export namespace HTMLUtils {
      * @returns 
      */
     export function appendDynamic<T extends Element|DocumentFragment>(parent:T, children:appendableContent|appendableContent[]):T | undefined {
+        // @ts-ignore extract children ref iterable from DocumentFragment
+        if (children instanceof DocumentFragment && children._uix_children) children = children._uix_children
+
         // is ref and iterable/element
         if (Datex.Pointer.isReference(children) && (children instanceof Array || children instanceof Map || children instanceof Set || children instanceof Element)) {
             // is iterable ref

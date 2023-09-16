@@ -81,7 +81,7 @@ export const htmlElementAttributes = {
 
 	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
 	button: ["type"],
-	form: ["method"],
+	form: ["method", "enctype"],
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
 	iframe: [src],
@@ -89,7 +89,8 @@ export const htmlElementAttributes = {
 	source: [src, "type"],
 	label: ["for"],
 	video: [src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload", "playsinline"],
-	textarea: ["placeholder"]
+	textarea: ["placeholder"],
+	option: ["value", "selected"]
 } as const satisfies {[key in keyof HTMLElementTagNameMap]?: readonly string[]};
 
 
@@ -130,7 +131,8 @@ export type htmlElementAttributeValues = {
 	},
 
 	form: {
-		method: "get"|"post"
+		method: "get"|"post",
+		enctype: "application/x-www-form-urlencoded"|"multipart/form-data"|"text/plain"
 	},
 
 	img: widthAndHeight & src &  {
@@ -158,6 +160,10 @@ export type htmlElementAttributeValues = {
 	},
 	textarea: widthAndHeight & {
 		placeholder: string
+	},
+
+	options: {
+		selected: boolean
 	}
 }
 

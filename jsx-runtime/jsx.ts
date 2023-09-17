@@ -95,7 +95,7 @@ export function jsx (type: string | any, config: Record<string,any>): Element|Do
 					val = val.replace("route:", "");
 				}
 				const valid_attr = UIX.HTMLUtils.setElementAttribute(element, attr, <any>val, module);
-				if (!allow_invalid_attributes && !valid_attr) throw new Error(`Element attribute "${attr}" is not allowed for <${element.tagName.toLowerCase()}>`)
+				if (!allow_invalid_attributes && !valid_attr) logger.warn(`Element attribute "${attr}" is not allowed for <${element.tagName.toLowerCase()}>`)
 			}
 		}
 	}

@@ -19,7 +19,7 @@ import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetL
 import { indent } from "../utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize_js.ts";
 import { ORIGIN_PROPS, Theme, jsxInputGenerator } from "../uix_all.ts"
-import { bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
+import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
 import type { DynamicCSSStyleSheet } from "../utils/css_template_strings.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { addCSSScopeSelector } from "uix/utils/css-scoping.ts"
@@ -834,7 +834,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         for (const [name, data] of Object.entries((this.constructor as typeof UIXComponent).standaloneProperties)) {
             // check if prop is method
             if (typeof this[<keyof this>name] === "function") {
-                if (originProps[name]) {
+                if (originProps[name] && !(this[<keyof typeof this>name] as any)[BOUND_TO_ORIGIN]) {
                     // @ts-ignore $
                     this[<keyof typeof this>name] = bindToOrigin(this[<keyof typeof this>name], this, null, originProps[name].datex);
                 }

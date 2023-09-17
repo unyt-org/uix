@@ -15,7 +15,7 @@ export type html_content_or_generator = html_content|html_generator;
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
 
 export type EntrypointRouteMap = {[route:string|requestMethod]:Entrypoint}
-export type html_generator = (ctx:Context)=>Entrypoint // html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
+export type html_generator = (ctx:Context, params:Record<string, string>)=>Entrypoint // html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 
 type _Entrypoint = html_content_or_generator_or_preset | EntrypointRouteMap | typeof KEEP_CONTENT
 

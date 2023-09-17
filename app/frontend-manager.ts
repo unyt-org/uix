@@ -25,6 +25,7 @@ export class FrontendManager extends HTMLProvider {
 	srcPrefix = "/@uix/src/"
 	externalPrefix = "/@uix/external/"
 	debugPrefix = "/@uix/debug/"
+	initPrefix = "/@uix/init"
 
 	srcPrefixRegex = String.raw `\/@uix\/src\/`
 
@@ -195,6 +196,9 @@ export class FrontendManager extends HTMLProvider {
 		if (this.app_options.installable) this.server.path("/manifest.json", (req, path)=>this.handleManifest(req, path));
 		this.server.path("/@uix/sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/@uix/sw.ts", (req, path)=>this.handleServiceWorker(req, path));
+
+		// handle endpoint init
+		this.server.path(this.initPrefix, (req) => this.handleInitPage(req));
 
 		// handle datex-via-http
 		this.server.path(/^\/@uix\/datex\/.*$/, async (req, path)=>{
@@ -537,10 +541,10 @@ catch {
 	}
 
 	private getUIXContextGenerator(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn){
-		return ()=>{
-			return new UIX.ContextBuilder()
-				.setRequestData(requestEvent, path, conn)
-				.build()
+		return async ()=>{
+			const builder = new UIX.ContextBuilder();
+			await builder.setRequestData(requestEvent, path, conn);
+			return builder.build()
 		}
 	}
 
@@ -596,6 +600,19 @@ catch {
 		} catch {
 			await this.server.sendError(requestEvent, 500);
 		}			
+	}
+
+	private async handleInitPage(requestEvent: Deno.RequestEvent) {
+		try {
+
+			const html = `<html>
+			INIT...
+			<script type="module" src="${import.meta.resolve('uix/session/init.ts')}"></script>
+			`
+			await this.server.serveContent(requestEvent, "text/html", html);
+		} catch {
+			await this.server.sendError(requestEvent, 500);
+		}	
 	}
 
 	private async handleFavicon(requestEvent: Deno.RequestEvent, _path:string) {

@@ -1,7 +1,10 @@
 import type { Datex } from "unyt_core"
 
 import { DX_PTR } from "unyt_core/runtime/constants.ts";
-import { STANDALONE } from "../standalone/bound_content_properties.ts";
+import { STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
+
+
+export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
 
 /**
  * Wraps a function so that it is always called in the original context.
@@ -15,15 +18,18 @@ import { STANDALONE } from "../standalone/bound_content_properties.ts";
  * @param fn
  */
 export function bindToOrigin<F extends (...args:any)=>any>(fn: F, context?:any, name?:string, forceDatex = false): F extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<Promise<R>>> : never  {
-	if (typeof fn !== "function") throw new Error("UIX.bindToOrigin: must be a function");
 	
+	if (typeof fn !== "function") throw new Error("UIX.bindToOrigin: Must be a function");
+	// @ts-ignore already bound
+	if (fn[BOUND_TO_ORIGIN]) return fn as any;
 	// @ts-ignore already bound
 	if (fn.uix_bound || fn.ntarget?.uix_bound) return <any>fn;
 
+	if (context && !fn.bind) throw new Error("UIX.bindToOrigin: Cannot bind arrow function to context");
+
 	// @ts-ignore
-	if (context) fn = fn.bind(context);
-	// @ts-ignore
-	fn = $$(fn);
+	fn = $$(Datex.Function.createFromJSFunction(fn, context));
+
 	// @ts-ignore
 	const ptr:Datex.Pointer = (globalThis.Datex ? Datex.Pointer.getByValue(fn) : fn[DX_PTR]) ?? fn.ntarget?.[DX_PTR];
 	if (!ptr) throw new Error("UIX.bindToOrigin: function must be bound to a DATEX pointer");
@@ -60,8 +66,11 @@ export function bindToOrigin<F extends (...args:any)=>any>(fn: F, context?:any, 
 				}
 				
 			}`
-		}	
+		}
 	}
+
+	// @ts-ignore
+	fn[BOUND_TO_ORIGIN] = true;
 
 	return <any>fn;
 }
@@ -123,8 +132,16 @@ export function getValueInitializer(value:any, forceDatex = false): string {
  * This is the counterpart to UIX.bindToOrigin, which always ensures that
  * the module context is available inside the wrapped function.
  */
-export function inDisplayContext<F extends (...args:any)=>any>(fn: F): F {
+export function bindToDisplayContext<F extends (...args:any)=>any>(fn: F, externalScopeVariables?:Record<string, unknown>): F {
 	// @ts-ignore
 	fn[STANDALONE] = true;
+	// @ts-ignore
+	if (externalScopeVariables) fn[EXTERNAL_SCOPE_VARIABLES] = externalScopeVariables;
 	return fn;
 }
+
+/**
+ * @deprecated use bindToDisplayContext
+ */
+export const inDisplayContext = bindToDisplayContext;
+export type inDisplayContext = typeof bindToDisplayContext

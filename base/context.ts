@@ -1,20 +1,25 @@
+import { Datex } from "unyt_core/datex.ts";
+import { BROADCAST, Endpoint } from "unyt_core/types/addressing.ts";
+
 const { getCookies } = globalThis.Deno ? await import("https://deno.land/std/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
 
-export type RequestData = Request & {address:string, params: () => Promise<URLSearchParams>|URLSearchParams}
+// TODO: remove params, use ctx.searchParams instead
+export type RequestData = {address:string|null}
 
-export class URLMatch {
-	constructor(public matches: URLPatternResult) {} 
-
-	public get(identifier:string|number): string {
-		if (!this.matches) throw new Error("Missing URL parameter ':" + identifier + "'");
-		for (const group of Object.values(this.matches)) {
-			if (group.groups?.[identifier] != undefined) return group.groups[identifier];
+export function generateURLParamsObject(matches: URLPatternResult) {
+	return new Proxy({} as Record<string,string>, {
+		get(_, identifier) {
+			if (typeof identifier=="symbol") throw new Error("Invalid parameter key");
+			if (!matches) throw new Error("Missing URL parameter ':" + identifier + "'");
+			for (const group of Object.values(matches)) {
+				if (group.groups?.[identifier] != undefined) return group.groups[identifier];
+			}
+			throw new Error("Missing URL parameter ':" + identifier + "'");
 		}
-		 throw new Error("Missing URL parameter ':" + identifier + "'");;
-	}
+	})
 }
 
-const emptyMatch = new URLMatch({} as URLPatternResult);
+const emptyMatch = Object.freeze({});
 
 /**
  * Context passed to callback functions in entrypoints, e,g.:
@@ -33,11 +38,28 @@ const emptyMatch = new URLMatch({} as URLPatternResult);
  * ```
  */
 export class Context {
-	request?: RequestData
+	request?: Request
+	requestData: RequestData = {
+		address: null
+	}
+
 	path!: string
-	match?: URLPatternResult
-	urlMatch: URLMatch = emptyMatch;
+	params: Record<string,string> = emptyMatch;
+	searchParams!: URLSearchParams
+
 	language = "en";
+	endpoint = BROADCAST
+
+	async getSharedData(): Promise<Record<string, any>|null> {
+		if (!this.request) return null;
+		const cookie = getCookies?.(this.request?.headers)?.['uix-shared-data'];
+		if (!cookie) return null;
+		const cookieSharedData = await Datex.Runtime.decodeValueBase64(decodeURIComponent(cookie))
+		return cookieSharedData
+	}
+	getPrivateData(): Record<string, any> {
+
+	}
 }
 
 export class ContextBuilder {
@@ -48,8 +70,12 @@ export class ContextBuilder {
 		return getCookies?.(req.headers)?.['uix-language'] ?? req.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.split("-")[0] ?? "en"
 	}
 
-	setRequestData(req:Deno.RequestEvent, path:string, con:Deno.Conn) {
-		this.#ctx.request = <RequestData> req.request//<any>{}
+	async setRequestData(req:Deno.RequestEvent, path:string, con:Deno.Conn) {
+		this.#ctx.request = req.request
+		this.#ctx.requestData.address = req.request.headers?.get("x-real-ip") ??
+					req.request.headers?.get("x-forwarded-for") ?? 
+					(con.remoteAddr as Deno.NetAddr)?.hostname
+		
 		this.#ctx.path = path;
 		// Object.assign(this.#ctx.request!, req.request)
 		// // @ts-ignore headers copied from prototype?
@@ -57,16 +83,18 @@ export class ContextBuilder {
 		// this.#ctx.request!.url = req.request.url;
 
 		// this.#ctx.request!.localAddr = con.localAddr
-		this.#ctx.request!.address = req.request.headers?.get("x-real-ip") ??
-				req.request.headers?.get("x-forwarded-for") ?? 
-				(con.remoteAddr as Deno.NetAddr)?.hostname;
-		// TODO: remove
-		this.#ctx.request!.path = path;
 
-		this.#ctx.request!.params = async () => {
-			if (this.#ctx.request!.method == "POST") return new URLSearchParams(await this.#ctx.request!.text());
-			else return new URL(this.#ctx.request!.url).searchParams
-		}
+		const isPost = this.#ctx.request!.method == "POST";
+		const postRequestBody = isPost ? await this.#ctx.request!.text() : null;
+
+		const ctx = this.#ctx;
+
+		Object.defineProperty(this.#ctx, "searchParams", {
+			get() {
+				if (isPost) return new URLSearchParams(postRequestBody!);
+				else return new URL(ctx.request!.url).searchParams
+			},
+		})
 	
 
 		this.#ctx.language = ContextBuilder.getRequestLanguage(req.request);
@@ -80,4 +108,4 @@ export class ContextBuilder {
 }
 
 
-export type ContextGenerator = () => Context
+export type ContextGenerator = () => Promise<Context>

@@ -95,7 +95,7 @@ class UIXApp {
 
 		// connect to supranet
 		if (endpoint_config.connect !== false) await Datex.Supranet.connect();
-		else await Datex.Supranet.init();
+		else await Datex.Supranet.init(undefined);
 
 		// TODO: map multiple backends to multiple frontends?
 		let backend_with_default_export:BackendManager|undefined;

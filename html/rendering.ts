@@ -2,7 +2,7 @@ import { Path } from "../utils/path.ts";
 import { $$, Datex, constructor } from "unyt_core";
 import { UIX } from "../uix.ts";
 import { logger } from "../uix_all.ts";
-import { Context, URLMatch } from "../base/context.ts";
+import { Context, URLMatch, generateURLParamsObject } from "../base/context.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
 import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_content_or_generator, html_generator } from "./entrypoints.ts"
 
@@ -112,18 +112,18 @@ function reconstructMatchedURL(input:string, match:URLPatternResult) {
 	return input
 }
 
-function resolveContext(entrypointData: entrypointData): asserts entrypointData is entrypointData & {context: Context} {
-	if (typeof entrypointData.context == "function") entrypointData.context = entrypointData.context();
+async function resolveContext(entrypointData: entrypointData): Promise<any> { //: asserts entrypointData is entrypointData & {context: Context} {
+	if (typeof entrypointData.context == "function") entrypointData.context = await entrypointData.context();
 	if (!entrypointData.context) throw new Error("missing UIX context for generator function")
 }
 
 async function resolveGeneratorFunction(entrypointData: entrypointData<html_generator>): Promise<resolvedEntrypointData> {
-	resolveContext(entrypointData)
+	await resolveContext(entrypointData)
 
 	let returnValue: Entrypoint|undefined;
 	let hasError = false;
 	try {
-		returnValue = await entrypointData.entrypoint(entrypointData.context);
+		returnValue = await entrypointData.entrypoint(entrypointData.context, entrypointData.context.params);
 	}
 	// return error as response with HTTPStatus error 500
 	catch (e) {
@@ -148,7 +148,7 @@ async function resolveRenderPreset(entrypointData: entrypointData<RenderPreset>)
 }
 
 async function resolveRouteHandler(entrypointData: entrypointData<RouteHandler>): Promise<resolvedEntrypointData> {
-	resolveContext(entrypointData)
+	await resolveContext(entrypointData)
 	if (!entrypointData.route) throw new Error("missing entrypoint route (required for RouteHandler")
 	const route2 = await entrypointData.entrypoint.getRoute(entrypointData.route, entrypointData.context);
 	entrypointData.route = Path.Route("/"); // route completely resolved by getRoute
@@ -162,7 +162,7 @@ function resolveModule(entrypointData: entrypointData<{default?:Entrypoint}>): P
 }
 
 async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>): Promise<resolvedEntrypointData|undefined> {
-	resolveContext(entrypointData)
+	await resolveContext(entrypointData)
 
 	// find longest matching route
 	let closest_match_key:string|symbol|null = null;
@@ -210,8 +210,8 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 				// route ends with * -> allow child routes
 				handle_children_separately = potential_route_key.endsWith("*");
 		
-				entrypointData.context.urlMatch = new URLMatch(match);
-				entrypointData.context.match = match;	
+				entrypointData.context.params = generateURLParamsObject(match);
+				// entrypointData.context.match = match;	
 			}
 		}
 	}

@@ -4,7 +4,7 @@ import { UIX } from "../uix.ts";
 import { indent } from "../utils/indent.ts";
 import type { HTMLProvider } from "./html_provider.ts";
 import { HTMLUtils } from "./utils.ts";
-import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_properties.ts";
+import { COMPONENT_CONTEXT, STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
 import { convertToWebPath } from "../app/utils.ts";
 
 let stage:string|undefined = '?'
@@ -102,15 +102,15 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 	return html || HTMLUtils.escapeHtml((el as HTMLElement).innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
-async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[], standaloneContext = false):Promise<string> {
-	standaloneContext = standaloneContext || (<any>el)[STANDALONE];
+async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[], isStandaloneContext = false):Promise<string> {
+	isStandaloneContext = isStandaloneContext || (<any>el)[STANDALONE];
 
 	if (el instanceof globalThis.Text) return HTMLUtils.escapeHtml(el.textContent ?? ""); // text node
 
 	if (el instanceof DocumentFragment) {
 		const content = [];
 		for (const child of (el.childNodes as unknown as Node[])) {
-			content.push(await _getOuterHTML(child, opts, collectedStylsheets, standaloneContext));
+			content.push(await _getOuterHTML(child, opts, collectedStylsheets, isStandaloneContext));
 		}
 		return content.join("\n");
 	}
@@ -125,7 +125,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 		throw "invalid HTML node"
 	}
 
-	const inner = await getInnerHTML(el, opts, collectedStylsheets, standaloneContext);
+	const inner = await getInnerHTML(el, opts, collectedStylsheets, isStandaloneContext);
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
 
@@ -157,15 +157,24 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 			}
 		} while ((parent = parent?.parentElement));
 
+
  		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
 		let script = `  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
 		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
 			for (const listener of listeners) {
-				// @ts-ignore
-				const standaloneFunction = listener[STANDALONE];
+
+				script += `{\n`
+
+				const standaloneFunction = (listener as any)[STANDALONE];
+				if ((listener as any)[EXTERNAL_SCOPE_VARIABLES]?.['this']) {
+					script += `const ctx = querySelector('[data-ptr="${Datex.Pointer.getByValue((listener as any)[EXTERNAL_SCOPE_VARIABLES]['this'])?.id}"]'); // injected context\n`
+				}
+				// else if (!context) {
+				// 	throw new Error("Cannot infer 'this' in runInDisplayContext(). Please provide it as an argument.")
+				// }
 				// @ts-ignore
 				// const backendExportFunction = listener[BACKEND_EXPORT];
-				const forceBindToOriginContext = !standaloneContext&&!standaloneFunction;
+				const forceBindToOriginContext = !isStandaloneContext&&!standaloneFunction;
 				const listenerSource = (forceBindToOriginContext ? UIX.bindToOrigin(listener) : listener).toString();
 
 				// native function not supported
@@ -187,6 +196,9 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 				}
 				// context wrapper for arrow function or object method
 				else script += `  el.addEventListener("${event}", (function (...args){return (${listenerSource})(...args)}).bind(ctx));`
+		
+				script += `\n}\n`
+
 			}
 		}
 		opts._injectedJsData.init.push(script);

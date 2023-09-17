@@ -79,6 +79,8 @@ export const htmlElementAttributes = {
 	a: ["href", "target"],
 	link: ["rel", "href"],
 
+	script: ["type", "src"],
+
 	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
 	button: ["type"],
 	form: ["method", "enctype"],

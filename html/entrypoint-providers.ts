@@ -217,7 +217,7 @@ export function provideError(message: string, status = 500) {
 				font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 				font-size: 1.5em;
 				color: var(--text_highlight);">
-				<div style="text-align:center">
+				<div style="text-align:center; word-break: break-word;">
 					<h2 style="margin-bottom:0; background: linear-gradient(to right, #ea2b51, #8557a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Error ${status}</h2>
 					<div>${message}</div>
 				</div>

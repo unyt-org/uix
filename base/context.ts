@@ -9,7 +9,11 @@ export type RequestData = {address:string|null}
 export function generateURLParamsObject(matches: URLPatternResult) {
 	return new Proxy({} as Record<string,string>, {
 		get(_, identifier) {
-			if (typeof identifier=="symbol") throw new Error("Invalid parameter key");
+			if (typeof identifier=="symbol") {
+				console.error("Issue here!", _, identifier)
+				return undefined;
+				//throw new Error("Invalid parameter key");
+			}
 			if (!matches) throw new Error("Missing URL parameter ':" + identifier + "'");
 			for (const group of Object.values(matches)) {
 				if (group.groups?.[identifier] != undefined) return group.groups[identifier];

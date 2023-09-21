@@ -81,7 +81,7 @@ export const htmlElementAttributes = {
 
 	script: ["type", "src"],
 
-	input: [alt, src, alt, ...widthAndHeight, "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
+	input: [alt, src, alt, ...widthAndHeight, "min", "minlength", "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
 	button: ["type"],
 	form: ["method", "enctype"],
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
@@ -117,6 +117,8 @@ export type htmlElementAttributeValues = {
 		formnovalidate: boolean
 		max: htmlNumber|string
 		maxlength: htmlNumber
+		min: htmlNumber|string
+		minlength: htmlNumber
 		multiple: boolean
 		readonly: boolean
 		required: boolean

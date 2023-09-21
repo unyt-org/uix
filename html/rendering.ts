@@ -280,6 +280,22 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	else if (typeof (entrypointData.entrypoint as any)?.getRoute == "function") {
 		resolved = await resolveRouteHandler(entrypointData as entrypointData<RouteHandler>);
 	}
+
+	// handle FsFile
+	else if (globalThis.Deno && entrypointData.entrypoint instanceof Deno.FsFile) {
+		resolved.content = new Response(entrypointData.entrypoint.readable)
+	}
+
+	// handle status code from HTTPStatus
+	else if (entrypointData.entrypoint instanceof HTTPStatus) {
+		resolved.status_code = entrypointData.entrypoint.code;
+		resolved.content = entrypointData.entrypoint.content;
+	}
+
+	// await Promise
+	else if (entrypointData.entrypoint instanceof Promise) {
+		resolved.content = await entrypointData.entrypoint;
+	}
 	
 	// handle path object, not element/markdown/special_content
 	else if (!(entrypointData.entrypoint instanceof Element || entrypointData.entrypoint instanceof Datex.Markdown || entrypointData.entrypoint instanceof URL || (globalThis.Deno && entrypointData.entrypoint instanceof globalThis.Deno.FsFile)) && entrypointData.entrypoint && typeof entrypointData.entrypoint == "object" && Object.getPrototypeOf(entrypointData.entrypoint) == Object.prototype) {
@@ -298,17 +314,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 			headers: new Headers({ location: convertToWebPath(entrypointData.entrypoint) })
 		})
 	}
-
-	// handle FsFile
-	else if (globalThis.Deno && entrypointData.entrypoint instanceof Deno.FsFile) {
-		resolved.content = new Response(entrypointData.entrypoint.readable)
-	}
-
-	// handle status code from HTTPStatus
-	else if (entrypointData.entrypoint instanceof HTTPStatus) {
-		resolved.status_code = entrypointData.entrypoint.code;
-		resolved.content = entrypointData.entrypoint.content;
-	}
+	
 
 	// else just return current entrypoint
 	else {

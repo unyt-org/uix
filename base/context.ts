@@ -6,22 +6,6 @@ const { getCookies } = globalThis.Deno ? await import("https://deno.land/std/htt
 // TODO: remove params, use ctx.searchParams instead
 export type RequestData = {address:string|null}
 
-export function generateURLParamsObject(matches: URLPatternResult) {
-	return new Proxy({} as Record<string,string>, {
-		get(_, identifier) {
-			if (typeof identifier=="symbol") {
-				console.error("Issue here!", _, identifier)
-				return undefined;
-				//throw new Error("Invalid parameter key");
-			}
-			if (!matches) throw new Error("Missing URL parameter ':" + identifier + "'");
-			for (const group of Object.values(matches)) {
-				if (group.groups?.[identifier] != undefined) return group.groups[identifier];
-			}
-			throw new Error("Missing URL parameter ':" + identifier + "'");
-		}
-	})
-}
 
 const emptyMatch = Object.freeze({});
 

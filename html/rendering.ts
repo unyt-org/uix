@@ -1,8 +1,8 @@
 import { Path } from "../utils/path.ts";
 import { $$, Datex, constructor } from "unyt_core";
 import { UIX } from "../uix.ts";
-import { logger } from "../uix_all.ts";
-import { Context, URLMatch, generateURLParamsObject } from "../base/context.ts";
+import { evaluateFilter, logger } from "../uix_all.ts";
+import {filter} from "../routing/route-filter.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
 import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_content_or_generator, html_generator } from "./entrypoints.ts"
 
@@ -10,7 +10,6 @@ import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts"
-import { RequestMethod, contextMatchesRequestMethod } from "./request-methods.ts";
 
 
 // URLPattern polyfill
@@ -123,7 +122,7 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 	let returnValue: Entrypoint|undefined;
 	let hasError = false;
 	try {
-		returnValue = await entrypointData.entrypoint(entrypointData.context, entrypointData.context.params);
+		returnValue = await entrypointData.entrypoint(entrypointData.context as UIX.Context, (entrypointData.context  as UIX.Context).params);
 	}
 	// return error as response with HTTPStatus error 500
 	catch (e) {
@@ -150,7 +149,7 @@ async function resolveRenderPreset(entrypointData: entrypointData<RenderPreset>)
 async function resolveRouteHandler(entrypointData: entrypointData<RouteHandler>): Promise<resolvedEntrypointData> {
 	await resolveContext(entrypointData)
 	if (!entrypointData.route) throw new Error("missing entrypoint route (required for RouteHandler")
-	const route2 = await entrypointData.entrypoint.getRoute(entrypointData.route, entrypointData.context);
+	const route2 = await entrypointData.entrypoint.getRoute(entrypointData.route, entrypointData.context as UIX.Context);
 	entrypointData.route = Path.Route("/"); // route completely resolved by getRoute
 	return resolveEntrypointRoute({...entrypointData, entrypoint: route2})
 }
@@ -161,11 +160,28 @@ function resolveModule(entrypointData: entrypointData<{default?:Entrypoint}>): P
 	return resolveEntrypointRoute({...entrypointData, entrypoint: content});
 }
 
+function generateURLParamsObject(matches: URLPatternResult) {
+	return new Proxy({} as Record<string,string>, {
+		get(_, identifier) {
+			if (typeof identifier=="symbol") {
+				console.error("Issue here!", _, identifier)
+				return undefined;
+				//throw new Error("Invalid parameter key");
+			}
+			if (!matches) throw new Error("Missing URL parameter ':" + identifier + "'");
+			for (const group of Object.values(matches)) {
+				if (group.groups?.[identifier] != undefined) return group.groups[identifier];
+			}
+			throw new Error("Missing URL parameter ':" + identifier + "'");
+		}
+	})
+}
+
 async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>): Promise<resolvedEntrypointData|undefined> {
 	await resolveContext(entrypointData)
 
 	// find longest matching route
-	let closest_match_key:string|symbol|null = null;
+	let closest_match_key:string|filter|null = null;
 	let closest_match_route:Path.Route|null = null;
 
 	const isBetterMatch = (potential_route_key: string) => {
@@ -178,12 +194,14 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 
 	// handle symbol keys (request methods)
 	let matchingSymbol = false;
+
 	for (const symbolKey of Object.getOwnPropertySymbols(entrypointData.entrypoint)) {
-		if (contextMatchesRequestMethod(symbolKey, entrypointData.context)) {
+		if (await evaluateFilter(symbolKey as filter, entrypointData.context as UIX.Context)) {
 			matchingSymbol = true;
-			closest_match_key = symbolKey;
+			closest_match_key = symbolKey as filter;
 		}
 	}
+
 
 	if (!matchingSymbol) {
 		for (const potential_route_key of Object.keys(entrypointData.entrypoint)) {
@@ -210,8 +228,8 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 				// route ends with * -> allow child routes
 				handle_children_separately = potential_route_key.endsWith("*");
 		
-				entrypointData.context.params = generateURLParamsObject(match);
-				// entrypointData.context.match = match;	
+				(entrypointData.context as UIX.Context).params = generateURLParamsObject(match);
+				(entrypointData.context as UIX.Context).urlPattern = match;	
 			}
 		}
 	}
@@ -221,7 +239,8 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 		let val = <any> entrypointData.entrypoint.$ ? (<any>entrypointData.entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypointData.entrypoint)[closest_match_key];
 		if (val instanceof Datex.Ref && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
 		val = await val;
-		const new_path = closest_match_route ? Path.Route(entrypointData.route!.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");
+		// only update route if a string key, symbol keys don't mutate the route
+		const new_path = matchingSymbol ? entrypointData.route : closest_match_route ? Path.Route(entrypointData.route!.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");
 		
 		const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: val, route: new_path});
 		if (!handle_children_separately) resolved.remaining_route = Path.Route("/");
@@ -410,7 +429,7 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
  * @returns true if the route could be fully resolved
  */
 async function resolveRouteForRouteManager(routeManager: RouteManager, route:Path.Route, context: UIX.Context|UIX.ContextGenerator) {
-	if (typeof context == "function") context = context();
+	if (typeof context == "function") context = await context();
 	const valid_route_part = <Path.route_representation> await Promise.race([
 		routeManager.resolveRoute(route, context),
 		new Promise((_,reject) => setTimeout(()=>{

@@ -5,7 +5,7 @@ import { HTTPStatus } from "./http-status.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts";
 import { KEEP_CONTENT } from "./entrypoint-providers.ts";
 import { resolveEntrypointRoute } from "./rendering.ts";
-import { requestMethod } from "uix/html/request-methods.ts";
+import { filter } from "../routing/route-filter.ts";
 
 
 export type raw_content = Blob|Response // sent as raw Response
@@ -14,7 +14,7 @@ export type html_content = Datex.RefOrValue<Element|string|number|boolean|bigint
 export type html_content_or_generator = html_content|html_generator;
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
 
-export type EntrypointRouteMap = {[route:string|requestMethod]:Entrypoint}
+export type EntrypointRouteMap = {[route:string|filter]:Entrypoint}
 export type html_generator = (ctx:Context, params:Record<string, string>)=>Entrypoint // html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 
 type _Entrypoint = html_content_or_generator_or_preset | EntrypointRouteMap | typeof KEEP_CONTENT

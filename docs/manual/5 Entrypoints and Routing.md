@@ -96,19 +96,59 @@ export default {
 } satisfies UIX.Entrypoint
 ```
 
+
 Besides the `*` syntax, many more patterns, like Regular Expressions, are supported in the Route Map keys. Internally, Route Maps use the [URLPattern API](https://developer.mozilla.org/en-US/docs/Web/API/URLPattern/URLPattern).
+Matches can be accessed via the second argument in the callback function. The raw `URLPatternResult` can be acessed via `ctx.urlPattern`.
 
 ```tsx
 export default {
     // Match user route with name
-    '/user/:name/': (ctx: UIX.Context) => `Hello ${ctx.match.pathname.groups['name']}!`
+    '/user/:name/': (_ctx, {name}) => `Hello ${name}!`
     // Match page route using a Regular Expression
-    '/page/(1|2|3)/': (ctx: UIX.Context) => `This is page ${ctx.match.pathname.groups[0]}` 
+    '/page/(1|2|3)/': (ctx) => `This is page ${ctx.urlPattern.pathname.groups[0]}` 
     // Fallback if nothing else matches
     '*': 'Not found' 
 } satisfies UIX.Entrypoint
 ```
 
+## Route Map Filters
+
+Route Maps also accept special symbols, called *filters* as keys.
+They can be used to follow a specific route only if a certain condition is met.
+
+One important use cases for filters are the `RequestMethod` filters that can be used to
+route depending on the HTTP request method:
+
+```tsx
+export default {
+    '/login': {
+        // Provide login page
+        [RequestMethod.GET]: UIX.provideFile("./common/index.html"),
+        // Handle POST method triggered from login page    
+        [RequestMethod.POST]: (ctx) => handleLogin(ctx)
+    }
+} satisfies UIX.Entrypoint
+```
+
+Custom route filters can be created with the `createFilter()` method from `"uix/routing/route-filter.ts"`:
+```tsx
+
+const isAdmin = (ctx: UIX.Context) => ctx.privateData.isAdmin
+const isPayingCustomer = (ctx: UIX.Context) => ctx.privateData.isPayingCustomer
+
+export default {
+    '/api/*': {
+        [isAdmin]:          ctx => handleAPICall(ctx, {rateLimit: Infinity}).
+        [isPayingCustomer]: ctx => handleAPICall(ctx, {rateLimit: 1000}),
+        '*' :               ctx => handleAPICall(ctx, {rateLimit: 10}),
+    }
+} satisfies UIX.Entrypoint
+```
+
+In this example, API calls are triggered with different rate limits depending on the type of
+the requesting client.
+The wildcard (`'*'`) selector can be used like with normal routes to provide a fallback behaviour
+if none of the other cases match.
 
 ## Blobs
 Blobs are directly displayed as files in the browser (Creating a file response with the correct mime type).
@@ -308,9 +348,20 @@ It contains information about the client, about the route, and about the HTTP re
 
 ```typescript
 interface Context {
-    request?: Request & {address:string}
-    path: string
-    match?: URLPatternResult
-    language: string
+	request?: Request
+	requestData = {
+		address: string | null
+	}
+
+	path: string
+	params: Record<string,string>;
+	urlPattern?: URLPatternResult
+	searchParams: URLSearchParams
+
+	language: string
+	endpoint: Datex.Endpoint
+
+	getSharedData(): Promise<Record<string, unknown>>
+	getPrivateData(): Promise<Record<string, unknown>>
 }
 ```

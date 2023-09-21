@@ -134,7 +134,7 @@ Custom route filters can be created with the `createFilter()` method from `"uix/
 ```tsx
 
 const isAdmin = createFilter((ctx: UIX.Context) => ctx.privateData.isAdmin)
-const isPayingCustomer = createFilter(ctx: UIX.Context) => ctx.privateData.isPayingCustomer)
+const isPayingCustomer = createFilter((ctx: UIX.Context) => ctx.privateData.isPayingCustomer)
 
 export default {
     '/api/*': {

@@ -7,6 +7,7 @@ import { HTMLUtils } from "./utils.ts";
 import { COMPONENT_CONTEXT, STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { app } from "../app/app.ts";
+import { logger } from "uix/uix_all.ts";
 
 let stage:string|undefined = '?'
 
@@ -167,37 +168,41 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 				script += `{\n`
 
 				const standaloneFunction = (listener as any)[STANDALONE];
-				if ((listener as any)[EXTERNAL_SCOPE_VARIABLES]?.['this']) {
-					script += `const ctx = querySelector('[data-ptr="${Datex.Pointer.getByValue((listener as any)[EXTERNAL_SCOPE_VARIABLES]['this'])?.id}"]'); // injected context\n`
+				for (const [varName, value] of Object.entries((listener as any)[EXTERNAL_SCOPE_VARIABLES]??[])) {
+					// handle special case: this
+					if (varName == "this") {
+						script += `const ctx = querySelector('[data-ptr="${Datex.Pointer.getByValue((listener as any)[EXTERNAL_SCOPE_VARIABLES]['this'])?.id}"]'); // injected context\n`
+					}
+					// handle functions
+					else if (typeof value == "function") {
+						const boundFunction = UIX.bindToOrigin(value)
+						script += `const ${varName} = ${getFunctionSource(boundFunction, "ctx")};// injected context\n`
+					}
+					// cannot yet handle other values
+					else {
+						throw new Error("Invalid bound value from external scope: " + varName + ". Only functions are supported");
+					}
 				}
+				
 				// else if (!context) {
 				// 	throw new Error("Cannot infer 'this' in runInDisplayContext(). Please provide it as an argument.")
 				// }
 				// @ts-ignore
 				// const backendExportFunction = listener[BACKEND_EXPORT];
 				const forceBindToOriginContext = !isStandaloneContext&&!standaloneFunction;
-				const listenerSource = (forceBindToOriginContext ? UIX.bindToOrigin(listener) : listener).toString();
+				const listenerFn = (forceBindToOriginContext ? UIX.bindToOrigin(listener) : listener);
 
-				// native function not supported
-				if (listenerSource == 'function () { [native code] }') {
-					throw new Error("Invalid event handler for standalone mode: native function in 'on"+event+"' handler (If you are using bind(), it is not supported.)");
+				// special form "action" on submit
+				if (event == "submit") {
+					script += `  el.setAttribute("action", "/@uix/form-action/${Datex.Pointer.getByValue(listenerFn)!.idString()}/");`
 				}
-				// normal function with own 'this' context
-				if (isNormalFunction(listenerSource)) script += `  el.addEventListener("${event}", ${listenerSource});`
-				// object methods check if 'this' context is component context;
-				else if (isObjectMethod(listenerSource)) {
-					throw new Error("Invalid event handler for standalone mode: cannot determine context for '"+listener.name+"()' on 'on"+event+"' handler");	
-					// const name = listener.name;
-					// // is property of context
-					// if ((<any>context)?.[name] === listener) {
-					// 	script += `  el.addEventListener("${event}", (function (...args){return this['${name}'](...args)}).bind(ctx));`
-					// }
-					// // other 'this' context, not supported
-					// else throw new Error("Invalid event handler for standalone mode: not a standalone context ("+listener.name+")");	
+
+				// normal event listener
+				else {
+					script += `  el.addEventListener("${event}", ${getFunctionSource(listenerFn, "ctx")});`
 				}
-				// context wrapper for arrow function or object method
-				else script += `  el.addEventListener("${event}", (function (...args){return (${listenerSource})(...args)}).bind(ctx));`
-		
+
+				
 				script += `\n}\n`
 
 			}
@@ -211,6 +216,23 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 	// const start = outer.replace(/<\/[A-Za-z0-9-_ ]+>$/, '');
 	// const end = outer.match(/<\/[A-Za-z0-9-_ ]+>$/)?.[0] ?? ""; // might not have an end tag
 	// return start + inner + end;
+}
+
+function getFunctionSource(fn: Function, contextName = "ctx") {
+	const fnSource = fn.toString();
+
+	// native function not supported
+	if (fnSource == 'function () { [native code] }') {
+		throw new Error("Invalid native function binding for standalone mode (If you are using bind(), it is not supported.)");
+	}
+	// normal function with own 'this' context
+	if (isNormalFunction(fnSource)) return fnSource;
+	// object methods check if 'this' context is component context;
+	else if (isObjectMethod(fnSource)) {
+		logger.warn("Unstable function binding for standalone mode: cannot determine 'this' context for '"+fn.name+"()'");	
+	}
+	// context wrapper for arrow function or object method
+	else return `(function (...args){return (${fnSource})(...args)}).bind(${contextName})`
 }
 
 // const isArrowFn = (fn:Function) => 

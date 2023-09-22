@@ -9,7 +9,7 @@ import { Path } from "../utils/path.ts";
 import { BackendManager } from "./backend-manager.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
 import { logger } from "../utils/global_values.ts";
-import { generateHTMLPage } from "../html/render.ts";
+import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
 import { HTMLProvider } from "../html/html_provider.ts";
 const {serveDir} = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -19,7 +19,12 @@ import { provideError, provideValue } from "../html/entrypoint-providers.ts";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
 import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "unyt_core/utils/interface-generator.ts"
-import { Controller } from "uix_std/espruino/espruino_tools/libs/esprima/escodegen.js";
+import { resolveEntrypointRoute } from "../html/rendering.ts";
+import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
+import { HTMLUtils } from "../html/utils.ts";
+import { RenderMethod } from "../html/render-methods.ts";
+import { Context, ContextGenerator } from "uix/base/context.ts";
+import { Entrypoint, raw_content } from "../html/entrypoints.ts";
 
 export class FrontendManager extends HTMLProvider {
 
@@ -201,12 +206,23 @@ export class FrontendManager extends HTMLProvider {
 		});
 
 		// handled default web paths
-		this.server.path("/", (req, path, con)=>this.handleIndexHTML(req, path, con));
+		this.server.path("/", (req, path, con)=>this.handleRequest(req, path, con));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
 		this.server.path("/robots.txt", (req, path)=>this.handleRobotsTXT(req, path));
 
 		this.server.path(/^\/@uix\/cache\/.*$/, async (req, path)=>{
 			await req.respondWith(await serveDir!(req.request, {fsRoot:UIX_CACHE_PATH.pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
+		});
+
+		this.server.path(/^\/@uix\/form-action\/.*$/, (req, path, con)=>{
+			const ptrId = path.replace("/@uix/form-action/", "").split("/")[0].slice(1);
+			const ptr = Datex.Pointer.get(ptrId)
+
+			if (!ptr) this.server.sendError(req, 400, "Invalid Form Action");
+			else {
+				console.log("form-action", ptrId, ptr);
+				this.handleRequest(req, path, con, ptr.val)
+			}
 		});
 
 		this.server.path("/@uix/window", (req, path)=>this.handleNewHTML(req, path));
@@ -277,7 +293,7 @@ export class FrontendManager extends HTMLProvider {
 
 		// handle routes (ignore /@uix/.... .dx)
 		this.server.path(/^((?!^(\/@uix\/|\/\.dx)).)*$/, (req, path, con)=>{
-			this.handleIndexHTML(req, path, con)
+			this.handleRequest(req, path, con)
 		});
 
 
@@ -619,7 +635,7 @@ runner.enableHotReloading();
 		}, 200); // wait some time until next update triggered
 	}
 
-	private getUIXContextGenerator(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn){
+	private getUIXContextGenerator(requestEvent: Deno.RequestEvent, path:string, conn?:Deno.Conn){
 		return async ()=>{
 			const builder = new UIX.ContextBuilder();
 			await builder.setRequestData(requestEvent, path, conn);
@@ -627,8 +643,36 @@ runner.enableHotReloading();
 		}
 	}
 
+	/**
+	 * Gets the current content from the backend entrypoint
+	 * @param path entrypoint path
+	 * @param lang current language
+	 * @param context request context
+	 * @returns 
+	 */
+	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined]> {
+		// extract content from provider, depending on path
+		const {content, render_method, status_code} = await resolveEntrypointRoute({
+			entrypoint: entrypoint,
+			route: Path.Route(path), 
+			context, 
+			only_return_static_content: true
+		});
 
-	private async handleIndexHTML(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn) {
+		const openGraphData = (content as any)?.[OPEN_GRAPH];
+
+		// raw file content
+		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData];
+
+		// Markdown
+		if (content instanceof Datex.Markdown) return [await getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData];
+
+		// convert content to valid HTML string
+		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData];
+		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData];
+	}
+
+	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider) {
 		const url = new Path(requestEvent.request.url);
 		const pathAndQueryParameters = url.pathname + url.search;
 		const compat = Server.isSafariClient(requestEvent.request);
@@ -641,7 +685,7 @@ runner.enableHotReloading();
 			// TODO:
 			// Datex.Runtime.ENV.LANG = lang;
 			// await Datex.Runtime.ENV.$.LANG.setVal(lang);
-			const [prerendered_content, render_method, status_code, open_graph_meta_tags] = await this.#backend?.getEntrypointContent(pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) ?? [];
+			const [prerendered_content, render_method, status_code, open_graph_meta_tags] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
 				if (prerendered_content instanceof Response) await requestEvent.respondWith(prerendered_content.clone());

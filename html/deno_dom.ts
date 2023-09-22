@@ -28,6 +28,7 @@ if (IS_HEADLESS) {
 	globalThis.HTMLVideoElement = window.HTMLVideoElement;
 	globalThis.MathMLElement = window.MathMLElement;
 	globalThis.HTMLLinkElement = window.HTMLLinkElement;
+	globalThis.HTMLFormElement = window.HTMLFormElement
 	globalThis.HTMLInputElement = window.HTMLInputElement;
 	globalThis.Element = window.Element;
 	globalThis.DocumentFragment = window.DocumentFragment;

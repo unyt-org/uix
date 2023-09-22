@@ -282,6 +282,23 @@ export namespace HTMLUtils {
             }
             
         }
+        // special form 'action' callback
+        else if (element instanceof HTMLFormElement && attr === "action") {
+            for (const handler of ((val instanceof Array || val instanceof Set) ? val : [val])) {
+                // action callback function
+                if (typeof handler == "function") {
+                    const eventName = "submit";
+                    element.addEventListener(eventName, <any>handler);
+                    // save in [EVENT_LISTENERS]
+                    if (!(<elWithEventListeners>element)[EVENT_LISTENERS]) (<elWithEventListeners>element)[EVENT_LISTENERS] = new Map<keyof HTMLElementEventMap, Set<Function>>().setAutoDefault(Set);
+                    (<elWithEventListeners>element)[EVENT_LISTENERS].getAuto(eventName).add(handler);
+                }
+                // default "action" (path)
+                else element.setAttribute(attr, formatAttributeValue(val,root_path));
+            }
+            
+        }
+
         // normal attribute
         else element.setAttribute(attr, formatAttributeValue(val,root_path));
 

@@ -6,6 +6,7 @@
 
 import type { Datex } from "unyt_core/datex.ts";
 import type { primitive } from "unyt_core/types/abstract_types.ts"
+import { UIX } from "uix/uix.ts";
 
 
 // general html specific types
@@ -83,7 +84,7 @@ export const htmlElementAttributes = {
 
 	input: [alt, src, alt, ...widthAndHeight, "min", "minlength", "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
 	button: ["type"],
-	form: ["method", "enctype"],
+	form: ["method", "enctype", "action"],
 	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
 	iframe: [src],
@@ -138,6 +139,7 @@ export type htmlElementAttributeValues = {
 	form: {
 		method: "get"|"post",
 		enctype: "application/x-www-form-urlencoded"|"multipart/form-data"|"text/plain"
+		action: string|UIX.Entrypoint
 	},
 
 	img: widthAndHeight & src &  {

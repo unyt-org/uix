@@ -3,7 +3,6 @@ import type { Datex } from "unyt_core"
 import { DX_PTR } from "unyt_core/runtime/constants.ts";
 import { STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
 
-
 export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
 
 /**
@@ -77,6 +76,7 @@ export function bindToOrigin<F extends (...args:any)=>any>(fn: F, context?:any, 
 
 
 
+
 /**
  * Wraps a value so that it is always loaded from the original context.
  * 
@@ -121,6 +121,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 		`
 	}
 }
+
 
 
 /**

@@ -61,7 +61,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,any>, Childr
 			(
 				handleAllProps extends true ? 
 					(JSX.IntrinsicAttributes & 
-						(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: childrenAsArray extends true ? childrenToArray<Children> : Children}))
+						(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: Children}))
 					) : unknown
 			)
 	) => Return;
@@ -98,7 +98,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,any>, Childr
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise, Context = unknown>(elementGenerator:jsxInputGenerator<Element, Options, never, false, false, Context>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(elementGenerator:jsxInputGenerator<Element, Options, never, false, false, Context>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * Default HTML Attributes defined in JSX are also set for the root element.
@@ -110,7 +110,7 @@ export function template<Options extends Record<string, any> = {}, Children = JS
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
 
 export function template(templateOrGenerator:Element|jsxInputGenerator<Element, any, any, any>) {
 	let generator:any;
@@ -168,7 +168,7 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
  * ```
  * @param elementGenerator 
  */
-export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise>(elementGenerator:jsxInputGenerator<Element, Options, Children, true, true>):jsxInputGenerator<Element, Options, Children> {
+export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<Element, Options, Children, true, true>):jsxInputGenerator<Element, Options, Children> {
 	return function(props:any) {
 		return elementGenerator(props) 
 	}
@@ -176,9 +176,9 @@ export function blankTemplate<Options extends Record<string, any>, Children = JS
 
 
 
-export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise, Context = unknown>(styleGenerator:jsxInputGenerator<CSSStyleSheet, Options, never, false, false, Context>):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(styleGenerator:jsxInputGenerator<CSSStyleSheet, Options, never, false, false, Context>):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
 
-export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise>(style:CSSStyleSheet):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(style:CSSStyleSheet):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
 
 export function style(templateOrGenerator:CSSStyleSheet|jsxInputGenerator<CSSStyleSheet, any, any, any>) {
 	let generator:any;

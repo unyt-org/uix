@@ -1,4 +1,5 @@
-import { Datex } from "unyt_core/datex.ts";
+import { StorageMap } from "unyt_core/types/storage_map.ts";
+import { Datex, f } from "unyt_core/datex.ts";
 import { BROADCAST, Endpoint } from "unyt_core/types/addressing.ts";
 
 const { getCookies } = globalThis.Deno ? await import("https://deno.land/std/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
@@ -7,7 +8,11 @@ const { getCookies } = globalThis.Deno ? await import("https://deno.land/std/htt
 export type RequestData = {address:string|null}
 
 
+// persistant data
+const privateData = await lazyEternalVar("privateData") ?? $$(new StorageMap<Endpoint, Record<string, unknown>>)
+
 const emptyMatch = Object.freeze({});
+
 
 /**
  * Context passed to callback functions in entrypoints, e,g.:
@@ -37,17 +42,19 @@ export class Context {
 	searchParams!: URLSearchParams
 
 	language = "en";
-	endpoint = BROADCAST
+	endpoint: Datex.Endpoint = BROADCAST
 
 	async getSharedData(): Promise<Record<string, unknown>|null> {
 		if (!this.request) return null;
 		const cookie = getCookies?.(this.request?.headers)?.['uix-shared-data'];
 		if (!cookie) return null;
-		const cookieSharedData = await Datex.Runtime.decodeValueBase64(decodeURIComponent(cookie))
+		const cookieSharedData = await Datex.Runtime.decodeValueBase64<Record<string, unknown>|null>(decodeURIComponent(cookie))
 		return cookieSharedData
 	}
-	getPrivateData(): Record<string, unknown> {
-
+	async getPrivateData(): Promise<Record<string, unknown>> {
+		console.log("get private data for " + this.endpoint);
+		if (!privateData.has(this.endpoint)) await privateData.set(this.endpoint, {});
+		return (await privateData.get(this.endpoint))!;
 	}
 }
 
@@ -59,19 +66,13 @@ export class ContextBuilder {
 		return getCookies?.(req.headers)?.['uix-language'] ?? req.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.split("-")[0] ?? "en"
 	}
 
-	async setRequestData(req:Deno.RequestEvent, path:string, con:Deno.Conn) {
+	async setRequestData(req:Deno.RequestEvent, path:string, conn?:Deno.Conn) {
 		this.#ctx.request = req.request
 		this.#ctx.requestData.address = req.request.headers?.get("x-real-ip") ??
 					req.request.headers?.get("x-forwarded-for") ?? 
-					(con.remoteAddr as Deno.NetAddr)?.hostname
+					(conn?.remoteAddr as Deno.NetAddr)?.hostname
 		
 		this.#ctx.path = path;
-		// Object.assign(this.#ctx.request!, req.request)
-		// // @ts-ignore headers copied from prototype?
-		// this.#ctx.request!.headers = req.request.headers;
-		// this.#ctx.request!.url = req.request.url;
-
-		// this.#ctx.request!.localAddr = con.localAddr
 
 		const isPost = this.#ctx.request!.method == "POST";
 		const postRequestBody = isPost ? await this.#ctx.request!.text() : null;
@@ -87,8 +88,17 @@ export class ContextBuilder {
 	
 
 		this.#ctx.language = ContextBuilder.getRequestLanguage(req.request);
+		this.#ctx.endpoint = this.getEndpoint(req.request) ?? BROADCAST;
 
 		return this;
+	}
+
+	getEndpoint(request: Request) {
+		if (!request) return null;
+		const endpointCookie = getCookies?.(request.headers)?.['uix-endpoint'];
+		if (!endpointCookie) return null;
+		else return f(endpointCookie as any);
+		// TODO signature validation
 	}
 
 	build() {

@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-namespace
 import { UIX } from "../uix.ts";
 
+// TODO: remove
 export namespace ServiceWorker {
 
 	let activated = false;

@@ -7,9 +7,10 @@ import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "../app/app.ts";
-import { indent } from "../utils/indent.ts";
+import { indent } from "unyt_core/utils/indent.ts";
 import { Entrypoint, RouteHandler, html_generator } from "./entrypoints.ts";
 import { client_type } from "unyt_core/datex_all.ts";
+import { HTTPStatus } from "uix/html/http-status.ts";
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -199,7 +200,8 @@ export function provideVirtualRedirect(path:string|URL) {
  * @param status http status code
  * @returns content blob
  */
-export function provideError(message: string, status = 500) {
+export function provideError(message: string, status:number|HTTPStatus = 500) {
+	status = typeof status == "number" ? status : status.code;
 	const content = indent `
 	<html>
 		<head>

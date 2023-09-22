@@ -33,19 +33,20 @@ export class Context {
 
 	path!: string
 	params: Record<string,string> = emptyMatch;
+	urlPattern?: URLPatternResult
 	searchParams!: URLSearchParams
 
 	language = "en";
 	endpoint = BROADCAST
 
-	async getSharedData(): Promise<Record<string, any>|null> {
+	async getSharedData(): Promise<Record<string, unknown>|null> {
 		if (!this.request) return null;
 		const cookie = getCookies?.(this.request?.headers)?.['uix-shared-data'];
 		if (!cookie) return null;
 		const cookieSharedData = await Datex.Runtime.decodeValueBase64(decodeURIComponent(cookie))
 		return cookieSharedData
 	}
-	getPrivateData(): Record<string, any> {
+	getPrivateData(): Record<string, unknown> {
 
 	}
 }

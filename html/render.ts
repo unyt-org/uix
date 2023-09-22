@@ -1,11 +1,12 @@
 import { Datex } from "unyt_core";
 import { OpenGraphInformation } from "../base/open-graph.ts";
 import { UIX } from "../uix.ts";
-import { indent } from "../utils/indent.ts";
+import { indent } from "unyt_core/utils/indent.ts";
 import type { HTMLProvider } from "./html_provider.ts";
 import { HTMLUtils } from "./utils.ts";
 import { COMPONENT_CONTEXT, STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
 import { convertToWebPath } from "../app/utils.ts";
+import { app } from "../app/app.ts";
 
 let stage:string|undefined = '?'
 
@@ -311,7 +312,7 @@ if (!globalThis.Element.prototype.getOuterHTML) {
 
 
 
-export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:UIX.RenderMethod = UIX.RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en"){
+export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:UIX.RenderMethod = UIX.RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en"){
 	let files = '';
 	let importmap = ''
 
@@ -369,6 +370,15 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	// no js, only inject some UIX app metadata
 	else {
 		files += indent(4) `<script type="module">\nglobalThis._UIX_appdata = {name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:"${Datex.Runtime.endpoint.toString()}"${Datex.Unyt.endpoint_info.app?.host ? `, host:"${Datex.Unyt.endpoint_info.app.host}"`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}};\n</script>`
+	}
+
+	// inject other static js scripts
+	if (render_method != UIX.RenderMethod.STATIC_NO_JS) {
+		files += indent(4) `<script type="module">\nglobalThis._UIX_usid = "${app.uniqueStartId}";\n</script>`
+
+		for (const file of static_js_files) {
+			if (file) files += indent(4) `<script type="module" src="${provider.resolveImport(file, compat_import_map).toString()}"></script>`
+		}
 	}
 
 	if (add_importmap) importmap = `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;

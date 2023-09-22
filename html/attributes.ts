@@ -91,8 +91,9 @@ export const htmlElementAttributes = {
 	source: [src, "type"],
 	label: ["for"],
 	video: [src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload", "playsinline"],
-	textarea: ["placeholder"],
-	option: ["value", "selected"]
+	textarea: ["placeholder", "name"],
+	option: ["value", "selected"],
+	select: ["name"]
 } as const satisfies {[key in keyof HTMLElementTagNameMap]?: readonly string[]};
 
 
@@ -166,7 +167,7 @@ export type htmlElementAttributeValues = {
 		placeholder: string
 	},
 
-	options: {
+	option: {
 		selected: boolean
 	}
 }

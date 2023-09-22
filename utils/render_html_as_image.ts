@@ -96,7 +96,7 @@ export async function renderHTMLAsImage(element: HTMLElement|DocumentFragment, o
 	})
 
 	await createSnapshot(element);
-	const html = await generateHTMLPage(renderHTMLProvider, await getOuterHTML(element), RenderMethod.STATIC, ['uix/app/client-scripts/default.ts'], ['uix/style/document.css'], ['uix/style/body.css'])
+	const html = await generateHTMLPage(renderHTMLProvider, await getOuterHTML(element), RenderMethod.STATIC, ['uix/app/client-scripts/default.ts'], [], ['uix/style/document.css'], ['uix/style/body.css'])
 	logger.info("loading page");
 
 	await page.setContent(html);

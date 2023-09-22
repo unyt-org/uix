@@ -47,7 +47,7 @@ export type transpiler_options = {
 
 type transpiler_options_all = Required<transpiler_options>;
 
-type file_update_handler = (file:Path)=>void
+type file_update_handler = (file:Path.File)=>void
 
 /**
  * Transpiler (also for scss)

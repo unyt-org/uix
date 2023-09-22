@@ -262,7 +262,6 @@ export class Server {
         await Promise.all(loaders)
 
         const server = await this.listenWithFallbackPort();
-        console.log(this.#dir?.toString())
         if (this.#dir?.name) logger.info(`${this.#dir.name} available on ${enable_tls?"https":"http"}://localhost${this.port==80?'':':'+this.port}`);
         else logger.info(`available on ${enable_tls?"https":"http"}://localhost${this.port==80?'':':'+this.port}`);
         this.#running = true;

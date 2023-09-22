@@ -4,7 +4,7 @@ import { TypescriptImportResolver } from "../server/ts_import_resolver.ts";
 import { $$, Datex } from "unyt_core";
 import { Server } from "../server/server.ts";
 import { UIX } from "../uix.ts";
-import { ALLOWED_ENTRYPOINT_FILE_NAMES } from "./app.ts";
+import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "./app.ts";
 import { Path } from "../utils/path.ts";
 import { BackendManager } from "./backend-manager.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
@@ -19,6 +19,7 @@ import { provideError, provideValue } from "../html/entrypoint-providers.ts";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
 import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "unyt_core/utils/interface-generator.ts"
+import { Controller } from "uix_std/espruino/espruino_tools/libs/esprima/escodegen.js";
 
 export class FrontendManager extends HTMLProvider {
 
@@ -80,6 +81,11 @@ export class FrontendManager extends HTMLProvider {
 		});
 	}
 
+	// file updates arrive on frontend also if backend is not restarted (TODO: might still lead to inconsistencies if files are added/removed)
+	isTransparentFile(path: Path.File) {
+		return path.hasFileExtension("css", "scss")
+	}
+
 
 	intCommonDirs() {
 		for (const common_dir of this.app_options.common) {
@@ -91,8 +97,10 @@ export class FrontendManager extends HTMLProvider {
 					import_map_base_path: this.#base_path,
 					handle_out_of_scope_path: (path: Path.File|string, from:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects, compat)
 				}),
-				on_file_update: this.#watch ? ()=>{
-					if (this.#backend?.watch) this.#backend.restart();
+				on_file_update: this.#watch ? (path)=>{
+					if (this.#backend?.watch && !this.isTransparentFile(path)) {
+						this.#backend.restart();
+					}
 					this.handleFrontendReload();
 				} : undefined
 			})
@@ -168,6 +176,15 @@ export class FrontendManager extends HTMLProvider {
 		'uix/app/client-scripts/default.ts'
 	]
 
+	#static_client_scripts:(URL|string)[] = []
+
+	#sse_controllers = new Set<(cmd: string) => void>()
+
+	sendSSECommand(cmd: string) {
+		for (const controller of this.#sse_controllers) controller(cmd);
+		return this.#sse_controllers.size;
+	}
+
 	getTranspilerForPath(path: Path.File) {
 		for (const transpiler of [...[...this.#common_transpilers.values()].map(t=>t[0]), this.transpiler]) {
 			if (path.isChildOf(transpiler.src_dir) || Path.equals(path, transpiler.src_dir)) return transpiler;
@@ -196,6 +213,48 @@ export class FrontendManager extends HTMLProvider {
 		if (this.app_options.installable) this.server.path("/manifest.json", (req, path)=>this.handleManifest(req, path));
 		this.server.path("/@uix/sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/@uix/sw.ts", (req, path)=>this.handleServiceWorker(req, path));
+
+		this.server.path("/@uix/thread-worker.ts", (req, path) => this.handleThreadWorker(req, path));
+		this.server.path("/@uix/thread-worker.js", (req, path) => this.handleThreadWorker(req, path));
+
+		this.server.path("/@uix/sse", async (req) => {
+
+			let controller:ReadableStreamDefaultController|undefined;
+			const sendSSECommand = (cmd: string) => {
+				controller?.enqueue(new TextEncoder().encode(`data: ${cmd}\r\n\r\n`));
+			}
+			this.#sse_controllers.add(sendSSECommand)
+
+			const body = new ReadableStream({
+				start: (ctrl) => {
+					controller = ctrl;
+				},
+				cancel: () => {
+					if (controller) this.#sse_controllers.delete(sendSSECommand)
+				},
+			});
+
+			// is not yet reloaded client with old app usid - trigger RELOAD once
+			const usid = new URL(req.request.url).searchParams.get("usid");
+			if (usid !== app.uniqueStartId) {
+				sendSSECommand("RELOAD")
+			}
+
+			try {
+				await req.respondWith(new Response(body, {
+					headers: {
+						"Content-Type": "text/event-stream",
+					},
+				}))
+			}
+			finally {
+				console.log("end see")
+				this.#sse_controllers.delete(sendSSECommand)
+			}
+			
+		});
+
+		
 
 		// handle endpoint init
 		this.server.path(this.initPrefix, (req) => this.handleInitPage(req));
@@ -226,6 +285,7 @@ export class FrontendManager extends HTMLProvider {
 
 		if (this.live){
 			await this.createLiveScript()
+			await this.createStaticLiveScript();
 			this.handleFrontendReload() // reload frontends from before backend restart
 		}
 
@@ -473,7 +533,6 @@ export class FrontendManager extends HTMLProvider {
 	private async createLiveScript() {
 		if (!this.server) return;
 
-		this.#logger.success("live frontend reloading enabled");
 		const script = `
 ${"import"} {Datex, datex, $$} from "unyt_core";
 ${"import"} {UIX} from "uix";
@@ -493,6 +552,21 @@ catch {
 		await this.transpiler.addVirtualFile(this.debugPrefix.slice(1)+"live.ts", script);
 
 		this.#client_scripts.push(this.debugPrefix+"live.ts")
+
+	}
+
+	// also provides hot reloading, but without loading unyt core in frontend
+	private async createStaticLiveScript() {
+		if (!this.server) return;
+
+		this.#logger.success("hot reloading enabled");
+		const script = `
+${"import"} {BackgroundRunner} from "uix/background-runner/background-runner.ts";
+const runner = await BackgroundRunner.get();
+runner.enableHotReloading();
+`
+		await this.transpiler.addVirtualFile(this.debugPrefix.slice(1)+"hot-reload.ts", script);
+		this.#static_client_scripts.push(this.debugPrefix+"hot-reload.ts")
 
 	}
 
@@ -518,6 +592,11 @@ catch {
 		if (!this.live) return;
 		if (this.#ignore_reload) return;
 
+		// new hot reloading via sse
+		let updatesTriggered = this.sendSSECommand("RELOAD");
+		updatesTriggered += reload_handlers.size;
+
+		// old hot reloading
 		this.#ignore_reload = true;
 		const promises = []
 		for (const handler of [...reload_handlers]) {
@@ -536,7 +615,7 @@ catch {
 		setTimeout(()=>this.#ignore_reload=false, 500); // wait some time until next update triggered
 
 		setTimeout(()=>{
-			if (reload_handlers.size) this.#logger.info("reloaded " + reload_handlers.size + " endpoint client" + (reload_handlers.size==1?'':'s'));
+			if (updatesTriggered > 0) this.#logger.info("hot reloaded " + updatesTriggered + " client" + (updatesTriggered==1?'':'s'));
 		}, 200); // wait some time until next update triggered
 	}
 
@@ -574,7 +653,7 @@ catch {
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
-					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, ['uix/style/document.css', ...entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', ...entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
+					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, this.#static_client_scripts, ['uix/style/document.css', ...entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', ...entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
 					undefined, status_code,
 					{
 						'content-language': lang
@@ -590,7 +669,7 @@ catch {
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
-		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage(this, "", UIX.RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], ['uix/style/document.css', ...getGlobalStyleSheetLinks()], ['uix/style/body.css'], undefined, undefined, undefined, compat));
+		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage(this, "", UIX.RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], this.#static_client_scripts, ['uix/style/document.css', ...getGlobalStyleSheetLinks()], ['uix/style/body.css'], undefined, undefined, undefined, compat));
 	}
 
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {
@@ -600,6 +679,12 @@ catch {
 		} catch {
 			await this.server.sendError(requestEvent, 500);
 		}			
+	}
+
+	private async handleThreadWorker(requestEvent: Deno.RequestEvent, _path:string) {
+		const url = import.meta.resolve("unyt_core/threads/thread-worker.ts");
+		const request = new Request(url, {headers: requestEvent.request.headers})
+		requestEvent.respondWith(await fetch(request));		
 	}
 
 	private async handleInitPage(requestEvent: Deno.RequestEvent) {

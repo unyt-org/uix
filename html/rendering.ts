@@ -1,8 +1,8 @@
 import { Path } from "../utils/path.ts";
 import { $$, Datex, constructor } from "unyt_core";
 import { UIX } from "../uix.ts";
-import { evaluateFilter, logger } from "../uix_all.ts";
-import {filter} from "../routing/route-filter.ts";
+import { logger } from "../uix_all.ts";
+import {evaluateFilter, filter} from "../routing/route-filter.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
 import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_content_or_generator, html_generator } from "./entrypoints.ts"
 

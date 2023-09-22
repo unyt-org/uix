@@ -83,13 +83,19 @@ export namespace Routing {
 			if (content == null) return;
 			if (content instanceof Array) {
 				document.body.innerHTML = "";
-				HTMLUtils.append(document.body, ...content) // add to document
+				HTMLUtils.appendDynamic(document.body, content) // add to document
 			}
+			// handle response
+			else if (content instanceof Response) {
+				console.log("response on frontend (TODO)", content)
+				// ignore for now
+			}
+
 			// TODO: currently only displayed if type not correctly mapped (TypedValue fallback)
 			else if (!(content instanceof Datex.TypedValue)) { //if (content instanceof Element || content instanceof DocumentFragment) {
 				document.body.innerHTML = "";
 				// TODO: handle all content correctly (same behaviour as on backend)
-				HTMLUtils.append(document.body, content) // add to document
+				HTMLUtils.appendDynamic(document.body, content) // add to document
 			}
 			else {
 				logger.warn("Invalid entrypoint value (matching JS definition is not available for type "+Datex.Type.ofValue(content)+")", content);

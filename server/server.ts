@@ -18,7 +18,10 @@ import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";
-import { addCSSScopeSelector } from "uix/utils/css-scoping.ts";
+import { addCSSScopeSelector } from "../utils/css-scoping.ts";
+import { app } from "../app/app.ts";
+
+const { highlightText } = globalThis.Deno ? await import('https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js') : {highlightText:null};
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -30,6 +33,19 @@ let port = 80;
 let customPort = false;
 let enable_tls = false;
 
+
+const langsByExtension = {
+    'ts': 'ts',
+    'tsx': 'ts',
+    'js': 'js',
+    'jsx': 'js',
+    'css': 'css',
+    'scss': 'css',
+    'xml': 'xml',
+    'rs': 'rs',
+    'json': 'json',
+    'html': 'html'
+}
 
 const defaultKey = `-----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCnGaK8mPqzlUcX
@@ -374,11 +390,35 @@ export class Server {
         }
 
         // Use the request pathname as filepath
-        const url = new Path(request.url);
+        let url = new Path(request.url);
         const isBrowser = Server.isBrowserClient(request);
         const isSafari = Server.isSafariClient(request);
-          
-        let filepath = this.findFilePath(url, normalizedPath, isBrowser, isSafari)
+
+        let lineNumber:number|undefined = undefined;
+        let colNumber:number|undefined = undefined;
+
+        // try to remove line numbers
+        if (normalizedPath.match(/(\:\d+){1,2}$/)) {
+            // extract line + col number
+            [lineNumber, colNumber] = normalizedPath.match(/(\:\d+){1,2}$/)?.[0].slice(1).split(":").map(Number);
+            normalizedPath = normalizedPath.replace(/(\:\d+){1,2}$/, '');
+            url = new Path(url.toString().replace(/(\:\d+){1,2}$/, ''));
+        }
+
+      
+
+        // extra browser tab for file => special file preview
+        const isPreviewClient = isBrowser && (request.headers.get("Sec-Fetch-Dest") == "document" || request.headers.get("Sec-Fetch-Dest") == "iframe") && url.hasFileExtension("ts", "tsx", "js", "jsx", "css", "scss", "dx")
+        
+        let filepath = this.findFilePath(url, normalizedPath, isBrowser && !isPreviewClient, isSafari)
+
+        // override filepath, exposes raw source files to browser for debugging TODO: only workaround with _base_path, improve
+        if (isPreviewClient && app.stage === "dev" && normalizedPath.startsWith("/@uix/src/")) {
+            filepath = (this._base_path as Path.File).getChildPath(normalizedPath.replace("/@uix/src/", ""))
+        }
+               
+
+
         if (!filepath) {
             return this.getErrorResponse(500);
         }
@@ -429,6 +469,69 @@ export class Server {
             
         }
 
+
+        // render file preview with syntax highlighting in browser
+        if (isPreviewClient) {
+            if (!filepath.fs_exists) return this.getErrorResponse(404, "Not found");
+            
+            const content = await Deno.readTextFile(filepath.normal_pathname);
+            const highlighted = await highlightText!(content, langsByExtension[filepath.ext as keyof typeof langsByExtension]);
+            const html = `<html>
+                <head>
+                    <title>${filepath.name}</title>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/speed-highlight/core@1.2.4/dist/themes/github-dark.css">
+                </head>
+                <body>
+                    <style>
+                        body {
+                            font-size: 1.2em;
+                            background: #282828;
+                            color: #eee;
+                        }
+                        body > div {
+                            display: flex;
+                        }
+                        body > div > div {
+                            white-space: pre;
+                            font-family: monospace;
+                        }
+                        
+                        .shj-numbers > * {
+                            position: relative;
+                        }
+
+                        ${lineNumber!==undefined ? `
+                        .shj-numbers :nth-child(${lineNumber}):before {
+                            color: white;
+                        }
+                        .shj-numbers :nth-child(${lineNumber}):after {
+                            content: 'x';
+                            user-select: none;
+                            pointer-events: none;
+                            color: transparent;
+                            position: absolute;
+                            top: 0;
+                            background: #fff3;
+                            width: 100vw;
+                            left: -12px;
+                            z-index: -100;
+                        }
+                        `: ''}
+                    </style>
+                    ${highlighted}
+                    ${lineNumber!==undefined ? `
+                    <script>
+                        document.querySelector('.shj-numbers :nth-child(${lineNumber})').scrollIntoView({behavior:'instant', block:'center'})
+                    </script>
+                    `: ''}
+                </body>
+            </html>`
+
+            return this.getContentResponse("text/html", html)
+
+        }
         const response = await fileServer.serveFile(request, filepath.normal_pathname);
 
         if (this.#options.cors) {
@@ -440,14 +543,14 @@ export class Server {
     }
 
 
-    protected findFilePath(url: Path, normalizedPath: string, isBrowser: boolean, isSafari: boolean) {
+    protected findFilePath(url: Path, normalizedPath: string, resolveTs: boolean, isSafari: boolean) {
         if (!this.#dir || !fileServer) return;
 
         let filepath = this.#dir.getChildPath(normalizedPath);
           
         try {
             // resolve ts and virtual files
-            const resolve_ts = (url.ext==="ts"||url.ext==="tsx"||url.ext==="mts") && url.searchParams.get("type") !== "ts" && isBrowser;
+            const resolve_ts = (url.ext==="ts"||url.ext==="tsx"||url.ext==="mts") && url.searchParams.get("type") !== "ts" && resolveTs;
             const compat_mode = isSafari;
             
             for (const [tpath, transpiler] of this.transpilers) {

@@ -6,7 +6,7 @@ import { resolveEntrypointRoute,  refetchRoute } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
 import { Datex } from "unyt_core/datex.ts";
 import { Entrypoint, html_content_or_generator } from "../html/entrypoints.ts";
-import { KEEP_CONTENT, provideError } from "../html/entrypoint-providers.ts";
+import { KEEP_CONTENT, provideError } from "../html/entrypoint-providers.tsx";
 import { RenderMethod } from "../html/render-methods.ts";
 /**
  * Generalized implementation for setting the route in the current tab URL

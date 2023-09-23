@@ -15,7 +15,7 @@ const {serveDir} = globalThis.Deno ? (await import("https://deno.land/std@0.164.
 
 import { UIX_CACHE_PATH } from "../utils/constants.ts";
 import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
-import { provideError, provideValue } from "../html/entrypoint-providers.ts";
+import { provideError, provideValue } from "../html/entrypoint-providers.tsx";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
 import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "unyt_core/utils/interface-generator.ts"
@@ -131,6 +131,7 @@ export class FrontendManager extends HTMLProvider {
 			cors: true,
 			transpilers
 		});
+		this.server._base_path = this.base_path
 	}
 
 	updateCheckEntrypoint(){

@@ -9,7 +9,8 @@ export type RequestData = {address:string|null}
 
 
 // persistant data
-const privateData = await lazyEternalVar("privateData") ?? $$(new StorageMap<Endpoint, Record<string, unknown>>)
+// TODO: fix and use StorageMap
+const privateData = await lazyEternalVar("privateData") ?? $$(new Map<Endpoint, Record<string, unknown>>)
 
 const emptyMatch = Object.freeze({});
 
@@ -52,6 +53,7 @@ export class Context {
 		return cookieSharedData
 	}
 	async getPrivateData(): Promise<Record<string, unknown>> {
+		if (this.endpoint == BROADCAST) throw new Error("Cannot get private data for UIX context, no session found");
 		console.log("get private data for " + this.endpoint);
 		if (!privateData.has(this.endpoint)) await privateData.set(this.endpoint, {});
 		return (await privateData.get(this.endpoint))!;

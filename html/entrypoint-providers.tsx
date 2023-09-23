@@ -10,7 +10,10 @@ import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "../app/app.ts";
 import { indent } from "unyt_core/utils/indent.ts";
 import { Entrypoint, RouteHandler, html_generator } from "./entrypoints.ts";
 import { client_type } from "unyt_core/datex_all.ts";
-import { HTTPStatus } from "uix/html/http-status.ts";
+import { HTTPStatus } from "./http-status.ts";
+import { HTMLUtils } from "./utils.ts";
+import { renderStatic } from "./render-methods.ts";
+import { unsafeHTML } from "../uix_short.ts";
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -20,14 +23,14 @@ type mime_type = `${'text'|'image'|'application'|'video'|'audio'}/${string}`;
 export function lazy<T extends html_generator>(generator: T): T {
 	let result:Awaited<ReturnType<T>>|undefined;
 	let loaded = false;
-	return <any> (async function(ctx: Context) {
+	return (async function(ctx: Context) {
 		if (loaded) return result;
 		else {
-			result = <any> await generator(ctx);
+			result = await generator(ctx, ctx.params) as any;
 			loaded = true;
 			return result;
 		}
-	})
+	}) as any
 }
 
 // TODO: remove, deprecated
@@ -46,7 +49,7 @@ export const once = lazy
  */
 export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FILE_TYPE, formatted?:boolean}) {
 	if (options?.type == Datex.FILE_TYPE.DATEX_BINARY) {
-		return provideContent(<ArrayBuffer> await Datex.Compiler.compile("?", [value]), options.type[0])
+		return provideContent(await Datex.Compiler.compile("?", [value]) as ArrayBuffer, options.type[0])
 	}
 	else if (options?.type == Datex.FILE_TYPE.JSON) {
 		return provideContent(JSON.stringify(value??null, null, options?.formatted ? '    ' : undefined), options.type[0])
@@ -194,6 +197,34 @@ export function provideVirtualRedirect(path:string|URL) {
 	}
 }
 
+const matchURL = /\b((https?|file):\/\/[^\s]+(\:\d+)?(\:\d+)?\b)/g;
+
+export function provideErrorDebugView(error: Error) {
+	const stackMessage = error.stack??error.message;
+	const lastURL = stackMessage.match(matchURL)?.[0];
+	console.log("lasurl",lastURL)
+	const stack = HTMLUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&">$&</a>')
+
+	const html = <div style="width:100%; height:100%; background-color:#282828; display:flex; justify-content:center; align-items:center">
+		
+		<div style="display:grid; padding:20px; margin: 15px; color: #ef7b7b; background-color:#4e3635; border-radius:10px; width: fit-content;">
+			<div style="display:flex">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
+					<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+				</svg>
+				<pre style="margin: 0; margin-left: 7px; text-wrap: wrap;">
+					<b style="color:#ef7b7b; margin-bottom: 7px; display: block;">Backend Error</b>
+					{unsafeHTML(`<div>${stack}</div>`)}
+				</pre>
+			</div>
+			
+			{lastURL ? <iframe style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL}></iframe> : undefined}
+		</div>
+		
+	</div>
+	return renderStatic(HTTPStatus.INTERNAL_SERVER_ERROR.with(html));
+}
+
 /**
  * serve an errror with a status code and message
  * @param message error message
@@ -297,7 +328,7 @@ export class PageProvider implements RouteHandler {
 		) 
 	}
 
-	async #findValidEntrypoint(parentDir: Path, names: string[], redirectRoute:string[] = []) {
+	async #findValidEntrypoint(parentDir: Path, names: string[], redirectRoute:string[] = []): Promise<Entrypoint|null> {
 		for (const name of names) {
 			try {
 				const url = parentDir.getChildPath(name);

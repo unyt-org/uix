@@ -3,7 +3,7 @@ export * from "./html/datex_binding.ts"
 export * from "./html/rendering.ts"
 export * from "./html/render-methods.ts"
 export * from "./html/entrypoints.ts"
-export * from "./html/entrypoint-providers.ts"
+export * from "./html/entrypoint-providers.tsx"
 export * from "./html/utils.ts"
 export * from "./html/anonymous_components.ts"
 

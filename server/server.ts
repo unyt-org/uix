@@ -19,7 +19,6 @@ import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts";
-import { app } from "../app/app.ts";
 
 const { highlightText } = globalThis.Deno ? await import('https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js') : {highlightText:null};
 
@@ -362,7 +361,13 @@ export class Server {
         // index.html for directory paths
         if (this.#options.resolve_index_html && req_url.is_dir) req_url.pathname += "index.html";
 
-        return decodeURIComponent(req_url.pathname);
+        try {
+            return decodeURIComponent(req_url.pathname);
+        }
+        catch (e) {
+            console.log(e);
+            return false;
+        }
     }
 
     public static isSafariClient(request:Request){
@@ -385,7 +390,7 @@ export class Server {
 
     async getResponse(request: Request, normalizedPath = this.normalizeURL(request)) {
 
-        if (!this.#dir || !fileServer) {
+        if (!this.#dir || !fileServer || normalizedPath===false) {
             return this.getErrorResponse(500);
         }
 
@@ -413,7 +418,7 @@ export class Server {
         let filepath = this.findFilePath(url, normalizedPath, isBrowser && !isPreviewClient, isSafari)
 
         // override filepath, exposes raw source files to browser for debugging TODO: only workaround with _base_path, improve
-        if (isPreviewClient && app.stage === "dev" && normalizedPath.startsWith("/@uix/src/")) {
+        if (isPreviewClient && this._app?.stage === "dev" && normalizedPath.startsWith("/@uix/src/")) {
             filepath = (this._base_path as Path.File).getChildPath(normalizedPath.replace("/@uix/src/", ""))
         }
                

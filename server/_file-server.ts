@@ -4,7 +4,7 @@ import { TypescriptImportResolver } from "./ts_import_resolver.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";
 
 import { CommandLineOptions } from "unyt/command-line-args/main.ts"
-export const options = new CommandLineOptions("unyt File Server", "Simple static file server with integrated typescript support");
+export const options = new CommandLineOptions("UIX File Server", "Simple static file server with integrated typescript support");
 
 
 const watch = options.option("watch", {aliases: ["w"], default: false, type: "boolean", description: "Re-compile TypeScript files on change"});

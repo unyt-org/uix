@@ -131,7 +131,9 @@ export class FrontendManager extends HTMLProvider {
 			cors: true,
 			transpilers
 		});
+		// inject dependencies to server, should be handled in another way, but server should stay standalone
 		this.server._base_path = this.base_path
+		this.server._app = app;
 	}
 
 	updateCheckEntrypoint(){

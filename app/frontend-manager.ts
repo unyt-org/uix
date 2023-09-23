@@ -267,7 +267,6 @@ export class FrontendManager extends HTMLProvider {
 				}))
 			}
 			finally {
-				console.log("end see")
 				this.#sse_controllers.delete(sendSSECommand)
 			}
 			

@@ -282,11 +282,16 @@ export class Server {
         this.#running = true;
 
         (async ()=>{
-            for await (const conn of server) {
-                let handled:boolean|void = false;
-                if (this.connectionHandler) handled = await this.connectionHandler(conn) // custom handling
-                // handle default
-                if (handled===false) this.handleConnectionAsHTTP(conn) // handle as http per default
+            try {
+                for await (const conn of server) {
+                    let handled:boolean|void = false;
+                    if (this.connectionHandler) handled = await this.connectionHandler(conn) // custom handling
+                    // handle default
+                    if (handled===false) this.handleConnectionAsHTTP(conn) // handle as http per default
+                }
+            }
+            catch (e){
+                console.error("Fatal server error: ", e)
             }
         })()
     }
@@ -327,8 +332,11 @@ export class Server {
     }
 
     public async handleRequest(requestEvent:Deno.RequestEvent, conn: Deno.Conn){
+        
         let normalized_path = this.normalizeURL(requestEvent.request);
         let handled:boolean|void|string = false;
+
+        console.log("Req:" + normalized_path)
 
         for (const handler of this.requestHandlers) {
             try { 

@@ -111,6 +111,7 @@ export function jsx (type: string | any, config: Record<string,any>): Element|Do
 		
 	}
 
+
 	// TODO: datex-pointer false default?
 	const makePtr = (<Record<string,any>>props)['datex-pointer'] == true || (<Record<string,any>>props)['datex-pointer'] == undefined;
 	// TODO: add pseudo pointer id attr, without initializing the pointer

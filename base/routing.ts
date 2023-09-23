@@ -75,6 +75,7 @@ export namespace Routing {
 	}
 
 	async function setContent(content: html_content_or_generator, entrypoint:Entrypoint) {
+
 		current_entrypoint = entrypoint;
 		if (current_content !== content) {
 			current_content = content;

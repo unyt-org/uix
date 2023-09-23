@@ -236,6 +236,7 @@ export namespace HTMLUtils {
     export type elWithEventListeners = HTMLElement & {[EVENT_LISTENERS]:Map<keyof HTMLElementEventMap, Set<(...args:any)=>any>>}
 
     function setAttribute(element: Element, attr:string, val:unknown, root_path?:string|URL) {
+
         // not an HTML attribute
         if (!(
             attr.startsWith("data-") ||
@@ -257,7 +258,7 @@ export namespace HTMLUtils {
         }
 
         // invalid :out attributes here
-        else if (attr == "valueOut") throw new Error("Invalid value for valueOut attribute - must be a pointer");
+        else if (attr.endsWith(":out")) throw new Error("Invalid value for "+attr+" attribute - must be a pointer");
 
         // special attribute values
         else if (val === false) element.removeAttribute(attr);
@@ -320,15 +321,17 @@ export namespace HTMLUtils {
             const type = Datex.Type.ofValue(value);
 
             // :out attributes
-            if (isInputElement && (attr == "valueOut" || attr == "value")) {
-                // if ((!(value instanceof Datex.Pointer))) throw new Error("only Pointers can be used for the valueOut attribute");
-                if (!(element instanceof HTMLInputElement)) throw new Error("the 'valueOut'/'value' attribute is only supported for <input> elements");
-                
+            if (isInputElement && (attr == "value:out" || attr == "value")) {
+                console.log("set valouaut", element,value,attr)
+
                 if (type.matchesType(Datex.Type.std.text)) element.addEventListener('change', () => value.val = element.value)
                 else if (type.matchesType(Datex.Type.std.decimal)) element.addEventListener('change', () => value.val = Number(element.value))
                 else if (type.matchesType(Datex.Type.std.integer)) element.addEventListener('change', () => value.val = BigInt(element.value))
                 else if (type.matchesType(Datex.Type.std.boolean)) element.addEventListener('change', () => value.val = Boolean(element.value))
-                else throw new Error("The type "+type+" is not supported for the 'valueOut' attribute of the <input> element");
+                else throw new Error("The type "+type+" is not supported for the '"+attr+"' attribute of the <input> element");
+
+                // TODO: allow duplex updates for "value"
+                if (attr == "value") setAttribute(element, attr, value.val, root_path)
 
                 return true;
             }
@@ -435,73 +438,72 @@ export namespace HTMLUtils {
         if (children instanceof DocumentFragment && children._uix_children) children = children._uix_children
 
         // is ref and iterable/element
-        if (Datex.Pointer.isReference(children) && (children instanceof Array || children instanceof Map || children instanceof Set || children instanceof Element)) {
+        if (Datex.Pointer.isReference(children) && (children instanceof Array || children instanceof Map || children instanceof Set)) {
             // is iterable ref
             // TODO: support promises
-            if (children instanceof Array || children instanceof Map || children instanceof Set) {
-                const startAnchor = new Comment("start " + Datex.Pointer.getByValue(children)?.idString())
-                const endAnchor = new Comment("end " + Datex.Pointer.getByValue(children)?.idString())
-                parent.append(startAnchor, endAnchor)
+            const startAnchor = new Comment("start " + Datex.Pointer.getByValue(children)?.idString())
+            const endAnchor = new Comment("end " + Datex.Pointer.getByValue(children)?.idString())
+            parent.append(startAnchor, endAnchor)
 
-                const iterableHandler = new IterableHandler(children, {
-                    map: (v,k) => {
-                        const el = valuesToDOMElement(v);
-                        return el;
-                    },
-                    onEntryRemoved: (v,k) => {
-                        if (parent.contains(v)) parent.removeChild(v);
-                    },
-                    onNewEntry: function(v,k) {
-                        let previous:Node = startAnchor;
+            const iterableHandler = new IterableHandler(children, {
+                map: (v,k) => {
+                    const el = valuesToDOMElement(v);
+                    return el;
+                },
+                onEntryRemoved: (v,k) => {
+                    if (parent.contains(v)) parent.removeChild(v);
+                },
+                onNewEntry: function(v,k) {
+                    let previous:Node = startAnchor;
 
-                        for (let prevIndex = k - 1; prevIndex >= 0; prevIndex--) {
-                            try {
-                                if (this.entries.has(prevIndex)) {
-                                    previous = this.entries.get(prevIndex)!;
-                                    break;
-                                }
+                    for (let prevIndex = k - 1; prevIndex >= 0; prevIndex--) {
+                        try {
+                            if (this.entries.has(prevIndex)) {
+                                previous = this.entries.get(prevIndex)!;
+                                break;
                             }
-                            catch (e) {
-                                console.log("TODO fix", e)
-                            }
-                            
                         }
-                        parent.insertBefore(v, previous.nextSibling)
-                    },
-                    onEmpty: () => {
-                        let current:Node|null|undefined = startAnchor.nextSibling;
-                        while (current && current !== endAnchor) {
-                            const removing = current;
-                            current = current?.nextSibling
-                            parent.removeChild(removing);
+                        catch (e) {
+                            console.log("TODO fix", e)
                         }
+                        
                     }
-                })
-            }
+                    parent.insertBefore(v, previous.nextSibling)
+                },
+                onEmpty: () => {
+                    let current:Node|null|undefined = startAnchor.nextSibling;
+                    while (current && current !== endAnchor) {
+                        const removing = current;
+                        current = current?.nextSibling
+                        parent.removeChild(removing);
+                    }
+                }
+            })
+        
 
-            // TODO: improve
-            else if (children instanceof Element) {
-                const scheduler = new TaskScheduler(true);
-                let lastChildren: Node[] = [];
+            // TODO: element references updating required?
+            // else if (children instanceof Element) {
+            //     const scheduler = new TaskScheduler(true);
+            //     let lastChildren: Node[] = [];
     
-                Datex.Ref.observeAndInit(children, () => {
-                    scheduler.schedule(
-                            Task(resolve => {
-                                appendNew(parent, Array.isArray(children) ? children : [children], lastChildren, (e) => {
-                                    lastChildren = e;
-                                    resolve();
-                                });
-                            })
-                        ); 
-                    },
-                    undefined,
-                    null, 
-                    {
-                        recursive: false,
-                        types: [Datex.Ref.UPDATE_TYPE.INIT]
-                    }
-                )
-            }
+            //     Datex.Ref.observeAndInit(children, () => {
+            //         scheduler.schedule(
+            //                 Task(resolve => {
+            //                     appendNew(parent, Array.isArray(children) ? children : [children], lastChildren, (e) => {
+            //                         lastChildren = e;
+            //                         resolve();
+            //                     });
+            //                 })
+            //             ); 
+            //         },
+            //         undefined,
+            //         null, 
+            //         {
+            //             recursive: false,
+            //             types: [Datex.Ref.UPDATE_TYPE.INIT]
+            //         }
+            //     )
+            // }
         }
 
         // is iterable (no ref, collapse recursive)

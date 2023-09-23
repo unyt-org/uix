@@ -120,7 +120,9 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 		// decorator
 		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			Component(propsOrClass).template = generator
+			const decoratedClass = Component(propsOrClass)
+			decoratedClass.template = generator
+			return decoratedClass
 		}
 		// jsx
 		else {
@@ -133,7 +135,9 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 		// decorator
 		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			Component(propsOrClass).template = generator
+			const decoratedClass = Component(propsOrClass)
+			decoratedClass.template = generator
+			return decoratedClass
 		}
 		// jsx
 		else {

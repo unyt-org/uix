@@ -189,7 +189,11 @@ export class TypescriptImportResolver {
             const rel_import_path = is_prefix ? null : this.resolveImportSpecifier(specifier, reference_path)
             const abs_import_path = is_prefix ? null : new Path(rel_import_path!, reference_path);
         
-            if (abs_import_path?.is_web) return match; // already resolved
+            // workaround: ignore 'node:x' paths
+            if (abs_import_path?.toString().startsWith("node:")) return match;
+
+            // already resolved web path
+            if (abs_import_path?.is_web) return match;
 
             const is_oos = !abs_import_path?.isChildOf(this.scope!);
             let is_ext = false;

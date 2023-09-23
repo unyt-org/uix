@@ -3,12 +3,15 @@
 use anyhow::anyhow;
 use deno_emit::BundleOptions;
 use deno_emit::BundleType;
+use deno_emit::CacheSetting;
 use deno_emit::EmitOptions;
+use deno_emit::ImportMapInput;
 use deno_emit::ImportsNotUsedAsValues;
 use deno_emit::LoadFuture;
 use deno_emit::Loader;
 use deno_emit::ModuleSpecifier;
-use std::collections::HashMap;
+use deno_emit::TranspileOptions;
+use url::Url;
 use wasm_bindgen::prelude::*;
 
 /// This is a deserializable structure of the `"compilerOptions"` section of a
@@ -23,12 +26,9 @@ pub struct CompilerOptions {
   pub imports_not_used_as_values: String,
   pub inline_source_map: bool,
   pub inline_sources: bool,
-  pub var_decl_imports: bool,
   pub jsx: String,
   pub jsx_factory: String,
   pub jsx_fragment_factory: String,
-  pub jsx_automatic: bool,
-  pub jsx_development: bool,
   pub jsx_import_source: Option<String>,
   pub source_map: bool,
 }
@@ -39,14 +39,11 @@ impl Default for CompilerOptions {
       check_js: false,
       emit_decorator_metadata: false,
       imports_not_used_as_values: "remove".to_string(),
-      inline_source_map: true,
-      inline_sources: true,
-      var_decl_imports: false,
+      inline_source_map: false,
+      inline_sources: false,
       jsx: "react".to_string(),
       jsx_factory: "React.createElement".to_string(),
       jsx_fragment_factory: "React.Fragment".to_string(),
-      jsx_automatic: false,
-      jsx_development: false,
       jsx_import_source: None,
       source_map: false,
     }
@@ -70,11 +67,45 @@ impl From<CompilerOptions> for EmitOptions {
       jsx_factory: options.jsx_factory,
       jsx_fragment_factory: options.jsx_fragment_factory,
       transform_jsx: options.jsx == "react" || options.jsx == "react-jsx" || options.jsx == "react-jsxdev",
-      var_decl_imports: options.var_decl_imports,
+      var_decl_imports: false,
       source_map: options.source_map,
-      jsx_automatic: options.jsx_automatic,
-      jsx_development: options.jsx_development,
+      jsx_automatic: options.jsx == "react-jsx" || options.jsx == "react-jsxdev",
+      jsx_development: options.jsx == "react-jsxdev",
       jsx_import_source: options.jsx_import_source,
+    }
+  }
+}
+
+#[derive(serde::Deserialize, Debug)]
+#[serde(untagged)]
+enum ImportMapJsInput {
+  ModuleSpecifier(String),
+  #[serde(rename_all = "camelCase")]
+  Json {
+    base_url: String,
+    json_string: String,
+  },
+}
+
+impl TryFrom<ImportMapJsInput> for ImportMapInput {
+  type Error = anyhow::Error;
+
+  fn try_from(js_input: ImportMapJsInput) -> anyhow::Result<Self> {
+    match js_input {
+      ImportMapJsInput::ModuleSpecifier(specifier) => {
+        let specifier = ModuleSpecifier::parse(&specifier)?;
+        Ok(ImportMapInput::ModuleSpecifier(specifier))
+      }
+      ImportMapJsInput::Json {
+        base_url,
+        json_string,
+      } => {
+        let base_url = Url::parse(&base_url)?;
+        Ok(ImportMapInput::Json {
+          base_url,
+          json_string,
+        })
+      }
     }
   }
 }
@@ -104,12 +135,14 @@ impl Loader for JsLoader {
     &mut self,
     specifier: &ModuleSpecifier,
     is_dynamic: bool,
+    cache_setting: CacheSetting,
   ) -> LoadFuture {
     let specifier = specifier.clone();
     let this = JsValue::null();
     let arg0 = JsValue::from(specifier.to_string());
     let arg1 = JsValue::from(is_dynamic);
-    let result = self.load.call2(&this, &arg0, &arg1);
+    let arg2 = JsValue::from(cache_setting.as_js_str());
+    let result = self.load.call3(&this, &arg0, &arg1, &arg2);
     let f = async move {
       let response = match result {
         Ok(result) => {
@@ -122,7 +155,7 @@ impl Loader for JsLoader {
       };
 
       response
-        .map(|value| value.into_serde().unwrap())
+        .map(|value| serde_wasm_bindgen::from_value(value).unwrap())
         .map_err(|err| anyhow!("load rejected or errored: {:#?}", err))
     };
     Box::pin(f)
@@ -134,22 +167,19 @@ pub async fn bundle(
   root: String,
   load: js_sys::Function,
   maybe_bundle_type: Option<String>,
-  maybe_imports: JsValue,
+  maybe_import_map: JsValue,
   maybe_compiler_options: JsValue,
 ) -> Result<JsValue, JsValue> {
   // todo(dsherret): eliminate all the duplicate `.map_err`s
-  let maybe_imports_map: Option<HashMap<String, Vec<String>>> = maybe_imports
-    .into_serde()
-    .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-  let maybe_compiler_options: Option<CompilerOptions> = maybe_compiler_options
-    .into_serde()
-    .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+  let compiler_options: CompilerOptions = serde_wasm_bindgen::from_value::<
+    Option<CompilerOptions>,
+  >(maybe_compiler_options)
+  .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?
+  .unwrap_or_default();
   let root = ModuleSpecifier::parse(&root)
     .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
   let mut loader = JsLoader::new(load);
-  let emit_options: EmitOptions = maybe_compiler_options
-    .map(|co| co.into())
-    .unwrap_or_default();
+  let emit_options: EmitOptions = compiler_options.into();
   let bundle_type = match maybe_bundle_type.as_deref() {
     Some("module") | None => BundleType::Module,
     Some("classic") => BundleType::Classic,
@@ -159,23 +189,21 @@ pub async fn bundle(
       ))))
     }
   };
-
-  let maybe_imports = if let Some(imports_map) = maybe_imports_map {
-    let mut imports = Vec::new();
-    for (referrer_str, specifier_vec) in imports_map.into_iter() {
-      let referrer = ModuleSpecifier::parse(&referrer_str)
-        .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-      imports.push((referrer, specifier_vec));
-    }
-    Some(imports)
-  } else {
-    None
-  };
+  let maybe_import_map = serde_wasm_bindgen::from_value::<
+    Option<ImportMapJsInput>,
+  >(maybe_import_map)
+  .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?
+  .map(|js_input| {
+    let result: anyhow::Result<ImportMapInput> = js_input.try_into();
+    result
+  })
+  .transpose()
+  .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
 
   let result = deno_emit::bundle(
     root,
     &mut loader,
-    maybe_imports,
+    maybe_import_map,
     BundleOptions {
       bundle_type,
       emit_options,
@@ -185,7 +213,7 @@ pub async fn bundle(
   .await
   .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
 
-  JsValue::from_serde(&SerializableBundleEmit {
+  serde_wasm_bindgen::to_value(&SerializableBundleEmit {
     code: result.code,
     maybe_map: result.maybe_map,
   })
@@ -196,26 +224,43 @@ pub async fn bundle(
 pub async fn transpile(
   root: String,
   load: js_sys::Function,
+  maybe_import_map: JsValue,
   maybe_compiler_options: JsValue,
 ) -> Result<JsValue, JsValue> {
+  let compiler_options: CompilerOptions = serde_wasm_bindgen::from_value::<
+    Option<CompilerOptions>,
+  >(maybe_compiler_options)
+  .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?
+  .unwrap_or_default();
   let root = ModuleSpecifier::parse(&root)
     .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
   let mut loader = JsLoader::new(load);
+  let emit_options: EmitOptions = compiler_options.into();
 
-  let maybe_compiler_options: Option<CompilerOptions> = maybe_compiler_options
-    .into_serde()
-    .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
-  let emit_options: EmitOptions = maybe_compiler_options
-    .map(|co| co.into())
-    .unwrap_or_default();
+  let maybe_import_map = serde_wasm_bindgen::from_value::<
+    Option<ImportMapJsInput>,
+  >(maybe_import_map)
+  .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?
+  .map(|js_input| {
+    let result: anyhow::Result<ImportMapInput> = js_input.try_into();
+    result
+  })
+  .transpose()
+  .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
 
-  let map = deno_emit::transpile(root, &mut loader, emit_options)
-    .await
-    .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+  let map = deno_emit::transpile(
+    root,
+    &mut loader,
+    maybe_import_map,
+    TranspileOptions { emit_options },
+  )
+  .await
+  .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
 
-  JsValue::from_serde(&map)
+  serde_wasm_bindgen::to_value(&map)
     .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))
 }
+
 
 
 #[wasm_bindgen]
@@ -225,13 +270,13 @@ pub fn transpile_isolated(
   content: String,
 ) -> Result<String, JsValue> {
 
-  let maybe_compiler_options: Option<CompilerOptions> = maybe_compiler_options
-    .into_serde()
-    .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
+  let compiler_options: CompilerOptions = serde_wasm_bindgen::from_value::<
+    Option<CompilerOptions>,
+  >(maybe_compiler_options)
+  .map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?
+  .unwrap_or_default();
 
-  let emit_options: EmitOptions = maybe_compiler_options
-    .map(|co| co.into())
-    .unwrap_or_default();
+  let emit_options: EmitOptions = compiler_options.into();
 
   let res = deno_emit::transpile_isolated(content, emit_options, file_path).map_err(|err| JsValue::from(js_sys::Error::new(&err.to_string())))?;
   return Ok(res);

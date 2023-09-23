@@ -11,11 +11,11 @@ const watch = options.option("watch", {aliases: ["w"], default: false, type: "bo
 const port =  options.option("port", {default: 80, type: "number", description: "The port on which the web server should run"});
 const path =  options.option("path", {aliases: ["p"], default: Deno.cwd(), type: "string", description: "The file directory", collectNotPrefixedArgs: true, allowEmptyString: false});
 
-const lib_dir = new Path(path, "file://"+Deno.cwd()+"/").asDir();
+const lib_dir = new Path<Path.Protocol.File>(path, "file://"+Deno.cwd()+"/").asDir();
 let import_map_path = lib_dir.getChildPath('importmap.dev.json')
 if (!import_map_path.fs_exists) import_map_path = lib_dir.getChildPath('importmap.json')
-if (!import_map_path.fs_exists) import_map_path = new Path(Deno.cwd()).asDir().getChildPath('importmap.dev.json')
-if (!import_map_path.fs_exists) import_map_path = new Path(Deno.cwd()).asDir().getChildPath('importmap.json')
+if (!import_map_path.fs_exists) import_map_path = new Path<Path.Protocol.File>(Deno.cwd()).asDir().getChildPath('importmap.dev.json')
+if (!import_map_path.fs_exists) import_map_path = new Path<Path.Protocol.File>(Deno.cwd()).asDir().getChildPath('importmap.json')
 if (!import_map_path.fs_exists) throw "Could not find an import map";
 
 new Server(lib_dir, {

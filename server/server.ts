@@ -388,7 +388,7 @@ export class Server {
     }
 
 
-    async getResponse(request: Request, normalizedPath = this.normalizeURL(request)) {
+    async getResponse(request: Request, normalizedPath:false|string = this.normalizeURL(request)) {
 
         if (!this.#dir || !fileServer || normalizedPath===false) {
             return this.getErrorResponse(500);

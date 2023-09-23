@@ -5,7 +5,7 @@ import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
 const copy = globalThis.Deno ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
 
-const deno_emit = globalThis.Deno ? (await import("./lib/deno_emit/mod.ts")) : null;
+const deno_emit = globalThis.Deno ? (await import("./lib/deno_emit/js/mod.ts")) : null;
 
 const sass = globalThis.Deno ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
 
@@ -522,7 +522,8 @@ export class TypescriptTranspiler {
     private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
-            const transpiled = await deno_emit!.transpileIsolated(ts_dist_path, {inlineSourceMap:false, jsx:'react-jsx', jsxAutomatic:true, jsxImportSource: 'uix'});
+            // TODO: remove jsxAutomatic:true, currently only because of caching problems
+            const transpiled = await deno_emit!.transpileIsolated(ts_dist_path, {inlineSourceMap:false, jsx:"react-jsx", jsxImportSource: "uix", jsxAutomatic: true});
             if (transpiled != undefined) await Deno.writeTextFile(js_dist_path, transpiled);
             else throw "unknown error"
         }

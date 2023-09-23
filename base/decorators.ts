@@ -47,6 +47,7 @@ export const defaultOptions = Component;
 function _Component(url:string, component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
 	
 	url = component_class._init_module ?? url;
+
 	if (!url) {
 		console.log(new Error().stack)
 		throw new Error("Could not get the location of the UIX component '"+component_class.name+"'. This should not happen");
@@ -127,7 +128,6 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 		// TODO: rename, also in UIXComponent.ts
 		if (component_class.prototype instanceof UIXComponent) window.customElements.define("uix2-" + name, component_class)
 		else window.customElements.define("uix-" + name, component_class)
-		
 		return new_class //element_class
 	}
 	else throw new Error("Invalid @UIX.Component - class must extend UIX.Components.Base or UIXComponent")

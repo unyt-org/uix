@@ -1,24 +1,15 @@
 {
-  "fmt": {
-    "files": {
-      "exclude": [
-        "lib",
-        "static",
-        "target"
-      ]
-    }
-  },
-  "lint": {
-    "files": {
-      "exclude": [
-        "lib",
-        "static/*.js",
-        "target"
-      ]
-    }
-  },
+  "lock": false,
   "tasks": {
-    "test": "deno test --allow-read --allow-net --allow-env --allow-write",
-    "build": "deno run -A --unstable https://deno.land/x/wasmbuild@0.8.3/main.ts"
-  }
+    "test": "deno test --allow-read --allow-net --allow-env --allow-write --allow-run",
+    "update-snapshots": "deno test --allow-read --allow-net --allow-env --allow-write --allow-run -- --update",
+    "build": "cp LICENSE js/LICENSE && deno run -A --unstable https://deno.land/x/wasmbuild@0.14.1/main.ts --out js"
+  },
+  "exclude": [
+    "lib",
+    "static",
+    "testdata",
+    "target",
+    "tests/__snapshots__"
+  ]
 }

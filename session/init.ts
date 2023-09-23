@@ -53,6 +53,7 @@ export function init() {
 	const id = createNewID();
 	console.log("new id",id);
 	setCookie(cookie.endpoint, id);
+    window.location.reload();
 }
 
 await init()

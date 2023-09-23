@@ -343,12 +343,13 @@ export class Server {
         }
 
         // TODO: move, uix specific
-        if ((this as any)._uix_init && getCookies(requestEvent.request.headers)["uix-endpoint"] && normalized_path !== "/@uix/init") {
-            console.log("missing endpoint", normalized_path);
-            requestEvent.respondWith(new Response(null, {
-                status: 302,
-                headers: new Headers({ location: "/@uix/init" })
-            }))
+        if ((this as any)._uix_init && !getCookies(requestEvent.request.headers)["uix-endpoint"] && normalized_path !== "/@uix/init") {
+            console.log("missing endpoint!", normalized_path);      
+			const html = `<html>
+                INIT...
+                <script type="module" src="${import.meta.resolve('uix/session/init.ts')}"></script>
+			`
+			await this.serveContent(requestEvent, "text/html", html);
             return;
         }
 

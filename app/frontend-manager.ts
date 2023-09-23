@@ -31,7 +31,6 @@ export class FrontendManager extends HTMLProvider {
 	srcPrefix = "/@uix/src/"
 	externalPrefix = "/@uix/external/"
 	debugPrefix = "/@uix/debug/"
-	initPrefix = "/@uix/init"
 
 	srcPrefixRegex = String.raw `\/@uix\/src\/`
 
@@ -274,10 +273,6 @@ export class FrontendManager extends HTMLProvider {
 		});
 
 		
-
-		// handle endpoint init
-		this.server.path(this.initPrefix, (req) => this.handleInitPage(req));
-
 		// handle datex-via-http
 		this.server.path(/^\/@uix\/datex\/.*$/, async (req, path)=>{
 			try {

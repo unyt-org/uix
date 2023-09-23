@@ -4,15 +4,15 @@
 
  1. Add a new module in the `components/` directory that exports the component class or function with the same name as the module file
  2. Test the new component by adding an example instance to the testComponents object in `common/test-components.tsx`
- 4. Expose the local UIX library on `localhost:4200` by running `deno task expose-uix`
+ 4. Expose the local UIX library on `localhost:4242` by running `deno task expose-uix`
  3. Start the test app on `localhost:4201` with `deno task run-test-app` from the root directory
 
 ## Using the local development UIX library in other projects
 
 You can test your local UIX library in UIX apps on the same host:
- 1. Expose the local UIX library on `localhost:4200` by running `deno task expose-uix`
+ 1. Expose the local UIX library on `localhost:4242` by running `deno task expose-uix`
  2. Copy the `importmap.uixdev.json` from the uix repo to your project repo
- 2. Launch your app with `deno run -Aqr http://localhost:4200/run.ts -wr --import-map importmap.uixdev.json`
+ 2. Launch your app with `deno run -Aqr http://localhost:4242/run.ts -wr --import-map importmap.uixdev.json`
 
 
 ## Git feature branches

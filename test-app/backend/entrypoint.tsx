@@ -4,11 +4,15 @@ import { invalid, notFound } from "../common/errors.tsx";
 
 
 export default {
-	'/:component/backend\\+dynamic' : ctx => UIX.renderDynamic(testComponents[ctx.match?.pathname.groups['component'] as keyof typeof testComponents] || notFound), 
-	'/:component/backend\\+static'  : ctx => UIX.renderStatic(testComponents[ctx.match?.pathname.groups['component'] as keyof typeof testComponents] || notFound),
-	'/:component/backend\\+hydrated': ctx => UIX.renderWithHydration(testComponents[ctx.match?.pathname.groups['component'] as keyof typeof testComponents] || notFound),
+	'/:component/backend\\+dynamic' : ctx => UIX.renderDynamic(testComponents[ctx.urlPattern?.pathname.groups['component'] as keyof typeof testComponents] || notFound), 
+	'/:component/backend\\+static'  : ctx => UIX.renderStatic(testComponents[ctx.urlPattern?.pathname.groups['component'] as keyof typeof testComponents] || notFound),
+	'/:component/backend\\+hydrated': ctx => UIX.renderWithHydration(testComponents[ctx.urlPattern?.pathname.groups['component'] as keyof typeof testComponents] || notFound),
 	'/:component/frontend': null,
 	'/x/*': null,
+
+	'exampleError': (ctx) => {
+		throw new Error("This is an example error");
+	},
 
 	'setValue/:key/:val': async (ctx, {key, val}) => {
 		(await ctx.getPrivateData())[key] = val;

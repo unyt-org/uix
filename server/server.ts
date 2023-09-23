@@ -15,7 +15,7 @@
 // ---
 import { Logger } from "unyt_core/utils/logger.ts";
 import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
-import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
+import { getCookies, type Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts";
@@ -333,10 +333,24 @@ export class Server {
 
     public async handleRequest(requestEvent:Deno.RequestEvent, conn: Deno.Conn){
         
-        let normalized_path = this.normalizeURL(requestEvent.request);
+        let normalized_path:string|false = this.normalizeURL(requestEvent.request);
         let handled:boolean|void|string = false;
 
-        console.log("Req:" + normalized_path)
+        // error parsing url (TODO: this should not happen)
+        if (normalized_path == false) {
+            this.sendError(requestEvent, 500);
+            return;
+        }
+
+        // TODO: move, uix specific
+        if (getCookies(requestEvent.request.headers)["uix-endpoint"]) {
+            console.log("missing endpoint");
+            requestEvent.respondWith(new Response(null, {
+                status: 302,
+                headers: new Headers({ location: "/@uix/init" })
+            }))
+            return;
+        }
 
         for (const handler of this.requestHandlers) {
             try { 

@@ -13,7 +13,7 @@ import { style } from "uix/html/anonymous_components.ts";
  *   /[key]/backend+dynamic (Loaded from the backend via DATEX)
  *   /[key]/backend+hydrated
  * 
- * (e.g. http://localhost:4200/textInput/backend+static )
+ * (e.g. http://localhost:4201/textInput/backend+static )
  */
 
 const Container = UIX.template(<div style={{display:"flex", gap:5, margin:5}}></div>)

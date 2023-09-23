@@ -343,8 +343,8 @@ export class Server {
         }
 
         // TODO: move, uix specific
-        if (getCookies(requestEvent.request.headers)["uix-endpoint"]) {
-            console.log("missing endpoint");
+        if (getCookies(requestEvent.request.headers)["uix-endpoint"] && normalized_path !== "/@uix/init") {
+            console.log("missing endpoint", normalized_path);
             requestEvent.respondWith(new Response(null, {
                 status: 302,
                 headers: new Headers({ location: "/@uix/init" })

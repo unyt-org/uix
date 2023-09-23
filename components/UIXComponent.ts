@@ -327,7 +327,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         return !! (
             Object.keys(this.standaloneMethods).length || 
             Object.keys(this.standaloneProperties).length ||
-            Object.getPrototypeOf(Object.getPrototypeOf(this)).standaloneEnabled?.()
+            /*Object.getPrototypeOf*/(Object.getPrototypeOf(this)).standaloneEnabled?.()
         )
     }
 
@@ -787,7 +787,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         let clss = <any>this.constructor;
         do {
             (<typeof UIXComponent>clss).loadStandaloneProps();
-        } while ((clss=Object.getPrototypeOf(Object.getPrototypeOf(clss))) && clss != HTMLElement && clss != Element && clss != Object); //  prototype chain, skip proxies inbetween
+        } while ((clss=/*Object.getPrototypeOf*/(Object.getPrototypeOf(clss))) && clss != HTMLElement && clss != Element && clss != Object); //  prototype chain, skip proxies inbetween
     }
 
     private enableDefaultOpenGraphGenerator() {

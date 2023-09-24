@@ -1,7 +1,8 @@
 import { AppPlugin } from "../app/config-files.ts";
+import { Logger } from "unyt_core/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
-
+const logger = new Logger("Git Deploy Plugin");
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 
 export class GitDeployPlugin implements AppPlugin {
@@ -10,7 +11,11 @@ export class GitDeployPlugin implements AppPlugin {
 	async apply(data: Record<string, unknown>) {
 		data = Object.fromEntries(Datex.DatexObject.entries(data));
 
-		const gitRepo = await GitRepo.get()
+		const gitRepo = await GitRepo.get();
+		if (!gitRepo) {
+			logger.warn("Git repo not found.");
+			return;
+		}
 		const workflowDir = await gitRepo.initWorkflowDirectory();
 
 		// TODO: also support gitlab

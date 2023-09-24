@@ -343,8 +343,12 @@ export class Server {
         }
 
         // TODO: move, uix specific - ignore wss connections
+        // TODO style noscript
         if ((this as any)._uix_init && requestEvent.request.headers.get("connection")!="Upgrade" && !getCookies!(requestEvent.request.headers)["uix-endpoint"]) {
-			const html = `<html><script type="module" src="${import.meta.resolve('uix/session/init.ts')}"></script>`
+			const html = `<html>
+            <noscript>Please activate JavaScript in your browser</noscript>
+            <script type="module" src="${import.meta.resolve('uix/session/init.ts')}"></script>
+            `
 			await this.serveContent(requestEvent, "text/html", html);
             return;
         }

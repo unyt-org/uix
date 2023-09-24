@@ -4,9 +4,9 @@ import { invalid, notFound } from "../common/errors.tsx";
 
 
 export default {
-	'/:component/backend\\+dynamic' : ctx => UIX.renderDynamic(testComponents[ctx.urlPattern?.pathname.groups['component'] as keyof typeof testComponents] || notFound), 
-	'/:component/backend\\+static'  : ctx => UIX.renderStatic(testComponents[ctx.urlPattern?.pathname.groups['component'] as keyof typeof testComponents] || notFound),
-	'/:component/backend\\+hydrated': ctx => UIX.renderWithHydration(testComponents[ctx.urlPattern?.pathname.groups['component'] as keyof typeof testComponents] || notFound),
+	'/:component/backend\\+dynamic' : (ctx, {component}) => UIX.renderDynamic(testComponents[component as keyof typeof testComponents] || notFound), 
+	'/:component/backend\\+static'  : (ctx, {component}) => UIX.renderStatic(testComponents[component as keyof typeof testComponents] || notFound),
+	'/:component/backend\\+hydrated': (ctx, {component}) => UIX.renderWithHydration(testComponents[component as keyof typeof testComponents] || notFound),
 	'/:component/frontend': null,
 	'/x/*': null,
 

@@ -7,12 +7,15 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
     width: 0;
     height: 0;
     background: transparent;
     display: none;
     -webkit-appearance: none;
+} */
+::-webkit-scrollbar-track {
+    background: transparent;
 }
 /* * {
     -ms-overflow-style: none;

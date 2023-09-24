@@ -115,7 +115,6 @@ export function template<Options extends Record<string, any> = {}, Children = JS
 export function template(templateOrGenerator:Element|jsxInputGenerator<Element, any, any, any>) {
 	let generator:any;
 	const module = getCallerFile();
-
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
 		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {

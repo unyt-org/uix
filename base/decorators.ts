@@ -45,8 +45,12 @@ export function Component<C>(...args:any[]):any {
 export const defaultOptions = Component;
 
 function _Component(url:string, component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
-	
-	url = component_class._init_module ?? url;
+	// FIXME
+	console.log(name, "url", url, component_class?._init_module)
+	url = Object.hasOwn(component_class, "_init_module") ?
+		component_class._init_module :
+		url;
+	// FIXME
 
 	if (!url) {
 		console.log(new Error().stack)

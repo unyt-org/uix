@@ -15,14 +15,14 @@
 // ---
 import { Logger } from "unyt_core/utils/logger.ts";
 import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
-import { getCookies, type Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
+import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts";
 
 const { highlightText } = globalThis.Deno ? await import('https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js') : {highlightText:null};
 
-const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
+const { setCookie, getCookies } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null, getCookies:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
 
 const logger = new Logger("UIX Server");
@@ -342,9 +342,8 @@ export class Server {
             return;
         }
 
-        // TODO: move, uix specific
-        if ((this as any)._uix_init && !getCookies(requestEvent.request.headers)["uix-endpoint"]) {
-            console.log("initializing endpoint session...");      
+        // TODO: move, uix specific - ignore wss connections
+        if ((this as any)._uix_init && requestEvent.request.headers.get("connection")!="Upgrade" && !getCookies!(requestEvent.request.headers)["uix-endpoint"]) {
 			const html = `<html><script type="module" src="${import.meta.resolve('uix/session/init.ts')}"></script>`
 			await this.serveContent(requestEvent, "text/html", html);
             return;

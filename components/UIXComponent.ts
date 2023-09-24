@@ -9,20 +9,20 @@ import { IS_HEADLESS } from "../utils/constants.ts"
 import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import { bindObserver } from "../html/datex_binding.ts";
 import { Path } from "../utils/path.ts";
-import { RouteManager } from "../html/rendering.ts";
+import { RouteManager } from "../html/entrypoints.ts";
 import { Context } from "../base/context.ts";
 import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../standalone/scroll_container.ts";
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open-graph.ts";
 import { bindContentProperties } from "../standalone/bound_content_properties.ts";
 import { DX_IGNORE, INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css_style_compat.ts";
-import { indent } from "../utils/indent.ts"
+import { indent } from "unyt_core/utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize_js.ts";
 import { ORIGIN_PROPS, Theme, jsxInputGenerator } from "../uix_all.ts"
 import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
 import type { DynamicCSSStyleSheet } from "../utils/css_template_strings.ts";
 import { convertToWebPath } from "../app/utils.ts";
-import { addCSSScopeSelector } from "uix/utils/css-scoping.ts"
+import { addCSSScopeSelector } from "../utils/css-scoping.ts"
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -501,6 +501,12 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     private static addPotentialModuleStylesheet(){
         if (this._use_resources) {
             const css_url = this._module.replace(/\.m?(ts|js)x?$/, '.css');
+            
+            
+            // FIXME
+            console.log("Adding", css_url, "for", this._module, this.name, this?.getParentClass()?._module);
+            // FIXME
+
             this.module_stylesheets = [...this.module_stylesheets]; // create new module stylesheets are for this class
             this.module_stylesheets.push(css_url); // remember as module stylesheets
             const url_string = new URL(css_url).toString();

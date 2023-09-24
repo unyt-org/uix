@@ -343,7 +343,7 @@ export class Server {
         }
 
         // TODO: move, uix specific
-        if ((this as any)._uix_init && !getCookies(requestEvent.request.headers)["uix-endpoint"] && normalized_path !== "/@uix/init") {
+        if ((this as any)._uix_init && !getCookies(requestEvent.request.headers)["uix-endpoint"]) {
             console.log("missing endpoint!", normalized_path);      
 			const html = `<html>
                 INIT...

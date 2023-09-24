@@ -239,7 +239,6 @@ export namespace HTMLUtils {
 
         // non-module-relative paths if :route suffix
         if (attr.endsWith(":route")) {
-            console.log("set href", attr,val)
             attr = attr.replace(":route", "");
             root_path = undefined;
         }

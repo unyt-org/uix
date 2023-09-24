@@ -10,10 +10,6 @@ export default {
 	'/:component/frontend': null,
 	'/x/*': null,
 
-	'exampleError': (ctx) => {
-		throw new Error("This is an example error");
-	},
-
 	'setValue/:key/:val': async (ctx, {key, val}) => {
 		(await ctx.getPrivateData())[key] = val;
 		console.log("set value", key,val)

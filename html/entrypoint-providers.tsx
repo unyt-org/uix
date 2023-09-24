@@ -14,6 +14,7 @@ import { HTTPStatus } from "./http-status.ts";
 import { HTMLUtils } from "./utils.ts";
 import { renderStatic } from "./render-methods.ts";
 import { unsafeHTML } from "../uix_short.ts";
+import { createErrorMessageHTML } from "./errors.tsx";
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -199,29 +200,25 @@ export function provideVirtualRedirect(path:string|URL) {
 
 const matchURL = /\b((https?|file):\/\/[^\s]+(\:\d+)?(\:\d+)?\b)/g;
 
-export function provideErrorDebugView(error: Error) {
+export function provideErrorMessage(title: string, message?: string|Element, attachment?: Element) {
+	return renderStatic(HTTPStatus.INTERNAL_SERVER_ERROR.with(createErrorMessageHTML(title, message, attachment)));
+}
+
+export function provideErrorDebugView(title: string, error: Error) {
+	const isBackend = client_type=="deno";
 	const stackMessage = error.stack??error.message;
 	const lastURL = stackMessage.match(matchURL)?.[0];
-	const stack = HTMLUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&:source">$&</a>')
+	const stack = HTMLUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&'+(isBackend ? ':source': '')+'">$&</a>')
 
-	const html = <div style="width:100%; height:100%; background-color:#282828; display:flex; justify-content:center; align-items:center">
-		
-		<div style="display:grid; padding:20px; margin: 15px; color: #ef7b7b; background-color:#4e3635; border-radius:10px; width: fit-content;">
-			<div style="display:flex">
-				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
-					<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
-				</svg>
-				<pre style="margin: 0; margin-left: 7px; text-wrap: wrap;">
-					<b style="color:#ef7b7b; margin-bottom: 7px; display: block;">Backend Error</b>
-					{unsafeHTML(`<div>${stack}</div>`)}
-				</pre>
-			</div>
-			
-			{lastURL ? <iframe style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+":source"}></iframe> : undefined}
-		</div>
-		
-	</div>
-	return renderStatic(HTTPStatus.INTERNAL_SERVER_ERROR.with(html));
+	const iframe = lastURL ? 
+		<iframe style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+(isBackend ? ':source': '')}></iframe> :
+		undefined
+	
+	return provideErrorMessage(
+		title,
+		unsafeHTML(`<div>${stack}</div>`),
+		iframe
+	)
 }
 
 /**
@@ -250,7 +247,7 @@ export function provideError(message: string, status:number|HTTPStatus = 500) {
 				font-size: 1.5em;
 				color: var(--text_highlight);">
 				<div style="text-align:center; word-break: break-word;">
-					<h2 style="margin-bottom:0; background: linear-gradient(to right, #ea2b51, #8557a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Error ${status}</h2>
+					<h2 style="margin-bottom:0; background: #ea2b51; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Error ${status}</h2>
 					<div>${message}</div>
 				</div>
 			</div>

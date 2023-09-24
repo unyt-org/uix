@@ -6,8 +6,9 @@ import { resolveEntrypointRoute,  refetchRoute } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
 import { Datex } from "unyt_core/datex.ts";
 import { Entrypoint, html_content_or_generator } from "../html/entrypoints.ts";
-import { KEEP_CONTENT, provideError } from "../html/entrypoint-providers.tsx";
-import { RenderMethod } from "../html/render-methods.ts";
+import { KEEP_CONTENT, provideError, provideErrorMessage } from "../html/entrypoint-providers.tsx";
+import { displayError } from "../html/errors.tsx";
+
 /**
  * Generalized implementation for setting the route in the current tab URL
  * Used in combination with components
@@ -75,8 +76,8 @@ export namespace Routing {
 	}
 
 	async function setContent(content: html_content_or_generator, entrypoint:Entrypoint) {
-
 		current_entrypoint = entrypoint;
+
 		if (current_content !== content) {
 			current_content = content;
 			// console.log("-->",content)
@@ -88,8 +89,7 @@ export namespace Routing {
 			}
 			// handle response
 			else if (content instanceof Response) {
-				console.log("response on frontend (TODO)", content)
-				// ignore for now
+				renderResponse(content)
 			}
 
 			// TODO: currently only displayed if type not correctly mapped (TypedValue fallback)
@@ -99,7 +99,7 @@ export namespace Routing {
 				HTMLUtils.appendDynamic(document.body, content) // add to document
 			}
 			else {
-				logger.warn("Invalid entrypoint value (matching JS definition is not available for type "+Datex.Type.ofValue(content)+")", content);
+				displayError("UIX Rendering Error", "Cannot render value of type " + Datex.Type.ofValue(content));
 			}
 			// else {
 			// 	logger.error("invalid content, cannot handle yet", content)
@@ -108,6 +108,33 @@ export namespace Routing {
 		}
 	
 		await update(getCurrentRouteFromURL(), false)
+	}
+
+	/**
+	 * Render a Response on the client side
+	 * @param response 
+	 */
+	async function renderResponse(response: Response) {
+		if (response.body instanceof ReadableStream) {
+			if (isContentType(response, "text/html")) {
+				document.body.innerHTML = await response.text();
+			}
+			else if (isContentType(response, "text/plain")) {
+				const content = await response.text()
+				document.body.innerHTML = '<pre style="all:initial;word-wrap: break-word; white-space: pre-wrap;">'+HTMLUtils.escapeHtml(content)+'</pre>'
+			}
+			else {
+				displayError("UIX Rendering Error", "Cannot render value with mime type \""+response.headers.get("content-type")+"\" on frontend");
+			}
+		}
+		else if (response.body) {
+			console.log("cannot handle response body on frontend (TODO)", response)
+		}
+	}
+
+	function isContentType(response: Response, mimeType: `${string}/${string}`) {
+		const actualMimeType = response.headers.get("content-type") 
+		return actualMimeType === mimeType || actualMimeType?.startsWith(mimeType + ";")
 	}
 
 

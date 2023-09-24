@@ -284,6 +284,14 @@ export const testComponents = {
 
 	routeExample: <div>This is a route</div>,
 
+	errorExample: () => {
+		throw new Error("This is an error")
+	},
+
+	rawResponse: () => {
+		return new Response("Hello World!", {headers: {"Content-Type": "text/plain"}})
+	},
+
 	datex:
 		<Container>
 			<div>{datex `<html/button> "click me"`}</div>

@@ -11,6 +11,7 @@ import { HTTPStatus } from "./http-status.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts"
 import { provideError, provideErrorDebugView } from "./entrypoint-providers.tsx";
+import { client_type } from "unyt_core/utils/global_values.ts";
 
 
 // URLPattern polyfill
@@ -134,9 +135,9 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 		else if (typeof e == "object" && "code" in e && "content" in e && Object.keys(e).length == 2) returnValue = new HTTPStatus(e.code, e.content);
 		else {
 			// render error in dev with debug info
-			if (app.stage == "dev") returnValue = e instanceof Error ? provideErrorDebugView(e) : HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
+			if (app.stage == "dev") returnValue = e instanceof Error ? provideErrorDebugView(`${client_type=="deno" ? 'Backend' : 'Frontend'} routing failed`, e) : HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
 			// don't leak any additional info in production
-			else returnValue = provideError("Server Error", HTTPStatus.INTERNAL_SERVER_ERROR);
+			else returnValue = provideError("Router Error", HTTPStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 

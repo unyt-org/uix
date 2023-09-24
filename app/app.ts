@@ -16,7 +16,7 @@ let live_frontend:boolean|undefined = false;
 let watch:boolean|undefined = false;
 let watch_backend:boolean|undefined = false;
 let http_over_datex: boolean|undefined = true;
-let stage = '?'
+let stage: string|undefined
 
 if (globalThis.Deno) {
 	({ stage, live_frontend, watch, watch_backend, http_over_datex } = (await import("./args.ts")))
@@ -42,7 +42,8 @@ class UIXApp {
 	 * Current deployment stage, default is 'dev'
 	 */
 	get stage(){
-		return stage;
+		// TODO: cleaner solution, cannot import UIX.State because of circular deps
+		return stage ?? UIX.State.APP_META.stage;
 	}
 
 	#uniqueStartId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'

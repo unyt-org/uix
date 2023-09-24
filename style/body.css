@@ -6,7 +6,9 @@
     height: 100%; */
 	/* width: 100dvw;
 	height: 100dvh; */
-    display: block;
+
+    /* Must have display: contents; (default)*/
+    /* display: block;  */
     overflow-y: scroll;
 }
 

@@ -502,11 +502,6 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         if (this._use_resources) {
             const css_url = this._module.replace(/\.m?(ts|js)x?$/, '.css');
             
-            
-            // FIXME
-            console.log("Adding", css_url, "for", this._module, this.name, this?.getParentClass()?._module);
-            // FIXME
-
             this.module_stylesheets = [...this.module_stylesheets]; // create new module stylesheets are for this class
             this.module_stylesheets.push(css_url); // remember as module stylesheets
             const url_string = new URL(css_url).toString();

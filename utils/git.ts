@@ -48,17 +48,21 @@ export class GitRepo {
 	}
 
 	public static async get() { // path: Path
-		const gitRepo = new GitRepo();
-		await gitRepo.getOrigin();
-		await gitRepo.getBranch();
+		try {
+			const gitRepo = new GitRepo();
+			await gitRepo.getOrigin();
+			await gitRepo.getBranch();
 
-		return gitRepo;
+			return gitRepo;
+		} catch {
+			return null;
+		}
 	}
 
 
 	public async initWorkflowDirectory() {
 		// TODO: also support gitlab
-		const root = await this.getRootPath()
+		const root = await this.getRootPath();
 		const workflowDir = root.getChildPath(".github/workflows").asDir();
 		if (!workflowDir.fs_exists) await Deno.mkdir(workflowDir, {recursive: true});
 		return workflowDir;
@@ -67,6 +71,8 @@ export class GitRepo {
 }
 
 async function exec(cmd: string) {
-	const {output} = await _exec(cmd, {output: OutputMode.Capture});
+	const {output, status} = await _exec(cmd, {output: OutputMode.Capture});
+	if (status.code !== 0)
+		throw new Error("Ecec failed", { cause: output});
 	return output;
 }

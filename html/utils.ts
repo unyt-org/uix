@@ -237,6 +237,13 @@ export namespace HTMLUtils {
 
     function setAttribute(element: Element, attr:string, val:unknown, root_path?:string|URL) {
 
+        // non-module-relative paths if :route suffix
+        if (attr.endsWith(":route")) {
+            console.log("set href", attr,val)
+            attr = attr.replace(":route", "");
+            root_path = undefined;
+        }
+
         // not an HTML attribute
         if (!(
             attr.startsWith("data-") ||

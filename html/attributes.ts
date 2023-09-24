@@ -30,6 +30,7 @@ export const defaultElementAttributes = [
 	"uix-module", "datex-pointer", "shadow-root"
 ] as const;
 
+// TODO: replace with uix:, datex:
 // custom attribute values for default attributes (default: string)
 type customDefaultAttributeValues = {
 	"uix-module": string|URL|null,
@@ -63,9 +64,17 @@ type widthAndHeight = {
 }
 
 // src
-const src = "src" as const;
+const src = ["src", "src:route"] as const;
 type src = {
 	src: string|URL
+	"src:route": string
+}
+
+// href
+const href = ["href", "href:route"] as const;
+type href = {
+	href: string|URL
+	"href:route": string
 }
 
 // alt
@@ -77,21 +86,21 @@ export const htmlElementAttributes = {
 
 	// TODO replace valueOut, ... with value:out
 
-	a: ["href", "target"],
-	link: ["rel", "href"],
+	a: [...href, "target"],
+	link: [...href, "rel"],
 
-	script: ["type", "src"],
+	script: [...src, "type"],
 
-	input: [alt, src, alt, ...widthAndHeight, "min", "minlength", "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
+	input: [alt, ...src, alt, ...widthAndHeight, "min", "minlength", "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
 	button: ["type"],
 	form: ["method", "enctype", "action"],
-	img: [alt, src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
+	img: [alt, ...src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
-	iframe: [src],
+	iframe: [...src],
 	details: ["open"],
-	source: [src, "type"],
+	source: [...src, "type"],
 	label: ["for"],
-	video: [src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload", "playsinline"],
+	video: [...src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload", "playsinline"],
 	textarea: ["placeholder", "name"],
 	option: ["value", "selected"],
 	select: ["name"]
@@ -100,13 +109,9 @@ export const htmlElementAttributes = {
 
 /** custom values for specific element attributes (default: string) */
 export type htmlElementAttributeValues = {
-	a: {
-		href: string|URL
-	},
+	a: href,
 
-	link: {
-		href: string|URL
-	},
+	link: href,
 
 	input: widthAndHeight & src & {
 		autocomplete: "on"|"off"

@@ -216,8 +216,13 @@ export namespace Routing {
 		if (globalThis.navigation) {
 			// @ts-ignore
 			globalThis.navigation?.addEventListener("navigate", (e:any)=>{
+				
 				if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
+				
 				const url = new URL(e.destination.url);
+				// pass links to /@uix/...
+				if (url.pathname.startsWith("/@uix/")) return;
+
 				if (url.origin != new URL(window.location.href).origin) return;
 
 				// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)

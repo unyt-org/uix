@@ -277,7 +277,12 @@ export const testComponents = {
 		<button onclick={()=>entryList.push($$({name:'New Item ' + new Date(), description: "", color: "orange"}))}>Add Entry</button>
 	</div>),
 
+	paths: <ul>
+		<li>Path relative to module: <a href="./assets/example.txt">Open</a></li>
+		<li>Path relative to current route on client: <a href:route="../routeExample/frontend">Open</a></li>
+	</ul>,
 
+	routeExample: <div>This is a route</div>,
 
 	datex:
 		<Container>

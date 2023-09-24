@@ -81,19 +81,14 @@ export function jsx (type: string | any, config: Record<string,any>): Element|Do
 	if (set_default_attributes) {
 		let module = (<Record<string,any>>props)['module'] ?? (<Record<string,any>>props)['uix-module'];
 		// ignore module of is explicitly module===null, otherwise fallback to getCallerFile
-		if (module === undefined) module = getCallerFile();
+		// TODO: optimize don't call getCallerFile for each nested jsx element, pass on from parent?
+		if (module === undefined) {
+			module = getCallerFile();
+		}
 		
-		for (let [attr,val] of Object.entries(props)) {
+		for (const [attr,val] of Object.entries(props)) {
 			if (attr == "style" && (element as HTMLElement).style) UIX.HTMLUtils.setCSS(element as HTMLElement, <any> val);
 			else {
-				if (typeof val == "string" && (val.startsWith("./") || val.startsWith("../")) && module !== null) {
-					// TODO: remove 'module'
-					val = new Path(val, module).toString();
-				}
-				// keep route: paths relative, remove route: prefix
-				else if (typeof val == "string" && val.startsWith("route:") && (attr == "href" || attr == "src")) {
-					val = val.replace("route:", "");
-				}
 				const valid_attr = UIX.HTMLUtils.setElementAttribute(element, attr, <any>val, module);
 				if (!allow_invalid_attributes && !valid_attr) logger.warn(`Element attribute "${attr}" is not allowed for <${element.tagName.toLowerCase()}>`)
 			}

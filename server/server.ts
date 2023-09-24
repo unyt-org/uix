@@ -407,7 +407,32 @@ export class Server {
     async handleHTTPRequest(requestEvent: Deno.RequestEvent, normalizedPath?:string) {
         try {
             await requestEvent.respondWith(await this.getResponse(requestEvent.request, normalizedPath))
-        } catch {}
+        } catch (e) {
+            console.log(e);
+            try {
+                await requestEvent.respondWith(this.getErrorResponse(500))
+            }
+            catch {}
+        }
+    }
+
+    getFileSuffix(url: Path, normalizedPath:string):[url: Path, normalizedPath:string, lineNumber:number|undefined, colNumber:number|undefined, contentType:"source"|"transpiled"|undefined] {
+        let lineNumber:number|undefined = undefined;
+        let colNumber:number|undefined = undefined;
+        let contentType:"source"|"transpiled"|undefined = undefined;
+
+        // "line:col:contentType", default contentType = transpiled
+        const suffix = /(\:\d+)?(\:\d+)?(\:\w+)?$/;
+        const matchSuffix = normalizedPath.match(suffix)
+        if (matchSuffix) {
+            // extract line + col number
+            [lineNumber, colNumber, contentType] = matchSuffix?.slice(1).map(x=>x?.slice(1)).map((x,i) => i==2 ? x : (x?Number(x):x)) as [number|undefined, number|undefined, "source"|"transpiled"|undefined];
+            contentType ??= "transpiled" // default for contentType
+            normalizedPath = normalizedPath.replace(suffix, '');
+            url = new Path(url.toString().replace(suffix, ''));
+        }
+        
+        return [url, normalizedPath, lineNumber, colNumber, contentType]
     }
 
 
@@ -422,30 +447,22 @@ export class Server {
         const isBrowser = Server.isBrowserClient(request);
         const isSafari = Server.isSafariClient(request);
 
-        let lineNumber:number|undefined = undefined;
-        let colNumber:number|undefined = undefined;
+        // extract row:col:contentType
+        const [newUrl, newNormalizedPath, lineNumber, colNumber, contentType] = this.getFileSuffix(url, normalizedPath);
+        url = newUrl;
+        normalizedPath = newNormalizedPath;
 
-        // try to remove line numbers
-        if (normalizedPath.match(/(\:\d+){1,2}$/)) {
-            // extract line + col number
-            [lineNumber, colNumber] = normalizedPath.match(/(\:\d+){1,2}$/)?.[0].slice(1).split(":").map(Number);
-            normalizedPath = normalizedPath.replace(/(\:\d+){1,2}$/, '');
-            url = new Path(url.toString().replace(/(\:\d+){1,2}$/, ''));
-        }
 
-      
-
-        // extra browser tab for file => special file preview
-        const isPreviewClient = isBrowser && (request.headers.get("Sec-Fetch-Dest") == "document" || request.headers.get("Sec-Fetch-Dest") == "iframe") && url.hasFileExtension("ts", "tsx", "js", "jsx", "css", "scss", "dx")
-        
-        let filepath = this.findFilePath(url, normalizedPath, isBrowser && !isPreviewClient, isSafari)
+        // open file in new browser tab => special file preview
+        const displayWithSyntaxHighlighting = isBrowser && (request.headers.get("Sec-Fetch-Dest") == "document" || request.headers.get("Sec-Fetch-Dest") == "iframe") && !!url.hasFileExtension("ts", "tsx", "js", "jsx", "css", "scss", "dx")
+        const transpile = isBrowser && (displayWithSyntaxHighlighting ? contentType == "transpiled" : true)
+        let filepath = this.findFilePath(url, normalizedPath, transpile, isSafari)
 
         // override filepath, exposes raw source files to browser for debugging TODO: only workaround with _base_path, improve
-        if (isPreviewClient && this._app?.stage === "dev" && normalizedPath.startsWith("/@uix/src/")) {
+        if (displayWithSyntaxHighlighting && contentType == "source" && this._app?.stage === "dev" && normalizedPath.startsWith("/@uix/src/")) {
             filepath = (this._base_path as Path.File).getChildPath(normalizedPath.replace("/@uix/src/", ""))
         }
                
-
 
         if (!filepath) {
             return this.getErrorResponse(500);
@@ -497,9 +514,8 @@ export class Server {
             
         }
 
-
         // render file preview with syntax highlighting in browser
-        if (isPreviewClient) {
+        if (displayWithSyntaxHighlighting) {
             if (!filepath.fs_exists) return this.getErrorResponse(404, "Not found");
             
             const content = await Deno.readTextFile(filepath.normal_pathname);

@@ -202,8 +202,7 @@ const matchURL = /\b((https?|file):\/\/[^\s]+(\:\d+)?(\:\d+)?\b)/g;
 export function provideErrorDebugView(error: Error) {
 	const stackMessage = error.stack??error.message;
 	const lastURL = stackMessage.match(matchURL)?.[0];
-	console.log("lasurl",lastURL)
-	const stack = HTMLUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&">$&</a>')
+	const stack = HTMLUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&:source">$&</a>')
 
 	const html = <div style="width:100%; height:100%; background-color:#282828; display:flex; justify-content:center; align-items:center">
 		
@@ -218,7 +217,7 @@ export function provideErrorDebugView(error: Error) {
 				</pre>
 			</div>
 			
-			{lastURL ? <iframe style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL}></iframe> : undefined}
+			{lastURL ? <iframe style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+":source"}></iframe> : undefined}
 		</div>
 		
 	</div>

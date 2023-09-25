@@ -6,8 +6,7 @@ import { unsafeHTML } from "../uix_short.ts";
 import { HTTPError } from "./http-error.ts";
 import { HTTPStatus } from "./http-status.ts";
 
-function createErrorMessageHTML(title: string, message?: string|Element, attachment?: Element, statusCode?: number) {
-	const isBackend = client_type=="deno";
+function createErrorMessageHTML(title: string, message?: string|Element, attachment?: Element, statusCode?: number, displayLocation?: string) {
 
 	return <div style="width:100%; height:100%; background-color:#282828; display:flex; justify-content:center; align-items:center">
 		
@@ -18,8 +17,8 @@ function createErrorMessageHTML(title: string, message?: string|Element, attachm
 				</svg>
 				<pre style="margin: 0; margin-left: 7px; text-wrap: wrap;">
 					<div style="display:flex;justify-content: space-between;">
-						<b style="color:#ef7b7b; margin-bottom: 7px; display: block;">{statusCode?statusCode + ' ' : ''}{title}</b>
-						<div style="background: #776565; color: #4e3635; border-radius: 6px; display: flex; justify-content: center; align-items: center; padding: 0px 8px;">{isBackend ? "Backend" : "Frontend"}</div>
+						<b style="color:#ef7b7b; margin-bottom: 7px; display: contents;">{statusCode?statusCode + ' ' : ''}{title}</b>
+						{displayLocation ? <div style="background: #776565; color: #4e3635; border-radius: 6px; display: flex; justify-content: center; align-items: center; padding: 0px 8px;margin-left: 15px;">{displayLocation}</div> : undefined}
 					</div>
 					{message}
 				</pre>
@@ -34,6 +33,7 @@ const matchURL = /\b((https?|file):\/\/[^\s]+(\:\d+)?(\:\d+)?\b)/g;
 export function createErrorHTML(title: string, error?: Error|number|HTTPStatus<number,string>|string) {
 	const isExplicitStatusCode = error instanceof HTTPError || error instanceof HTTPStatus || typeof error == "number";
 	const isBackend = client_type=="deno";
+	const displayLocation = isBackend ? "Backend" : "Frontend"
 
 	let errorMessage:string|Element|undefined = error instanceof HTTPStatus ? error.content?.toString() : (typeof error == "string" ? error : undefined);
 	let attachment = undefined
@@ -77,12 +77,14 @@ export function createErrorHTML(title: string, error?: Error|number|HTTPStatus<n
 				errorMessage,
 				attachment,
 				isExplicitStatusCode ? statusCode : undefined,
+				displayLocation
 			) :
 			createErrorMessageHTML(
 				title,
 				errorMessage,
 				attachment,
 				isExplicitStatusCode ? statusCode : undefined,
+				displayLocation
 			)
 	] as const
 }
@@ -103,10 +105,10 @@ export function displayError(title: string, error?: Error|number|HTTPStatus<numb
 	logger.error(title + '\n' + (error ? error.toString() : ''))
 }
 
-type errorGenerator = (title: string, message?: string|Element, attachment?: Element, statusCode?: number) => Element;
+type errorGenerator = (title: string, message?: string|Element, attachment?: Element, statusCode?: number, displayLocation?: string) => Element;
 
 // default impl for prod mode generator: always omit message + attachment in prod mode
-let productionErrorGenerator:errorGenerator = (title, message, attachment, statusCode) => {
+let productionErrorGenerator:errorGenerator = (title, message, attachment, statusCode, displayLocation) => {
 	return createErrorMessageHTML(title, undefined, undefined, statusCode)
 };
 

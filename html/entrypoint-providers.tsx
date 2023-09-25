@@ -11,10 +11,9 @@ import { indent } from "unyt_core/utils/indent.ts";
 import { Entrypoint, RouteHandler, html_generator } from "./entrypoints.ts";
 import { client_type } from "unyt_core/datex_all.ts";
 import { HTTPStatus } from "./http-status.ts";
-import { HTMLUtils } from "./utils.ts";
 import { renderStatic } from "./render-methods.ts";
-import { unsafeHTML } from "../uix_short.ts";
-import { createErrorMessageHTML } from "./errors.tsx";
+import { createErrorHTML } from "./errors.tsx";
+import { HTTPError } from "./http-error.ts";
 
 const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -200,62 +199,54 @@ export function provideVirtualRedirect(path:string|URL) {
 
 const matchURL = /\b((https?|file):\/\/[^\s]+(\:\d+)?(\:\d+)?\b)/g;
 
-export function provideErrorMessage(title: string, message?: string|Element, attachment?: Element) {
-	return renderStatic(HTTPStatus.INTERNAL_SERVER_ERROR.with(createErrorMessageHTML(title, message, attachment)));
-}
-
-export function provideErrorDebugView(title: string, error: Error) {
-	const isBackend = client_type=="deno";
-	const stackMessage = error.stack??error.message;
-	const lastURL = stackMessage.match(matchURL)?.[0];
-	const stack = HTMLUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&'+(isBackend ? ':source': '')+'">$&</a>')
-
-	const iframe = lastURL ? 
-		<iframe style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+(isBackend ? ':source': '')}></iframe> :
-		undefined
-	
-	return provideErrorMessage(
-		title,
-		unsafeHTML(`<div>${stack}</div>`),
-		iframe
-	)
-}
 
 /**
- * serve an errror with a status code and message
- * @param message error message
- * @param status http status code
- * @returns content blob
+ * Creates an Error View
+ * @param message error title
+ * @param status http status code or error
+ * @returns
  */
-export function provideError(message: string, status:number|HTTPStatus = 500) {
-	status = typeof status == "number" ? status : status.code;
-	const content = indent `
-	<html>
-		<head>
-			<meta charset="UTF-8">
-			<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-		</head>
-	
-		<body>
-			<div style="
-				width: 100%;
-				height: 100%;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-				font-size: 1.5em;
-				color: var(--text_highlight);">
-				<div style="text-align:center; word-break: break-word;">
-					<h2 style="margin-bottom:0; background: #ea2b51; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Error ${status}</h2>
-					<div>${message}</div>
-				</div>
-			</div>
-		</body>
-	</html>
-	`;
-	return provideContent(content, "text/html", status);
+export function provideError(title: string, error?: Error|number|HTTPStatus<number,string>|string) {
+	const [statusCode, html] = createErrorHTML(title, error);
+	return new HTTPStatus(statusCode, html)
 }
+
+// /**
+//  * @deprecated return/throw a new HTTPError or an Error instead
+//  * serve an errror with a status code and message
+//  * @param message error message
+//  * @param status http status code
+//  * @returns content blob
+//  */
+// export function provideError(message: string, status:number|HTTPStatus = 500) {
+// 	status = typeof status == "number" ? status : status.code;
+// 	const content = indent `
+// 	<html>
+// 		<head>
+// 			<meta charset="UTF-8">
+// 			<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+// 		</head>
+	
+// 		<body>
+// 			<div style="
+// 				width: 100%;
+// 				height: 100%;
+// 				display: flex;
+// 				justify-content: center;
+// 				align-items: center;
+// 				font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+// 				font-size: 1.5em;
+// 				color: var(--text_highlight);">
+// 				<div style="text-align:center; word-break: break-word;">
+// 					<h2 style="margin-bottom:0; background: #ea2b51; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Error ${status}</h2>
+// 					<div>${message}</div>
+// 				</div>
+// 			</div>
+// 		</body>
+// 	</html>
+// 	`;
+// 	return provideContent(content, "text/html", status);
+// }
 
 
 
@@ -289,7 +280,7 @@ export class FileProvider implements RouteHandler {
 			if (this.allowHTMLWithoutExtension && path.getWithFileExtension("html").fs_exists) {
 				path = path.getWithFileExtension("html");
 			}
-			else return provideError("Not found", 404);
+			else return new HTTPError(HTTPStatus.NOT_FOUND)
 		}
 
 		return fileServer!.serveFile(context.request, path.normal_pathname);

@@ -10,8 +10,8 @@ import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts"
-import { provideError, provideErrorDebugView } from "./entrypoint-providers.tsx";
 import { client_type } from "unyt_core/utils/global_values.ts";
+import { createErrorHTML } from "./errors.tsx";
 
 
 // URLPattern polyfill
@@ -127,17 +127,15 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 		returnValue = await entrypointData.entrypoint(entrypointData.context as UIX.Context, (entrypointData.context  as UIX.Context).params);
 	}
 	// return error as response with HTTPStatus error 500
-	// + more information if running in dev stage
 	catch (e) {
 		hasError = true;
-		if (e instanceof HTTPStatus) returnValue = e;
+
+		if (e instanceof Error) returnValue = e;
+		else if (e instanceof HTTPStatus) returnValue = e;
 		// TODO: fix instance check if transmitted via datex, currently just force converted to HTTPStatus
 		else if (typeof e == "object" && "code" in e && "content" in e && Object.keys(e).length == 2) returnValue = new HTTPStatus(e.code, e.content);
 		else {
-			// render error in dev with debug info
-			if (app.stage == "dev") returnValue = e instanceof Error ? provideErrorDebugView(`${client_type=="deno" ? 'Backend' : 'Frontend'} routing failed`, e) : HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
-			// don't leak any additional info in production
-			else returnValue = provideError("Router Error", HTTPStatus.INTERNAL_SERVER_ERROR);
+			returnValue = HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
 		}
 	}
 
@@ -340,6 +338,13 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 			status: 302,
 			headers: new Headers({ location: convertToWebPath(entrypointData.entrypoint) })
 		})
+	}
+
+	// handle Error
+	else if (entrypointData.entrypoint instanceof Error) {
+		const [statusCode, html] = createErrorHTML('Routing failed', entrypointData.entrypoint);
+		resolved.content = html;
+		resolved.status_code = statusCode;
 	}
 	
 

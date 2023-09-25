@@ -4,6 +4,8 @@ import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
 import { ValueInput } from "uix/components/ValueInput.tsx";
 import { add, always, and, map, not, select } from "unyt_core/functions.ts";
 import { style } from "uix/html/anonymous_components.ts";
+import { HTTPError } from "uix/html/http-error.ts";
+import { HTTPStatus } from "uix/html/http-status.ts";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -159,7 +161,6 @@ const ListView = UIX.template(()=>{
 
 
 const likesCheese = $$(true);
-console.log("likes cheese", likesCheese)
 
 
 const ExampleImage = () => <img src="https://picsum.photos/536/354"/> as HTMLImageElement;
@@ -284,12 +285,43 @@ export const testComponents = {
 
 	routeExample: <div>This is a route</div>,
 
+	// shows error alert with stack trace
 	errorExample: () => {
 		throw new Error("This is an error")
 	},
 
+	// shows error alert with stack trace
+	errorExample2: () => {
+		throw new HTTPError(HTTPStatus.INTERNAL_SERVER_ERROR)
+	},
+
+	// shows error alert with stack trace
+	errorExample3: () => {
+		return new HTTPError(500, "Error Example")
+	},
+
+	// renders empty page, HTTP status code is 403
+	errorExample4: () => {
+		return HTTPStatus.FORBIDDEN
+	},
+
+	// renders string, HTTP status code is 500
+	errorExample5: () => {
+		throw "An error result"
+	},
+
+	// shows error alert with stack trace
+	errorExample6: () => {
+		return new SyntaxError("There is an error in you syntax")
+	},
+
+	// shows error alert
+	errorExample7: () => {
+		return UIX.provideError("My custom error", "Custom error message")
+	},
+
 	rawResponse: () => {
-		return new Response("Hello World!", {headers: {"Content-Type": "text/plain"}})
+		return new Response("Hello World!", {headers: {"Content-Type": "text/css"}})
 	},
 
 	datex:

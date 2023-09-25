@@ -25,6 +25,7 @@ import { HTMLUtils } from "../html/utils.ts";
 import { RenderMethod } from "../html/render-methods.ts";
 import { Context, ContextGenerator } from "uix/base/context.ts";
 import { Entrypoint, raw_content } from "../html/entrypoints.ts";
+import { createErrorHTML } from "uix/html/errors.tsx";
 
 export class FrontendManager extends HTMLProvider {
 
@@ -667,6 +668,13 @@ runner.enableHotReloading();
 
 		// convert content to valid HTML string
 		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData];
+		
+		// invalid content was created, should not happen
+		else if (content && typeof content == "object") {
+			console.log(content)
+			const [status_code, html] = createErrorHTML(`UIX exception #1`, 500);
+			return [await getOuterHTML(html, {includeShadowRoots:true, injectStandaloneJS:true, lang}), RenderMethod.STATIC, status_code, undefined];
+		}
 		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData];
 	}
 

@@ -1,12 +1,14 @@
 import { UIX } from "uix";
 import { testComponents } from "../common/test-components.tsx";
-import { invalid, notFound } from "../common/errors.tsx";
+import { invalid } from "../common/errors.tsx";
+import { HTTPError } from "uix/html/http-error.ts";
+import { HTTPStatus } from "uix/html/http-status.ts";
 
 
 export default {
-	'/:component/backend\\+dynamic' : (ctx, {component}) => UIX.renderDynamic(testComponents[component as keyof typeof testComponents] || notFound), 
-	'/:component/backend\\+static'  : (ctx, {component}) => UIX.renderStatic(testComponents[component as keyof typeof testComponents] || notFound),
-	'/:component/backend\\+hydrated': (ctx, {component}) => UIX.renderWithHydration(testComponents[component as keyof typeof testComponents] || notFound),
+	'/:component/backend\\+dynamic' : (ctx, {component}) => UIX.renderDynamic(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)), 
+	'/:component/backend\\+static'  : (ctx, {component}) => UIX.renderStatic(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
+	'/:component/backend\\+hydrated': (ctx, {component}) => UIX.renderWithHydration(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
 	'/:component/frontend': null,
 	'/x/*': null,
 

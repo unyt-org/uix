@@ -9,7 +9,7 @@ import { filter } from "../routing/route-filter.ts";
 
 
 export type raw_content = Blob|Response // sent as raw Response
-export type special_content = URL|Deno.FsFile|HTTPStatus // gets converted to a Response
+export type special_content = URL|Deno.FsFile|HTTPStatus|Error // gets converted to a Response
 export type html_content = Datex.RefOrValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|undefined|raw_content|special_content;
 export type html_content_or_generator = html_content|html_generator;
 export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;

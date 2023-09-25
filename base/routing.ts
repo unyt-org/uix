@@ -6,7 +6,7 @@ import { resolveEntrypointRoute,  refetchRoute } from "../html/rendering.ts";
 import { HTMLUtils } from "../html/utils.ts";
 import { Datex } from "unyt_core/datex.ts";
 import { Entrypoint, html_content_or_generator } from "../html/entrypoints.ts";
-import { KEEP_CONTENT, provideError, provideErrorMessage } from "../html/entrypoint-providers.tsx";
+import { KEEP_CONTENT } from "../html/entrypoint-providers.tsx";
 import { displayError } from "../html/errors.tsx";
 
 /**
@@ -60,7 +60,8 @@ export namespace Routing {
 		if (!frontend_available && !backend_entrypoint) {
 		// TODO: should be 'if (!frontend_available && !backend_available) {'
 		// relaxed check only checks for any existing baclend entrypoint
-			document.body.innerHTML = await (await provideError("No content for this path")).text();
+			displayError("No content for this path")
+			// document.body.innerHTML = await (await provideError("No content for this path")).text();
 		}
 	}
 

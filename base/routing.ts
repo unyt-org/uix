@@ -60,7 +60,7 @@ export namespace Routing {
 		if (!frontend_available && !backend_entrypoint) {
 		// TODO: should be 'if (!frontend_available && !backend_available) {'
 		// relaxed check only checks for any existing baclend entrypoint
-			displayError("No content for this path")
+		displayError("No content for this path", "No default entrypoint exports found")
 			// document.body.innerHTML = await (await provideError("No content for this path")).text();
 		}
 	}

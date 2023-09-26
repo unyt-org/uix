@@ -11,7 +11,7 @@ import { normalizedAppOptions } from "./options.ts";
  */
 export function convertToWebPath(filePath:URL|string, includeDefaultDomain = false){
 	// keep import aliases
-	if (typeof filePath == "string" && !(filePath.startsWith("./")||filePath.startsWith("../")||filePath.startsWith("/")||filePath.startsWith("file://"))) return filePath;
+	if (typeof filePath == "string" && !(filePath.startsWith("./")||filePath.startsWith("../")||filePath.startsWith("file://"))) return filePath;
 
 	// route path
 	if (filePath instanceof URL && filePath.protocol == Path.RouteProtocol) return new Path(filePath).routename

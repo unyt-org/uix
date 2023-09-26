@@ -628,7 +628,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     #anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
 
     private static template?:jsxInputGenerator<Element,any,any,any>
-    private static style_template?:jsxInputGenerator<CSSStyleSheet,any,any,any>
+    private static style_templates?:Set<jsxInputGenerator<DynamicCSSStyleSheet|URL,any,any,any>>
 
     /**
      * Promise that resolves after onConstruct is finished
@@ -707,17 +707,21 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
      * load stylesheet from @UIX.style
      */
     private loadDefaultStyle() {
-        if ((<typeof UIXComponent> this.constructor).style_template) {
+        for (const templateFn of (<typeof UIXComponent> this.constructor).style_templates??[]) {
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
-            const templateFn = (<typeof UIXComponent> this.constructor).style_template!;
-            const stylesheet = templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this) as DynamicCSSStyleSheet;
+            const options = Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options
+            const stylesheet = templateFn(options, this)
             // inject css scoping if component has no shadow root
-            if (!this.shadowRoot) {
+            if (stylesheet instanceof CSSStyleSheet && !this.shadowRoot) {
                 const css = [...(stylesheet.cssRules as any)].map(r=>r.cssText).join("\n");
                 const scopedCSS = addCSSScopeSelector(css, this.tagName)
                 stylesheet.replaceSync(scopedCSS)
             }
-            if (stylesheet.activate) stylesheet.activate(this.shadowRoot??document);
+            if (stylesheet instanceof CSSStyleSheet && stylesheet.activate) {
+                stylesheet.activate(this.shadowRoot??document);
+                this.activatedScopedStyles.add(stylesheet)
+            }
+            else if (stylesheet instanceof CSSStyleSheet) this.addStyleSheet(stylesheet)
             else this.addStyleSheet(stylesheet)
         }
     }
@@ -1097,7 +1101,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     }
 
     public observeOption(key:keyof O & UIXComponent.Options, handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
-        Datex.Value.observeAndInit(this.options.$$[key], handler, this);
+        Datex.Ref.observeAndInit(this.options.$$[key], handler, this);
     }
     public observeOptions(keys:(keyof O & UIXComponent.Options)[], handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
         for (const key of keys) this.observeOption(key, handler);
@@ -1245,6 +1249,9 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     // list of all adopted stylesheets for this element / shadow DOM
     #style_sheets:CSSStyleSheet[] = [];
     #pseudo_style = PlaceholderCSSStyleDeclaration.create();
+
+    // contains all styles used for this component that are scoped and adopted on the document
+    activatedScopedStyles = new Set<DynamicCSSStyleSheet>()
 
     // return rendered HTML for stylesheets used in this component
     public getRenderedStyle() {

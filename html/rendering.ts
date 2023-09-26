@@ -403,13 +403,13 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 }
 
 
-export async function preloadElementOnBackend(element:Element|DocumentFragment) {
+export async function preloadElementOnBackend(element:Element|DocumentFragment, parent?:Element|DocumentFragment) {
 	// preload in deno, TODO: better solution?
 	if (IS_HEADLESS) {
 
 		const promises = [];
 
-		// fake dom append
+		// fake dom append for UIX Component
 		if (element instanceof UIX.UIXComponent || element instanceof UIX.Components.Base) {
 			let resolved = false;
 			const timeoutSec = `${(element.CREATE_TIMEOUT/1000)}s`
@@ -425,11 +425,17 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment) 
 			])
 			resolved = true;
 		}
+		
+		// fake dom append for other elements with connectedCallback (e.g light-root)
+		else if (typeof (element as any).connectedCallback == "function") {
+			(element as any).connectedCallback();
+		}
+
 		// load shadow root
-		if ((element as Element).shadowRoot) promises.push(preloadElementOnBackend((element as Element).shadowRoot!))
+		if ((element as Element).shadowRoot) promises.push(preloadElementOnBackend((element as Element).shadowRoot!, element))
 		// load children
 		for (const child of (element.childNodes as unknown as Element[])) {
-			promises.push(preloadElementOnBackend(child));
+			promises.push(preloadElementOnBackend(child, element));
 		}
 
 		await Promise.all(promises)

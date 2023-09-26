@@ -553,9 +553,9 @@ export namespace HTMLUtils {
                 // return parent;
             } else {
                 const dom = valuesToDOMElement(child);
+
                 // set shadow root or append
                 if (lastAnchor) {
-
                     appendElementOrShadowRoot(lastAnchor, dom, undefined, true, (e) => (lastChildren.push(...e)));
                     lastAnchor = dom;
                 }

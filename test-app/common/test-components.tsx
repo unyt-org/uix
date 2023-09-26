@@ -90,14 +90,44 @@ class ClassComponent2 extends UIX.ShadowDOMComponent<{title:string}> {
     }
 }
 
-const CustomComponentWithSlots2 = UIX.template(<div>
+
+// shadow root + slot
+const CustomComponentWithSlots1 = UIX.template(<div>
+	1
     <shadow-root>
+		<slot name="title" style="font-weight:bold"/>
         Before children
         <slot/>
         After children
     </shadow-root>
     This child is appended to the slot element inside the shadow root
 </div>)
+
+// alternative shadow root + slot
+const CustomComponentWithSlots2 = UIX.template(<div>
+	2
+    <ShadowRoot>
+		<slot name="title" style="font-weight:bold"/>
+        Before children
+        <slot/>
+        After children
+    </ShadowRoot>
+    This child is appended to the slot element inside the shadow root
+</div>)
+
+// light root + slot
+const CustomComponentWithSlots3 = UIX.template(<div>
+	3
+    <light-root>
+		<slot name="title" style="font-weight:bold"/>
+        Before children
+        <slot/>
+        After children
+    </light-root>
+    This child is appended to the slot element inside the shadow root
+</div>)
+
+
 
 const list = [
 	{
@@ -187,13 +217,43 @@ const TemplateWithOptions = UIX.template<{image:HTMLImageElement, x: number, map
 	}
 `)
 @TemplateWithOptions
-export class CompontentWithOptions extends UIX.UIXComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
+export class ComponentWithOptions extends UIX.UIXComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
 	protected override onCreate() {
 		console.debug("CompontentWithOptions image", this.options.image, this.options.$.image)
-		console.debug("CompontentWithOptions x", this.options.x, this.options.$.x)
-		console.debug("CompontentWithOptions map", this.options.map, this.options.$.map)
+		console.debug("ComponentWithOptions x", this.options.x, this.options.$.x)
+		console.debug("ComponentWithOptions map", this.options.map, this.options.$.map)
 	}
 }
+
+@style("./style1.css")
+
+@style(SCSS`
+	div {
+		background: green;
+		color: #eee;
+
+		& h1 {
+			color: white;
+		}
+	}
+`)
+
+@style(SCSS`
+	* {
+		font-family: sans-serif;
+	}
+`)
+@UIX.template(
+	<div>
+		<h1>Title</h1>
+		Lorem Ispum blalblablababl...
+	</div>
+)
+export class ComponentWithStyle extends UIX.UIXComponent {
+
+}
+
+
 
 
 export const testComponents = {
@@ -204,9 +264,11 @@ export const testComponents = {
 	templateAndComponent: UIX.lazy(() => 
 		<Container>
 			<TemplateWithOptions   x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></TemplateWithOptions>
-			<CompontentWithOptions x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></CompontentWithOptions>
+			<ComponentWithOptions x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></ComponentWithOptions>
 		</Container>
 	),
+
+	style: UIX.lazy(() => <ComponentWithStyle/>),
 
 	/** 
 	 * Contexts demo:
@@ -347,8 +409,9 @@ export const testComponents = {
 	</>,
 
 	templates: <>
-
-		<CustomComponentWithSlots2>123</CustomComponentWithSlots2>
+		<CustomComponentWithSlots1><div slot="title">X1</div>x1</CustomComponentWithSlots1>
+		<CustomComponentWithSlots2><div slot="title">X2</div>x2</CustomComponentWithSlots2>
+		<CustomComponentWithSlots3><div slot="title">X3</div>x3</CustomComponentWithSlots3>
 		<TemplateComp>Hello World</TemplateComp>
 		<TemplateCompWithShadowRoot>Hello World Shadow Root</TemplateCompWithShadowRoot>
 		<TemplateCompWithShadowRootTemplate>Hello World Shadow Root 2</TemplateCompWithShadowRootTemplate>

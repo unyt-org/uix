@@ -187,52 +187,110 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
  * ```
  * @param elementGenerator 
  */
-export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<Element, Options, Children, true, true>):jsxInputGenerator<Element, Options, Children> {
+export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<Element, Options, Children, true, true>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any) {
 	return function(props:any) {
 		const collapsedPropsProxy = new Proxy(props, {
 			get(target,p) {
 				return val(target[p])
 			},
 		});
-		return elementGenerator(props, collapsedPropsProxy) 
+
+		return elementGenerator(props, collapsedPropsProxy);
 	}
 }
 
 
-
+/**
+ * \@style decorator
+ * 
+ * Can be used to define an inline style generator for a component:
+ * 
+ * ```tsx
+ * ;@style<{color:string}>(({color}) => SCSS `
+ *   #main {
+ *     background-color: ${color};
+ *   }
+ * `)
+ * class MyComponent extends UIXComponent {...}
+ * ```
+ * @param styleGenerator 
+ */
 export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(styleGenerator:jsxInputGenerator<CSSStyleSheet, Options, never, false, false, Context>):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
 
-export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(style:CSSStyleSheet):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
+/**
+ * \@style decorator
+ * 
+ * Can be used to define inline styles for a component:
+ * 
+ * ```tsx
+ * ;@style(SCSS `
+ *   #main {
+ *     background-color: magenta;
+ *   }
+ * `)
+ * class MyComponent extends UIXComponent {...}
+ * ```
+ * @param styleGenerator 
+ */
+export function style(style:CSSStyleSheet):((cl:typeof HTMLElement)=>any)
 
-export function style(templateOrGenerator:CSSStyleSheet|jsxInputGenerator<CSSStyleSheet, any, any, any>) {
+/**
+ * \@style decorator
+ * 
+ * Can be used to define an external style sheet for a component:
+ *
+ * ```tsx
+ * ;@style("./my-style.scss")
+ * class MyComponent extends UIXComponent {...}
+ * ```
+ * @param styleGenerator 
+ */
+export function style(file:string|URL):((cl:typeof HTMLElement)=>any)
+
+
+export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGenerator<CSSStyleSheet, any, any, any>) {
 	let generator:any;
 	const module = getCallerFile();
 
+	// string to url
+	if (typeof templateOrGenerator == "string") templateOrGenerator = new URL(templateOrGenerator, module)
+
+	// generator function
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
 		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			propsOrClass.style_template = generator
+			if (!propsOrClass.style_templates) propsOrClass.style_templates = new Set()
+			propsOrClass.style_templates.add(generator)
 		}
-		// jsx
+		// evaluate
 		else {
-			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass)
-			else return templateOrGenerator(propsOrClass);
+
+			const collapsedPropsProxy = new Proxy(propsOrClass, {
+				get(target,p) {
+					return val(target[p])
+				},
+			});
+
+			if (context && (templateOrGenerator as Function).call) return templateOrGenerator.call(context, propsOrClass, collapsedPropsProxy)
+			else return (templateOrGenerator as Function)(propsOrClass, collapsedPropsProxy);
 		}
 	}
-	else generator = function(propsOrClass:any) {
+
+	// CSSStyleSheet or URL/string
+	else generator = function (propsOrClass:any) {
 
 		// decorator
 		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			propsOrClass.style_template = generator
+			if (!propsOrClass.style_templates) propsOrClass.style_templates = new Set()
+			propsOrClass.style_templates.add(generator)
 		}
-		// jsx
+		// evaluate
 		else {
 			return templateOrGenerator;
 		}
-	};
+	}
 
 	return generator;
-
 }

@@ -7,7 +7,7 @@ const LOCAL_VAR_PREFIX = '--uix-local-value-'
 const GLOBAL_VAR_PREFIX = '--uix-global-value-'
 
 type cssGeneratorFunction = (it:HTMLElement)=>string|number;
-type cssParam = Datex.CompatValue<primitive> | cssGeneratorFunction;
+type cssParam = Datex.RefOrValue<primitive> | cssGeneratorFunction;
 
 export interface DynamicCSSStyleSheet extends CSSStyleSheet {
 	activate(document: Document|ShadowRoot): void

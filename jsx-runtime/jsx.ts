@@ -43,6 +43,9 @@ export function jsx (type: string | any, config: Record<string,any>): Element|Do
 		shadow_root = props['shadow-root']==true?'open':props['shadow-root'];
 		delete props['shadow-root'];
 	}
+
+	// replace ShadowRoot with shadow-root
+	if (type === ShadowRoot) type = "shadow-root";
 	
 	if (typeof type === 'function') {
 
@@ -235,6 +238,7 @@ declare global {
 		// other custom elements
 		& {
 			'shadow-root': {children?: childrenOrChildrenPromise|childrenOrChildrenPromise[]} & {[key in keyof IntrinsicAttributes]: never} & {mode?:'open'|'closed'}
+			'light-root': {children?: childrenOrChildrenPromise|childrenOrChildrenPromise[]} & {[key in keyof IntrinsicAttributes]: never}
 		}
 	}
   }

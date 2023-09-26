@@ -95,6 +95,8 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 	else {
 		// @ts-ignore
 		if (el.style_sheets_urls && collectedStylsheets) collectedStylsheets.push(...el.style_sheets_urls)
+		// @ts-ignore
+		if (el.activatedScopedStyles && collectedStylsheets) collectedStylsheets.push(...el.activatedScopedStyles)
 	}
 
 	for (const child of (el.childNodes as unknown as Node[])) {

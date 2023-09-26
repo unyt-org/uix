@@ -25,9 +25,9 @@ export const elementEventHandlerAttributes = [
 // list of all default element attributes
 export const defaultElementAttributes = [
 	"accesskey", "class", "contenteditable", "contextmenu", "dir", "draggable", "dropzone", "hidden", "id", "lang", "spellcheck", "style", "tabindex", "title",
-	"role",
+	"role", "name", "slot",
 	// uix specific
-	"uix-module", "datex-pointer", "shadow-root"
+	"uix-module", "datex-pointer", "shadow-root", "light-root"
 ] as const;
 
 // TODO: replace with uix:, datex:
@@ -102,9 +102,9 @@ export const htmlElementAttributes = {
 	source: [...src, "type"],
 	label: ["for"],
 	video: [...src, ...widthAndHeight, "autoplay", "controls", "loop", "muted", "poster", "preload", "playsinline"],
-	textarea: ["placeholder", "name"],
+	textarea: ["placeholder"],
 	option: ["value", "selected"],
-	select: ["name"]
+	select: []
 } as const satisfies {[key in keyof HTMLElementTagNameMap]?: readonly string[]};
 
 

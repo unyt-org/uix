@@ -6,6 +6,7 @@ export * from "./html/entrypoints.ts"
 export * from "./html/entrypoint-providers.tsx"
 export * from "./html/utils.ts"
 export * from "./html/anonymous_components.ts"
+export * from "./html/light-root.ts"
 
 // routing
 export * from "./routing/route-filter.ts"

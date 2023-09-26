@@ -40,7 +40,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 			return `async ${name??'function'} (...args) {
 				await import("unyt_core");
 				await Datex.Supranet.connect();
-				return datex('${ptr.idString()}(?)', [args]);
+				return datex('${ptr.idString()}(Tuple(?))', [args]);
 			}`
 		}
 	}
@@ -50,7 +50,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 				// use datex
 				if (globalThis.datex && globalThis.Datex) {
 					await Datex.Supranet.connect();
-					return datex('${ptr.idString()}(?)', [args]);
+					return datex('${ptr.idString()}(Tuple(?))', [args]);
 				}
 				// use datex-over-http
 				else {

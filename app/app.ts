@@ -179,3 +179,8 @@ class UIXApp {
  * The currrent UIXApp, accessible on a client or on the backend
  */
 export const app = new UIXApp();
+
+// @ts-ignore use pre injected uix app metadata
+if (globalThis._UIX_options && !app.options) {
+	app.options = globalThis._UIX_options
+}

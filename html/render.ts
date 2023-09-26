@@ -398,7 +398,11 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 
 	// no js, only inject some UIX app metadata
 	else {
-		files += indent(4) `<script type="module">\nglobalThis._UIX_appdata = {name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:"${Datex.Runtime.endpoint.toString()}"${Datex.Unyt.endpoint_info.app?.host ? `, host:"${Datex.Unyt.endpoint_info.app.host}"`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}};\n</script>`
+		files += indent(4) `
+			<script type="module">\n
+				globalThis._UIX_appdata = {name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:"${Datex.Runtime.endpoint.toString()}"${Datex.Unyt.endpoint_info.app?.host ? `, host:"${Datex.Unyt.endpoint_info.app.host}"`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}};
+				globalThis._UIX_options = ${JSON.stringify(provider.app_options, null, "  ")}
+			</script>`
 	}
 
 	// inject other static js scripts

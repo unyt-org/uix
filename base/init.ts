@@ -34,6 +34,7 @@ if (globalThis._UIX_appdata) {
 	State._setMetadata(appdata)
 }
 
+
 // enable DATEX CLI
 if (globalThis.Deno) Datex.enableCLI();
 

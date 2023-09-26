@@ -328,7 +328,6 @@ export namespace HTMLUtils {
 
             // :out attributes
             if (isInputElement && (attr == "value:out" || attr == "value")) {
-                console.log("set valouaut", element,value,attr)
 
                 if (type.matchesType(Datex.Type.std.text)) element.addEventListener('change', () => value.val = element.value)
                 else if (type.matchesType(Datex.Type.std.decimal)) element.addEventListener('change', () => value.val = Number(element.value))

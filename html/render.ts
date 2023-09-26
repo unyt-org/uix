@@ -172,6 +172,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 				const listenerFn = (forceBindToOriginContext ? UIX.bindToOrigin(listener) : listener);
 
 				// special form "action" on submit
+				// FIXME
 				if (event == "submit" && Datex.Pointer.getByValue(listenerFn)) {
 					attrs.push(`action="/@uix/form-action/${Datex.Pointer.getByValue(listenerFn)!.idString()}/"`);
 				} 

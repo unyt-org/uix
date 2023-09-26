@@ -91,8 +91,9 @@ export const htmlElementAttributes = {
 
 	script: [...src, "type"],
 
+	progress: ["value", "max", "min"],
 	input: [alt, ...src, alt, ...widthAndHeight, "min", "minlength", "accept", "autocomplete", "autofocus", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "list", "max", "maxlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "step", "type", "value", "valueOut", "valueInitial"],
-	button: ["type"],
+	button: ["type", "disabled"],
 	form: ["method", "enctype", "action"],
 	img: [alt, ...src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
@@ -137,8 +138,15 @@ export type htmlElementAttributeValues = {
 		valueOut: Datex.Pointer,
 	},
 
+	progress: {
+		value: string | number,
+		max: string | number,
+		min: string | number
+	},
+
 	button: {
-		type: "button"|"submit"|"reset"
+		type: "button"|"submit"|"reset",
+		disabled: boolean
 	},
 
 	form: {

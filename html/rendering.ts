@@ -253,13 +253,13 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 		return resolved;
 	} 
 	else {
+		// pass through if nothing found
 		return {
-			status_code: 404,
-			content: "Route not found",
+			status_code: 200,
+			content: null,
 			loaded: true,
-			render_method: RenderMethod.RAW_CONTENT
+			render_method: RenderMethod.DYNAMIC
 		}
-		// throw new Error("no match in path map for " + entrypointData.route)
 	}
 }
 

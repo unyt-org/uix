@@ -9,7 +9,12 @@
 
     /* Must have display: contents; (default)*/
     /* display: block;  */
+    /* overflow-y: scroll; */
+
+    display: block;
     overflow-y: scroll;
+    width: 100vw;
+    height: 100vh;
 }
 
 .notification-container {

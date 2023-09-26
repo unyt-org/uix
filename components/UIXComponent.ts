@@ -1126,6 +1126,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
             // adopt CSSStylesheet (works if css does not use @import and shadowRoot exists, otherwise use <link>)
             if (adopt && this.shadowRoot) {
                 const stylesheet = UIXComponent.getURLStyleSheet(url_or_style_sheet, allow_fail);
+
                 // is sync
                 if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) this.adoptStyle(stylesheet)
                 else if (stylesheet) return new Promise<void>(async resolve=>{

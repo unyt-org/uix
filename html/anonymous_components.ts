@@ -189,7 +189,12 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
  */
 export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<Element, Options, Children, true, true>):jsxInputGenerator<Element, Options, Children> {
 	return function(props:any) {
-		return elementGenerator(props) 
+		const collapsedPropsProxy = new Proxy(props, {
+			get(target,p) {
+				return val(target[p])
+			},
+		});
+		return elementGenerator(props, collapsedPropsProxy) 
 	}
 }
 

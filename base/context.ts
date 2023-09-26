@@ -45,6 +45,11 @@ export class Context {
 	language = "en";
 	endpoint: Datex.Endpoint = BROADCAST
 
+	async getPostParams() {
+		if (this.request!.method !== "POST") throw new Error("Not a POST request");
+		return new URLSearchParams(await this.request!.text()!);
+	}
+
 	async getSharedData(): Promise<Record<string, unknown>|null> {
 		if (!this.request) return null;
 		const cookie = getCookies?.(this.request?.headers)?.['uix-shared-data'];
@@ -68,7 +73,7 @@ export class ContextBuilder {
 		return getCookies?.(req.headers)?.['uix-language'] ?? req.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.split("-")[0] ?? "en"
 	}
 
-	async setRequestData(req:Deno.RequestEvent, path:string, conn?:Deno.Conn) {
+	setRequestData(req:Deno.RequestEvent, path:string, conn?:Deno.Conn) {
 		this.#ctx.request = req.request
 		this.#ctx.requestData.address = req.request.headers?.get("x-real-ip") ??
 					req.request.headers?.get("x-forwarded-for") ?? 
@@ -76,15 +81,11 @@ export class ContextBuilder {
 		
 		this.#ctx.path = path;
 
-		const isPost = this.#ctx.request!.method == "POST";
-		const postRequestBody = isPost ? await this.#ctx.request!.text() : null;
-
 		const ctx = this.#ctx;
 
 		Object.defineProperty(this.#ctx, "searchParams", {
 			get() {
-				if (isPost) return new URLSearchParams(postRequestBody!);
-				else return new URL(ctx.request!.url).searchParams
+				return new URL(ctx.request!.url).searchParams
 			},
 		})
 	
@@ -109,4 +110,4 @@ export class ContextBuilder {
 }
 
 
-export type ContextGenerator = () => Promise<Context>
+export type ContextGenerator = () => Context

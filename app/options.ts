@@ -7,7 +7,7 @@ declare const Datex: any; // cannot import Datex here, circular dependency probl
 export type appOptions = {
 	name?: string,  // app name
 	description?: string, // app description
-	icon_path?: string, // path to app icon / favicon
+	icon?: string, // path to app icon / favicon
 	version?: string, // app version
 	installable?: boolean, // can be installed as standalone web app
 	offline_support?: boolean, // add a service worker with offline cache
@@ -27,7 +27,7 @@ export interface normalizedAppOptions extends appOptions {
 	backend: Path.File[]
 	common: Path.File[],
 	pages?: Path.File
-	icon_path: string,
+	icon: string,
 
 	scripts: (Path|string)[],
 	import_map_path: never
@@ -44,7 +44,7 @@ export async function normalizeAppOptions(options:appOptions = {}, base_url?:str
 
 	n_options.name = options.name;
 	n_options.description = options.description;
-	n_options.icon_path = options.icon_path ?? 'https://dev.cdn.unyt.org/unyt_core/assets/skeleton_light.svg'
+	n_options.icon = options.icon ?? 'https://dev.cdn.unyt.org/unyt_core/assets/skeleton_light.svg'
 	n_options.version = options.version?.replaceAll("\n","");
 	n_options.offline_support = options.offline_support ?? true;
 	n_options.installable = options.installable ?? false;

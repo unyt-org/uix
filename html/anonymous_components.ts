@@ -1,3 +1,4 @@
+import { Datex } from "unyt_core/datex.ts";
 import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../jsx-runtime/jsx.ts";
 import { UIX } from "../uix.ts";
 import { HTMLUtils } from "./utils.ts";
@@ -54,16 +55,24 @@ type Equals<X, Y> =
     (<T>() => T extends X ? 1 : 2) extends
     (<T>() => T extends Y ? 1 : 2) ? true : false;
 
-export type jsxInputGenerator<Return, Options extends Record<string,any>, Children, handleAllProps = true, childrenAsArray = false, Context = unknown> =
+
+type Props<Options extends Record<string,unknown>, Children, handleAllProps = true> = JSX.DatexValueObject<Options> & 
+(
+	handleAllProps extends true ? 
+		(JSX.IntrinsicAttributes & 
+			(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: Children}))
+		) : unknown
+)
+
+type ObjectWithCollapsedValues<O extends Record<string, unknown>> = {
+	[K in keyof O]: O[K] extends Datex.RefOrValue<infer T> ? T : O[K]
+}
+
+export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Children, handleAllProps = true, childrenAsArray = false, Context = unknown> =
 	(
 		this: Context,
-		props: JSX.DatexValueObject<Options> & 
-			(
-				handleAllProps extends true ? 
-					(JSX.IntrinsicAttributes & 
-						(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: Children}))
-					) : unknown
-			)
+		props: Props<Options, Children, handleAllProps>,
+		propsValues: ObjectWithCollapsedValues<Props<Options, Children, handleAllProps>>
 	) => Return;
 
 
@@ -125,16 +134,23 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 		}
 		// jsx
 		else {
-			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass)
-			else return templateOrGenerator(propsOrClass);
+
+			const collapsedPropsProxy = new Proxy(propsOrClass, {
+				get(target,p) {
+					return val(target[p])
+				},
+			});
+
+			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass, collapsedPropsProxy)
+			else return templateOrGenerator(propsOrClass, collapsedPropsProxy);
 		}
 	}
-	else generator = function(propsOrClass:any) {
+	else generator = function(maybeClass:any) {
 
 		// decorator
-		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
-			propsOrClass._init_module = module;
-			const decoratedClass = Component(propsOrClass)
+		if (UIX.UIXComponent.isPrototypeOf(maybeClass)) {
+			maybeClass._init_module = module;
+			const decoratedClass = Component(maybeClass)
 			decoratedClass.template = generator
 			return decoratedClass
 		}

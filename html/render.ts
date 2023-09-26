@@ -151,6 +151,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 	if (dataPtr && opts?._injectedJsData && (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
 		let context: HTMLElement|undefined;
 		let parent: Element|null = el;
+		let hasScriptContent = false; // indicates whether the generated script actually contains relevant content, not just skeleton code
 		do {
 			const ctx = <HTMLElement|undefined>(<any>parent)[COMPONENT_CONTEXT];
 			if (ctx) {
@@ -163,51 +164,54 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
  		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
 		let script = `  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
 		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
+			
 			for (const listener of listeners) {
 
-				script += `{\n`
-
 				const standaloneFunction = (listener as any)[STANDALONE];
-				for (const [varName, value] of Object.entries((listener as any)[EXTERNAL_SCOPE_VARIABLES]??[])) {
-					// handle special case: this
-					if (varName == "this") {
-						script += `const ctx = querySelector('[data-ptr="${Datex.Pointer.getByValue((listener as any)[EXTERNAL_SCOPE_VARIABLES]['this'])?.id}"]'); // injected context\n`
-					}
-					// handle functions
-					else if (typeof value == "function") {
-						const boundFunction = UIX.bindToOrigin(value)
-						script += `const ${varName} = ${getFunctionSource(boundFunction, "ctx")};// injected context\n`
-					}
-					// cannot yet handle other values
-					else {
-						throw new Error("Invalid bound value from external scope: " + varName + ". Only functions are supported");
-					}
-				}
-				
-				// else if (!context) {
-				// 	throw new Error("Cannot infer 'this' in runInDisplayContext(). Please provide it as an argument.")
-				// }
-				// @ts-ignore
-				// const backendExportFunction = listener[BACKEND_EXPORT];
 				const forceBindToOriginContext = !isStandaloneContext&&!standaloneFunction;
 				const listenerFn = (forceBindToOriginContext ? UIX.bindToOrigin(listener) : listener);
 
 				// special form "action" on submit
-				if (event == "submit") {
-					script += `  el.setAttribute("action", "/@uix/form-action/${Datex.Pointer.getByValue(listenerFn)!.idString()}/");`
-				}
+				if (event == "submit" && Datex.Pointer.getByValue(listenerFn)) {
+					attrs.push(`action="/@uix/form-action/${Datex.Pointer.getByValue(listenerFn)!.idString()}/"`);
+				} 
 
 				// normal event listener
 				else {
+					hasScriptContent = true;
+
+					script += `{\n`
+	
+					for (const [varName, value] of Object.entries((listener as any)[EXTERNAL_SCOPE_VARIABLES]??[])) {
+						// handle special case: this
+						if (varName == "this") {
+							script += `const ctx = querySelector('[data-ptr="${Datex.Pointer.getByValue((listener as any)[EXTERNAL_SCOPE_VARIABLES]['this'])?.id}"]'); // injected context\n`
+						}
+						// handle functions
+						else if (typeof value == "function") {
+							const boundFunction = UIX.bindToOrigin(value as (...args: unknown[]) => unknown)
+							script += `const ${varName} = ${getFunctionSource(boundFunction, "ctx")};// injected context\n`
+						}
+						// cannot yet handle other values
+						else {
+							throw new Error("Invalid bound value from external scope: " + varName + ". Only functions are supported");
+						}
+					}
+					
+					// else if (!context) {
+					// 	throw new Error("Cannot infer 'this' in runInDisplayContext(). Please provide it as an argument.")
+					// }
+
 					script += `  el.addEventListener("${event}", ${getFunctionSource(listenerFn, "ctx")});`
+					script += `\n}\n`
 				}
 
 				
-				script += `\n}\n`
 
 			}
+			
 		}
-		opts._injectedJsData.init.push(script);
+		if (hasScriptContent) opts._injectedJsData.init.push(script);
 	}
 
 	if (selfClosingTags.has(tag)) return `<${tag} ${attrs.join(" ")}/>`;
@@ -435,8 +439,10 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	}
 
 	let favicon = "";
-	if (provider.app_options.icon_path) favicon = `<link rel="icon" href="${provider.resolveImport(provider.app_options.icon_path, compat_import_map)}">`
+	// TODO: remove icon_path, use icon instead
+	if (provider.app_options.icon || provider.app_options.icon) favicon = `<link rel="icon" href="${provider.resolveImport(provider.app_options.icon??provider.app_options.icon, compat_import_map)}">`
 
+	// TODO: fix open_graph_meta_tags?.getMetaTags()
 	return indent `
 		<!DOCTYPE html>
 		<html lang="${lang}">
@@ -444,7 +450,8 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 				<meta charset="UTF-8">
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 				<meta name="theme-color"/>	
-				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
+				${await open_graph_meta_tags?.getMetaTags()}
+				${provider.app_options.name ? `<title>${provider.app_options.name}</title>` : ''}
 				${favicon}
 				${provider.app_options.installable ? `<link rel="manifest" href="manifest.json">` : ''}
 				${importmap}

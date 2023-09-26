@@ -61,7 +61,8 @@ export class FrontendManager extends HTMLProvider {
 		this.#watch = watch;
 		this.#logger = new Datex.Logger("UIX Frontend");
 
-		if (this.app_options.offline_support) this.#client_scripts.push('uix/app/client-scripts/sw.ts');
+		// TODO: fix offline caching, currently sends multiple requests to the server in forms
+		// if (this.app_options.offline_support) this.#client_scripts.push('uix/app/client-scripts/sw.ts');
 
 		this.initFrontendDir();
 		this.intCommonDirs();
@@ -224,7 +225,7 @@ export class FrontendManager extends HTMLProvider {
 
 			if (!ptr) this.server.sendError(req, 400, "Invalid Form Action");
 			else {
-				console.log("form-action", ptrId, ptr);
+				// console.log("form-action", ptrId, req);
 				this.handleRequest(req, path, con, ptr.val)
 			}
 		});
@@ -635,9 +636,9 @@ runner.enableHotReloading();
 	}
 
 	private getUIXContextGenerator(requestEvent: Deno.RequestEvent, path:string, conn?:Deno.Conn){
-		return async ()=>{
+		return ()=>{
 			const builder = new UIX.ContextBuilder();
-			await builder.setRequestData(requestEvent, path, conn);
+			builder.setRequestData(requestEvent, path, conn);
 			return builder.build()
 		}
 	}
@@ -671,8 +672,8 @@ runner.enableHotReloading();
 		
 		// invalid content was created, should not happen
 		else if (content && typeof content == "object") {
-			console.log(content)
-			const [status_code, html] = createErrorHTML(`UIX exception #1`, 500);
+			console.log("invalid UIX content:", content)
+			const [status_code, html] = createErrorHTML(`Cannot render content type`, 500);
 			return [await getOuterHTML(html, {includeShadowRoots:true, injectStandaloneJS:true, lang}), RenderMethod.STATIC, status_code, undefined];
 		}
 		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData];
@@ -752,7 +753,7 @@ runner.enableHotReloading();
 
 	private async handleFavicon(requestEvent: Deno.RequestEvent, _path:string) {
 		try {
-			const path = new Path(this.resolveImport(this.app_options.icon_path, true, false), this.base_path);
+			const path = new Path(this.resolveImport(this.app_options.icon, true, false), this.base_path);
 			await this.server.serveContent(requestEvent, "image/*", await path.getTextContent());
 		} catch (e) {
 			console.log(e)
@@ -779,7 +780,7 @@ runner.enableHotReloading();
 				"version": this.app_options.version,
 				"icons": [
 				  {
-					"src": this.resolveImport(this.app_options.icon_path),
+					"src": this.resolveImport(this.app_options.icon),
 					"sizes": "287x287",
 					"type": "image/png"
 				  }

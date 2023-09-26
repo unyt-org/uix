@@ -16,7 +16,7 @@ export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
  * - parameters must be json compatible
  * @param fn
  */
-export function bindToOrigin<F extends (...args:any)=>any>(fn: F, context?:any, name?:string, forceDatex = false): F extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<Promise<R>>> : never  {
+export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, context?:any, name?:string, forceDatex = false): F extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<Promise<R>>> : never  {
 	
 	if (typeof fn !== "function") throw new Error("UIX.bindToOrigin: Must be a function");
 	// @ts-ignore already bound

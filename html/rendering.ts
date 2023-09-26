@@ -113,18 +113,18 @@ function reconstructMatchedURL(input:string, match:URLPatternResult) {
 	return input
 }
 
-async function resolveContext(entrypointData: entrypointData): Promise<any> { //: asserts entrypointData is entrypointData & {context: Context} {
-	if (typeof entrypointData.context == "function") entrypointData.context = await entrypointData.context();
+function resolveContext(entrypointData: entrypointData): asserts entrypointData is entrypointData & {context: UIX.Context} {
+	if (typeof entrypointData.context == "function") entrypointData.context = entrypointData.context();
 	if (!entrypointData.context) throw new Error("missing UIX context for generator function")
 }
 
 async function resolveGeneratorFunction(entrypointData: entrypointData<html_generator>): Promise<resolvedEntrypointData> {
-	await resolveContext(entrypointData)
+	resolveContext(entrypointData)
 
 	let returnValue: Entrypoint|undefined;
 	let hasError = false;
 	try {
-		returnValue = await entrypointData.entrypoint(entrypointData.context as UIX.Context, (entrypointData.context  as UIX.Context).params);
+		returnValue = await entrypointData.entrypoint(entrypointData.context, (entrypointData.context).params);
 	}
 	// return error as response with HTTPStatus error 500
 	catch (e) {
@@ -153,9 +153,9 @@ async function resolveRenderPreset(entrypointData: entrypointData<RenderPreset>)
 }
 
 async function resolveRouteHandler(entrypointData: entrypointData<RouteHandler>): Promise<resolvedEntrypointData> {
-	await resolveContext(entrypointData)
+	resolveContext(entrypointData)
 	if (!entrypointData.route) throw new Error("missing entrypoint route (required for RouteHandler")
-	const route2 = await entrypointData.entrypoint.getRoute(entrypointData.route, entrypointData.context as UIX.Context);
+	const route2 = await entrypointData.entrypoint.getRoute(entrypointData.route, entrypointData.context);
 	entrypointData.route = Path.Route("/"); // route completely resolved by getRoute
 	return resolveEntrypointRoute({...entrypointData, entrypoint: route2})
 }
@@ -184,7 +184,7 @@ function generateURLParamsObject(matches: URLPatternResult) {
 }
 
 async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>): Promise<resolvedEntrypointData|undefined> {
-	await resolveContext(entrypointData)
+	resolveContext(entrypointData)
 
 	// find longest matching route
 	let closest_match_key:string|filter|null = null;
@@ -201,41 +201,43 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 	// handle symbol keys (request methods)
 	let matchingSymbol = false;
 
-	for (const symbolKey of Object.getOwnPropertySymbols(entrypointData.entrypoint)) {
-		if (await evaluateFilter(symbolKey as filter, entrypointData.context as UIX.Context)) {
-			matchingSymbol = true;
-			closest_match_key = symbolKey as filter;
+	for (const potential_route_key of Object.keys(entrypointData.entrypoint)) {
+		let matchWith = entrypointData.route!;
+
+		let urlPattern:URLPattern;
+		// url with http - match with base origin
+		if (potential_route_key.startsWith("http://") || potential_route_key.startsWith("https://")) {
+			urlPattern = new URLPattern(potential_route_key);
+			matchWith = new Path(entrypointData.route!.routename, globalThis.location?.href??'http:///unknown')
+		}
+		// just match a generic route
+		else {
+			let normalized_route_key = potential_route_key;
+			if (!potential_route_key.startsWith("/")) normalized_route_key = "/" + potential_route_key
+			const [pathname, hash] = normalized_route_key.split("#");
+			urlPattern = new URLPattern({pathname, hash})
+		}
+		
+		let match:URLPatternResult|null;
+		if ((match=urlPattern.exec(matchWith.toString())) && isBetterMatch(potential_route_key)) {
+			closest_match_key = potential_route_key;
+			closest_match_route = Path.Route(reconstructMatchedURL(potential_route_key, match));
+			// route ends with * -> allow child routes
+			handle_children_separately = potential_route_key.endsWith("*");
+	
+			entrypointData.context.params = generateURLParamsObject(match);
+			entrypointData.context.urlPattern = match;	
 		}
 	}
+	
 
-
-	if (!matchingSymbol) {
-		for (const potential_route_key of Object.keys(entrypointData.entrypoint)) {
-			let matchWith = entrypointData.route!;
-
-			let urlPattern:URLPattern;
-			// url with http - match with base origin
-			if (potential_route_key.startsWith("http://") || potential_route_key.startsWith("https://")) {
-				urlPattern = new URLPattern(potential_route_key);
-				matchWith = new Path(entrypointData.route!.routename, globalThis.location?.href??'http:///unknown')
-			}
-			// just match a generic route
-			else {
-				let normalized_route_key = potential_route_key;
-				if (!potential_route_key.startsWith("/")) normalized_route_key = "/" + potential_route_key
-				const [pathname, hash] = normalized_route_key.split("#");
-				urlPattern = new URLPattern({pathname, hash})
-			}
-			
-			let match:URLPatternResult|null;
-			if ((match=urlPattern.exec(matchWith.toString())) && isBetterMatch(potential_route_key)) {
-				closest_match_key = potential_route_key;
-				closest_match_route = Path.Route(reconstructMatchedURL(potential_route_key, match));
-				// route ends with * -> allow child routes
-				handle_children_separately = potential_route_key.endsWith("*");
-		
-				(entrypointData.context as UIX.Context).params = generateURLParamsObject(match);
-				(entrypointData.context as UIX.Context).urlPattern = match;	
+	// check symbols if no match key found, or only default wildcard
+	if (closest_match_key==null || closest_match_key == "*") {
+		for (const symbolKey of Object.getOwnPropertySymbols(entrypointData.entrypoint)) {
+			if (await evaluateFilter(symbolKey as filter, entrypointData.context)) {
+				matchingSymbol = true;
+				closest_match_key = symbolKey as filter;
+				break;
 			}
 		}
 	}

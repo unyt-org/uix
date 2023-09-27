@@ -7,11 +7,25 @@ const logger = new Logger("UIX Import Map");
  */
 export class ImportMap {
 
-	get imports(){return this.#map.imports}
+	/**
+	 * the orignal import map json
+	 */
+	get json() {return this.#json}
+	
+	/**
+	 * imports property of the import map
+	 */
+	get imports(){return this.#json.imports}
 
-	// imports without temporary imports
+	toString(onlyImports = false) {
+		return JSON.stringify(onlyImports ? {imports:this.imports} : this.#json, null, '    ')
+	}
+
+	/**
+	 * imports without temporary imports
+	 */
 	get static_imports(){
-		const imports = {...this.#map.imports};
+		const imports = {...this.#json.imports};
 		for (const key of Object.keys(imports)) {
 			if (this.isEntryTemporary(key)) delete imports[key];
 		}
@@ -20,8 +34,9 @@ export class ImportMap {
 
 
 	#readonly = true;
-	#map: {imports:Record<string,string>};
+	#json: {imports:Record<string,string>};
 	#path?: Path;
+
 
 	#temporary_imports = new Set<string>;
 
@@ -34,7 +49,7 @@ export class ImportMap {
 	}
 
 	constructor(map:{imports:Record<string,string>}, path?:string|URL) {
-		this.#map = map;
+		this.#json = map;
 		this.#path = path ? new Path(path) : undefined;
 		this.#readonly = !this.#path || this.#path.is_web;
 
@@ -108,7 +123,7 @@ export class ImportMap {
 	#writeToFile(){
 		if (!this.#path) throw new Error("import map is readonly")
 		try {
-			Deno.writeTextFileSync(this.#path, JSON.stringify(this.#map, null, '    '))
+			Deno.writeTextFileSync(this.#path, this.toString())
 		}
 		catch {
 			logger.error("could not update import map")

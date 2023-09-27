@@ -5,6 +5,7 @@ import { HTMLUtils } from "./utils.ts";
 import { unsafeHTML } from "../uix_short.ts";
 import { HTTPError } from "./http-error.ts";
 import { HTTPStatus } from "./http-status.ts";
+import { bindToOrigin } from "../utils/datex_over_http.ts";
 
 function createErrorMessageHTML(title: string, message?: string|Element, attachment?: Element, statusCode?: number, displayLocation?: string) {
 
@@ -62,8 +63,8 @@ export function createErrorHTML(title: string, error?: Error|number|HTTPStatus<n
 		const stack = HTMLUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&'+(isBackend ? ':source': '')+'">$&</a>')
 		errorMessage = unsafeHTML(`<div>${stack}</div>`);
 		attachment = lastURL ? 
-			<iframe style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+(isBackend ? ':source': '')}></iframe> :
-			undefined
+			<iframe onload={bindToOrigin(e => e.target.style.display="block")} style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+(isBackend ? ':source': '')}></iframe> :
+			undefined;
 	}
 
 

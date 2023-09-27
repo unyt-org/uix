@@ -1344,7 +1344,7 @@ export class TableNodeElement<O extends UIX.Components.Node.Options = UIX.Compon
 
 @UIX.Group("MySQL")
 @UIX.Id("xxx")
-@UIX.Component<DB_STRUCTURE_OPTIONS>({default_connection_options:{line_type:UIX.Components.Node.Connection.LINE_TYPE.ANGULAR}, bg_color:'var(--grey_blue)'})
+@UIX.Component<DB_STRUCTURE_OPTIONS>({default_connection_options:{line_type:UIX.Components.NodeConnection.LINE_TYPE.ANGULAR}, bg_color:'var(--grey_blue)'})
 export class DBStructureView<O extends DB_STRUCTURE_OPTIONS = DB_TABLE_VIEW_OPTIONS> extends UIX.Components.NodeGroup<O> {
 
     sql: SQLConnection;

@@ -349,6 +349,14 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	const use_js = (render_method == UIX.RenderMethod.DYNAMIC || render_method == UIX.RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
 	const add_importmap = render_method != UIX.RenderMethod.STATIC_NO_JS;
 
+	// inject uix app options
+	if (render_method != UIX.RenderMethod.STATIC_NO_JS && provider.app_options?.import_map) {
+		files += indent(4) `
+			<script type="module">
+				globalThis._UIX_import_map = ${provider.app_options.import_map.toString(true)}
+			</script>`
+	}
+
 	//js files
 	if (use_js) {
 		files += '<script type="module">'
@@ -397,11 +405,10 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	}
 
 	// no js, only inject some UIX app metadata
-	else {
+	else if (render_method != UIX.RenderMethod.STATIC_NO_JS) {
 		files += indent(4) `
-			<script type="module">\n
+			<script type="module">
 				globalThis._UIX_appdata = {name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:"${Datex.Runtime.endpoint.toString()}"${Datex.Unyt.endpoint_info.app?.host ? `, host:"${Datex.Unyt.endpoint_info.app.host}"`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}};
-				globalThis._UIX_options = ${JSON.stringify(provider.app_options, null, "  ")}
 			</script>`
 	}
 

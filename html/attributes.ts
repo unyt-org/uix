@@ -97,7 +97,7 @@ export const htmlElementAttributes = {
 	form: ["method", "enctype", "action"],
 	img: [alt, ...src, ...widthAndHeight, "crossorigin", "ismap", "loading", "longdesc", "referrerpolicy", "sizes", "srcset", "usemap"],
 	template: ["shadowrootmode"],
-	iframe: [...src],
+	iframe: [...src, "allowtransparency"],
 	details: ["open"],
 	source: [...src, "type"],
 	label: ["for"],
@@ -166,7 +166,9 @@ export type htmlElementAttributeValues = {
 		shadowrootmode: 'open'|'closed'
 	},
 
-	iframe: src,
+	iframe: src & {
+		allowtransparency: boolean | "true" | "false"
+	},
 
 	source: src,
 

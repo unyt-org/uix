@@ -472,16 +472,18 @@ export async function refetchRoute(route: Path.route_representation, entrypoint:
 	const route_path = Path.Route(route);
 
 	const {content: routing_handler, remaining_route} = await resolveEntrypointRoute({entrypoint, route: route_path, context, return_first_routing_handler: true});
-	if (!remaining_route) throw new Error("could not reconstruct route " + route_path.routename);
-	
-	// valid part of route before potential RouteManager
-	const existing_route = Path.Route(route_path.routename.replace(remaining_route.routename,""));
-	
+
 	// resolve internal route in RouteManager
 	if (routing_handler?.getInternalRoute) {
+		if (!remaining_route) throw new Error("could not reconstruct route " + route_path.routename);
+	
+		// valid part of route before potential RouteManager
+		const existing_route = Path.Route(route_path.routename.replace(remaining_route.routename,""));
+	
 		const combined_route = <Path.Route> existing_route.getChildRoute(Path.Route(await (<RouteManager>routing_handler).getInternalRoute()));
 		return combined_route;
 	}
-	else return existing_route;
+	// no internal routing, just return original route
+	else return route_path;
 	
 }

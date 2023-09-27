@@ -4,7 +4,9 @@ import { FrontendManager } from "./frontend-manager.ts";
 import { BackendManager } from "./backend-manager.ts";
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { Path } from "../utils/path.ts";
+import { ImportMap } from "../utils/importmap.ts";
 import { Server } from "../server/server.ts";
+
 import type { appOptions, normalizedAppOptions } from "./options.ts";
 
 const logger = new Datex.Logger("UIX App");
@@ -181,6 +183,6 @@ class UIXApp {
 export const app = new UIXApp();
 
 // @ts-ignore use pre injected uix app metadata
-if (globalThis._UIX_options && !app.options) {
-	app.options = globalThis._UIX_options
+if (globalThis._UIX_import_map && !app.options) {
+	app.options = {import_map: new ImportMap(globalThis._UIX_import_map)}
 }

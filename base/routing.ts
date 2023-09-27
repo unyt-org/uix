@@ -56,12 +56,10 @@ export namespace Routing {
 
 		const backend_available = backend_entrypoint ? await initEndpointContent(backend_entrypoint) : false;
 		const frontend_available = frontend_entrypoint ? await initEndpointContent(frontend_entrypoint) : false;
+
 		// no content for path found after initial loading
-		if (!frontend_available && !backend_entrypoint) {
-		// TODO: should be 'if (!frontend_available && !backend_available) {'
-		// relaxed check only checks for any existing baclend entrypoint
-		displayError("No content for this path", "No default entrypoint exports found")
-			// document.body.innerHTML = await (await provideError("No content for this path")).text();
+		if (!frontend_available && !backend_available) {
+			displayError("No content", `Route resolved to null on the ${backend_entrypoint?'backend':''}${(backend_entrypoint&&frontend_entrypoint?' and ': '')}${frontend_entrypoint?'frontend':''}`)
 		}
 	}
 
@@ -81,7 +79,6 @@ export namespace Routing {
 
 		if (current_content !== content) {
 			current_content = content;
-			// console.log("-->",content)
 			// TODO:
 			if (content == null) return;
 			if (content instanceof Array) {
@@ -212,7 +209,7 @@ export namespace Routing {
 			} 
 
 			const refetched_route = await refetchRoute(route, entrypoint);// Path.Route(await (<RouteManager>current_content).getInternalRoute());
-			// check of accepted route matches new calculated current_route
+			// check if accepted route matches new calculated current_route
 			if (route_should_equal && !Path.routesAreEqual(route_should_equal, refetched_route)) {
 				logger.warn `new route should be "${Path.Route(route_should_equal).routename}", but was changed to "${refetched_route.routename}". Make sure getInternalRoute() and onRoute() are consistent in all components.`;
 				// stop ongoing loading animation

@@ -335,7 +335,7 @@ export class Server {
         
         let normalized_path:string|false = this.normalizeURL(requestEvent.request);
         let handled:boolean|void|string = false;
-
+        
         // error parsing url (TODO: this should not happen)
         if (normalized_path == false) {
             this.sendError(requestEvent, 500);
@@ -344,7 +344,7 @@ export class Server {
 
         // TODO: move, uix specific - ignore wss connections
         // TODO style noscript
-        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" || requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe") && requestEvent.request.headers.get("connection")!="Upgrade" && !getCookies!(requestEvent.request.headers)["uix-endpoint"]) {
+        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade" && !getCookies!(requestEvent.request.headers)["uix-endpoint"]) {
 			const html = `<html>
             <noscript>Please activate JavaScript in your browser!</noscript>
             <script type="module" src="${import.meta.resolve('uix/session/init.ts')}"></script>
@@ -454,6 +454,7 @@ export class Server {
 
         // open file in new browser tab => special file preview
         const displayWithSyntaxHighlighting = isBrowser && (request.headers.get("Sec-Fetch-Dest") == "document" || request.headers.get("Sec-Fetch-Dest") == "iframe") && !!url.hasFileExtension("ts", "tsx", "js", "jsx", "css", "scss", "dx")
+
         const transpile = isBrowser && (displayWithSyntaxHighlighting ? contentType == "transpiled" : true)
         let filepath = this.findFilePath(url, normalizedPath, transpile, isSafari)
 
@@ -515,6 +516,7 @@ export class Server {
 
         // render file preview with syntax highlighting in browser
         if (displayWithSyntaxHighlighting) {
+
             if (!filepath.fs_exists) return this.getErrorResponse(404, "Not found");
             
             const content = await Deno.readTextFile(filepath.normal_pathname);
@@ -572,8 +574,7 @@ export class Server {
                 </body>
             </html>`
 
-            return this.getContentResponse("text/html", html)
-
+            return this.getContentResponse("text/html", html);
         }
         const response = await fileServer.serveFile(request, filepath.normal_pathname);
 
@@ -657,7 +658,8 @@ export class Server {
 
 
     public getContentResponse(type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string> = {}) {
-        if (this.#options.cors) Object.assign(headers, {"Content-Type": type, "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*"});
+        if (this.#options.cors) Object.assign(headers, {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*"});
+        headers["Content-Type"] = type;
 
         const res = new Response(content, {headers, status});
         if (cookies) {

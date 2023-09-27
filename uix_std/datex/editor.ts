@@ -271,7 +271,7 @@ export class DatexEditor extends UIX.Components.Base<DatexEditor.Options> {
         end_of_scope: true,
         intermediate_result: false,
         sid: Math.round(Math.random()*20000),
-        runtime_version: 1,
+        runtime_version: 0,
         compiler_version: 0
     }
 

@@ -206,7 +206,7 @@ export const svgTags = new Set(["animate", "animateMotion", "animateTransform", 
 export const svgElementAttributes = {
 	circle: [...cXY, "fill", "r"],
 	svg: [...widthAndHeight, "xmlns", "viewBox", "preserveAspectRatio", "fill"],
-	path: ["stroke", "stroke-width", "fill", "d"]
+	path: ["stroke", "stroke-width", "fill", "d", "fill-rule"]
 } as const satisfies {[key in keyof SVGElementTagNameMap]?: readonly string[]};
 
 

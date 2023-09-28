@@ -8,6 +8,7 @@ import { ImportMap } from "../utils/importmap.ts";
 import { Server } from "../server/server.ts";
 
 import type { appOptions, normalizedAppOptions } from "./options.ts";
+import { client_type } from "unyt_core/datex_all.ts";
 
 const logger = new Datex.Logger("UIX App");
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
@@ -86,6 +87,35 @@ class UIXApp {
 	 */
 	public ready = new Promise<void>(resolve=>this.onReady(()=>resolve()))
 
+	#domains?: string[]
+
+	/**
+	 * A list of all known domains for this app instance, sorted by priority
+	 * 
+	 * This includes auto-generated *.unyt.app domains
+	 */
+	public get domains() {
+		if (!this.#domains) {
+			// custom host domains
+			const domains = Deno.env.get("UIX_HOST_DOMAINS")?.split(",") ?? [];
+
+			// TODO: use this in the unyt core status logger, currently implemented twice
+			// app domains inferred from current endpoint
+			const urlEndpoint = Datex.Runtime.endpoint;
+			const endpointURLs = urlEndpoint ? [this.formatEndpointURL(urlEndpoint)].filter(v=>!!v) as string[] : [];
+
+			this.#domains = [...new Set([...domains, ...endpointURLs])];
+		}
+
+		return this.#domains!;
+	}
+
+	public formatEndpointURL(endpoint:Datex.Endpoint) {
+        const endpointName = endpoint.toString();
+        if (endpointName.startsWith("@+")) return `${endpointName.replace("@+","")}.unyt.app`
+        else if (endpointName.startsWith("@@")) return `${endpointName.replace("@@","")}.unyt.app`
+        else if (endpointName.startsWith("@")) return `${endpointName.replace("@","")}.unyt.me`
+    }
 
 	public async start(options:appOptions = {}, base_url?:string|URL) {
 
@@ -184,5 +214,6 @@ export const app = new UIXApp();
 
 // @ts-ignore use pre injected uix app metadata
 if (globalThis._UIX_import_map && !app.options) {
+	// @ts-ignore use pre injected uix app metadata
 	app.options = {import_map: new ImportMap(globalThis._UIX_import_map)}
 }

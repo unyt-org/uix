@@ -12,7 +12,7 @@
     /* overflow-y: scroll; */
 
     display: block;
-    overflow-y: scroll;
+    overflow-y: auto;
     width: 100vw;
     height: 100vh;
 }

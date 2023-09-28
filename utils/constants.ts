@@ -29,7 +29,7 @@ if (!IS_HEADLESS) await import("https://unpkg.com/construct-style-sheets-polyfil
 // 	})(document);
 // }
 
-let version = "0.0.0";
+let version = "beta";
 try {
     const res = await fetch(new URL("../version", import.meta.url));
     if (res.ok) version = (await res.text()).replaceAll("\n","");

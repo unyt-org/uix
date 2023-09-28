@@ -1,6 +1,7 @@
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
 import { Path } from "../utils/path.ts";
 import { getExistingFile } from "../utils/file_utils.ts";
+import { VERSION } from "../utils/constants.js";
 
 export const command_line_options = new CommandLineOptions("UIX", "Fullstack Web Framework with DATEX Integration.\nVisit https://unyt.org/uix for more information", "../RUN.md");
 
@@ -19,6 +20,13 @@ export const stage = command_line_options.option("stage", {type:"string", defaul
 export const env = command_line_options.option("env", {type:"string", multiple: true, description: "Exposed environment variables (for remote deployment)"});
 
 export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});
+
+export const version = command_line_options.option("version", {type:"boolean", description: "Get the version of your UIX installation"});
+
+if (version) {
+	console.log(`UIX ${VERSION == "beta" ? "beta" : "v." + VERSION} (${new URL("../", import.meta.url)})`);
+	Deno.exit(0);
+}
 
 if (!config_path && !CommandLineOptions.collecting) {
 	throw "Could not find an app.dx or app.json config file in " + _path.pathname

@@ -3,7 +3,7 @@ import { Server } from "./server.ts";
 import { TypescriptImportResolver } from "./ts_import_resolver.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";
 
-import { CommandLineOptions } from "unyt/command-line-args/main.ts"
+import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
 export const options = new CommandLineOptions("UIX File Server", "Simple static file server with integrated typescript support");
 
 
@@ -16,7 +16,8 @@ let import_map_path = lib_dir.getChildPath('importmap.dev.json')
 if (!import_map_path.fs_exists) import_map_path = lib_dir.getChildPath('importmap.json')
 if (!import_map_path.fs_exists) import_map_path = new Path<Path.Protocol.File>(Deno.cwd()).asDir().getChildPath('importmap.dev.json')
 if (!import_map_path.fs_exists) import_map_path = new Path<Path.Protocol.File>(Deno.cwd()).asDir().getChildPath('importmap.json')
-if (!import_map_path.fs_exists) throw "Could not find an import map";
+// if (!import_map_path.fs_exists) throw "Could not find an import map";
+const importmap = import_map_path.fs_exists ? await import_map_path.getTextContent() : await new Path("https://dev.cdn.unyt.org/importmap.json").getTextContent()
 
 new Server(lib_dir, {
     cors: true, 
@@ -25,7 +26,7 @@ new Server(lib_dir, {
         '/': new TypescriptTranspiler(lib_dir, {
             watch: watch,
             import_resolver: new TypescriptImportResolver(lib_dir, {
-				import_map: JSON.parse(await import_map_path.getTextContent())
+				import_map: JSON.parse(importmap)
             })
         })
     }

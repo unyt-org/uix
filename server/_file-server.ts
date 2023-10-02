@@ -12,7 +12,8 @@ const port =  options.option("port", {default: 80, type: "number", description: 
 const path =  options.option("path", {aliases: ["p"], default: Deno.cwd(), type: "string", description: "The file directory", collectNotPrefixedArgs: true, allowEmptyString: false});
 
 const lib_dir = new Path<Path.Protocol.File>(path, "file://"+Deno.cwd()+"/").asDir();
-let import_map_path = lib_dir.getChildPath('importmap.dev.json')
+let import_map_path = lib_dir.getChildPath('deno.json')
+if (!import_map_path.fs_exists) import_map_path = lib_dir.getChildPath('importmap.dev.json')
 if (!import_map_path.fs_exists) import_map_path = lib_dir.getChildPath('importmap.json')
 if (!import_map_path.fs_exists) import_map_path = new Path<Path.Protocol.File>(Deno.cwd()).asDir().getChildPath('importmap.dev.json')
 if (!import_map_path.fs_exists) import_map_path = new Path<Path.Protocol.File>(Deno.cwd()).asDir().getChildPath('importmap.json')
@@ -26,7 +27,7 @@ new Server(lib_dir, {
         '/': new TypescriptTranspiler(lib_dir, {
             watch: watch,
             import_resolver: new TypescriptImportResolver(lib_dir, {
-				import_map: JSON.parse(importmap)
+				import_map: {imports: JSON.parse(importmap).imports}
             })
         })
     }

@@ -1,7 +1,7 @@
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
 import { Path } from "../utils/path.ts";
 import { getExistingFile } from "../utils/file_utils.ts";
-import { VERSION } from "../utils/constants.js";
+import { VERSION } from "../utils/constants.ts";
 
 export const command_line_options = new CommandLineOptions("UIX", "Fullstack Web Framework with DATEX Integration.\nVisit https://unyt.org/uix for more information", "../RUN.md");
 

@@ -33,7 +33,7 @@ pre code {
     /*line-break: loose;*/
 }
 
-pre code::before {
+pre code::after {
     content: attr(lang);
     position: absolute;
     right: 5px;
@@ -46,7 +46,7 @@ pre code::before {
     opacity: 0;
 }
 
-pre code:hover::before {
+pre code:hover::after {
     opacity: 1;
 }
 

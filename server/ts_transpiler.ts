@@ -43,6 +43,7 @@ export type transpiler_options = {
     dist_parent_dir?: Path.File, // parent dir for dist dirs
     dist_dir?: Path.File, // use different path for dist (default: generated tmp dir)
     dist_dir_compat?: Path.File // use different path for compat dist (default: generated tmp dir)
+    sourceMap?: boolean // generate inline source maps when transpiling ts
 }
 
 type transpiler_options_all = Required<transpiler_options>;
@@ -523,7 +524,13 @@ export class TypescriptTranspiler {
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
             // TODO: remove jsxAutomatic:true, currently only because of caching problems
-            const transpiled = await deno_emit!.transpileIsolated(ts_dist_path, {inlineSourceMap:false, jsx:"react-jsx", jsxImportSource: "uix", jsxAutomatic: true});
+            const transpiled = await deno_emit!.transpileIsolated(ts_dist_path, {
+                inlineSourceMap: !!this.#options.sourceMap, 
+                inlineSources: !!this.#options.sourceMap,
+                jsx:"react-jsx", 
+                jsxImportSource: "uix",
+                jsxAutomatic: true
+            });
             if (transpiled != undefined) await Deno.writeTextFile(js_dist_path, transpiled);
             else throw "unknown error"
         }

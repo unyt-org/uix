@@ -81,6 +81,7 @@ export class FrontendManager extends HTMLProvider {
 
 	initFrontendDir(){
 		this.transpiler = new TypescriptTranspiler(this.scope, {
+			sourceMap: app.stage == "dev",
 			watch: this.#watch,
 			import_resolver: this.import_resolver,
 			on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined
@@ -96,6 +97,7 @@ export class FrontendManager extends HTMLProvider {
 	intCommonDirs() {
 		for (const common_dir of this.app_options.common) {
 			const transpiler = new TypescriptTranspiler(new Path(common_dir), {
+				sourceMap: app.stage == "dev",
 				dist_parent_dir: this.transpiler.tmp_dir,
 				watch: this.#watch,
 				import_resolver:  new TypescriptImportResolver(new Path(common_dir), {

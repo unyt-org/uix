@@ -2,7 +2,7 @@ import {
   isAbsolute,
   resolve,
   toFileUrl,
-} from "https://unyt.land/std@0.186.0/path/mod.ts";
+} from "https://deno.land/std@0.186.0/path/mod.ts";
 
 /**
  * Resolves a location to its canonical URL object.

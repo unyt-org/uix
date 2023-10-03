@@ -13,6 +13,10 @@ const path =  options.option("path", {aliases: ["p"], default: Deno.cwd(), type:
 
 const lib_dir = new Path<Path.Protocol.File>(path, "file://"+Deno.cwd()+"/").asDir();
 let import_map_path = lib_dir.getChildPath('deno.json')
+// check if deno json has external import map
+const denoJsonExternalImportMap = import_map_path.fs_exists && JSON.parse(await import_map_path.getTextContent())?.importMap;
+if (denoJsonExternalImportMap) import_map_path = new Path<Path.Protocol.File>(denoJsonExternalImportMap, import_map_path);
+
 if (!import_map_path.fs_exists) import_map_path = lib_dir.getChildPath('importmap.dev.json')
 if (!import_map_path.fs_exists) import_map_path = lib_dir.getChildPath('importmap.json')
 if (!import_map_path.fs_exists) import_map_path = new Path<Path.Protocol.File>(Deno.cwd()).asDir().getChildPath('importmap.dev.json')

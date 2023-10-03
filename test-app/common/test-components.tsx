@@ -251,6 +251,10 @@ export class ComponentWithOptions extends UIX.UIXComponent<{image?:HTMLImageElem
 )
 export class ComponentWithStyle extends UIX.UIXComponent {
 
+	// TODO: source maps for @standalone
+	@standalone override onDisplay() {
+		console.log("displaying ComponentWithStyle")
+	}
 }
 
 

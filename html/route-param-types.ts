@@ -3,6 +3,8 @@
  * is supported in TS (https://github.com/microsoft/TypeScript/issues/32794)
  */
 
+import { Equals } from "unyt_core/utils/global_types.ts";
+
 
 type Separator = '/'|'-'
 type Other = Exclude<string,':'>;

@@ -15,7 +15,7 @@ export default {
 		throw new Error("This is an example error");
 	},
 
-
+	// set and get shared data on the frontend, available on the frontend + backend
 	'setSharedValueFrontend/:key/:val': (async (ctx, {key, val}) => {
 		const sharedData = await ctx.getSharedData()
 		sharedData[key] = val;

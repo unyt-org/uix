@@ -37,7 +37,12 @@ const emptyMatch = Object.freeze({});
 Symbol.dispose ??= Symbol.for("Symbol.dispose")
 
 
-export class Context {
+export class Context
+	<
+		SharedData extends Record<string, unknown> = Record<string, unknown>,
+		PrivateData extends Record<string, unknown> = Record<string, unknown>
+	> 
+{
 	request?: Request
 	requestData: RequestData = {
 		address: null
@@ -70,16 +75,16 @@ export class Context {
 	 * Returns a shared data record, containing arbitrary key-value pairs.
 	 * This data is separated for each endpoint session and is accessible from the client and the backend 
 	 */
-	async getSharedData(): Promise<Record<string, unknown>> {
+	async getSharedData(): Promise<SharedData> {
 		if (client_type === "browser") {
 			const { getSharedData } = await import("../session/frontend.ts");
-			return getSharedData();
+			return getSharedData() as Promise<SharedData>;
 		}
 		else {
 			if (!this.request) throw new Error("Cannot get shared data from UIX Context with request object");
 			const sharedData = await getSharedDataPointer(this.request.headers, this.responseHeaders);
 			if (sharedData[Symbol.dispose]) this.#disposeCallbacks.add(sharedData[Symbol.dispose]!)
-			return sharedData;
+			return sharedData as SharedData;
 		}
 	}
 
@@ -87,12 +92,12 @@ export class Context {
 	 * Returns a private data record, containing arbitrary key-value pairs.
 	 * This data is separated for each endpoint session and is only accessible from the backend 
 	 */
-	async getPrivateData(): Promise<Record<string, unknown>> {
+	async getPrivateData(): Promise<PrivateData> {
 		if (client_type == "browser") throw new Error("Private data is only accessible from the backend");
 		if (this.endpoint == BROADCAST) throw new Error("Cannot get private data for UIX context, no session found");
 		console.log("get private data for " + this.endpoint);
 		if (!privateData.has(this.endpoint)) await privateData.set(this.endpoint, {});
-		return (await privateData.get(this.endpoint))!;
+		return (await privateData.get(this.endpoint))! as PrivateData;
 	}
 
 	[Symbol.dispose]() {

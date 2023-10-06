@@ -12,30 +12,33 @@ export default {
 	'/:component/frontend': null,
 	'/x/*': null,
 
+	// set and get private data on the backend, associated with the current endpoint session
 	'setPrivateValue/:key/:val': async (ctx, {key, val}) => {
-		(await ctx.getPrivateData())[key] = val;
-		console.log("set value", key,val)
+		const privateData = await ctx.getPrivateData()
+		privateData[key] = val;
 		return UIX.renderStatic(`${key}=${val}`)
 	},
 	'getPrivateValue/:key': async (ctx, {key}) => {
-		const val = (await ctx.getPrivateData())[key];
+		const privateData = await ctx.getPrivateData()
+		const val = privateData[key];
 		return UIX.renderStatic(`${key}=${val}`)
 	},
 
 	'/setSharedValueFrontend/*': null,
 	'/getSharedValueFrontend/*': null,
 
+	// set and get shared data on the backend, available on the frontend + backend
 	'setSharedValueBackend/:key/:val': (async (ctx, {key, val}) => {
 		const sharedData = await ctx.getSharedData()
 		sharedData[key] = val;
 		return UIX.renderStatic(`${key}=${val}`)
-	}) satisfies UIX.Entrypoint,
+	}),
 
 	'getSharedValueBackend/:key': (async (ctx, {key}) => {
 		const sharedData = await ctx.getSharedData()
 		const val = sharedData[key];
 		return UIX.renderStatic(`${key}=${val}`)
-	}) satisfies UIX.Entrypoint,
+	}),
 
 	'*': invalid
-} satisfies UIX.Entrypoint;
+} satisfies UIX.Entrypoint<{a:number}>;

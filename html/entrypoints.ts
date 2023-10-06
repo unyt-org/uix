@@ -11,13 +11,28 @@ import { filter } from "../routing/route-filter.ts";
 export type raw_content = Blob|Response // sent as raw Response
 export type special_content = URL|Deno.FsFile|HTTPStatus|Error // gets converted to a Response
 export type html_content = Datex.RefOrValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|undefined|raw_content|special_content;
-export type html_content_or_generator = html_content|html_generator;
-export type html_content_or_generator_or_preset = html_content_or_generator|RenderPreset<RenderMethod, html_content_or_generator>;
+export type html_content_or_generator<
+	SharedData extends Record<string, unknown> = Record<string, unknown>,
+	PrivateData extends Record<string, unknown> = Record<string, unknown>
+	> = html_content|html_generator<SharedData, PrivateData>;
+export type html_content_or_generator_or_preset<
+	SharedData extends Record<string, unknown> = Record<string, unknown>,
+	PrivateData extends Record<string, unknown> = Record<string, unknown>
+	> = html_content_or_generator<SharedData, PrivateData>|RenderPreset<RenderMethod, html_content_or_generator<SharedData, PrivateData>>;
 
-export type EntrypointRouteMap = {[route:string|filter]:Entrypoint}
-export type html_generator = (ctx:Context, params:Record<string, string>)=>Entrypoint // html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
+export type EntrypointRouteMap<
+	SharedData extends Record<string, unknown> = Record<string, unknown>,
+	PrivateData extends Record<string, unknown> = Record<string, unknown>
+	> = {[route:string|filter]:Entrypoint<SharedData, PrivateData>}
+export type html_generator<
+	SharedData extends Record<string, unknown> = Record<string, unknown>,
+	PrivateData extends Record<string, unknown> = Record<string, unknown>
+	> = (ctx:Context<SharedData, PrivateData>, params:Record<string, string>)=>Entrypoint<SharedData, PrivateData> // html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 
-type _Entrypoint = html_content_or_generator_or_preset | EntrypointRouteMap | typeof KEEP_CONTENT
+type _Entrypoint<
+	SharedData extends Record<string, unknown> = Record<string, unknown>,
+	PrivateData extends Record<string, unknown> = Record<string, unknown>
+	> = html_content_or_generator_or_preset<SharedData, PrivateData> | EntrypointRouteMap<SharedData, PrivateData> | typeof KEEP_CONTENT
 
 /**
  * UIX Entrypoint type.
@@ -35,7 +50,10 @@ type _Entrypoint = html_content_or_generator_or_preset | EntrypointRouteMap | ty
  * } satisfies Entrypoint;
  * ```
  */
-export type Entrypoint = _Entrypoint | Promise<_Entrypoint>
+export type Entrypoint<
+	SharedData extends Record<string, unknown> = Record<string, unknown>,
+	PrivateData extends Record<string, unknown> = Record<string, unknown>
+	> = _Entrypoint<SharedData, PrivateData> | Promise<_Entrypoint<SharedData, PrivateData>>
 
 
 /**

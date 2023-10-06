@@ -654,9 +654,9 @@ runner.enableHotReloading();
 	 * @param context request context
 	 * @returns 
 	 */
-	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined]> {
+	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers]> {
 		// extract content from provider, depending on path
-		const {content, render_method, status_code} = await resolveEntrypointRoute({
+		const {content, render_method, status_code, headers} = await resolveEntrypointRoute({
 			entrypoint: entrypoint,
 			route: Path.Route(path), 
 			context, 
@@ -666,13 +666,13 @@ runner.enableHotReloading();
 		const openGraphData = (content as any)?.[OPEN_GRAPH];
 
 		// raw file content
-		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData];
+		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData, headers];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [await getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData];
+		if (content instanceof Datex.Markdown) return [await getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData, headers];
 
 		// convert content to valid HTML string
-		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData];
+		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData, headers];
 		
 		// invalid content was created, should not happen
 		else if (content && typeof content == "object") {
@@ -680,7 +680,7 @@ runner.enableHotReloading();
 			const [status_code, html] = createErrorHTML(`Cannot render content type`, 500);
 			return [await getOuterHTML(html, {includeShadowRoots:true, injectStandaloneJS:true, lang}), RenderMethod.STATIC, status_code, undefined];
 		}
-		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData];
+		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData, headers];
 	}
 
 	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider) {
@@ -696,23 +696,24 @@ runner.enableHotReloading();
 			// TODO:
 			// Datex.Runtime.ENV.LANG = lang;
 			// await Datex.Runtime.ENV.$.LANG.setVal(lang);
-			const [prerendered_content, render_method, status_code, open_graph_meta_tags] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
+			const [prerendered_content, render_method, status_code, open_graph_meta_tags, headers] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
+
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
 				if (prerendered_content instanceof Response) await requestEvent.respondWith(prerendered_content.clone());
-				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain;charset=utf-8" : (<any>prerendered_content).type, <any>prerendered_content, undefined, status_code);
+				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain;charset=utf-8" : (<any>prerendered_content).type, <any>prerendered_content, undefined, status_code, headers);
 			}
 
 			// serve normal page
 			else {
+				const combinedHeaders = headers ?? new Headers();
+				combinedHeaders.set('content-language', lang)
+
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
 					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, this.#static_client_scripts, ['uix/style/document.css', ...entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', ...entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
-					undefined, status_code,
-					{
-						'content-language': lang
-					}
+					undefined, status_code, combinedHeaders
 				);
 			}
 		} catch (e) {

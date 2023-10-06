@@ -52,11 +52,12 @@ export class Context {
 	endpoint: Datex.Endpoint = BROADCAST
 
 	get responseHeaders() {
-		if (!this.#responseHeaders) this.#responseHeaders = new Headers();
-		return this.#responseHeaders
+		if (!this._responseHeaders) this._responseHeaders = new Headers();
+		return this._responseHeaders
 	}
 
-	#responseHeaders?: Headers
+
+	private _responseHeaders?: Headers
 
 	#disposeCallbacks = new Set<()=>void>()
 

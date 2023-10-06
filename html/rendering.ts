@@ -87,6 +87,7 @@ type resolvedEntrypointData<T extends Entrypoint = Entrypoint> = {
 	status_code: number, 
 	loaded: boolean, 
 	remaining_route?: Path.Route
+	headers?: Headers // additional response headers
 }
 
 function reconstructMatchedURLPart(input:string, partResult:URLPatternComponentResult) {
@@ -395,6 +396,9 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 				resolved.content = null; // reset content, route could not be resolved
 			}
 		}
+
+		resolveContext(entrypointData)
+		if ((entrypointData.context as any)._responseHeaders) resolved.headers = (entrypointData.context as any)._responseHeaders;
 
 		resolved.loaded = true;
 	}

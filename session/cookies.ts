@@ -33,9 +33,8 @@ export function setCookie(name: UIX_COOKIE, value:string, expDays?:number, heade
 		setHeaderCookie!(headers, {
 			name,
 			value,
-			expires: expiryDate,
-			secure: true,
-			httpOnly: false
+			path: '/',
+			expires: expiryDate
 		})
 	}
 

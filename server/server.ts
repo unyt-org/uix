@@ -650,7 +650,7 @@ export class Server {
     }
 
 
-    public async serveContent(requestEvent: Deno.RequestEvent, type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string> = {}) {
+    public async serveContent(requestEvent: Deno.RequestEvent, type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}) {
         const res = this.getContentResponse(type, content, cookies, status, headers)
         try {
             await requestEvent.respondWith(res)
@@ -658,11 +658,15 @@ export class Server {
 	}
 
 
-    public getContentResponse(type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string> = {}) {
-        if (this.#options.cors) Object.assign(headers, {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*"});
-        headers["Content-Type"] = type;
+    public getContentResponse(type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}) {
+        const normalHeaders = headers instanceof Headers ? headers : new Headers(headers);
+        if (this.#options.cors) {
+            normalHeaders.set("Access-Control-Allow-Origin", "*")
+            normalHeaders.set("Access-Control-Allow-Headers", "*")
+        }
+        normalHeaders.set("Content-Type", type);
 
-        const res = new Response(content, {headers, status});
+        const res = new Response(content, {headers:normalHeaders, status});
         if (cookies) {
             for (const cookie of cookies) setCookie!(res.headers, cookie);
         }

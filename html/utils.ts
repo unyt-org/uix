@@ -189,7 +189,7 @@ export namespace HTMLUtils {
     export function getElementSize(element:HTMLElement): Datex.Value<{x:number, y:number}>
     export function getElementSize(element:HTMLElement, dimension?:'x'|'y'): Datex.Value<number> | Datex.Value<{x:number, y:number}>{
         const value = dimension ? decimal() : pointer({x:0,y:0}); 
-        if (!globalThis.Deno) {
+        if (client_type !== "deno") {
             const resizeObserver = new ResizeObserver((entries) => {
                 const size = entries[0].borderBoxSize?.[0] ?? entries[0].contentBoxSize?.[0] ?? {inlineSize:entries[0].contentRect.width,blockSize:entries[0].contentRect.height};
                 if (value instanceof Datex.DecimalRef) value.val = size[dimension == 'x' ? 'inlineSize' : 'blockSize']

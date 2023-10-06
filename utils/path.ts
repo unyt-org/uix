@@ -1,6 +1,8 @@
 // deno-lint-ignore-file no-namespace
-const relative = globalThis.Deno ? (await import("https://deno.land/std@0.172.0/path/mod.ts")).relative : null;
+import { client_type } from "unyt_core/utils/constants.ts";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
+
+const relative = client_type === "deno" ? (await import("https://deno.land/std@0.172.0/path/mod.ts")).relative : null;
 
 export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean = boolean> extends URL {
 
@@ -38,7 +40,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 
 	// get path for current working directory
 	static cwd(){
-		return new Path(globalThis.Deno ? Deno.cwd() : window.location.href);
+		return new Path(client_type === "deno" ? Deno.cwd() : window.location.href);
 	}
 
 	/**
@@ -73,7 +75,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 		// string, string []
 		if (path instanceof Array) path = './'+path.join('/').replace(/^\//,''); // join, make relative and remove duplicate / at beginning
 		// for deno: absolute path becomes file path, not relative to origin
-		if (abs_path_as_file_path && globalThis.Deno) {
+		if (abs_path_as_file_path && client_type === "deno") {
 			if (typeof path == "string" && path.startsWith("/")) path = new URL(Path.DEFAULT_PROTOCOL + (Path.ProtocolDefaultPrefixes[<keyof typeof Path.ProtocolDefaultPrefixes>Path.DEFAULT_PROTOCOL]??'') + path); // default to DEFAULT_PROTOCOL for absolute paths
 		}
 		if (typeof path == "string" && !(path.startsWith("/") || path.startsWith("./") || path.startsWith("../"))) path = "./" + path // assume file relative path without ./
@@ -115,7 +117,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	 */
 	get fs_is_dir() {
 		if (this.is_web) return false;
-		if (!globalThis.Deno) throw new Error("filesystem operations not supported");
+		if (client_type !== "deno") throw new Error("filesystem operations not supported");
 		if (!this.fs_exists) return false;
 		return Deno.statSync(this.normal_pathname).isDirectory;
 	}
@@ -207,7 +209,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	 */
 	get fs_exists() {
 		if (this.is_web) return false;
-		if (!globalThis.Deno) throw new Error("filesystem operations not supported");
+		if (client_type !== "deno") throw new Error("filesystem operations not supported");
 		try {
 			Deno.statSync(this.normal_pathname);
 			return true
@@ -394,7 +396,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 
 	// filesystem utils - create dir
 	fsCreateIfNotExists(){
-		if (!globalThis.Deno) throw new Error("filesystem operations not supported");
+		if (client_type !== "deno") throw new Error("filesystem operations not supported");
 		if (!this.is_dir) throw new Error("cannot create directory for non-directory path");
 
 		try {

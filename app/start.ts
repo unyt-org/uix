@@ -2,9 +2,10 @@ import {Datex} from "unyt_core";
 import {UIX} from "uix";
 import { getAppOptions } from "./config-files.ts";
 import { env, root_path } from "./args.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 const logger = new Datex.Logger("UIX App Runner");
 
-if (!globalThis.Deno) {
+if (client_type !== "deno") {
 	logger.error("The UIX app runner can only be used on a deno backend");
 	throw new Error("Runtime environment error");
 }

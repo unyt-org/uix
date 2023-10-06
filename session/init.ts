@@ -2,7 +2,7 @@
  * Initialize new anonymous endpoint session if no endpoint cookies set
  */
 
-import { cookie, setCookie } from "./cookies.ts";
+import { UIX_COOKIE, setCookie } from "./cookies.ts";
 
 const BIG_BANG_TIME = new Date(2022, 0, 22, 0, 0, 0, 0).getTime();
 
@@ -52,7 +52,7 @@ function buffer2hex(buffer:Uint8Array|ArrayBuffer, seperator?:string, pad_size_b
 export function init() {
 	const id = createNewID();
 	console.log("new id",id);
-	setCookie(cookie.endpoint, id);
+	setCookie(UIX_COOKIE.endpoint, id);
     window.location.reload();
 }
 

@@ -3,6 +3,7 @@ import { Logger } from "unyt_core/utils/logger.ts";
 import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import "unyt_core/utils/auto_map.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 
 const logger = new Logger("ts import resolver");
 
@@ -20,8 +21,8 @@ type import_resolver_options = {
 
 export class TypescriptImportResolver {
 
-	private static import_specifier_regex = globalThis.Deno ? new RegExp(String.raw`(?<=^(?:\*\/ *)?)((?:import|export)\s+(?:[A-Za-z0-9_$,{} ])*\s+from\s+|import\s+)["'](((?!\w+:\/\/)[^."'][^"']*)|[0-9A-Za-z_\-@:.]+)["']`, 'gm') : null // /(?<=^(?:\*\/ *)?)((?:import|export)\s+(?:[A-Za-z0-9_$,{} ])*\s+from\s+|import\s+)["'](((?!\w+:\/\/)[^."'][^"']*)|[0-9A-Za-z_\-@:.]+)["']/gm;
-    private static general_import_regex   = globalThis.Deno ? new RegExp(String.raw`(?<=^(?:\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']`, 'gm') : null // /(?<=^(?:\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["']([^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']/gm
+	private static import_specifier_regex = client_type === "deno" ? new RegExp(String.raw`(?<=^(?:\*\/ *)?)((?:import|export)\s+(?:[A-Za-z0-9_$,{} ])*\s+from\s+|import\s+)["'](((?!\w+:\/\/)[^."'][^"']*)|[0-9A-Za-z_\-@:.]+)["']`, 'gm') : null // /(?<=^(?:\*\/ *)?)((?:import|export)\s+(?:[A-Za-z0-9_$,{} ])*\s+from\s+|import\s+)["'](((?!\w+:\/\/)[^."'][^"']*)|[0-9A-Za-z_\-@:.]+)["']/gm;
+    private static general_import_regex   = client_type === "deno" ? new RegExp(String.raw`(?<=^(?:\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']`, 'gm') : null // /(?<=^(?:\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["']([^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']/gm
 
 	readonly scope?: Path // root path for source files, locations outside have to be resolved with out of scope resolution
     readonly import_map_base_path?: Path // import map location

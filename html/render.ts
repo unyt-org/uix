@@ -8,10 +8,11 @@ import { COMPONENT_CONTEXT, STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../stan
 import { convertToWebPath } from "../app/utils.ts";
 import { app } from "../app/app.ts";
 import { logger } from "uix/uix_all.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 
 let stage:string|undefined = '?'
 
-if (globalThis.Deno) {
+if (client_type === "deno") {
 	({ stage } = (await import("../app/args.ts")))
 }
 

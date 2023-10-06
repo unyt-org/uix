@@ -12,15 +12,30 @@ export default {
 	'/:component/frontend': null,
 	'/x/*': null,
 
-	'setValue/:key/:val': async (ctx, {key, val}) => {
+	'setPrivateValue/:key/:val': async (ctx, {key, val}) => {
 		(await ctx.getPrivateData())[key] = val;
 		console.log("set value", key,val)
 		return UIX.renderStatic(`${key}=${val}`)
 	},
-	'getValue/:key': async (ctx, {key}) => {
+	'getPrivateValue/:key': async (ctx, {key}) => {
 		const val = (await ctx.getPrivateData())[key];
 		return UIX.renderStatic(`${key}=${val}`)
 	},
+
+	'/setSharedValueFrontend/*': null,
+	'/getSharedValueFrontend/*': null,
+
+	'setSharedValueBackend/:key/:val': (async (ctx, {key, val}) => {
+		const sharedData = await ctx.getSharedData()
+		sharedData[key] = val;
+		return UIX.renderStatic(`${key}=${val}`)
+	}) satisfies UIX.Entrypoint,
+
+	'getSharedValueBackend/:key': (async (ctx, {key}) => {
+		const sharedData = await ctx.getSharedData()
+		const val = sharedData[key];
+		return UIX.renderStatic(`${key}=${val}`)
+	}) satisfies UIX.Entrypoint,
 
 	'*': invalid
 } satisfies UIX.Entrypoint;

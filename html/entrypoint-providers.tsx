@@ -7,16 +7,14 @@ import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "../app/app.ts";
-import { indent } from "unyt_core/utils/indent.ts";
 import { Entrypoint, RouteHandler, html_generator } from "./entrypoints.ts";
-import { client_type } from "unyt_core/datex_all.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 import { HTTPStatus } from "./http-status.ts";
-import { renderStatic } from "./render-methods.ts";
 import { createErrorHTML } from "./errors.tsx";
 import { HTTPError } from "./http-error.ts";
 
-const { setCookie } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
-const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
+const { setCookie } = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
+const fileServer = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
 
 type mime_type = `${'text'|'image'|'application'|'video'|'audio'}/${string}`;
 

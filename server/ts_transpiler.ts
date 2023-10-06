@@ -2,12 +2,13 @@ import { Path } from "../utils/path.ts";
 import { Logger } from "unyt_core/utils/logger.ts";
 import { TypescriptImportResolver } from "./ts_import_resolver.ts";
 import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
-const copy = globalThis.Deno ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
-const walk = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
+import { client_type } from "unyt_core/utils/constants.ts";
+const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
+const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
 
-const deno_emit = globalThis.Deno ? (await import("./lib/deno_emit/js/mod.ts")) : null;
+const deno_emit = client_type === "deno" ? (await import("./lib/deno_emit/js/mod.ts")) : null;
 
-const sass = globalThis.Deno ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
+const sass = client_type === "deno" ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
 
 // Experiment: Babel for js transpilation (not working, incomplete ts support)
 // if (globalThis.Deno) {
@@ -154,7 +155,7 @@ export class TypescriptTranspiler {
 	constructor(src_dir:Path.File|string, options:transpiler_options = {}) {
         src_dir = src_dir instanceof Path ? src_dir : new Path(src_dir, getCallerDir());
 
-        if (!globalThis.Deno) throw new Error("tranpiler currently only supported in deno environments");
+        if (client_type !== "deno") throw new Error("tranpiler currently only supported in deno environments");
 
 		this.#src_dir = src_dir;
         this.setOptions(options);

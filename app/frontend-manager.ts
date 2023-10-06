@@ -11,7 +11,6 @@ import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.t
 import { logger } from "../utils/global_values.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
 import { HTMLProvider } from "../html/html_provider.ts";
-const {serveDir} = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
 import { UIX_CACHE_PATH } from "../utils/constants.ts";
 import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
@@ -26,6 +25,9 @@ import { RenderMethod } from "../html/render-methods.ts";
 import { Context, ContextGenerator } from "uix/base/context.ts";
 import { Entrypoint, raw_content } from "../html/entrypoints.ts";
 import { createErrorHTML } from "uix/html/errors.tsx";
+import { client_type } from "unyt_core/utils/constants.ts";
+
+const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
 export class FrontendManager extends HTMLProvider {
 

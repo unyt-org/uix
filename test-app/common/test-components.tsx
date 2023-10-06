@@ -163,7 +163,6 @@ setInterval(()=>{
 }, 2000)
 
 setInterval(()=>{
-	console.log("remove item",deleteCounter)
 	// entryList.splice(deleteCounter++, 1);
 	delete entryList[deleteCounter++];
 }, 3500)

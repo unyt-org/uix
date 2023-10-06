@@ -10,7 +10,7 @@ import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts"
-import { client_type } from "unyt_core/utils/global_values.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 import { createErrorHTML } from "./errors.tsx";
 
 
@@ -309,7 +309,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	}
 
 	// handle FsFile
-	else if (globalThis.Deno && entrypointData.entrypoint instanceof Deno.FsFile) {
+	else if (client_type === "deno" && entrypointData.entrypoint instanceof Deno.FsFile) {
 		resolved.content = new Response(entrypointData.entrypoint.readable)
 	}
 
@@ -325,7 +325,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	}
 	
 	// handle path object, not element/markdown/special_content
-	else if (!(entrypointData.entrypoint instanceof Element || entrypointData.entrypoint instanceof Datex.Markdown || entrypointData.entrypoint instanceof URL || (globalThis.Deno && entrypointData.entrypoint instanceof globalThis.Deno.FsFile)) && entrypointData.entrypoint && typeof entrypointData.entrypoint == "object" && Object.getPrototypeOf(entrypointData.entrypoint) == Object.prototype) {
+	else if (!(entrypointData.entrypoint instanceof Element || entrypointData.entrypoint instanceof Datex.Markdown || entrypointData.entrypoint instanceof URL || (client_type === "deno" && entrypointData.entrypoint instanceof globalThis.Deno.FsFile)) && entrypointData.entrypoint && typeof entrypointData.entrypoint == "object" && Object.getPrototypeOf(entrypointData.entrypoint) == Object.prototype) {
 		resolved = await resolvePathMap(entrypointData as entrypointData<EntrypointRouteMap>) ?? resolved;
 	}
 

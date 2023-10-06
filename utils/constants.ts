@@ -1,8 +1,9 @@
 // Global constants
+import { client_type } from "unyt_core/utils/constants.ts";
 import { Path } from "../utils/path.ts";
 import { cache_path } from "unyt_core/runtime/cache_path.ts";
 
-export const IS_HEADLESS = !!globalThis.Deno;
+export const IS_HEADLESS = client_type === "deno";
 
 // type window = Window & {HTMLElement: HTMLElement};
 
@@ -49,4 +50,4 @@ export const SAFARI_COMPATIBILITY_MODE = IS_HEADLESS ? false : (typeof window.we
 export const PLEEASE_FIREFOX = IS_HEADLESS ? false : navigator.userAgent.indexOf("Firefox") != -1;
 
 export const UIX_CACHE_PATH = new Path('./uix/', cache_path);
-if (globalThis.Deno && !UIX_CACHE_PATH.fs_exists) Deno.mkdirSync(UIX_CACHE_PATH, {recursive:true})
+if (client_type === "deno" && !UIX_CACHE_PATH.fs_exists) Deno.mkdirSync(UIX_CACHE_PATH, {recursive:true})

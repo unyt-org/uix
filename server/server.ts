@@ -19,11 +19,12 @@ import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
 import { TypescriptTranspiler } from "./ts_transpiler.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 
-const { highlightText } = globalThis.Deno ? await import('https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js') : {highlightText:null};
+const { highlightText } = client_type === "deno" ? await import('https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js') : {highlightText:null};
 
-const { setCookie, getCookies } = globalThis.Deno ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null, getCookies:null};
-const fileServer = globalThis.Deno ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
+const { setCookie, getCookies } = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null, getCookies:null};
+const fileServer = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
 
 const logger = new Logger("UIX Server");
 

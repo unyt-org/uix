@@ -15,5 +15,18 @@ export default {
 		throw new Error("This is an example error");
 	},
 
+
+	'setSharedValueFrontend/:key/:val': (async (ctx, {key, val}) => {
+		const sharedData = await ctx.getSharedData()
+		sharedData[key] = val;
+		return UIX.renderStatic(`${key}=${val}`)
+	}) satisfies UIX.Entrypoint,
+
+	'getSharedValueFrontend/:key': (async (ctx, {key}) => {
+		const sharedData = await ctx.getSharedData()
+		const val = sharedData[key];
+		return UIX.renderStatic(`${key}=${val}`)
+	}) satisfies UIX.Entrypoint,
+
 	'*': invalid
 } satisfies UIX.Entrypoint;

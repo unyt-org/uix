@@ -8,7 +8,7 @@ import { ImportMap } from "../utils/importmap.ts";
 import { Server } from "../server/server.ts";
 
 import type { appOptions, normalizedAppOptions } from "./options.ts";
-import { client_type } from "unyt_core/datex_all.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 
 const logger = new Datex.Logger("UIX App");
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
@@ -21,7 +21,7 @@ let watch_backend:boolean|undefined = false;
 let http_over_datex: boolean|undefined = true;
 let stage: string|undefined
 
-if (globalThis.Deno) {
+if (client_type === "deno") {
 	({ stage, live_frontend, watch, watch_backend, http_over_datex } = (await import("./args.ts")))
 }
 

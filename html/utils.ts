@@ -1,5 +1,5 @@
 import "unyt_core";
-import { DATEX_ERROR, DX_VALUE } from "unyt_core/datex_all.ts";
+import { DATEX_ERROR, DX_VALUE, client_type } from "unyt_core/datex_all.ts";
 import { Datex, decimal, pointer } from "unyt_core";
 import { Theme } from "../base/theme.ts";
 import { defaultElementAttributes, elementEventHandlerAttributes, htmlElementAttributes, mathMLTags, svgElementAttributes, svgTags } from "./attributes.ts";

@@ -1,6 +1,5 @@
 import { Datex } from "unyt_core";
 import { UIX } from "../uix.ts";
-import { DatexValueTreeView } from "../uix_std/datex/value_tree_view.ts";
 import { convertANSIToHTML } from "./ansi_to_html.ts";
 import { logger } from "./global_values.ts";
 

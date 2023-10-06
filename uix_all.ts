@@ -15,9 +15,7 @@ export * from "./routing/route-filter.ts"
 export * from "./base/init.ts"
 
 // base
-export * from "./base/actions.ts"
 export * from "./base/clipboard.ts"
-export * from "./base/debug.ts"
 export * from "./base/decorators.ts"
 export * from "./base/dom_pointer_source.ts"
 export * from "./base/files.ts"
@@ -31,7 +29,7 @@ export * from "./base/theme.ts"
 export * from "./base/unyt_pen.ts"
 export * from "./base/utils.ts"
 export * from "./base/routing.ts"
-export * from "./base/context.ts"
+export * from "./routing/context.ts"
 
 // sw
 export * from "./sw/sw-installer.ts"

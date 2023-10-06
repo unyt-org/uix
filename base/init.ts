@@ -10,7 +10,6 @@ import { State } from "./state.ts";
 import { Theme } from "./theme.ts";
 import { Datex, f, expose, scope } from "unyt_core";
 import { Actions } from "./actions.ts";
-import { Debug } from "./debug.ts";
 import { UnytPen } from "./unyt_pen.ts";
 import { addStyleSheetLink } from "../uix_all.ts";
 import { client_type } from "unyt_core/utils/constants.ts";

@@ -83,7 +83,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	}
 	// returns true if the path is a URL or an url string
 	static pathIsURL(path:string|URL) {
-		return path instanceof URL || path.match(/^[A-Za-z0-9]+\:/);
+		return path instanceof URL || path?.match(/^[A-Za-z0-9]+\:/);
 	}
 
 

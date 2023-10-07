@@ -1,5 +1,4 @@
 import { Datex } from "unyt_core/datex.ts";
-import { always } from "unyt_core/datex_short.ts";
 
 console.log("lazy loaded module")
 
@@ -8,13 +7,13 @@ console.log("lazy loaded module")
 	@property a = 10;
 	@property b = 20;
 
-	@always get sum() {
+	@property get sum() {
 		return this.a + this.b
 	}
 
 }
 
-const test = new Test() as Datex.JSValueWith$<Test>;
+const test = new Test() as Datex.ObjectRef<Test>;
 Datex.Ref.observe(test.$.sum, (x)=>console.log("sum changed: " + x))
 console.log(test)
 console.log(test.a,test.b,test.sum)

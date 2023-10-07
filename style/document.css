@@ -1,22 +1,13 @@
-/* Fonts */
-@import url('../fonts/BalooThambi2.css');
-@import url('../fonts/Roboto.css');
-
 /* Fontawesome */
 @import url('./fontawesome.css');
 
-@import url('./elements.css'); /* TODO: refactor*/
 @import url('./base.css');
 
-
-
-body, html {
+/* body, html {
     height: 100dvh;
     width: 100dvw;
     position: relative;
     -webkit-touch-callout: none;
-    /* -webkit-user-select: none;
-    user-select: none; */
 }
 
 body {
@@ -28,4 +19,4 @@ body {
     overflow: hidden; 
     font-family: "Baloo Thambi 2", sans-serif;
     font-size: 16px;
-}
+} */

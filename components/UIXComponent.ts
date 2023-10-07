@@ -45,7 +45,6 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
     protected static shadow_stylesheets:string[] =  [
         // global base style
-        new URL('../style/elements.css', import.meta.url).toString(),
         new URL('../style/base.css', import.meta.url).toString(),
         new URL('../style/fontawesome.css', import.meta.url).toString()
     ]

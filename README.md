@@ -45,7 +45,6 @@ However, the saved state of a UIX Component should not contain web-specfic conte
 8. [Configuration](./docs/manual/8%20Configuration.md)
 8. [Localization](./docs/manual/9%20Localization.md)
 
-## [Development Guidelines](./DEVELOP.md)
 
 
 ## UIX-DOM
@@ -55,3 +54,7 @@ a standalone library that allows you to define reactive DOM elements on the fron
 
 The fullstack UIX framework provides many more features, but if you just need a basic reactive DOM library,
 you can take a look at UIX-DOM.
+
+## Contribute
+
+Please take a look at the [Development Guidelines](./DEVELOP.md)

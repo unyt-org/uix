@@ -329,14 +329,18 @@ export namespace HTMLUtils {
             // :out attributes
             if (isInputElement && (attr == "value:out" || attr == "value")) {
 
-                if (type.matchesType(Datex.Type.std.text)) element.addEventListener('change', () => value.val = element.value)
-                else if (type.matchesType(Datex.Type.std.decimal)) element.addEventListener('change', () => value.val = Number(element.value))
-                else if (type.matchesType(Datex.Type.std.integer)) element.addEventListener('change', () => value.val = BigInt(element.value))
-                else if (type.matchesType(Datex.Type.std.boolean)) element.addEventListener('change', () => value.val = Boolean(element.value))
+                if (type.matchesType(Datex.Type.std.text)) element.addEventListener('input', () => value.val = element.value)
+                else if (type.matchesType(Datex.Type.std.decimal)) element.addEventListener('input', () => value.val = Number(element.value))
+                else if (type.matchesType(Datex.Type.std.integer)) element.addEventListener('input', () => value.val = BigInt(element.value))
+                else if (type.matchesType(Datex.Type.std.boolean)) element.addEventListener('input', () => value.val = Boolean(element.value))
                 else throw new Error("The type "+type+" is not supported for the '"+attr+"' attribute of the <input> element");
 
                 // TODO: allow duplex updates for "value"
-                if (attr == "value") setAttribute(element, attr, value.val, root_path)
+                if (attr == "value") {
+                    const valid = setAttribute(element, attr, value.val, root_path)
+                    if (valid) value.observe(v => setAttribute(element, attr, v, root_path));
+                    return valid;
+                }
 
                 return true;
             }

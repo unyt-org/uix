@@ -24,6 +24,7 @@ import { Context, ContextBuilder, ContextGenerator } from "../routing/context.ts
 import { Entrypoint, raw_content } from "../html/entrypoints.ts";
 import { createErrorHTML } from "../html/errors.tsx";
 import { client_type } from "unyt_core/utils/constants.ts";
+import { domUtils } from "./dom-context.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -553,11 +554,12 @@ export class FrontendManager extends HTMLProvider {
 
 		const script = `
 ${"import"} {Datex, datex, $$} from "unyt_core";
-${"import"} {UIX} from "uix";
+${"import"} { ServiceWorker } from "uix/sw/sw-installer.ts";
+
 const logger = new Datex.Logger("UIX Dev");
 export const reload = $$(Datex.Function.createFromJSFunction(async function(){
 	logger.info("Reload triggered");
-	await UIX.ServiceWorker.clearCache();
+	await ServiceWorker.clearCache();
 	window.location.reload();
 }));
 try {

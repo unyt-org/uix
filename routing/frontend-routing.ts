@@ -2,7 +2,7 @@
 
 import { Path } from "../utils/path.ts";
 import { Logger } from "unyt_core/datex_all.ts";
-import { resolveEntrypointRoute,  refetchRoute } from "../routing/rendering.ts";
+import { resolveEntrypointRoute,  refetchRoute } from "./rendering.ts";
 import { Datex } from "unyt_core/datex.ts";
 import { Entrypoint, html_content_or_generator } from "../html/entrypoints.ts";
 import { KEEP_CONTENT } from "../html/entrypoint-providers.tsx";
@@ -83,7 +83,7 @@ export namespace Routing {
 			if (content == null) return;
 			if (content instanceof Array) {
 				document.body.innerHTML = "";
-				domUtils.appendDynamic(document.body, content) // add to document
+				domUtils.append(document.body, content) // add to document
 			}
 			// handle response
 			else if (content instanceof Response) {
@@ -94,7 +94,7 @@ export namespace Routing {
 			else if (!(content instanceof Datex.TypedValue)) { //if (content instanceof Element || content instanceof DocumentFragment) {
 				document.body.innerHTML = "";
 				// TODO: handle all content correctly (same behaviour as on backend)
-				domUtils.appendDynamic(document.body, content) // add to document
+				domUtils.append(document.body, content) // add to document
 			}
 			else {
 				displayError("UIX Rendering Error", "Cannot render value of type " + Datex.Type.ofValue(content));

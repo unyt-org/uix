@@ -1,7 +1,7 @@
 import { Datex } from "unyt_core";
-import { UIX } from "../uix.ts";
 import { convertANSIToHTML } from "./ansi_to_html.ts";
 import { logger } from "./global_values.ts";
+import { domUtils } from "../app/dom-context.ts";
 
 const POINTER_REGEX = /\$((?:[A-Fa-f0-9]{2}|[xX][A-Fa-f0-9]){1,26})(\s*[:+-/*&|^]?=(?![=>/]))? *(\()?/gm;
 
@@ -62,7 +62,7 @@ export function convertANSIWithDATEXToHTML(content: string) {
 	let html = convertANSIToHTML(content)
 
 	html = html.replace(POINTER_REGEX, '<span class="dx-pointer hoverable">$&</span>')
-	const el = UIX.HTMLUtils.createHTMLElement(html);
+	const el = domUtils.createHTMLElement(html);
 
 	el.querySelectorAll('.dx-pointer').forEach(ptr=>{
 		ptr.addEventListener("mouseenter", e => showPointerTooltip(ptr));

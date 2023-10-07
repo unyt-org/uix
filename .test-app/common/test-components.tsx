@@ -1,12 +1,13 @@
 import { Api, test } from "../backend/public.ts";
 
 import { add, always, and, map, not, select } from "unyt_core/functions.ts";
-import { style, template } from "uix/html/anonymous_components.ts";
+import { blankTemplate, style, template } from "uix/html/anonymous_components.ts";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { inDisplayContext } from "uix/utils/datex_over_http.ts";
 import { UIXComponent } from "uix/components/UIXComponent.ts";
 import { lazy, provideError } from "uix/html/entrypoint-providers.tsx";
+import { unsafeHTML } from "uix/uix_short.ts";
 
 /**
  * Put examples for all components in the testComponents object.

@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-namespace
-import { UIX } from "../uix.ts";
+
+import { logger } from "uix/utils/global_values.ts";
 
 // TODO: remove
 export namespace ServiceWorker {
@@ -10,19 +11,19 @@ export namespace ServiceWorker {
 		if ('serviceWorker' in navigator) {
 			const has_registration = (await navigator.serviceWorker.getRegistrations()).length;
 			if (has_registration) {
-				UIX.logger.debug("Service Worker already registered");
+				logger.debug("Service Worker already registered");
 				return; // already registered
 			}
 			try {
 				await navigator.serviceWorker.register(path);
-				UIX.logger.success("Service Worker registered");
+				logger.success("Service Worker registered");
 				activated = true;
 			}
 			catch (e) {
-				UIX.logger.error("Error installing Service Worker: ?"+  e)
+				logger.error("Error installing Service Worker: ?"+  e)
 			}
 		}
-		else UIX.logger.error("Could not register Service Worker")
+		else logger.error("Could not register Service Worker")
 	}
 	
 

@@ -521,7 +521,7 @@ export class Server {
             if (!filepath.fs_exists) return this.getErrorResponse(404, "Not found");
             
             const content = await Deno.readTextFile(filepath.normal_pathname);
-            const highlighted = await highlightText!(content, langsByExtension[filepath.ext as keyof typeof langsByExtension]);
+            const highlighted = await highlightText!(content.replace(/\/\/\# sourceMappingURL=.*$/, ""), langsByExtension[filepath.ext as keyof typeof langsByExtension]);
             const html = `<html>
                 <head>
                     <title>${filepath.name}</title>

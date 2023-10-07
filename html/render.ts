@@ -366,15 +366,16 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 		// js imports
 		files += indent(4) `
 			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("unyt_core/runtime/display.ts", compat_import_map).toString()}";\ndisableInitScreen();\n` : ''}
-			const f = (await import("${provider.resolveImport("unyt_core", compat_import_map).toString()}")).f;
-			const UIX = (await import("${provider.resolveImport("uix", compat_import_map).toString()}")).UIX;` 
+			const {f} = (await import("${provider.resolveImport("unyt_core", compat_import_map).toString()}"));
+			const {State} = (await import("${provider.resolveImport("uix/base/state.ts", compat_import_map).toString()}")); 
+			const {Routing} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts", compat_import_map).toString()}"));` 
 			// await new Promise(resolve=>setTimeout(resolve,5000))
 
 		// files += `\nDatex.MessageLogger.enable();`
 
 
 		// set app info
-		files += indent(4) `\n\nUIX.State._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")${Datex.Unyt.endpoint_info.app?.host ? `, host:f("${Datex.Unyt.endpoint_info.app.host}")`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}});`
+		files += indent(4) `\nState._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")${Datex.Unyt.endpoint_info.app?.host ? `, host:f("${Datex.Unyt.endpoint_info.app.host}")`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}});`
 
 		for (const file of js_files) {
 			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file, compat_import_map).toString()}");`
@@ -397,11 +398,11 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 		}
 
 		if (backend_entrypoint && frontend_entrypoint)
-			files += `\n\nawait UIX.Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint)`
+			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint)`
 		else if (backend_entrypoint)
-			files += `\n\nawait UIX.Routing.setEntrypoints(undefined, backend_entrypoint)`
+			files += `\n\nawait Routing.setEntrypoints(undefined, backend_entrypoint)`
 		else if (frontend_entrypoint)
-			files += `\n\nawait UIX.Routing.setEntrypoints(frontend_entrypoint, undefined)`
+			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined)`
 
 		files += '\n</script>'
 	}

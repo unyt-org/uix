@@ -1,6 +1,6 @@
 import { Datex } from "unyt_core/datex.ts";
 import { primitive } from "unyt_core/datex_all.ts";
-import { domUtils } from "uix/app/dom-context.ts";
+import { domContext, domUtils } from "uix/app/dom-context.ts";
 import { logger } from "uix/utils/global_values.ts";
 import { always } from "unyt_core/functions.ts";
 
@@ -60,7 +60,7 @@ export function SCSS(template:any, ...params:cssParam[]) {
 		}
 		// console.log("css",css)
 
-		const styleSheet = new CSSStyleSheet() as DynamicCSSStyleSheet;
+		const styleSheet = new domContext.CSSStyleSheet() as DynamicCSSStyleSheet;
 		styleSheet.replaceSync(css)
 	
 		// find injected values

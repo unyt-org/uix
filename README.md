@@ -17,21 +17,6 @@ components as needed.
 
 UIX Homepage: [uix.unyt.org](https://uix.unyt.org)
 
-## Benefits of the UIX/DATEX ecosystem
-
-In general, a UIX front-end can be integrated seamlessly into complex full-stack applications thanks to DATEX.
-If you are developing a unyt.org-based application, the UIX library is a good choice for a front-end framework
-since it is designed to work great in combination with DATEX.
-UIX also supports seamless transitions between server- and client-side rendering.
- 
-UIX Component states, including tabs, open files, cursor positions and more, are synchronized with DATEX pointers and can be restored at any time.
-
-The library also comes with a set of built-in functionalities, like handling drag and drop, context menus, files, and others.
-The UIX Standard Library includes a variety of basic components, from simple text views to file trees.
-
-UIX provides a layer of abstraction so that direct DOM manipulation with CSS and HTML is not necessarily required for creating an app with basic Components, but the implementation of more complex Components might still require CSS and HTML.
-However, the saved state of a UIX Component should not contain web-specfic content like css attributes or HTML element names, since UIX is also intended to work in non-web environments.
-
 
 ## Documentation
 
@@ -44,7 +29,6 @@ However, the saved state of a UIX Component should not contain web-specfic conte
 7. [Standalone Mode](./docs/manual/7%20Standalone%20Mode.md)
 8. [Configuration](./docs/manual/8%20Configuration.md)
 8. [Localization](./docs/manual/9%20Localization.md)
-
 
 
 ## UIX-DOM

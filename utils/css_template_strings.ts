@@ -1,7 +1,8 @@
-import { Datex, always } from "unyt_core/datex.ts";
-import { HTMLUtils } from "../html/utils.ts";
+import { Datex } from "unyt_core/datex.ts";
 import { primitive } from "unyt_core/datex_all.ts";
-import { logger } from "../uix_all.ts";
+import { domUtils } from "uix/app/dom-context.ts";
+import { logger } from "uix/utils/global_values.ts";
+import { always } from "unyt_core/functions.ts";
 
 const LOCAL_VAR_PREFIX = '--uix-local-value-'
 const GLOBAL_VAR_PREFIX = '--uix-global-value-'
@@ -76,18 +77,18 @@ export function SCSS(template:any, ...params:cssParam[]) {
 			// set all global css vars for document
 			for (const [prop, val] of globalCSSVars) {
 				const evaluatedVal = typeof val == "function" ? always(val) : val;
-				HTMLUtils.setCSSProperty((document as Document).documentElement ?? document, prop, evaluatedVal);
+				domUtils.setCSSProperty((document as Document).documentElement ?? document, prop, evaluatedVal);
 			}
 			
 			// set required local css vars for existing elements in document
 			for (const [element, varName] of elementsDynamicProperties(iterateDOMTree(document), cssVarsBySelector)) {
-				HTMLUtils.setCSSProperty(element, varName, always(()=>localCSSVars.get(varName)!(element)));
+				domUtils.setCSSProperty(element, varName, always(()=>localCSSVars.get(varName)!(element)));
 			}
 
 			// observe when new child elements added
 			const observer = new MutationObserver(mutations => {
 				for (const [element, varName] of elementsDynamicProperties(iterateAddedNodes(mutations), cssVarsBySelector)) {
-					HTMLUtils.setCSSProperty(element, varName, always(()=>localCSSVars.get(varName)!(element)));
+					domUtils.setCSSProperty(element, varName, always(()=>localCSSVars.get(varName)!(element)));
 				}
 				// TODO: on remove
 			});

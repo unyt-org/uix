@@ -1,8 +1,10 @@
 import { Datex } from "unyt_core/datex.ts";
-import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../jsx-runtime/jsx.ts";
-import { UIX } from "../uix.ts";
-import { HTMLUtils } from "./utils.ts";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
+import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../uix-dom/jsx/parser.ts";
+import { UIXComponent } from "../components/UIXComponent.ts";
+import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
+import { domContext, domUtils } from "../app/dom-context.ts";
+import { Element, Node, HTMLElement, HTMLTemplateElement } from "uix/uix-dom/dom/mod.ts";
 
 /**
  * cloneNode(true), but also clones shadow roots.
@@ -30,7 +32,7 @@ function cloneWithShadowRoots(element:Node) {
 }
 
 /**
- * deep clone node, add listeners bound with [HTMLUtils.EVENT_LISTENERS]
+ * deep clone node, add listeners bound with [DOMUtils.EVENT_LISTENERS]
  * @param element
  * @returns 
  */
@@ -38,9 +40,9 @@ function cloneWithListeners(element: Node) {
 	// cannot use cloneNode(true) because listeners have to be copied for all children
 	const clone = element.cloneNode(false);
 	if (clone instanceof Element) {
-		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>element)[HTMLUtils.EVENT_LISTENERS]??[]) {
+		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>element)[DOMUtils.EVENT_LISTENERS]??[]) {
 			for (const listener of listeners) {
-				HTMLUtils.setElementAttribute(clone, "on"+event, listener);
+				domUtils.setElementAttribute(clone, "on"+event, listener);
 			}
 		}	
 	}
@@ -107,7 +109,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Ch
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(elementGenerator:jsxInputGenerator<Element, Options, never, false, false, Context>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(elementGenerator:jsxInputGenerator<Element, Options, never, false, false, Context>):jsxInputGenerator<Element, Options, Children>&((cl:typeof domContext.HTMLElement)=>any)
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * Default HTML Attributes defined in JSX are also set for the root element.
@@ -119,14 +121,14 @@ export function template<Options extends Record<string, any> = {}, Children = JS
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof domContext.HTMLElement)=>any)
 
 export function template(templateOrGenerator:Element|jsxInputGenerator<Element, any, any, any>) {
 	let generator:any;
 	const module = getCallerFile();
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
-		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
+		if (UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			const decoratedClass = Component(propsOrClass)
 			decoratedClass.template = generator
@@ -148,7 +150,7 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 	else generator = function(maybeClass:any) {
 
 		// decorator
-		if (UIX.UIXComponent.isPrototypeOf(maybeClass)) {
+		if (UIXComponent.isPrototypeOf(maybeClass)) {
 			maybeClass._init_module = module;
 			const decoratedClass = Component(maybeClass)
 			decoratedClass.template = generator
@@ -258,7 +260,7 @@ export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGener
 	// generator function
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
-		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
+		if (UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			if (!propsOrClass.style_templates) propsOrClass.style_templates = new Set()
 			propsOrClass.style_templates.add(generator)
@@ -272,7 +274,7 @@ export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGener
 				},
 			});
 
-			if (context && (templateOrGenerator as Function).call) return templateOrGenerator.call(context, propsOrClass, collapsedPropsProxy)
+			if (context && (templateOrGenerator as Function).call) return (templateOrGenerator as Function).call(context, propsOrClass, collapsedPropsProxy)
 			else return (templateOrGenerator as Function)(propsOrClass, collapsedPropsProxy);
 		}
 	}
@@ -281,7 +283,7 @@ export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGener
 	else generator = function (propsOrClass:any) {
 
 		// decorator
-		if (UIX.UIXComponent.isPrototypeOf(propsOrClass)) {
+		if (UIXComponent.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			if (!propsOrClass.style_templates) propsOrClass.style_templates = new Set()
 			propsOrClass.style_templates.add(generator)

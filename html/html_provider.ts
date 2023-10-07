@@ -4,7 +4,7 @@ import type { normalizedAppOptions } from "../app/options.ts";
 import { convertToWebPath } from "../app/utils.ts";
 
 /**
- * Standlone provider to generate HTML Pages
+ * Standalone provider to generate HTML Pages
  */
 export class HTMLProvider {
 	live: boolean;

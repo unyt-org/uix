@@ -1,39 +1,16 @@
 import { Datex } from "unyt_core";
-import { Class, context_kind, context_meta_getter, context_meta_setter, context_name, handleDecoratorArgs, METADATA } from "unyt_core/datex_all.ts";
-import { Types } from "../utils/global_types.ts";
-import { abstract_component_classes, component_classes, component_groups, logger } from "../utils/global_values.ts";
+import { context_kind, context_meta_getter, context_meta_setter, context_name, handleDecoratorArgs, METADATA } from "unyt_core/datex_all.ts";
+import { logger } from "../utils/global_values.ts";
 import { getCloneKeys } from "../utils/utils.ts";
-import { Components} from "../components/main.ts";
-import { Elements} from "../elements/main.ts";
-import { Files } from "./files.ts";
-import "../html/datex_binding.ts";
 import { UIXComponent } from "../components/UIXComponent.ts";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
-
-//export const customElements = <typeof globalThis.customElements> globalThis.customElements ? globalThis.customElements : {define:()=>null};
-
-/** @Element for elements without component state */
-export function Element<C>(target: Function & { prototype: C }):any
-export function Element<C>(...args:any[]) {
-	return handleDecoratorArgs(args, _Element);
-}
-
-function _Element(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string]|[string, Components.Base.Options]|[Components.Base.Options?] = []) {
-	if (kind != "class") {
-		logger.error("@UIX.Element has to be used on a class");
-		return;
-	}
-
-	const formatted_name = "uix-"  + String(name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // convert from CamelCase to snake-case
-	window.customElements.define(formatted_name, element_class)
-}
+import { domContext } from "../app/dom-context.ts";
 
 /**
  * @Component decorators for custom new elements and default elements
  * @deprecated use @UIX.defaultOptions (todo)
  */
-export function Component<T extends Components.Base.Options|UIXComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>, initial_constraints:Partial<Datex.DatexObjectPartialInit<Types.component_constraints>>):any
-export function Component<T extends Components.Base.Options|UIXComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>):any
+export function Component<T extends UIXComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>):any
 export function Component():any
 export function Component<C>(target: Function & { prototype: C }):any
 export function Component<C>(...args:any[]):any {
@@ -44,7 +21,7 @@ export function Component<C>(...args:any[]):any {
 // use instead of @UIX.Component
 export const defaultOptions = Component;
 
-function _Component(url:string, component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[Components.Base.Options?, Types.component_constraints?] = []) {
+function _Component(url:string, component_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[any] = []) {
 	url = Object.hasOwn(component_class, "_init_module") ?
 		component_class._init_module :
 		url;
@@ -59,7 +36,7 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 	// 	logger.warn("UIX.Components.Base is deprecated - please use UIXComponent")
 	// }
 
-	if (component_class.prototype instanceof Components.Base || component_class.prototype instanceof UIXComponent) {
+	if (component_class.prototype instanceof UIXComponent) {
 
 		// set auto module (url from stack trace), not if module === null => resources was disabled with @NoResources
 		if (url && component_class._module !== null) component_class._module = url;
@@ -75,7 +52,7 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 		const options_datex_type = Datex.Type.get("uixopt", name);
 
 		// create template class for component
-		const new_class = <Types.ComponentSubClass>Datex.createTemplateClass(component_class, datex_type, true);
+		const new_class = Datex.createTemplateClass(component_class, datex_type, true);
 
 		const html_interface = Datex.Type.get('html').interface_config!;
 		datex_type.interface_config.cast_no_tuple = html_interface.cast_no_tuple; // handle casts from object
@@ -96,11 +73,11 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 
 		// component default options
 
-		new_class.DEFAULT_OPTIONS = Object.create(Object.getPrototypeOf(new_class).DEFAULT_OPTIONS ?? Components.Base.DEFAULT_OPTIONS);
+		new_class.DEFAULT_OPTIONS = Object.create(Object.getPrototypeOf(new_class).DEFAULT_OPTIONS ?? {});
 		if (!params[0]) params[0] = {};
 		// set default options + title
 		// ! title is overriden, even if a parent class has specified another default title
-		if (!(<Components.Base.Options>params[0]).title)(<Components.Base.Options>params[0]).title = component_class.name;
+		// if (!(<Components.Base.Options>params[0]).title)(<Components.Base.Options>params[0]).title = component_class.name;
 		Object.assign(new_class.DEFAULT_OPTIONS, params[0])
 
 		// find non-primitive values in default options (must be copied)
@@ -113,10 +90,6 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 			Object.assign(new_class.INITIAL_CONSTRAINTS, params[1]);
 		}
 
-
-		component_classes.set(datex_type, new_class);
-
-
 		// create DATEX type for options (with prototype)
 		options_datex_type.setJSInterface({
 			prototype: new_class.DEFAULT_OPTIONS,
@@ -127,11 +100,10 @@ function _Component(url:string, component_class:Types.ComponentSubClass, name:co
 
 		// define custom DOM element after everything is initialized
 		// TODO: rename, also in UIXComponent.ts
-		if (component_class.prototype instanceof UIXComponent) window.customElements.define("uix2-" + name, component_class)
-		else window.customElements.define("uix-" + name, component_class)
+		domContext.customElements.define("uix-" + name, component_class)
 		return new_class //element_class
 	}
-	else throw new Error("Invalid @UIX.Component - class must extend UIX.Components.Base or UIXComponent")
+	else throw new Error("Invalid @Component - class must extend or UIXComponent")
 }
 
 /**
@@ -142,7 +114,7 @@ export function NoResources(...args:any[]):any {
 	return handleDecoratorArgs(args, _NoResources);
 }
 
-function _NoResources(component_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
+function _NoResources(component_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
 	// was called after @Component
 	if (Object.hasOwn(component_class, '_module')) {
 		throw new Error("Please put the @NoResources decorator for the component '"+name+"' below the @Component decorator");
@@ -167,7 +139,7 @@ export function id(...args:any[]) {
 	return handleDecoratorArgs(args, _id);
 }
 
-function _id(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
+function _id(element_class:HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
 	if (kind != "field") {
 		logger.error("@UIX.id has to be used on a field");
 		return;
@@ -183,7 +155,7 @@ export function content(...args:any[]) {
 	return handleDecoratorArgs(args, _content);
 }
 
-function _content(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
+function _content(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
 	if (kind != "field") {
 		logger.error("@UIX.content has to be used on a field");
 		return;
@@ -199,7 +171,7 @@ export function layout(...args:any[]) {
 	return handleDecoratorArgs(args, _layout);
 }
 
-function _layout(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
+function _layout(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
 	if (kind != "field") {
 		logger.error("@UIX.layout has to be used on a field");
 		return;
@@ -215,7 +187,7 @@ export function child(...args:any[]) {
 	return handleDecoratorArgs(args, _child);
 }
 
-function _child(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
+function _child(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?] = []) {
 	if (kind != "field") {
 		logger.error("@UIX.child has to be used on a field");
 		return;
@@ -232,7 +204,7 @@ export function use(...args:any[]) {
 	return handleDecoratorArgs(args, _use);
 }
 
-function _use(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?, string?] = []) {
+function _use(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?, string?] = []) {
 
 	if (kind != "field" && kind != "method") {
 		logger.error("@UIX.use has to be used on a field or method");
@@ -250,7 +222,7 @@ export function standalone(...args:any[]) {
 	return handleDecoratorArgs(args, _standalone);
 }
 
-function _standalone(element_class:typeof Elements.Base, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
+function _standalone(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
 	if (is_static) {
 		logger.error("@UIX.standalone cannot be used on static class fields");
 		return;
@@ -276,61 +248,4 @@ function _bindOrigin(val:(...args:any)=>any, name:context_name, kind:context_kin
 	}
 	setMetadata(STANDALONE_PROPS, name);
 	setMetadata(ORIGIN_PROPS, params[0]??{datex:false});
-}
-
-
-
-/**
- * @UIX.Id unique component id
- */
-export function Id<C>(id:string) {
-	return (target: Function & { prototype: C }) => {
-	}
-}
-
-// /**
-//  * @UIX.App app definition
-//  */
-// export function App<C>(...args:any[]) {
-// 	return handleDecoratorArgs(args, _App);
-// }
-// function _App(app_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[options?:any] = []) {
-// 	return app_class
-// }
-
-
-/**
- * @UIX.Section for app definition
- */
-export function Section<C>(...args:any[]) {
-	return handleDecoratorArgs(args, _Section);
-}
-function _Section(app_class:Types.ComponentSubClass, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[options?:any] = []) {
-	return app_class
-}
-
-/**
- * @UIX.Group component group
- */
-export function Group<C>(group_name:string) {
-	return (target: Function & { prototype: C }) => {
-		if (!component_groups.has(group_name)) component_groups.set(group_name, new Set());
-		component_groups.get(group_name).add(<Types.ComponentSubClass>target);
-	}
-}
-
-/**
- * @UIX.Abstract decorators for custom new elements and default elements
- */
-export function Abstract<C>(target: Function & { prototype: C }) {
-	abstract_component_classes.add(<Types.ComponentSubClass>target);
-}
-
-/**
- * @UIX.Files decorators for file editors (important !! add decorator after (left to) UIX.Component)
- */
-export function BindFiles<C>(files:Files.files) {
-	return (target: Function & { prototype: C }) => {
-		Files.registerFileHandlerElement(files, <Types.ComponentSubClass>target);
-	}
 }

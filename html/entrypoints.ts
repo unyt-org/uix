@@ -1,10 +1,10 @@
 import { Datex } from "unyt_core/datex.ts";
-import { Context } from "../base/context.ts";
+import { Context } from "../routing/context.ts";
 import { Path } from "../utils/path.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { RenderPreset, RenderMethod } from "./render-methods.ts";
 import { KEEP_CONTENT } from "./entrypoint-providers.tsx";
-import { resolveEntrypointRoute } from "./rendering.ts";
+import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { filter } from "../routing/route-filter.ts";
 
 

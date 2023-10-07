@@ -1,4 +1,4 @@
-import { Context } from "../base/context.ts";
+import { Context } from "../routing/context.ts";
 import { Path } from "../utils/path.ts";
 import { Entrypoint, EntrypointProxy } from "./entrypoints.ts";
 

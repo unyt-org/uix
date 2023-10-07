@@ -1,6 +1,5 @@
 import { Datex } from "unyt_core";
 import { NOT_EXISTING, ValueError } from "unyt_core/datex_all.ts";
-import { Components } from "../components/main.ts";
 import { querySelector } from "../standalone/shadow_dom_selector.ts";
 
 // proxy for Storage, binds existing UIX DOM Elements to pointer values

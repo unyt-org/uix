@@ -1,6 +1,6 @@
-import { UIX } from "uix";
+import { renderStatic } from "uix/html/render-methods.ts";
 
-export const invalid = UIX.renderStatic(
+export const invalid = renderStatic(
 	<div style="margin:10px">
 		Invalid path, example components are available under:
 		<ul>

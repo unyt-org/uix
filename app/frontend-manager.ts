@@ -3,7 +3,6 @@ import { TypescriptImportResolver } from "../server/ts_import_resolver.ts";
 
 import { $$, Datex } from "unyt_core";
 import { Server } from "../server/server.ts";
-import { UIX } from "../uix.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "./app.ts";
 import { Path } from "../utils/path.ts";
 import { BackendManager } from "./backend-manager.ts";
@@ -14,17 +13,16 @@ import { HTMLProvider } from "../html/html_provider.ts";
 
 import { UIX_CACHE_PATH } from "../utils/constants.ts";
 import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
-import { provideError, provideValue } from "../html/entrypoint-providers.tsx";
+import { provideValue } from "../html/entrypoint-providers.tsx";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
 import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "unyt_core/utils/interface-generator.ts"
-import { resolveEntrypointRoute } from "../html/rendering.ts";
+import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
-import { HTMLUtils } from "../html/utils.ts";
 import { RenderMethod } from "../html/render-methods.ts";
-import { Context, ContextGenerator } from "uix/base/context.ts";
+import { Context, ContextBuilder, ContextGenerator } from "../routing/context.ts";
 import { Entrypoint, raw_content } from "../html/entrypoints.ts";
-import { createErrorHTML } from "uix/html/errors.tsx";
+import { createErrorHTML } from "../html/errors.tsx";
 import { client_type } from "unyt_core/utils/constants.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
@@ -290,7 +288,7 @@ export class FrontendManager extends HTMLProvider {
 				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON}));
 			}
 			catch (e) {
-				req.respondWith(await provideError("DATEX Error: " + e));
+				req.respondWith(await this.server.getErrorResponse(500, "DATEX Error: " + e));
 			}
 		});
 
@@ -641,7 +639,7 @@ runner.enableHotReloading();
 
 	private getUIXContextGenerator(requestEvent: Deno.RequestEvent, path:string, conn?:Deno.Conn){
 		return ()=>{
-			const builder = new UIX.ContextBuilder();
+			const builder = new ContextBuilder();
 			builder.setRequestData(requestEvent, path, conn);
 			return builder.build()
 		}
@@ -680,14 +678,14 @@ runner.enableHotReloading();
 			const [status_code, html] = createErrorHTML(`Cannot render content type`, 500);
 			return [await getOuterHTML(html, {includeShadowRoots:true, injectStandaloneJS:true, lang}), RenderMethod.STATIC, status_code, undefined];
 		}
-		else return [HTMLUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData, headers];
+		else return [domUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData, headers];
 	}
 
 	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider) {
 		const url = new Path(requestEvent.request.url);
 		const pathAndQueryParameters = url.pathname + url.search;
 		const compat = Server.isSafariClient(requestEvent.request);
-		const lang = UIX.ContextBuilder.getRequestLanguage(requestEvent.request);
+		const lang = ContextBuilder.getRequestLanguage(requestEvent.request);
 		try {
 			this.updateCheckEntrypoint();
 			const entrypoint_css = [this.getEntrypointCSS(this.scope)];
@@ -699,7 +697,7 @@ runner.enableHotReloading();
 			const [prerendered_content, render_method, status_code, open_graph_meta_tags, headers] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
 
 			// serve raw content (Blob or HTTP Response)
-			if (prerendered_content && render_method == UIX.RenderMethod.RAW_CONTENT) {
+			if (prerendered_content && render_method == RenderMethod.RAW_CONTENT) {
 				if (prerendered_content instanceof Response) await requestEvent.respondWith(prerendered_content.clone());
 				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain;charset=utf-8" : (<any>prerendered_content).type, <any>prerendered_content, undefined, status_code, headers);
 			}
@@ -725,7 +723,7 @@ runner.enableHotReloading();
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
-		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage(this, "", UIX.RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], this.#static_client_scripts, ['uix/style/document.css', ...getGlobalStyleSheetLinks()], ['uix/style/body.css'], undefined, undefined, undefined, compat));
+		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage(this, "", RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], this.#static_client_scripts, ['uix/style/document.css', ...getGlobalStyleSheetLinks()], ['uix/style/body.css'], undefined, undefined, undefined, compat));
 	}
 
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {

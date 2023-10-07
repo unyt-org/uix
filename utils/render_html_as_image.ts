@@ -1,14 +1,13 @@
 import { Datex } from "unyt_core";
 import { UIX_CACHE_PATH } from "./constants.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
-import { createSnapshot } from "../html/rendering.ts";
+import { createSnapshot } from "../routing/rendering.ts";
 import { RenderMethod } from "../html/render-methods.ts";
 import { HTMLProvider } from "../html/html_provider.ts";
 import { Path } from "../utils/path.ts";
 import { TypescriptImportResolver } from "../server/ts_import_resolver.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import type {Browser} from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
-import { app } from "../app/app.ts";
 import { convertToWebPath } from "../app/utils.ts";
 
 const logger = new Datex.Logger("HTML Image Renderer");

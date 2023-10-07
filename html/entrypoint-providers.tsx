@@ -1,6 +1,6 @@
 import { Datex } from "unyt_core/datex.ts";
-import { resolveEntrypointRoute } from "./rendering.ts";
-import { Context } from "../base/context.ts";
+import { resolveEntrypointRoute } from "../routing/rendering.ts";
+import { Context } from "../routing/context.ts";
 import { convertANSIToHTML } from "../utils/ansi_to_html.ts";
 import { Path } from "../utils/path.ts";
 import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";

@@ -1,11 +1,12 @@
-import { UIX, unsafeHTML } from "uix/uix.ts";
 import { Api, test } from "../backend/public.ts";
-import { DropdownMenu } from "uix/components/DropdownMenu.tsx";
-import { ValueInput } from "uix/components/ValueInput.tsx";
+
 import { add, always, and, map, not, select } from "unyt_core/functions.ts";
-import { style } from "uix/html/anonymous_components.ts";
+import { style, template } from "uix/html/anonymous_components.ts";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
+import { inDisplayContext } from "uix/utils/datex_over_http.ts";
+import { UIXComponent } from "uix/components/UIXComponent.ts";
+import { lazy, provideError } from "uix/html/entrypoint-providers.tsx";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -18,7 +19,7 @@ import { HTTPStatus } from "uix/html/http-status.ts";
  * (e.g. http://localhost:4201/textInput/backend+static )
  */
 
-const Container = UIX.template(<div style={{display:"flex", gap:5, margin:5}}></div>)
+const Container = template(<div style={{display:"flex", gap:5, margin:5}}></div>)
 
 const a = $$(0);
 const b = $$(0);
@@ -29,11 +30,11 @@ setInterval(()=>a.val = Math.round(Math.random()*100), 1000);
 setInterval(()=>b.val = Math.round(Math.random()*100), 2000);
 
 
-const TemplateComp = UIX.template(<div style="color:red; font-size:2em"/>)
+const TemplateComp = template(<div style="color:red; font-size:2em"/>)
 // allow children
-const TemplateCompWithShadowRoot = UIX.template(
+const TemplateCompWithShadowRoot = template(
 	<div style="color:green; font-size:2em" shadow-root>
-		<input type="button" value="click me!" onclick={UIX.inDisplayContext(e => console.log("click",e.target))} onmousedown={e => console.log("mousedown",e.target)}/>
+		<input type="button" value="click me!" onclick={inDisplayContext(e => console.log("click",e.target))} onmousedown={e => console.log("mousedown",e.target)}/>
 		custom layout before
 		<slot/>
 		custom layout after
@@ -41,7 +42,7 @@ const TemplateCompWithShadowRoot = UIX.template(
 );
 
 // same as TemplateCompWithShadowRoot, just with shadow root (template) explicitly declared
-const TemplateCompWithShadowRootTemplate = UIX.template(
+const TemplateCompWithShadowRootTemplate = template(
 	<div style="color:blue; font-size:2em">
 		<template shadowrootmode="open">
 			custom layout before
@@ -51,11 +52,11 @@ const TemplateCompWithShadowRootTemplate = UIX.template(
 	</div>
 );
 
-const BlankTemplateComp = UIX.blankTemplate(({children}) => <div style="color:orange; font-size:2em">custom layout before{...children}custom layout after</div>)
-const TemplateCompWithOptions = UIX.template<{a:number, b?:number}, never>(({a,b}) => <div>a={a}, b={b}</div>);
+const BlankTemplateComp = blankTemplate(({children}) => <div style="color:orange; font-size:2em">custom layout before{...children}custom layout after</div>)
+const TemplateCompWithOptions = template<{a:number, b?:number}, never>(({a,b}) => <div>a={a}, b={b}</div>);
 
 
-@UIX.template(<>
+@template(<>
     <shadow-root>
         <h1 id="header">Header</h1>
         <section id="description"></section>
@@ -64,9 +65,9 @@ const TemplateCompWithOptions = UIX.template<{a:number, b?:number}, never>(({a,b
 	predefined child
 </>
 )
-class ClassComponent extends UIX.UIXComponent {
-    @UIX.id declare header: HTMLHeadingElement
-    @UIX.id declare description: HTMLElement
+class ClassComponent extends UIXComponent {
+    @id declare header: HTMLHeadingElement
+    @id declare description: HTMLElement
 
 	protected override onConstruct(): void | Promise<void> {
 		console.log("constructed")
@@ -78,13 +79,13 @@ class ClassComponent extends UIX.UIXComponent {
     }
 }
 
-@UIX.template<{title:string}>(({title}) =>
+@template<{title:string}>(({title}) =>
 	<article>
         <h1>{title}</h1>
         <section>Default section content</section>
     </article>
 )
-class ClassComponent2 extends UIX.ShadowDOMComponent<{title:string}> {
+class ClassComponent2 extends UIXComponent<{title:string}> {
     override onCreate() {
         console.log("options",this.options)
     }
@@ -92,7 +93,7 @@ class ClassComponent2 extends UIX.ShadowDOMComponent<{title:string}> {
 
 
 // shadow root + slot
-const CustomComponentWithSlots1 = UIX.template(<div>
+const CustomComponentWithSlots1 = template(<div>
 	1
     <shadow-root>
 		<slot name="title" style="font-weight:bold"/>
@@ -104,7 +105,7 @@ const CustomComponentWithSlots1 = UIX.template(<div>
 </div>)
 
 // alternative shadow root + slot
-const CustomComponentWithSlots2 = UIX.template(<div>
+const CustomComponentWithSlots2 = template(<div>
 	2
     <ShadowRoot>
 		<slot name="title" style="font-weight:bold"/>
@@ -116,7 +117,7 @@ const CustomComponentWithSlots2 = UIX.template(<div>
 </div>)
 
 // light root + slot
-const CustomComponentWithSlots3 = UIX.template(<div>
+const CustomComponentWithSlots3 = template(<div>
 	3
     <light-root>
 		<slot name="title" style="font-weight:bold"/>
@@ -170,7 +171,7 @@ setInterval(()=>{
 console.log(entryList)
 
 
-const ListView = UIX.template(()=>{
+const ListView = template(()=>{
 	const index = $$ (0);
 	const sculpture = index.transform(i => list[i]);
 
@@ -198,7 +199,7 @@ const exampleObject = $$({
 })
 
 
-const TemplateWithOptions = UIX.template<{image:HTMLImageElement, x: number, map: Map<string, string>}>(({image, x, map})=> {
+const TemplateWithOptions = template<{image:HTMLImageElement, x: number, map: Map<string, string>}>(({image, x, map})=> {
 	console.debug("TemplateWithOptions image", val(image), image)
 	console.debug("TemplateWithOptions x", val(x), x)
 	console.debug("TemplateWithOptions map", val(map), map)
@@ -216,7 +217,7 @@ const TemplateWithOptions = UIX.template<{image:HTMLImageElement, x: number, map
 	}
 `)
 @TemplateWithOptions
-export class ComponentWithOptions extends UIX.UIXComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
+export class ComponentWithOptions extends UIXComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
 	protected override onCreate() {
 		console.debug("CompontentWithOptions image", this.options.image, this.options.$.image)
 		console.debug("ComponentWithOptions x", this.options.x, this.options.$.x)
@@ -242,13 +243,13 @@ export class ComponentWithOptions extends UIX.UIXComponent<{image?:HTMLImageElem
 		font-family: sans-serif;
 	}
 `)
-@UIX.template(
+@template(
 	<div>
 		<h1>Title</h1>
 		Lorem Ispum blalblablababl...
 	</div>
 )
-export class ComponentWithStyle extends UIX.UIXComponent {
+export class ComponentWithStyle extends UIXComponent {
 
 	// TODO: source maps for @standalone
 	@standalone override onDisplay() {
@@ -261,17 +262,14 @@ export class ComponentWithStyle extends UIX.UIXComponent {
 
 export const testComponents = {
 
-	textInput: 		<Container><div>&copy; <span>2023 unyt.org</span></div><ValueInput placeholder="text 1..."/></Container>,
-	dropdownMenu: 	<Container><DropdownMenu/></Container>,
-
-	templateAndComponent: UIX.lazy(() => 
+	templateAndComponent: lazy(() => 
 		<Container>
 			<TemplateWithOptions   x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></TemplateWithOptions>
 			<ComponentWithOptions x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></ComponentWithOptions>
 		</Container>
 	),
 
-	style: UIX.lazy(() => <ComponentWithStyle/>),
+	style: lazy(() => <ComponentWithStyle/>),
 
 	/** 
 	 * Contexts demo:
@@ -287,7 +285,7 @@ export const testComponents = {
 	*/
 	contexts: 
 		<button 
-			onmousedown={UIX.inDisplayContext(() => console.log("mouse down"))} 
+			onmousedown={inDisplayContext(() => console.log("mouse down"))} 
 			onmouseup={Api.method1}
 			onclick={async e => {
 				console.log("clicked",e);
@@ -322,7 +320,7 @@ export const testComponents = {
 	</div>,
 
 	// dynamically map a live ref array to a DOM element list
-	dynamicList: UIX.lazy(() => <div>
+	dynamicList: lazy(() => <div>
 		<h2>My List ({always(()=>entryList.reduce((p,v)=>(v===undefined ? 0 : 1)+p, 0))} entries)</h2>
 		<ul>
 			{map(entryList, entry =>
@@ -333,7 +331,7 @@ export const testComponents = {
 	</div>),
 
 	// same as dynamicList, but using always and the built-in array map method (less efficient)
-	dynamicList2: UIX.lazy(() => <div>
+	dynamicList2: lazy(() => <div>
 		<h2>My List ({always(()=>entryList.reduce((p,v)=>(v===undefined ? 0 : 1)+p, 0))} entries)</h2>
 		<ul>
 			{always(() => entryList.map(entry =>
@@ -382,7 +380,7 @@ export const testComponents = {
 
 	// shows error alert
 	errorExample7: () => {
-		return UIX.provideError("My custom error", "Custom error message")
+		return provideError("My custom error", "Custom error message")
 	},
 
 	rawResponse: () => {

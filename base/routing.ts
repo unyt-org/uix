@@ -2,12 +2,12 @@
 
 import { Path } from "../utils/path.ts";
 import { Logger } from "unyt_core/datex_all.ts";
-import { resolveEntrypointRoute,  refetchRoute } from "../html/rendering.ts";
-import { HTMLUtils } from "../html/utils.ts";
+import { resolveEntrypointRoute,  refetchRoute } from "../routing/rendering.ts";
 import { Datex } from "unyt_core/datex.ts";
 import { Entrypoint, html_content_or_generator } from "../html/entrypoints.ts";
 import { KEEP_CONTENT } from "../html/entrypoint-providers.tsx";
 import { displayError } from "../html/errors.tsx";
+import { domUtils } from "../app/dom-context.ts";
 
 /**
  * Generalized implementation for setting the route in the current tab URL
@@ -83,7 +83,7 @@ export namespace Routing {
 			if (content == null) return;
 			if (content instanceof Array) {
 				document.body.innerHTML = "";
-				HTMLUtils.appendDynamic(document.body, content) // add to document
+				domUtils.appendDynamic(document.body, content) // add to document
 			}
 			// handle response
 			else if (content instanceof Response) {
@@ -94,7 +94,7 @@ export namespace Routing {
 			else if (!(content instanceof Datex.TypedValue)) { //if (content instanceof Element || content instanceof DocumentFragment) {
 				document.body.innerHTML = "";
 				// TODO: handle all content correctly (same behaviour as on backend)
-				HTMLUtils.appendDynamic(document.body, content) // add to document
+				domUtils.appendDynamic(document.body, content) // add to document
 			}
 			else {
 				displayError("UIX Rendering Error", "Cannot render value of type " + Datex.Type.ofValue(content));
@@ -119,7 +119,7 @@ export namespace Routing {
 			}
 			else if (isContentType(response, "text/plain")) {
 				const content = await response.text()
-				document.body.innerHTML = '<pre style="all:initial;word-wrap: break-word; white-space: pre-wrap;">'+HTMLUtils.escapeHtml(content)+'</pre>'
+				document.body.innerHTML = '<pre style="all:initial;word-wrap: break-word; white-space: pre-wrap;">'+domUtils.escapeHtml(content)+'</pre>'
 			}
 			else {
 				displayError("UIX Rendering Error", "Cannot render value with mime type \""+response.headers.get("content-type")+"\" on frontend");

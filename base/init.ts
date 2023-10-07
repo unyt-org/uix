@@ -1,16 +1,13 @@
 
 // global event listeners
 
-import { global_states, logger, notification_container, unsaved_components } from "../utils/global_values.ts";
+import { logger } from "../utils/global_values.ts";
 import { IS_HEADLESS, VERSION } from "../utils/constants.ts";
-import { Handlers } from "./handlers.ts";
-import { Res } from "./res.ts";
 
 import { State } from "./state.ts";
 import { Theme } from "./theme.ts";
 import { Datex, f, expose, scope } from "unyt_core";
-import { Actions } from "./actions.ts";
-import { UnytPen } from "./unyt_pen.ts";
+
 import { addStyleSheetLink } from "../uix_all.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
 
@@ -38,51 +35,13 @@ if (globalThis._UIX_appdata) {
 if (client_type === "deno") Datex.enableCLI();
 
 if (!IS_HEADLESS) {
-	window.addEventListener("keydown", (e)=>{
-		if (e.key == "Shift") {
-			global_states.shift_pressed = true;
-		}
-		else if (e.key == "Meta") {
-			global_states.meta_pressed = true;
-		}
-	})
-	
-	window.addEventListener("keyup", (e)=>{
-		if (e.key == "Shift") {
-			global_states.shift_pressed = false;
-		}
-		  else if (e.key == "Meta") {
-			global_states.meta_pressed = false;
-		}
-	})
-	
-	window.addEventListener("mousemove", (e)=>{
-		global_states.mouse_x = e.clientX;
-		global_states.mouse_y = e.clientY;
-	})
-	
-	window.addEventListener("blur", (e)=>{
-		global_states.shift_pressed = false;
-		global_states.meta_pressed = false;
-	})
-
-
-	window.onkeydown = (e) => {
-		if(e.key == "F6") {
-			Actions.toggleFullscreen()
-		}
-		if(e.key == "Escape") {
-			Actions.exitFullscreen()
-		}
-	}
-
     // keyboard overlay content (on chrome)
     if ('virtualKeyboard' in navigator) {
         // @ts-ignore
         navigator.virtualKeyboard.overlaysContent = true
     }
 
-    // header meta tag for mobile viewport sizing,  allow content over notch
+    // header meta tag for mobile viewport sizing, allow content over notch
 	if (!document.querySelector("meta[name=viewport]")) document.head.insertAdjacentHTML('beforeend', '<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>')
     // to change app color
     if (!document.querySelector("meta[name=theme-color]")) document.head.insertAdjacentHTML('beforeend', '<meta name="theme-color"/>')
@@ -95,7 +54,6 @@ if (!IS_HEADLESS) {
 	
 	// handle invalid images (TODO) ....
 
-
 	// watch system theme change
 	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
 		if (Theme.auto_mode) return;
@@ -105,17 +63,6 @@ if (!IS_HEADLESS) {
 		Theme.auto_mode = true;
 	})
 
-	window.addEventListener("beforeunload", function (e) {
-		if (unsaved_components.size==0) {
-			return undefined;
-		}
-	
-		let confirmationMessage = 'You have unsaved changes';
-	
-		(e || globalThis.event).returnValue = confirmationMessage;
-		return confirmationMessage;
-	});
-
 	// load document + body style, if not yet added
 
 	const body_style_url = new URL("../style/body.css", import.meta.url).toString();
@@ -124,48 +71,6 @@ if (!IS_HEADLESS) {
 	if (!IS_HEADLESS && !document.head.querySelector("link[href='"+document_style_url+"']")) addStyleSheetLink(document.head, document_style_url);
 	if (!IS_HEADLESS && document.body.shadowRoot && !document.body.shadowRoot.querySelector("link[href='"+body_style_url+"']")) addStyleSheetLink(document.body.shadowRoot, body_style_url);
 }
-
-// uix.stage
-const stageTransformFunction = await datex`
-	function (options) (
-		use currentStage from #public.uix;
-		always options.(currentStage) default @@local
-	);
-`
-
-@scope("uix") class UIXDatexScope {
-    @expose static setMode(theme:"light"|"dark"){
-        console.log("setting UIX mode: " + theme);
-        Theme.setMode(theme);
-    }
-
-    @expose static anchor(element:any){
-        element.anchor();
-    }
-
-    @expose 
-    static set MODE(theme:"light"|"dark"){
-        console.log("setting UIX mode: " + theme)
-        Theme.setMode(theme);
-    }
-    static get MODE(){
-        return Theme.mode
-    }
-
-    @expose static LANG = "en";
-
-	@expose static stage = stageTransformFunction
-
-	@expose static currentStage = stage
-}
-globalThis.UIXDatexScope = UIXDatexScope
-
-
-
-// after global_stylesheet loaded
-if (Debug.DEBUG_MODE) Debug.enableDebugMode();
-
-
 
 
 // Debug shortcuts

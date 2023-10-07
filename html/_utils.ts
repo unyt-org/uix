@@ -3,9 +3,8 @@ import { DATEX_ERROR, DX_VALUE, client_type } from "unyt_core/datex_all.ts";
 import { Datex, decimal, pointer } from "unyt_core";
 import { Theme } from "../base/theme.ts";
 import { defaultElementAttributes, elementEventHandlerAttributes, htmlElementAttributes, mathMLTags, svgElementAttributes, svgTags } from "./attributes.ts";
-import { JSX_INSERT_STRING } from "../jsx-runtime/jsx.ts";
-import { Task, TaskScheduler } from "uix/utils/scheduling.ts";
 import { IterableHandler } from "unyt_core/utils/iterable-handler.ts";
+import { JSX_INSERT_STRING } from "../uix-dom/datex-bindings/DOMUtils.ts";
 
 
 // deno-lint-ignore no-namespace

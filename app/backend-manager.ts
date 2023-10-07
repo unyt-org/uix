@@ -1,15 +1,11 @@
 import { ALLOWED_ENTRYPOINT_FILE_NAMES } from "./app.ts";
 import { Path } from "../utils/path.ts";
 import { getExistingFileExclusive } from "../utils/file_utils.ts";
-import { resolveEntrypointRoute } from "../html/rendering.ts";
+import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { logger } from "../utils/global_values.ts";
-import { Context, ContextGenerator, Entrypoint, HTMLUtils } from "../uix_all.ts";
 import { PageProvider } from "../html/entrypoint-providers.tsx";
 import { RenderMethod, RenderPreset } from "../html/render-methods.ts";
-import { html_content_or_generator_or_preset, raw_content } from "../html/entrypoints.ts";
-import { getOuterHTML } from "../html/render.ts";
-import { Datex } from "unyt_core";
-import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
+import { Entrypoint } from "../html/entrypoints.ts";
 import type { normalizedAppOptions } from "./options.ts";
 
 /**

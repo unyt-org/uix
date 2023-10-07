@@ -1,5 +1,6 @@
-import { Datex, $$,  f, static_pointer } from "unyt_core"
+import { Datex, $$, static_pointer } from "unyt_core"
 import { IS_HEADLESS } from "../utils/constants.ts"
+import { domContext } from "uix/app/dom-context.ts";
 
 const logger = new Datex.Logger("uix theme");
 
@@ -138,10 +139,10 @@ export class Theme  {
 	static #current_light_theme:ThemeProperties = this.LIGHT;
 	static #current_dark_theme:ThemeProperties = this.DARK;
 
-	static readonly #current_theme_style_sheet = new window.CSSStyleSheet();
+	static readonly #current_theme_style_sheet = new domContext.CSSStyleSheet();
 	static #current_theme_style_sheet_added = false;
 
-	static #global_style_sheet = new window.CSSStyleSheet();
+	static #global_style_sheet = new domContext.CSSStyleSheet();
 	static #global_style_sheet_added = false;
 
 	static #dark_themes = new Map<string, string>()
@@ -372,7 +373,7 @@ Theme.addGlobalThemeClass(Theme.DARK.__name, Theme.DARK, "dark");
 Theme.addGlobalThemeClass(Theme.LIGHT.__name, Theme.LIGHT, "light");
 
 // load themes from embedded style
-for (const sheet of <CSSStyleSheet[]><any>document.styleSheets??[]) {
+for (const sheet of domContext.document.styleSheets??[]) {
 	// light themes
 	if ((<HTMLStyleElement>sheet.ownerNode)?.classList?.contains("uix-light-themes")) {
 		Theme.addThemeFromParsedStylesheet(sheet, "light")

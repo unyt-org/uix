@@ -1,11 +1,10 @@
-import { client_type, logger } from "unyt_core/datex_all.ts";
+import { logger } from "unyt_core/datex_all.ts";
 import { app } from "../app/app.ts";
-import { Datex } from "unyt_core/datex.ts";
-import { HTMLUtils } from "./utils.ts";
 import { unsafeHTML } from "../uix_short.ts";
 import { HTTPError } from "./http-error.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { bindToOrigin } from "../utils/datex_over_http.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 
 function createErrorMessageHTML(title: string, message?: string|Element, attachment?: Element, statusCode?: number, displayLocation?: string) {
 
@@ -60,7 +59,7 @@ export function createErrorHTML(title: string, error?: Error|number|HTTPStatus<n
 	if (error instanceof Error) {
 		const stackMessage = error.stack ?? error.message ?? "";
 		const lastURL = stackMessage.match(matchURL)?.[0];
-		const stack = HTMLUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&'+(isBackend ? ':source': '')+'">$&</a>')
+		const stack = domUtils.escapeHtml(stackMessage).replace(matchURL, '<a target="_blank" style="color:#a4c1f3" href="$&'+(isBackend ? ':source': '')+'">$&</a>')
 		errorMessage = unsafeHTML(`<div>${stack}</div>`);
 		attachment = lastURL ? 
 			<iframe onload={bindToOrigin(e => e.target.style.display="block")} style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+(isBackend ? ':source': '')}></iframe> :

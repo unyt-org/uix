@@ -83,11 +83,6 @@ To resolve imports correctly, you need to add an import map to your HTML page.
 ```
 
 
-```typescript
-import { UIX } from "uix";
-// ...
-```
-
 ### Dealing with TypeScript in browsers (File Server)
 
 You can of course use a classic build setup and compile your TypeScript files to JavaScript with tsc or other tools.

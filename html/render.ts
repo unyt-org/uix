@@ -1,14 +1,17 @@
 import { Datex } from "unyt_core";
 import { OpenGraphInformation } from "../base/open-graph.ts";
-import { UIX } from "../uix.ts";
 import { indent } from "unyt_core/utils/indent.ts";
 import type { HTMLProvider } from "./html_provider.ts";
-import { HTMLUtils } from "./utils.ts";
 import { COMPONENT_CONTEXT, STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { app } from "../app/app.ts";
-import { logger } from "uix/uix_all.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
+import { bindToOrigin } from "../utils/datex_over_http.ts";
+import { RenderMethod } from "./render-methods.ts";
+import { Theme } from "../base/theme.ts";
+import { logger } from "../utils/global_values.ts";
+import { domContext, domUtils } from "../app/dom-context.ts";
+import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
 
 let stage:string|undefined = '?'
 
@@ -16,8 +19,6 @@ if (client_type === "deno") {
 	({ stage } = (await import("../app/args.ts")))
 }
 
-
-await import("./deno_dom.ts");
 
 type injectScriptData = {declare:Record<string,string>, init:string[]};
 
@@ -82,7 +83,7 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 	loadStandaloneJS(el, opts);
 
 	// add shadow root
-	if (el instanceof globalThis.Element && el.shadowRoot) {
+	if (el instanceof domContext.Element && el.shadowRoot) {
 		html += `<template shadowrootmode="${el.shadowRoot.mode}">`
 		// collect stylsheets that children require
 		const collectedStylesheets:string[] = []
@@ -104,28 +105,28 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 		html += await _getOuterHTML(child, opts, collectedStylsheets, standaloneContext);
 	}
 
-	return html || HTMLUtils.escapeHtml((el as HTMLElement).innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
+	return html || domUtils.escapeHtml((el as HTMLElement).innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
 async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[], isStandaloneContext = false):Promise<string> {
 	isStandaloneContext = isStandaloneContext || (<any>el)[STANDALONE];
 
-	if (el instanceof globalThis.Text) return HTMLUtils.escapeHtml(el.textContent ?? ""); // text node
+	if (el instanceof domContext.Text) return domUtils.escapeHtml(el.textContent ?? ""); // text node
 
-	if (el instanceof DocumentFragment) {
+	if (el instanceof domContext.DocumentFragment) {
 		const content = [];
-		for (const child of (el.childNodes as unknown as Node[])) {
+		for (const child of (el.childNodes as unknown as domContext.Node[])) {
 			content.push(await _getOuterHTML(child, opts, collectedStylsheets, isStandaloneContext));
 		}
 		return content.join("\n");
 	}
 
-	if (el instanceof globalThis.Comment) {
+	if (el instanceof domContext.Comment) {
 		return `<!--${el.textContent}-->`
 	}
 
 	// invalid node/element
-	if (!(el instanceof Element)) {
+	if (!(el instanceof domContext.Element)) {
 		console.log("cannot render node",el);
 		throw "invalid HTML node"
 	}
@@ -151,7 +152,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 
 
 	// inject event listeners
-	if (dataPtr && opts?._injectedJsData && (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
+	if (dataPtr && opts?._injectedJsData && (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS]) {
 		let context: HTMLElement|undefined;
 		let parent: Element|null = el;
 		let hasScriptContent = false; // indicates whether the generated script actually contains relevant content, not just skeleton code
@@ -166,13 +167,13 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 
  		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
 		let script = `  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
-		for (const [event, listeners] of (<HTMLUtils.elWithEventListeners>el)[HTMLUtils.EVENT_LISTENERS]) {
+		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS]) {
 			
 			for (const listener of listeners) {
 
 				const standaloneFunction = (listener as any)[STANDALONE];
 				const forceBindToOriginContext = !isStandaloneContext&&!standaloneFunction;
-				const listenerFn = (forceBindToOriginContext ? UIX.bindToOrigin(listener) : listener);
+				const listenerFn = (forceBindToOriginContext ? bindToOrigin(listener) : listener);
 
 				// special form "action" on submit
 				// FIXME
@@ -193,7 +194,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 						}
 						// handle functions
 						else if (typeof value == "function") {
-							const boundFunction = UIX.bindToOrigin(value as (...args: unknown[]) => unknown)
+							const boundFunction = bindToOrigin(value as (...args: unknown[]) => unknown)
 							script += `const ${varName} = ${getFunctionSource(boundFunction, "ctx")};// injected context\n`
 						}
 						// cannot yet handle other values
@@ -324,17 +325,17 @@ async function blobToBase64(blobUri:string|URL) {
 
 // https://gist.github.com/developit/54f3e3d1ce9ed0e5a171044edcd0784f
 // @ts-ignore
-if (!globalThis.Element.prototype.getInnerHTML) {
+if (!domContext.Element.prototype.getInnerHTML) {
 	// @ts-ignore
-	globalThis.Element.prototype.getInnerHTML = function(opts?:{includeShadowRoots?:boolean, lang?:string}) {
+	domContext.Element.prototype.getInnerHTML = function(opts?:{includeShadowRoots?:boolean, lang?:string}) {
 	  return getInnerHTML(this, opts);
 	}
 }
 
 // @ts-ignore
-if (!globalThis.Element.prototype.getOuterHTML) {
+if (!domContext.Element.prototype.getOuterHTML) {
 	// @ts-ignore
-	globalThis.Element.prototype.getOuterHTML = function(opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, lang?:string}) {
+	domContext.Element.prototype.getOuterHTML = function(opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, lang?:string}) {
 		return getOuterHTML(this, opts);
 	}
 }
@@ -342,16 +343,16 @@ if (!globalThis.Element.prototype.getOuterHTML) {
 
 
 
-export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:UIX.RenderMethod = UIX.RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en"){
+export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:RenderMethod = RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en"){
 	let files = '';
 	let importmap = ''
 
 	// use js if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content
-	const use_js = (render_method == UIX.RenderMethod.DYNAMIC || render_method == UIX.RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
-	const add_importmap = render_method != UIX.RenderMethod.STATIC_NO_JS;
+	const use_js = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
+	const add_importmap = render_method != RenderMethod.STATIC_NO_JS;
 
 	// inject uix app options
-	if (render_method != UIX.RenderMethod.STATIC_NO_JS && provider.app_options?.import_map) {
+	if (render_method != RenderMethod.STATIC_NO_JS && provider.app_options?.import_map) {
 		files += indent(4) `
 			<script type="module">
 				globalThis._UIX_import_map = ${provider.app_options.import_map.toString(true)}
@@ -406,7 +407,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	}
 
 	// no js, only inject some UIX app metadata
-	else if (render_method != UIX.RenderMethod.STATIC_NO_JS) {
+	else if (render_method != RenderMethod.STATIC_NO_JS) {
 		files += indent(4) `
 			<script type="module">
 				globalThis._UIX_appdata = {name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:"${Datex.Runtime.endpoint.toString()}"${Datex.Unyt.endpoint_info.app?.host ? `, host:"${Datex.Unyt.endpoint_info.app.host}"`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}};
@@ -414,7 +415,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	}
 
 	// inject other static js scripts
-	if (render_method != UIX.RenderMethod.STATIC_NO_JS) {
+	if (render_method != RenderMethod.STATIC_NO_JS) {
 		files += indent(4) `<script type="module">\nglobalThis._UIX_usid = "${app.uniqueStartId}";\n</script>`
 
 		for (const file of static_js_files) {
@@ -433,17 +434,17 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 
 	// global variable stylesheet
 	global_style += "<style>"
-	global_style += UIX.Theme.getCurrentThemeCSS().replaceAll("\n","");
+	global_style += Theme.getCurrentThemeCSS().replaceAll("\n","");
 	global_style += "</style>"
 	
 	// dark themes
 	global_style += `<style class="uix-light-themes">`
-	global_style += UIX.Theme.getLightThemesCSS().replaceAll("\n","");
+	global_style += Theme.getLightThemesCSS().replaceAll("\n","");
 	global_style += "</style>"
 
 	// light themes
 	global_style +=  `<style class="uix-dark-themes">`
-	global_style += UIX.Theme.getDarkThemesCSS().replaceAll("\n","");
+	global_style += Theme.getDarkThemesCSS().replaceAll("\n","");
 	global_style += "</style>"
 
 	let body_style = ''
@@ -487,7 +488,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 					<link rel="stylesheet" href="${provider.resolveImport("uix/style/noscript.css", true)}">
 				</noscript>
 			</head>
-			<body style="visibility:hidden; color-scheme:${UIX.Theme.mode}" data-color-scheme="${UIX.Theme.mode}">
+			<body style="visibility:hidden; color-scheme:${Theme.mode}" data-color-scheme="${Theme.mode}">
 				<template shadowrootmode=open>
 					<slot id=main></slot>
 					${body_style}

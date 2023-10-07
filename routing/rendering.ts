@@ -1,17 +1,18 @@
 import { Path } from "../utils/path.ts";
-import { $$, Datex, constructor } from "unyt_core";
-import { UIX } from "../uix.ts";
-import { app, logger } from "../uix_all.ts";
-import {evaluateFilter, filter} from "../routing/route-filter.ts";
+import { Datex } from "unyt_core";
+import {evaluateFilter, filter} from "./route-filter.ts";
 import { IS_HEADLESS } from "../utils/constants.ts";
-import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_content_or_generator, html_generator } from "./entrypoints.ts"
+import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_generator } from "../html/entrypoints.ts"
 
-import { CACHED_CONTENT, getOuterHTML } from "./render.ts";
-import { HTTPStatus } from "./http-status.ts";
+import { CACHED_CONTENT, getOuterHTML } from "../html/render.ts";
+import { HTTPStatus } from "../html/http-status.ts";
 import { convertToWebPath } from "../app/utils.ts";
-import { RenderPreset, RenderMethod } from "./render-methods.ts"
+import { RenderPreset, RenderMethod } from "../html/render-methods.ts"
 import { client_type } from "unyt_core/utils/constants.ts";
-import { createErrorHTML } from "./errors.tsx";
+import { createErrorHTML } from "../html/errors.tsx";
+import { Context, ContextGenerator } from "./context.ts";
+import { UIXComponent } from "../components/UIXComponent.ts";
+import { logger } from "../utils/global_values.ts";
 
 
 // URLPattern polyfill
@@ -76,14 +77,14 @@ type get_render_method<C extends Entrypoint, Path extends string = string> =
 type entrypointData<T extends Entrypoint = Entrypoint> = {
 	entrypoint: T,
 	route?:Path.Route, 
-	context?:UIX.ContextGenerator|UIX.Context, 
+	context?:ContextGenerator|Context, 
 	only_return_static_content?: boolean
 	return_first_routing_handler?: boolean
 }
 
 type resolvedEntrypointData<T extends Entrypoint = Entrypoint> = {
 	content: get_content<T>,
-	render_method: UIX.RenderMethod, // get_render_method<T>, 
+	render_method: RenderMethod, // get_render_method<T>, 
 	status_code: number, 
 	loaded: boolean, 
 	remaining_route?: Path.Route
@@ -114,7 +115,7 @@ function reconstructMatchedURL(input:string, match:URLPatternResult) {
 	return input
 }
 
-function resolveContext(entrypointData: entrypointData): asserts entrypointData is entrypointData & {context: UIX.Context} {
+function resolveContext(entrypointData: entrypointData): asserts entrypointData is entrypointData & {context: Context} {
 	if (typeof entrypointData.context == "function") entrypointData.context = entrypointData.context();
 	if (!entrypointData.context) throw new Error("missing UIX context for generator function")
 }
@@ -271,7 +272,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 
 	// init context if missing
 	if (!entrypointData.context) {
-		entrypointData.context = new UIX.Context()
+		entrypointData.context = new Context()
 		if (entrypointData.route) entrypointData.context.path = entrypointData.route.routename
 	}
 	// init route if missing
@@ -390,7 +391,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		else if (entrypointData.route && typeof resolved.content?.resolveRoute == "function") {
 
 			// wait until at least construct lifecycle finished
-			if (entrypointData.entrypoint instanceof UIX.Components.Base) await entrypointData.entrypoint.constructed
+			if (entrypointData.entrypoint instanceof UIXComponent) await entrypointData.entrypoint.constructed
 
 			if (!await resolveRouteForRouteManager(resolved.content as RouteManager, entrypointData.route, entrypointData.context)) {
 				resolved.content = null; // reset content, route could not be resolved
@@ -414,7 +415,7 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment, 
 		const promises = [];
 
 		// fake dom append for UIX Component
-		if (element instanceof UIX.UIXComponent || element instanceof UIX.Components.Base) {
+		if (element instanceof UIXComponent) {
 			let resolved = false;
 			const timeoutSec = `${(element.CREATE_TIMEOUT/1000)}s`
 			await Promise.race([
@@ -453,7 +454,7 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment, 
  * @param context UIX context
  * @returns true if the route could be fully resolved
  */
-async function resolveRouteForRouteManager(routeManager: RouteManager, route:Path.Route, context: UIX.Context|UIX.ContextGenerator) {
+async function resolveRouteForRouteManager(routeManager: RouteManager, route:Path.Route, context: Context|ContextGenerator) {
 	if (typeof context == "function") context = await context();
 	const valid_route_part = <Path.route_representation> await Promise.race([
 		routeManager.resolveRoute(route, context),
@@ -472,7 +473,7 @@ async function resolveRouteForRouteManager(routeManager: RouteManager, route:Pat
  * @param context 
  * @returns 
  */
-export async function refetchRoute(route: Path.route_representation, entrypoint: Entrypoint, context?:UIX.Context) {
+export async function refetchRoute(route: Path.route_representation, entrypoint: Entrypoint, context?:Context) {
 	const route_path = Path.Route(route);
 
 	const {content: routing_handler, remaining_route} = await resolveEntrypointRoute({entrypoint, route: route_path, context, return_first_routing_handler: true});

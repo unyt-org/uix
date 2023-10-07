@@ -484,7 +484,7 @@ export class Server {
             return this.getContentResponse("text/css", scopedCSS);
         }
         if (url.searchParams.has("useDirective") && (url.ext === "tsx" || url.ext === "ts" || url.ext === "js" || url.ext === "jsx")) {
-            const {PageProvider} = await import("uix/html/rendering.ts")
+            const {PageProvider} = await import("../routing/rendering.ts")
             if (!await PageProvider.useDirectiveMatchesForFile(filepath, url.searchParams.get("useDirective")!)) {
                 return this.getErrorResponse(406, "Not Acceptable");
             }

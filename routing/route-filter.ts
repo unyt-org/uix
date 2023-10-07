@@ -1,5 +1,4 @@
-import { Context } from "../base/context.ts";
-
+import { Context } from "./context.ts";
 
 export type filterFunction = (ctx: Context) => boolean|Promise<boolean>;
 export type filter = symbol & {readonly __tag: unique symbol};

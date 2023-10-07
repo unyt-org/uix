@@ -15,7 +15,7 @@
 	},
 	"tasks": {
 		"expose-uix": "deno run -Aq --reload https://dev.cdn.unyt.org/uix/server/standalone-file-server.ts -w --port 4242",
-		"run-test-app": "cd test-app && deno run -Aqr ../run.ts -blr --import-map http://localhost:4242/importmap.uixdev.json --port 4201",
+		"run-test-app": "cd .test-app && deno run -Aqr ../run.ts -blr --import-map http://localhost:4242/importmap.uixdev.json --port 4201",
 		"generate-api-docs": "deno run -Aqr --import-map importmap.dev.json https://dev.cdn.unyt.org/doc-generator/run.ts --import-map importmap.dev.json --base ./ -m ./uix.ts --out ./docs/api"
 	}
 }

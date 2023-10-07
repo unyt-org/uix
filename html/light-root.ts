@@ -1,10 +1,10 @@
-import "./deno_dom.ts";
+import { domContext } from "uix/app/dom-context.ts";
 
 /**
  * Alternative to ShadowRoot, also works with slot elements.
  * Does not have a separate document and encapsulated styles
  */
-export class LightRoot extends HTMLElement {
+export class LightRoot extends domContext.HTMLElement {
 	
 	connectedCallback() {
 		const parent = this.parentElement!;
@@ -26,7 +26,7 @@ export class LightRoot extends HTMLElement {
 	#defaultSlot?: HTMLSlotElement|null = null
 
 	getChildSlot(child: Node|string) {
-		if (child instanceof Element && child.hasAttribute("slot")) {
+		if (child instanceof domContext.Element && child.hasAttribute("slot")) {
 			return this.querySelector(`slot[name="${child.getAttribute("slot")}"]`)
 		}
 		else {
@@ -40,4 +40,4 @@ export class LightRoot extends HTMLElement {
 
 }
 
-customElements.define("light-root", LightRoot)
+domContext.customElements.define("light-root", LightRoot)

@@ -2,15 +2,12 @@
 import { constructor, Datex, property, replicator, template, get} from "unyt_core"
 import { logger } from "../utils/global_values.ts"
 import { assignDefaultPrototype } from "../utils/utils.ts"
-import { HTMLUtils } from "../html/utils.ts"
-import { Actions } from "../base/actions.ts"
 import { Class, Logger, METADATA, ValueError } from "unyt_core/datex_all.ts"
 import { IS_HEADLESS } from "../utils/constants.ts"
-import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
-import { bindObserver } from "../html/datex_binding.ts";
+import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, ORIGIN_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import { Path } from "../utils/path.ts";
 import { RouteManager } from "../html/entrypoints.ts";
-import { Context } from "../base/context.ts";
+import { Context } from "../routing/context.ts";
 import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../standalone/scroll_container.ts";
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open-graph.ts";
 import { bindContentProperties } from "../standalone/bound_content_properties.ts";
@@ -18,11 +15,13 @@ import { DX_IGNORE, INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css_style_compat.ts";
 import { indent } from "unyt_core/utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize_js.ts";
-import { ORIGIN_PROPS, Theme, jsxInputGenerator } from "../uix_all.ts"
 import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
 import type { DynamicCSSStyleSheet } from "../utils/css_template_strings.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts"
+import { Theme } from "../base/theme.ts";
+import { jsxInputGenerator } from "../html/anonymous_components.ts";
+import { bindObserver, domContext, domUtils } from "../app/dom-context.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -38,7 +37,7 @@ export namespace UIXComponent {
 }
 
 @template("uix:uixcomponent") 
-export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends HTMLElement implements RouteManager {
+export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -305,7 +304,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
      * returns the parent class if not UIXComponent
      */
     public static getParentClass(): typeof UIXComponent {
-        return Object.getPrototypeOf(this) != HTMLElement ? Object.getPrototypeOf(this) : null;
+        return Object.getPrototypeOf(this) != domContext.HTMLElement ? Object.getPrototypeOf(this) : null;
     }
 
     /**
@@ -593,18 +592,18 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     }
 
     // apply css properties to this element
-    public css(property:string, value?:Datex.CompatValue<string|number>):this
-    public css(properties:{[property:string]:Datex.CompatValue<string|number>}):this
-    public css(properties_object_or_property:{[property:string]:Datex.CompatValue<string|number>}|string, value?:Datex.CompatValue<string|number>):this {
-        if (typeof properties_object_or_property == "string") return HTMLUtils.setCSS(this, properties_object_or_property, value)
-        else return HTMLUtils.setCSS(this, properties_object_or_property)
+    public css(property:string, value?:Datex.RefOrValue<string|number>):this
+    public css(properties:{[property:string]:Datex.RefOrValue<string|number>}):this
+    public css(properties_object_or_property:{[property:string]:Datex.RefOrValue<string|number>}|string, value?:Datex.CompatValue<string|number>):this {
+        if (typeof properties_object_or_property == "string") return domUtils.setCSS(this, properties_object_or_property, value)
+        else return domUtils.setCSS(this, properties_object_or_property)
     }
 
     // add css classes
-    public cssClass(classes:Datex.CompatValue<string[]>):this
+    public cssClass(classes:Datex.RefOrValue<string[]>):this
     public cssClass(...classes:string[]):this
-    public cssClass(...classes:(Datex.CompatValue<string[]>|string)[]):this {
-        return HTMLUtils.setCssClass(this, ...<string[]>classes);
+    public cssClass(...classes:(Datex.RefOrValue<string[]>|string)[]):this {
+        return domUtils.setCssClass(this, ...<string[]>classes);
     }
 
     private handleIdProps(constructed=false){
@@ -666,7 +665,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
         // handle default component options (class, ...)
         if (this.options?.class) 
-            HTMLUtils.setElementAttribute(this, "class", this.options.$.class);
+            domUtils.setElementAttribute(this, "class", this.options.$.class);
 
         
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in UIXComponent.init
@@ -699,7 +698,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
             const templateFn = (<typeof UIXComponent> this.constructor).template!;
             const template = templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this);
-            HTMLUtils.append(this, template);
+            domUtils.append(this, template);
         }
     }
 
@@ -747,7 +746,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
                 } 
                 // string
                 catch {
-                    options[<keyof typeof options>name] = <Datex.CompatValue<O & UIXComponent.Options[keyof O & UIXComponent.Options]>> this.attributes[i].value;
+                    options[<keyof typeof options>name] = <Datex.RefOrValue<O & UIXComponent.Options[keyof O & UIXComponent.Options]>> this.attributes[i].value;
                 }
             }
         }
@@ -792,7 +791,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         let clss = <any>this.constructor;
         do {
             (<typeof UIXComponent>clss).loadStandaloneProps();
-        } while ((clss=Object.getPrototypeOf(Object.getPrototypeOf(clss))) && clss != HTMLElement && clss != Element && clss != Object); //  prototype chain, skip proxies inbetween
+        } while ((clss=Object.getPrototypeOf(Object.getPrototypeOf(clss))) && clss != domContext.HTMLElement && clss != domContext.Element && clss != Object); //  prototype chain, skip proxies inbetween
     }
 
     private enableDefaultOpenGraphGenerator() {
@@ -966,11 +965,12 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
 
         for (const [name, content] of Object.entries((this.constructor as typeof UIXComponent).standaloneMethods)) {
-            console.log("bindtoirigin", name, originProps?.[name])
+            console.log("bind to origin", name, originProps?.[name])
             if (originProps?.[name]) {
                 // @ts-ignore
-                this[<keyof typeof scope>name] = bindToOrigin(scope[<keyof typeof scope>name], this, name, originProps[name].datex);
-                console.log(this[name]?.toString?.(), "<--- name")
+                this[name as keyof typeof scope] = bindToOrigin(scope[<keyof typeof scope>name], this, name, originProps[name].datex);
+                // @ts-ignore
+                console.log(this[name as keyof typeof scope]?.toString?.(), "<--- name")
             }
         }
     }
@@ -1091,7 +1091,6 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
     override remove() {
         logger.debug("remove element ?", this.id || this.constructor.name);
-        if (this == Actions.getActiveDialogElement()) Actions.closeActiveDialog(); // is dialog element, close dialog
         super.remove();
     }
 
@@ -1100,10 +1099,10 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         return this.parentElement?.replaceChild(element, this);
     }
 
-    public observeOption(key:keyof O & UIXComponent.Options, handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
-        Datex.Ref.observeAndInit(this.options.$$[key], handler, this);
+    public observeOption(key:keyof O & UIXComponent.Options, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
+        Datex.Ref.observeAndInit(this.options.$$[key as keyof typeof this.options.$$], handler, this);
     }
-    public observeOptions(keys:(keyof O & UIXComponent.Options)[], handler: (value: unknown, key?: unknown, type?: Datex.Value.UPDATE_TYPE) => void) {
+    public observeOptions(keys:(keyof O & UIXComponent.Options)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
         for (const key of keys) this.observeOption(key, handler);
     }
 

@@ -1,21 +1,13 @@
 import { Path } from "../utils/path.ts"; 
 import { Logger } from "unyt_core/utils/logger.ts";
-import { TypescriptImportResolver } from "./ts_import_resolver.ts";
+import { TypescriptImportResolver } from "./ts-import-resolver.ts";
 import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
+
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
-
-const deno_emit = client_type === "deno" ? (await import("./lib/deno_emit/js/mod.ts")) : null;
-
+const {transpile} = client_type === "deno" ? (await import("https://deno.land/x/ts_transpiler@v0.0.1/mod.ts")) : {transpile:null};
 const sass = client_type === "deno" ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
-
-// Experiment: Babel for js transpilation (not working, incomplete ts support)
-// if (globalThis.Deno) {
-//     await import("https://dev.jspm.io/@babel/preset-typescript");
-//     await import("https://dev.jspm.io/@babel/plugin-proposal-decorators");
-// }
-// const Babel = <any>(globalThis.Deno ? (await import("https://dev.jspm.io/@babel/standalone")).default : null);
 
 const logger = new Logger("transpiler");
 
@@ -52,9 +44,9 @@ type transpiler_options_all = Required<transpiler_options>;
 type file_update_handler = (file:Path.File)=>void
 
 /**
- * Transpiler (also for scss)
+ * Transpiler (for ts + scss)
  */
-export class TypescriptTranspiler {
+export class Transpiler {
 
     private TMP_DIR_PREFIX = "transpiler_cache_";
     private TRANSPILED_DIR_EXT = "transpiled.web";
@@ -524,13 +516,15 @@ export class TypescriptTranspiler {
     private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
+            const jsxOptions = ts_dist_path.hasFileExtension("tsx") ? {
+                jsx: "react-jsx",
+                jsxImportSource: "uix"
+            } as const : null;
             // TODO: remove jsxAutomatic:true, currently only because of caching problems
-            const transpiled = await deno_emit!.transpileIsolated(ts_dist_path, {
+            const transpiled = await transpile!(await Deno.readTextFile(ts_dist_path), {
                 inlineSourceMap: !!this.#options.sourceMap, 
                 inlineSources: !!this.#options.sourceMap,
-                jsx:"react-jsx", 
-                jsxImportSource: "uix",
-                jsxAutomatic: true
+                ...jsxOptions
             });
             if (transpiled != undefined) await Deno.writeTextFile(js_dist_path, transpiled);
             else throw "unknown error"

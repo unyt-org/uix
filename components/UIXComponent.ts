@@ -20,7 +20,7 @@ import type { DynamicCSSStyleSheet } from "../utils/css_template_strings.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts"
 import { Theme } from "../base/theme.ts";
-import { jsxInputGenerator } from "../html/anonymous_components.ts";
+import { jsxInputGenerator } from "../html/anonymous-components.ts";
 import { bindObserver, domContext, domUtils } from "../app/dom-context.ts";
 
 export type propInit = {datex?:boolean};

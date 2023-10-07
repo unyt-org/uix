@@ -1,7 +1,7 @@
 import { Path } from "../utils/path.ts";
 import { Server } from "./server.ts";
-import { TypescriptImportResolver } from "./ts_import_resolver.ts";
-import { TypescriptTranspiler } from "./ts_transpiler.ts";
+import { TypescriptImportResolver } from "./ts-import-resolver.ts";
+import { Transpiler } from "./transpiler.ts";
 
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
 export const options = new CommandLineOptions("UIX File Server", "Simple static file server with integrated typescript support");
@@ -28,7 +28,7 @@ new Server(lib_dir, {
     cors: true, 
     resolve_index_html: true,
     transpilers: {
-        '/': new TypescriptTranspiler(lib_dir, {
+        '/': new Transpiler(lib_dir, {
             watch: watch,
             import_resolver: new TypescriptImportResolver(lib_dir, {
 				import_map: {imports: JSON.parse(importmap).imports}

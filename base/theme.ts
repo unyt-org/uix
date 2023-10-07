@@ -134,7 +134,7 @@ export class Theme  {
 	static #current_style = "flat";
 	static #style_handlers:Map<string,(element:HTMLElement)=>void> = new Map();
 	static #auto_mode = eternalVar('auto_mode') ?? $$(true); // static_pointer(true, Datex.LOCAL_ENDPOINT, 1238, "$uix_auto_mode");
-	static #current_mode:Datex.Pointer<"dark"|"light"> = eternalVar('current_mode') ?? $$(document.body.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light")); // static_pointer(document.body.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light"), Datex.LOCAL_ENDPOINT, 1239, "$uix_mode"); // eternal ?? $$(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") as Datex.Pointer<"dark"|"light">;// 
+	static #current_mode:Datex.Pointer<"dark"|"light"> = eternalVar('current_mode') ?? $$(document.body?.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light")); // static_pointer(document.body.style.getPropertyValue("color-scheme") as "dark"|"light" || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light"), Datex.LOCAL_ENDPOINT, 1239, "$uix_mode"); // eternal ?? $$(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? "dark" : "light") as Datex.Pointer<"dark"|"light">;// 
 	static #transition_mode:Datex.Pointer<"dark"|"light">|undefined;
 	static #current_light_theme:ThemeProperties = this.LIGHT;
 	static #current_dark_theme:ThemeProperties = this.DARK;

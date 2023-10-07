@@ -17,7 +17,7 @@ import { Logger } from "unyt_core/utils/logger.ts";
 import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
-import { TypescriptTranspiler } from "./ts_transpiler.ts";
+import { Transpiler } from "./transpiler.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
 
@@ -121,11 +121,6 @@ if (globalThis.Deno) {
     // cert_path = Deno.run()
 }
 
-
-// Using Deno.emit in version < 1.21.3, use external deno_emit module as soon es import maps are supported & decorators work correctly!
-// const emit = globalThis.Deno ? (await import("https://deno.land/x/emit@0.12.0/mod.ts")).emit : null;
-
-
 // -------------------------------------------------------------------------------------------------------------------
 
 
@@ -136,7 +131,7 @@ type requestHandler = (req: Deno.RequestEvent, path:string, con:Deno.Conn)=>void
 
 type server_options = {
     cors?: boolean, // enable cors, default: false
-    transpilers?: {[path:string]: TypescriptTranspiler}, // use transpiler for specific web path, if set, ts files are transpiled, and the js content is returned to the browser (+ virtual files can be added). The transpilers for the first matching path in the list is used. 
+    transpilers?: {[path:string]: Transpiler}, // use transpiler for specific web path, if set, ts files are transpiled, and the js content is returned to the browser (+ virtual files can be added). The transpilers for the first matching path in the list is used. 
     resolve_index_html?: boolean, // resolve / path to index.html, default: false
     request_proxies?: RequestProxy[] // request proxies are called for file requests that match their extensions which are requested directly from a browser session, not as a script import or deno import
                                      // they can be used to provide a custom view for a file in the browser
@@ -162,7 +157,7 @@ export class Server {
     get running(){return this.#running}
     get port(){return this.#port}
     
-    transpilers = new Map<string, TypescriptTranspiler>()
+    transpilers = new Map<string, Transpiler>()
 
     private requestHandlers = new Set<requestHandler>();
     private connectionHandler?: connectionHandler

@@ -1,5 +1,5 @@
-import { TypescriptTranspiler } from "../server/ts_transpiler.ts";
-import { TypescriptImportResolver } from "../server/ts_import_resolver.ts";
+import { Transpiler } from "../server/transpiler.ts";
+import { TypescriptImportResolver } from "../server/ts-import-resolver.ts";
 
 import { $$, Datex } from "unyt_core";
 import { Server } from "../server/server.ts";
@@ -9,7 +9,7 @@ import { BackendManager } from "./backend-manager.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
 import { logger } from "../utils/global_values.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
-import { HTMLProvider } from "../html/html_provider.ts";
+import { HTMLProvider } from "../html/html-provider.ts";
 
 import { UIX_CACHE_PATH } from "../utils/constants.ts";
 import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
@@ -81,7 +81,7 @@ export class FrontendManager extends HTMLProvider {
 	}
 
 	initFrontendDir(){
-		this.transpiler = new TypescriptTranspiler(this.scope, {
+		this.transpiler = new Transpiler(this.scope, {
 			sourceMap: app.stage == "dev",
 			watch: this.#watch,
 			import_resolver: this.import_resolver,
@@ -97,7 +97,7 @@ export class FrontendManager extends HTMLProvider {
 
 	intCommonDirs() {
 		for (const common_dir of this.app_options.common) {
-			const transpiler = new TypescriptTranspiler(new Path(common_dir), {
+			const transpiler = new Transpiler(new Path(common_dir), {
 				sourceMap: app.stage == "dev",
 				dist_parent_dir: this.transpiler.tmp_dir,
 				watch: this.#watch,
@@ -119,7 +119,7 @@ export class FrontendManager extends HTMLProvider {
 	}
 
 	initServer() {
-		const transpilers:Record<string,TypescriptTranspiler> = {}
+		const transpilers:Record<string,Transpiler> = {}
 
 		// set common transpilers to @... web paths
 		for (const [_path, [transpiler, web_path]] of this.#common_transpilers) {
@@ -170,9 +170,9 @@ export class FrontendManager extends HTMLProvider {
 	#BLANK_PAGE_URL = 'uix/base/blank.ts';
 
 	server!: Server
-	transpiler!: TypescriptTranspiler
+	transpiler!: Transpiler
 
-	#common_transpilers = new Map<string, [transpiler:TypescriptTranspiler, web_path:string]>();
+	#common_transpilers = new Map<string, [transpiler:Transpiler, web_path:string]>();
 
 	#watch = false;
 

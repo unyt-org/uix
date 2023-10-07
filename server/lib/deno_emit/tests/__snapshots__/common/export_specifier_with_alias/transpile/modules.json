@@ -1,4 +1,0 @@
-{
-  "file:///exports_with_alias.ts": "local/exports_with_alias.ts",
-  "file:///subdir/foo.ts": "local/subdir/foo.ts"
-}

@@ -1,5 +1,5 @@
 import { UIXComponent } from "uix/components/UIXComponent.ts";
-import { template } from "uix/html/anonymous_components.ts";
+import { template } from "uix/html/anonymous-components.ts";
 
 @template<{name:string}>(({name}) =>
 	<div>

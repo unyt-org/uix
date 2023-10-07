@@ -1,7 +1,7 @@
 import { Datex } from "unyt_core";
 import { OpenGraphInformation } from "../base/open-graph.ts";
 import { indent } from "unyt_core/utils/indent.ts";
-import type { HTMLProvider } from "./html_provider.ts";
+import type { HTMLProvider } from "./html-provider.ts";
 import { COMPONENT_CONTEXT, STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { app } from "../app/app.ts";

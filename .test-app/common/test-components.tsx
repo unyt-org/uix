@@ -1,7 +1,7 @@
 import { Api, test } from "../backend/public.ts";
 
 import { add, always, and, map, not, select } from "unyt_core/functions.ts";
-import { blankTemplate, style, template } from "uix/html/anonymous_components.ts";
+import { blankTemplate, style, template } from "uix/html/anonymous-components.ts";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { inDisplayContext } from "uix/utils/datex_over_http.ts";

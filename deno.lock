@@ -2,7 +2,8 @@
   "version": "3",
   "redirects": {
     "https://deno.land/std/async/mod.ts": "https://deno.land/std@0.203.0/async/mod.ts",
-    "https://deno.land/std/uuid/mod.ts": "https://deno.land/std@0.203.0/uuid/mod.ts"
+    "https://deno.land/std/uuid/mod.ts": "https://deno.land/std@0.203.0/uuid/mod.ts",
+    "https://deno.land/x/ts_transpiler/mod.ts": "https://deno.land/x/ts_transpiler@v0.0.1/mod.ts"
   },
   "remote": {
     "https://deno.land/std@0.168.0/_util/asserts.ts": "d0844e9b62510f89ce1f9878b046f6a57bf88f208a10304aab50efcb48365272",

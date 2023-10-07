@@ -14,7 +14,7 @@ import { bindContentProperties } from "../standalone/bound_content_properties.ts
 import { DX_IGNORE, INIT_PROPS } from "unyt_core/runtime/constants.ts"
 import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css_style_compat.ts";
 import { indent } from "unyt_core/utils/indent.ts"
-import { serializeJSValue } from "../utils/serialize_js.ts";
+import { serializeJSValue } from "../utils/serialize-js.ts";
 import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
 import type { DynamicCSSStyleSheet } from "../utils/css_template_strings.ts";
 import { convertToWebPath } from "../app/utils.ts";

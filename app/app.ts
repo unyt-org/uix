@@ -9,6 +9,7 @@ import { Server } from "../server/server.ts";
 
 import type { appOptions, normalizedAppOptions } from "./options.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
+import { State } from "../base/state.ts";
 
 const logger = new Datex.Logger("UIX App");
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
@@ -45,8 +46,7 @@ class UIXApp {
 	 * Current deployment stage, default is 'dev'
 	 */
 	get stage(){
-		// TODO: cleaner solution, cannot import UIX.State because of circular deps
-		return stage ?? UIX.State.APP_META.stage;
+		return stage ?? State.APP_META.stage;
 	}
 
 	#uniqueStartId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'

@@ -2,8 +2,7 @@
   "version": "3",
   "redirects": {
     "https://deno.land/std/async/mod.ts": "https://deno.land/std@0.203.0/async/mod.ts",
-    "https://deno.land/std/uuid/mod.ts": "https://deno.land/std@0.203.0/uuid/mod.ts",
-    "https://deno.land/x/ts_transpiler/mod.ts": "https://deno.land/x/ts_transpiler@v0.0.1/mod.ts"
+    "https://deno.land/std/uuid/mod.ts": "https://deno.land/std@0.203.0/uuid/mod.ts"
   },
   "remote": {
     "https://deno.land/std@0.168.0/_util/asserts.ts": "d0844e9b62510f89ce1f9878b046f6a57bf88f208a10304aab50efcb48365272",
@@ -66,7 +65,7 @@
     "https://dev.cdn.unyt.org/unyt_core/compiler/unit_codes.ts": "0da02d162eed5583c30130eea7d3f013bc09e1c5e274d1b3c41566cb71ef22a1",
     "https://dev.cdn.unyt.org/unyt_core/datex.ts": "e14ca15dcf7a5766d4451c514fa732214177af71be84b06985bb7189dfbd43e1",
     "https://dev.cdn.unyt.org/unyt_core/datex_all.ts": "831953bd7394e3051a8327269eedaadaaa1f2923192e838d85ad8fe321d951b4",
-    "https://dev.cdn.unyt.org/unyt_core/datex_short.ts": "476159e18b79daff106cca81f0efe5c3fcd7d69d06489c25fd5719cc89604363",
+    "https://dev.cdn.unyt.org/unyt_core/datex_short.ts": "14a9539f55ea1566b28f85cee145cb1970465ab2e4cee021f299c38dd41646f2",
     "https://dev.cdn.unyt.org/unyt_core/js_adapter/js_class_adapter.ts": "3549dbbccc901984b892dfd91678f1b5cbf8ec01139bedad1e5bac8d610b9add",
     "https://dev.cdn.unyt.org/unyt_core/js_adapter/legacy_decorators.ts": "a4e89ef74be48bf593d5788d680e807cd4da7992cdb0a8c80b881dca45f37fec",
     "https://dev.cdn.unyt.org/unyt_core/lib/localforage/drivers/indexeddb.js": "94a6cfe0f3bfbe677bae59127c991405d68c4c54ae4d3dbbdb56072a471ece02",
@@ -117,7 +116,7 @@
     "https://dev.cdn.unyt.org/unyt_core/types/deferred.ts": "7d660af810d2ab773dfeafce0c88af89b76c3d4abf3d2aa14c4313537e3aac27",
     "https://dev.cdn.unyt.org/unyt_core/types/error_codes.ts": "e4c8c23a07a5e71c70a6c2769de73f45547a4086152155b84ac080699bfb02ea",
     "https://dev.cdn.unyt.org/unyt_core/types/errors.ts": "4ce39c0543f5a43d8060a1c1090679e289349238d385e61bb06badbd1c43b547",
-    "https://dev.cdn.unyt.org/unyt_core/types/function.ts": "5a5b15c0b9fe0b741ac8143f009e2b90a8aa360f7cb97318d641cf1cafd93882",
+    "https://dev.cdn.unyt.org/unyt_core/types/function.ts": "8b2631f885b3327b713699bf56467b6ac465efad0acdf8c65e80e391ec9ce007",
     "https://dev.cdn.unyt.org/unyt_core/types/iterator.ts": "cb9c82d6053b2531bf37b0bc0c9032c9c668cee687948c93d8225c07bd7fab93",
     "https://dev.cdn.unyt.org/unyt_core/types/js-function.ts": "159614bca5ecfb8c6852239d2a5fbfa2a8d6f8faa4d72706590134db8346ae17",
     "https://dev.cdn.unyt.org/unyt_core/types/logic.ts": "69562cafae630e6740b3f5d177e1c3e543a9f77d98e3111b97f3481c96445c7f",

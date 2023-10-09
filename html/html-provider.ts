@@ -1,4 +1,4 @@
-import type { TypescriptImportResolver } from "../server/ts_import_resolver.ts";
+import type { TypescriptImportResolver } from "../server/ts-import-resolver.ts";
 import { Path } from "../utils/path.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { convertToWebPath } from "../app/utils.ts";

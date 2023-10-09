@@ -125,8 +125,14 @@ export namespace Routing {
 				displayError("UIX Rendering Error", "Cannot render value with mime type \""+response.headers.get("content-type")+"\" on frontend");
 			}
 		}
+		else if (response.status === 302) {
+			window.location.href = response.headers.get("location")!;
+		}
 		else if (response.body) {
-			console.log("cannot handle response body on frontend (TODO)", response)
+			console.warn("cannot handle response body on frontend (TODO)", response)
+		}
+		else {
+			console.warn("cannot handle response on frontend (TODO)", response)
 		}
 	}
 

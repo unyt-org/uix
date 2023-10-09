@@ -169,8 +169,6 @@ setInterval(()=>{
 	delete entryList[deleteCounter++];
 }, 3500)
 
-console.log(entryList)
-
 
 const ListView = template(()=>{
 	const index = $$ (0);
@@ -272,6 +270,8 @@ export const testComponents = {
 
 	style: lazy(() => <ComponentWithStyle/>),
 
+	redirect: new URL("https://google.com"),
+	
 	/** 
 	 * Contexts demo:
 	 * 

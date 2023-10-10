@@ -170,11 +170,9 @@ function resolveModule(entrypointData: entrypointData<{default?:Entrypoint}>): P
 
 function generateURLParamsObject(matches: URLPatternResult) {
 	return new Proxy({} as Record<string,string>, {
-		get(_, identifier) {
+		get(target, identifier) {
 			if (typeof identifier=="symbol") {
-				console.error("Issue here!", _, identifier)
-				return undefined;
-				//throw new Error("Invalid parameter key");
+				return (target as any)[identifier];
 			}
 			if (!matches) throw new Error("Missing URL parameter ':" + identifier + "'");
 			for (const group of Object.values(matches)) {

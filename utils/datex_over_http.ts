@@ -38,32 +38,16 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 	if (forceDatex) {
 		fn.toString = ()=>{
 			return `async ${name??'function'} (...args) {
-				await import("unyt_core");
-				await Datex.Supranet.connect();
-				return datex('${ptr.idString()}(Tuple(?))', [args]);
+				const { callDatex } = await import("uix/standalone/call-compat.ts");
+				return callDatex('${ptr.idString()}', args);
 			}`
 		}
 	}
 	else {
 		fn.toString = ()=>{
 			return `async ${name??'function'} (...args) {
-				// use datex
-				if (globalThis.datex && globalThis.Datex) {
-					await Datex.Supranet.connect();
-					return datex('${ptr.idString()}(Tuple(?))', [args]);
-				}
-				// use datex-over-http
-				else {
-					const dx = "${ptr.idString()}("+JSON.stringify(args).slice(1,-1)+")";
-					const res = await fetch("/@uix/datex/"+encodeURIComponent(dx));
-					const text = await res.text();
-					if (res.ok) {
-						try {return JSON.parse(text)}
-						catch {return "Return value is not valid JSON"}
-					}
-					else throw new Error(text)
-				}
-				
+				const { callCompat } = await import("uix/standalone/call-compat.ts");
+				return callCompat('${ptr.idString()}', args);
 			}`
 		}
 	}

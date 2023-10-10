@@ -53,9 +53,8 @@ export namespace Routing {
 		if (frontend_entrypoint || backend_entrypoint) {
 			enableFrontendRouting();
 		}
-
 		const backend_available = backend_entrypoint ? await initEndpointContent(backend_entrypoint) : false;
-		const frontend_available = frontend_entrypoint ? await initEndpointContent(frontend_entrypoint) : false;
+		const frontend_available = (!backend_available &&  frontend_entrypoint) ? await initEndpointContent(frontend_entrypoint) : false;
 
 		// no content for path found after initial loading
 		if (!frontend_available && !backend_available) {

@@ -44,7 +44,7 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 	if (arg_import_map) config.import_map_path = arg_import_map;
 
 	// set import map from deno.json if exists
-	const deno_path = getExistingFile(root_path, './deno.json');
+	const deno_path = getExistingFile(root_path, './deno.json', './deno.jsonc');
 	if (!config.import_map_path && !config.import_map && deno_path) {
 		try {
 			const deno = JSON.parse(await Deno.readTextFile(deno_path));
@@ -53,6 +53,10 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 			if (deno.imports) {
 				//config.import_map = {imports:deno.imports};
 				config.import_map_path = new URL(deno_path);
+			}
+			// _publicImportMap path
+			else if (deno._publicImportMap) {
+				config.import_map_path = new URL(deno._publicImportMap, root_path);
 			}
 			// importMap path
 			else if (deno.importMap) {

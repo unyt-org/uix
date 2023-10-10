@@ -351,14 +351,6 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 	const use_js = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
 	const add_importmap = render_method != RenderMethod.STATIC_NO_JS;
 
-	// inject uix app options
-	if (render_method != RenderMethod.STATIC_NO_JS && provider.app_options?.import_map) {
-		files += indent(4) `
-			<script type="module">
-				globalThis._UIX_import_map = ${provider.app_options.import_map.toString(true)}
-			</script>`
-	}
-
 	//js files
 	if (use_js) {
 		files += '<script type="module">'
@@ -375,7 +367,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 
 
 		// set app info
-		files += indent(4) `\nState._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")${Datex.Unyt.endpoint_info.app?.host ? `, host:f("${Datex.Unyt.endpoint_info.app.host}")`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}});`
+		// files += indent(4) `\nState._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")${Datex.Unyt.endpoint_info.app?.host ? `, host:f("${Datex.Unyt.endpoint_info.app.host}")`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}});`
 
 		for (const file of js_files) {
 			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file, compat_import_map).toString()}");`
@@ -404,20 +396,23 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 		else if (frontend_entrypoint)
 			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined)`
 
-		files += '\n</script>'
+		files += '\n</script>\n'
 	}
 
-	// no js, only inject some UIX app metadata
-	else if (render_method != RenderMethod.STATIC_NO_JS) {
-		files += indent(4) `
-			<script type="module">
-				globalThis._UIX_appdata = {name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:"${Datex.Runtime.endpoint.toString()}"${Datex.Unyt.endpoint_info.app?.host ? `, host:"${Datex.Unyt.endpoint_info.app.host}"`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}};
-			</script>`
-	}
-
-	// inject other static js scripts
+	// inject UIX app metadata
 	if (render_method != RenderMethod.STATIC_NO_JS) {
-		files += indent(4) `<script type="module">\nglobalThis._UIX_usid = "${app.uniqueStartId}";\n</script>`
+		files += indent(4) `
+			<script type="uix-app">
+				${JSON.stringify({
+					name: provider.app_options.name, 
+					version: provider.app_options.version, 
+					stage: stage, 
+					backend: Datex.Runtime.endpoint.toString(),
+					host: Datex.Unyt.endpoint_info.app?.host ? Datex.Unyt.endpoint_info.app.host.toString() : null,
+					domains: Datex.Unyt.endpoint_info.app?.domains ?? [],
+					usid: app.uniqueStartId
+				}, null, "    ")}
+			</script>\n`
 
 		for (const file of static_js_files) {
 			if (file) files += indent(4) `<script type="module" src="${provider.resolveImport(file, compat_import_map).toString()}"></script>`

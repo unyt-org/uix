@@ -27,6 +27,10 @@ export class ImportMap {
 	get static_imports(){
 		const imports = {...this.#json.imports};
 		for (const key of Object.keys(imports)) {
+			// exclude .eternal.ts imports
+			if (key.endsWith(".eternal.ts") || key.endsWith(".eternal.tsx") || key.endsWith(".eternal.js") || key.endsWith(".eternal.jsx") || key.endsWith(".eternal.mts") || key.endsWith(".eternal.mjs")) 
+				delete imports[key];
+			// exclude temp entries
 			if (this.isEntryTemporary(key)) delete imports[key];
 		}
 		return imports;
@@ -48,13 +52,18 @@ export class ImportMap {
 		return new ImportMap(map, path);
 	}
 
-	constructor(map:{imports:Record<string,string>}, path?:string|URL) {
+	constructor(map:{imports:Record<string,string>}, path?:string|URL, resetOnUnload = false) {
 		this.#json = map;
 		this.#path = path ? new Path(path) : undefined;
 		this.#readonly = !this.#path || this.#path.is_web;
 
 		this.clearEntriesForExtension(".dx.d.ts"); // remove temporarily created dx.d.ts entries from previous sessions
-		addEventListener("unload", ()=>this.clearTemporaryEntries());
+		if (resetOnUnload) addEventListener("unload", ()=>this.clearTemporaryEntries());
+
+		// make imports available as normal property
+		const descriptor = Object.getOwnPropertyDescriptor(ImportMap.prototype, "imports");
+		const modified_descriptor = Object.assign(descriptor as any, {enumerable: true});
+		Object.defineProperty(this, "imports", modified_descriptor);
 	}
 
 	public addEntry(name:string|Path, value:string|Path, temporary = true){
@@ -62,16 +71,19 @@ export class ImportMap {
 			logger.warn("cannot dynamically update the current import map - no read access");
 			return;
 		}
-		const val_string = value.toString();
-		const relative_name = name instanceof Path ? name.getAsRelativeFrom(this.#path!) : name;
+		if (name instanceof URL) name = new Path(name);
+		if (value instanceof URL) value = new Path(value);
+
+		const val_string = (value instanceof Path && !value.isWeb()) ? value.getAsRelativeFrom(this.#path!) : value.toString();
+		const name_string = (name instanceof Path && !name.isWeb()) ? name.getAsRelativeFrom(this.#path!) : name.toString();
 
 		// also add entries for aliases, e.g. for ./backend/x.dx -> backend/x.dx
-		if (name instanceof Path) {
+		if (name instanceof Path && !name.isWeb()) {
 			for (const alias of this.getPathAliases(name)) {
 				this.#addEntry(alias, val_string, temporary);
 			}
 		}
-		this.#addEntry(relative_name, val_string, temporary);
+		this.#addEntry(name_string, val_string, temporary);
 
 		this.#writeToFile();
 	}
@@ -129,4 +141,25 @@ export class ImportMap {
 			logger.error("could not update import map")
 		}
 	}
+
+	save() {
+		this.#writeToFile()
+	}
+
+	getMoved(newImportMapLocation: URL, resetOnUnload = false) {
+		const mappedImports:Record<string,string> = {};
+		for (let [key, value] of Object.entries(this.imports)) {
+			if (key.startsWith("./") || key.startsWith("../")) {
+				const absPath = new Path(key, this.path);
+				key = absPath.getAsRelativeFrom(newImportMapLocation);
+			} 
+			if (value.startsWith("./") || value.startsWith("../")) {
+				const absPath = new Path(value, this.path);
+				value = absPath.getAsRelativeFrom(newImportMapLocation);
+			}
+			mappedImports[key] = value;
+		}
+		return new ImportMap({imports:mappedImports}, newImportMapLocation, resetOnUnload);
+	}
 }
+

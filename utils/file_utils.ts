@@ -1,6 +1,6 @@
 import { Path } from "./path.ts";
 
-export function getExistingFile(root_path:URL, ...paths:(string|URL)[]):string|URL|null {
+export function getExistingFile(root_path:URL, ...paths:(string|URL)[]):URL|null {
 	try {
 		const path = paths.shift();
 		if (!path) return null;

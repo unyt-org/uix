@@ -20,7 +20,7 @@ enum ContainerStatus {
 
 // workaround, ignore modified deno.json
 function onlyDenoFileChanges(fileOutput: string) {
-	return !fileOutput.includes("\n") && fileOutput.endsWith("deno.json");
+	return !fileOutput.includes("\n") && fileOutput.endsWith("deno.json") || fileOutput.endsWith("deno.jsonc");
 }
 
 /**

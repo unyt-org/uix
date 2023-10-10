@@ -28,6 +28,7 @@ import { domUtils } from "./dom-context.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
+
 export class FrontendManager extends HTMLProvider {
 
 	srcPrefix = "/@uix/src/"
@@ -260,7 +261,10 @@ export class FrontendManager extends HTMLProvider {
 
 			// is not yet reloaded client with old app usid - trigger RELOAD once
 			const usid = new URL(req.request.url).searchParams.get("usid");
-			if (usid !== app.uniqueStartId) {
+			if (!usid) {
+				sendSSECommand("ERROR Cannot enable hot reloading, no app usid found")
+			}
+			else if (usid !== app.uniqueStartId) {
 				sendSSECommand("RELOAD")
 			}
 

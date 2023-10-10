@@ -4,7 +4,7 @@ import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../uix-dom/jsx/par
 import { UIXComponent } from "../components/UIXComponent.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
-import { Element, Node, HTMLElement, HTMLTemplateElement } from "uix/uix-dom/dom/mod.ts";
+import { Element, Node, HTMLElement, HTMLTemplateElement, CSSStyleSheet } from "uix/uix-dom/dom/mod.ts";
 
 /**
  * cloneNode(true), but also clones shadow roots.
@@ -109,7 +109,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Ch
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(elementGenerator:jsxInputGenerator<Element, Options, never, false, false, Context>):jsxInputGenerator<Element, Options, Children>&((cl:typeof domContext.HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(elementGenerator:jsxInputGenerator<Element, Options, never, false, false, Context>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * Default HTML Attributes defined in JSX are also set for the root element.
@@ -121,7 +121,7 @@ export function template<Options extends Record<string, any> = {}, Children = JS
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof domContext.HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
 
 export function template(templateOrGenerator:Element|jsxInputGenerator<Element, any, any, any>) {
 	let generator:any;

@@ -5,6 +5,7 @@ import { HTTPError } from "./http-error.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { bindToOrigin } from "../utils/datex_over_http.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
+import { domUtils } from "../app/dom-context.ts";
 
 function createErrorMessageHTML(title: string, message?: string|Element, attachment?: Element, statusCode?: number, displayLocation?: string) {
 

@@ -1,6 +1,7 @@
 import type { Tuple } from "unyt_core/types/tuple.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import { Path } from "../utils/path.ts";
+import { logger } from "uix/utils/global_values.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 
@@ -51,10 +52,10 @@ export async function normalizeAppOptions(options:appOptions = {}, base_url?:str
 	n_options.expose_deno = options.expose_deno ?? false;
 	
 	// import map or import map path
-	if (options.import_map_path) {
+	if (options.import_map) n_options.import_map = new ImportMap(options.import_map);
+	else if (options.import_map_path) {
 		n_options.import_map = await ImportMap.fromPath(options.import_map_path);
 	}
-	else if (options.import_map) n_options.import_map = new ImportMap(options.import_map);
 	else throw new Error("No importmap found or set in the app configuration") // should not happen
 
 	// default frontend, backend, common

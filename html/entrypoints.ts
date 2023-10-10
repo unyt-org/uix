@@ -6,6 +6,7 @@ import { RenderPreset, RenderMethod } from "./render-methods.ts";
 import { KEEP_CONTENT } from "./entrypoint-providers.tsx";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { filter } from "../routing/route-filter.ts";
+import { Element } from "uix/uix-dom/dom/mod.ts";
 
 
 export type raw_content = Blob|Response // sent as raw Response

@@ -7,31 +7,18 @@ import { Entrypoint } from "uix/html/entrypoints.ts";
 import { renderStatic } from "uix/html/render-methods.ts";
 import { logger } from "uix/utils/global_values.ts";
 import { bindToOrigin } from "uix/utils/datex_over_http.ts";
+// import { counter } from "backend/counter.eternal.ts";
 
-const count = $$(0);
+// /* <button onclick={(() => count.val++).inDisplayContext.with({count})}>Increase Counter</button> */
+// /* <button onclick={(() => count.val++).with({count})}>Increase Counter</button> */
+// console.log("COUNTER = " + counter)
 
-const el = await lazyEternal ?? $$(
-	<button onclick={() => using (count) && count.val++}>
-		Increase Counter (Current: {count})
-	</button>
-);
-
-/* <button onclick={(() => count.val++).inDisplayContext.with({count})}>Increase Counter</button> */
-/* <button onclick={(() => count.val++).with({count})}>Increase Counter</button> */
-
-const comp = await lazyEternalVar('comp') ?? $$(<HelloComponent name="World42"/>);
-
-
-logger.info("comp", comp)
-logger.info("el", el)
 
 export default {
 	'/:component/frontend': (ctx, {component}) => testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND),
 	'/:component/backend*': null,
 	'/x/*': {
-		'/lazy': () => import("./lazy.tsx"),
-		'/persistent': () => comp,
-		'/persistent2': () => el
+		'/lazy': () => import("./lazy.tsx")
 	},
 
 	'frontendError': (ctx) => {

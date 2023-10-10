@@ -15,7 +15,6 @@ declare global {
 	const id: typeof _id;
 	const layout: typeof _layout;
 	const child: typeof _child;
-	const use: typeof _use;
 	const Component: typeof _Component;
 	const NoResources: typeof _NoResources;
 	const standalone: typeof _standalone;
@@ -26,8 +25,6 @@ declare global {
 globalThis.content = _content;
 // @ts-ignore global
 globalThis.id = _id;
-// @ts-ignore global
-globalThis.use = _use;
 // @ts-ignore global
 globalThis.child = _child;
 // @ts-ignore global

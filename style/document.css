@@ -3,14 +3,19 @@
 
 @import url('./base.css');
 
-/* body, html {
-    height: 100dvh;
+body, html {
+    /* height: 100dvh;
     width: 100dvw;
-    position: relative;
+    position: relative; */
+    height: -webkit-fill-available;
     -webkit-touch-callout: none;
 }
 
 body {
+    margin: 0;
+}
+
+/*body {
     background-color: var(--bg_dark);
 	color: var(--current_text_color);
     margin: 0;

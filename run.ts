@@ -16,6 +16,7 @@ import { runRemote } from "./runners/run-remote.ts";
 import { GitDeployPlugin } from "./plugins/git-deploy.ts";
 import { triggerLogin } from "./utils/login.ts";
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
+import { createProxyImports } from "./app/module-mapping.ts";
 
 // login flow
 if (login) await triggerLogin();
@@ -45,7 +46,7 @@ export type runParams = {
     inspect: boolean | undefined;
     unstable: boolean | undefined;
 	detach: boolean | undefined;
-    deno_config_path: string | URL | null;
+    deno_config_path: URL | null;
 }
 
 const params: runParams = {
@@ -55,7 +56,7 @@ const params: runParams = {
 	unstable: command_line_options.option("unstable", {type:"boolean", description: "Enable unstable deno features"}),
 	detach: command_line_options.option("detach", {type:"boolean", aliases: ["d"], default: false, description: "Keep the app running in background"}),
 
-	deno_config_path: getExistingFile(root_path, './deno.json')
+	deno_config_path: getExistingFile(root_path, './deno.json', './deno.jsonc')
 }
 
 // forced command line args capture, exit after this point
@@ -74,6 +75,9 @@ await datex`
 
 // find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
 const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(root_path, [new GitDeployPlugin()]), root_path);
+if (!options.import_map) throw new Error("Could not find importmap");
+options.import_map = await createProxyImports(options, new_base_url, params.deno_config_path!);
+
 await runBackends(options);
 
 async function getDXConfigData(path: URL) {

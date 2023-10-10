@@ -6,6 +6,7 @@ export const invalid = renderStatic(
 		<ul>
 			<li><code>/componentName/backend+dynamic</code></li>
 			<li><code>/componentName/backend+static</code></li>
+			<li><code>/componentName/backend+staticnojs</code></li>
 			<li><code>/componentName/backend+hydrated</code></li>
 			<li><code>/componentName/frontend</code></li>
 		</ul>

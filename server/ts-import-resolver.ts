@@ -4,6 +4,7 @@ import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import "unyt_core/utils/auto_map.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
+import { cache_path } from "unyt_core/runtime/cache_path.ts";
 
 const logger = new Logger("ts import resolver");
 
@@ -58,10 +59,16 @@ export class TypescriptImportResolver {
 
 	resolveImportSpecifier(specifier:string, path:Path): string {
 
+        // TODO: (wrong import mapping for /@uix/src web paths)
+        // let resolved = import.meta.resolve(specifier);
+        
+        // is in datex_cache/eternal -> keep original specifier, eternal values on frontend are resolved by server, not import map
+
         if (!this.import_map) {
             logger.warn("cannot resolve imports, no import map")
             return specifier; // no import map, cannot resolve
         }
+
 
         // already resolved
         if (specifier.startsWith("../") || specifier.startsWith("./")) return specifier; // already a relative path
@@ -69,8 +76,6 @@ export class TypescriptImportResolver {
         else if (specifier.startsWith("https://") || specifier.startsWith("http://")) return specifier; // already an absolute url path
 
         // TODO:?
-        // console.log("import resolve", specifier, import.meta.resolve(specifier));
-
 
         let resolved: string|undefined
         const imports = this.import_map.imports;
@@ -106,6 +111,10 @@ export class TypescriptImportResolver {
             if (imports[specifier] && this.import_map.isEntryTemporary(specifier)) {}
             else logger.error("Cannot resolve import '"+specifier+"'") // should not happen, but can ignore for now in workaround impl, because imports are resolved for all ts files in the source directory, even those without correct import map imports
         }
+
+        // keep original specifier for eternal.ts
+        if (resolved.endsWith(".eternal.ts") || resolved.endsWith(".eternal.tsx") || resolved.endsWith(".eternal.js") || resolved.endsWith(".eternal.jsx") || resolved.endsWith(".eternal.mts") || resolved.endsWith(".eternal.mjs")) 
+            resolved = specifier
 
         return this.resolveRelativeImportMapImport(resolved, path);
 	}

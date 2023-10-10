@@ -2,7 +2,7 @@ import { StorageMap } from "unyt_core/types/storage_map.ts";
 import { Datex, f } from "unyt_core/datex.ts";
 import { BROADCAST, Endpoint } from "unyt_core/types/addressing.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
-import { UIX_COOKIE, getCookie } from "../session/cookies.ts";
+import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
 import { getSharedDataPointer } from "../session/shared-data.ts";
 
 // TODO: remove params, use ctx.searchParams instead
@@ -141,7 +141,16 @@ export class ContextBuilder {
 		if (!request) return null;
 		const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers);
 		if (!endpointCookie) return null;
-		else return f(endpointCookie as any);
+		else {
+			try {
+				return f(endpointCookie as any);
+			}
+			// invalid cookie content, reset
+			catch {
+				deleteCookie(UIX_COOKIE.endpoint, this.#ctx.responseHeaders)
+				return null;
+			}
+		}
 		// TODO signature validation
 	}
 

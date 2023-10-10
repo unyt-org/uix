@@ -67,6 +67,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	await run();
 
 	async function run() {
+
 		process = Deno.run({
 			cmd: [
 				...cmd,

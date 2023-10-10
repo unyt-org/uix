@@ -1,4 +1,5 @@
 import { Logger } from "unyt_core/utils/logger.ts";
+import { getInjectedAppData } from "../app/app-data.ts";
 // import { getServiceWorkerThread, ThreadModule } from "unyt_core/threads/threads.ts";
 
 const logger = new Logger("background-runner")
@@ -14,7 +15,9 @@ export class BackgroundRunner {
 	// }
 
 
-	private constructor(){}
+	private constructor(){
+		this.#handleSSECommand("ERROR", (data) => logger.error(data))
+	}
 	static #instance?: BackgroundRunner
 	static async get() {
 		if (!this.#instance) {
@@ -25,20 +28,24 @@ export class BackgroundRunner {
 	}
 
 	#listeningToSSE = false;
-	#commandCallbacks = new Map<string, Set<()=>void>>();
+	#commandCallbacks = new Map<string, Set<(data?: string)=>void>>();
 	#listenToSSE() {
-		if (this.#listeningToSSE) return;
+		if (this.#listeningToSSE) return true;
+
+		const usid = getInjectedAppData()?.usid;
+
+		if (!usid) return false;
 		this.#listeningToSSE = true;
-		const usid = (globalThis as any)._UIX_usid;
-		const path = "/@uix/sse?usid=" + usid;
+		const path = "/@uix/sse?usid=" + (usid??'');
 
 		const evtSource = new EventSource(path, {
 			withCredentials: true,
 		});
 		evtSource.addEventListener("message", (e) => {
-			const cmd = e.data;
+			const [cmd, ...data] = (e.data as string).split(" ");
+
 			if (this.#commandCallbacks.has(cmd)) {
-				for (const callback of this.#commandCallbacks.get(cmd)!) callback()
+				for (const callback of this.#commandCallbacks.get(cmd)!) callback(data.join(" "))
 			}
 		});
 
@@ -54,16 +61,19 @@ export class BackgroundRunner {
 		}
 	}
 
-	#handleSSECommand(cmd: string, callback: ()=>void) {
-		this.#listenToSSE();
+	#handleSSECommand(cmd: string, callback: (data?:string)=>void) {
+		const valid = this.#listenToSSE();
+		if (!valid) return false;
 		if (!this.#commandCallbacks.has(cmd)) this.#commandCallbacks.set(cmd, new Set())
 		this.#commandCallbacks.get(cmd)!.add(callback);
+		return true;
 	}
 
 	// TODO: implement with sw thread
 	enableHotReloading() {
-		this.#handleSSECommand("RELOAD", () => window.location.reload())
-		logger.success("hot reloading enabled");
+		const enabled = this.#handleSSECommand("RELOAD", () => window.location.reload())
+		if (enabled) logger.success("Hot reloading enabled");
+		else logger.error("Could not enable hot reloading");
 	}
 
 }

@@ -1,33 +1,61 @@
 import { Datex, f } from "unyt_core";
 
-import { FrontendManager } from "./frontend-manager.ts";
-import { BackendManager } from "./backend-manager.ts";
-import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
+import type { FrontendManager  } from "./frontend-manager.ts";
 import { Path } from "../utils/path.ts";
 import { ImportMap } from "../utils/importmap.ts";
-import { Server } from "../server/server.ts";
+import type { Server } from "../server/server.ts";
 
 import type { appOptions, normalizedAppOptions } from "./options.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
-import { State } from "../base/state.ts";
+import { displayInit } from "unyt_core/runtime/display.ts";
+import { ServiceWorker } from "uix/sw/sw-installer.ts";
+import { logger } from "../utils/global_values.ts";
+import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
+import { getInjectedAppData, getInjectedImportmap } from "./app-data.ts";
 
-const logger = new Datex.Logger("UIX App");
+
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
+
+type version_change_handler = (version:string, prev_version:string)=>void|Promise<void>;
 
 
 // options passed in via command line arguments
-let live_frontend:boolean|undefined = false;
-let watch:boolean|undefined = false;
-let watch_backend:boolean|undefined = false;
-let http_over_datex: boolean|undefined = true;
 let stage: string|undefined
-
 if (client_type === "deno") {
-	({ stage, live_frontend, watch, watch_backend, http_over_datex } = (await import("./args.ts")))
+	({ stage } = (await import("./args.ts")))
 }
 
+const version = eternal ?? $$("unknown");
+
+
+export type appMetadata = {
+	name?: string,
+	description?: string,
+	version?: string,
+	stage?: string,
+	backend?: Datex.Endpoint,
+	usid?: string
+}
 
 class UIXApp {
+
+	constructor() {
+		// get import map from <script type=importmap>
+		const importMapContent = getInjectedImportmap()
+		if (importMapContent) {
+			// @ts-ignore use pre injected import map
+			this.options = {import_map: new ImportMap(importMapContent)}
+		}
+
+		// get injected uix app metadata
+		const appDataContent = getInjectedAppData()
+		if (appDataContent) {
+			const appdata: Record<string,any> = {...appDataContent}
+			if (appdata.backend) appdata.backend = f(appdata.backend);
+			if (appdata.host) appdata.host = f(appdata.host);
+			this.#setMetadata(appdata)
+		}
+	}
 
 	base_url?:URL
 
@@ -36,6 +64,8 @@ class UIXApp {
 	frontends = new Map<string, FrontendManager>()
 	#ready_handlers = new Set<()=>void>();
 	#ready = false;
+
+	#metadata: appMetadata = {}
 
 	/**
 	 * The default web server instance (there might be multiple web server instances if there is more than one backend)
@@ -46,7 +76,26 @@ class UIXApp {
 	 * Current deployment stage, default is 'dev'
 	 */
 	get stage(){
-		return stage ?? State.APP_META.stage;
+		return stage ?? this.metadata.stage;
+	}
+
+	get version() {
+		return version;
+	}
+
+	get metadata() {
+		return this.#metadata
+	}
+
+	#setMetadata(metadata:appMetadata) {
+		Object.assign(this.#metadata, metadata);
+        Datex.Unyt.setAppInfo(metadata)
+	      
+        if (metadata.version) {
+            const prev_version = version.val;
+            version.val = metadata.version;
+            if (prev_version != "unknown" && prev_version != version.val) this.#handleVersionChange(prev_version, version.val)
+        }
 	}
 
 	#uniqueStartId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
@@ -57,7 +106,7 @@ class UIXApp {
 		});
 
 	get uniqueStartId() {
-		return this.#uniqueStartId
+		return this.metadata.usid ?? this.#uniqueStartId
 	}
 
 	/**
@@ -81,6 +130,36 @@ class UIXApp {
 		else this.#ready_handlers.add(handler);
 	}
 
+	#current_version_change_handler: version_change_handler|undefined;
+    #waiting_version_change: Function|undefined;
+
+	/**
+	 * Register a handler that gets called when the app is loaded with a new version
+	 * @param handler
+	 */
+    onVersionChange(handler:version_change_handler) {
+        this.#current_version_change_handler = handler;
+        if (this.#waiting_version_change) this.#waiting_version_change();
+    }
+
+    #handleVersionChange(from:string, to:string) {
+        this.#waiting_version_change = async ()=> {
+            if (!this.#waiting_version_change) return;
+            this.#waiting_version_change = undefined;
+            displayInit("Updating App");
+            logger.info("app version changed from " + from + " to " + to);
+            await ServiceWorker.clearCache();
+            if (this.#current_version_change_handler) await this.#current_version_change_handler(from, to);
+            window.location.reload();
+        }
+        if (this.#current_version_change_handler) this.#waiting_version_change(); // call if handler available
+        // show ui
+        displayInit("Updating App");
+
+        // update if no handler called after some time
+        setTimeout(()=>this.#waiting_version_change?.(), 8000);
+    }
+
 	/**
 	 * Resolved when the app is fully loaded
 	 * Dont await this in top level of a backend module!
@@ -97,7 +176,7 @@ class UIXApp {
 	public get domains() {
 		if (!this.#domains) {
 			// custom host domains
-			const domains = Deno.env.get("UIX_HOST_DOMAINS")?.split(",") ?? [];
+			const domains = globalThis.Deno?.env.get("UIX_HOST_DOMAINS")?.split(",") ?? [];
 
 			// TODO: use this in the unyt core status logger, currently implemented twice
 			// app domains inferred from current endpoint
@@ -117,92 +196,28 @@ class UIXApp {
         else if (endpointName.startsWith("@")) return `${endpointName.replace("@","")}.unyt.me`
     }
 
-	public async start(options:appOptions = {}, base_url?:string|URL) {
+	public async start(options:appOptions = {}, originalBaseURL?:string|URL) {
+		const { startApp } = await import("./start-app.ts");
+		const {nOptions, baseURL, defaultServer} = await startApp(options, originalBaseURL)
+		this.options = nOptions;
+		this.defaultServer = defaultServer;
+		this.base_url = baseURL;
 
-		// prevent circular dependency problems
-		const {normalizeAppOptions} = await import("./options.ts")
-
-		const [n_options, new_base_url] = await normalizeAppOptions(options, base_url);
-		this.options = n_options;
-		this.base_url = new_base_url;
-
-		// logger.info("options", {...n_options})
-
-		// for unyt log
-		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
-
-		// set .dx path to backend
-		if (n_options.backend.length) {
-			await endpoint_config.load(new URL("./.dx", n_options.backend[0]))
-		}
-
-		// connect to supranet
-		if (endpoint_config.connect !== false) await Datex.Supranet.connect();
-		else await Datex.Supranet.init(undefined);
-
-		// TODO: map multiple backends to multiple frontends?
-		let backend_with_default_export:BackendManager|undefined;
-
-		// load backend
-		for (const backend of n_options.backend) {
-			const backend_manager = new BackendManager(n_options, backend, this.base_url, watch_backend);
-			await backend_manager.run()
-			if (backend_manager.content_provider!=undefined) {
-				if (backend_with_default_export!=undefined) logger.warn("multiple backend entrypoint export a default content");
-				backend_with_default_export = backend_manager; 
-			}
-		}
-
-		// also override endpoint default
-		if (backend_with_default_export) Datex.Runtime.endpoint_entrypoint = backend_with_default_export.content_provider;
-
-
-		let server:Server|undefined
-		// load frontend
-		for (const frontend of n_options.frontend) {
-			const frontend_manager = new FrontendManager(n_options, frontend, this.base_url, backend_with_default_export, watch, live_frontend)
-			await frontend_manager.run();
-			server = frontend_manager.server;
-			this.frontends.set(frontend.toString(), frontend_manager);
-		}
-		// no frontend, but has backend with default export -> create empty frontend
-		if (!n_options.frontend.length && backend_with_default_export) {
-			// TODO: remove tmp dir on exit
-			const dir = new Path(Deno.makeTempDirSync()).asDir();
-			const frontend_manager = new FrontendManager(n_options, dir, this.base_url, backend_with_default_export, watch, live_frontend)
-			await frontend_manager.run();
-			server = frontend_manager.server;
-			this.frontends.set(dir.toString(), frontend_manager);
-		}
-
-		// expose DATEX interfaces
-		// TODO: also enable without connect == false (For all uix servers), working, but routing problems
-		if (server && endpoint_config.connect === false) {
-			const DatexServer = (await import("../server/datex_server.ts")).DatexServer
-			DatexServer.addInterfaces(["websocket", "webpush"], server);
-			// also add custom .dx file
-			const data = new Map<Datex.Endpoint, {channels:Record<string,string>,keys:[ArrayBuffer, ArrayBuffer]}>();
-			data.set(Datex.Runtime.endpoint,  {
-				channels: {
-					'websocket': '##location##'
-				},
-				keys: Datex.Crypto.getOwnPublicKeysExported()
-			})
-			server.path("/.dx", Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true).replace('"##location##"', '#location'), 'text/datex')
-		}
-
-
-		// enable HTTP-over-DATEX
-		if (server && http_over_datex) {
-			const {HTTP} = await import("./http-over-datex.ts")
-			HTTP.setServer(server);
-		}
-
-		this.defaultServer = server;
-		
 		this.#ready = true;
-		for (const handler of this.#ready_handlers) await handler();
+		for (const handler of this.#ready_handlers) await handler();	
 	}
+
+
+	async reset(resetEndpoint = false) {
+		if (resetEndpoint) endpoint_config.clear();
+        localStorage.clear();
+
+        // reset service worker
+        await ServiceWorker.clearCache();
+
+        // clear storage
+        await Datex.Storage.clearAndReload();
+    }
 
 }
 
@@ -212,8 +227,6 @@ class UIXApp {
  */
 export const app = new UIXApp();
 
-// @ts-ignore use pre injected uix app metadata
-if (globalThis._UIX_import_map && !app.options) {
-	// @ts-ignore use pre injected uix app metadata
-	app.options = {import_map: new ImportMap(globalThis._UIX_import_map)}
-}
+// @ts-ignore
+globalThis.reset = app.reset
+

@@ -3,6 +3,8 @@ import { primitive } from "unyt_core/datex_all.ts";
 import { domContext, domUtils } from "uix/app/dom-context.ts";
 import { logger } from "uix/utils/global_values.ts";
 import { always } from "unyt_core/functions.ts";
+import type { CSSStyleDeclaration, CSSStyleRule, CSSStyleSheet, Document, Element, HTMLElement, Node, ShadowRoot } from "uix/uix-dom/dom/mod.ts";
+
 
 const LOCAL_VAR_PREFIX = '--uix-local-value-'
 const GLOBAL_VAR_PREFIX = '--uix-global-value-'
@@ -26,7 +28,7 @@ export function SCSS(template:any, ...params:cssParam[]) {
 	const isTemplate = template?.raw instanceof Array && template instanceof Array;
 	// non template value - convert to HTML node
 	if (!isTemplate) {
-		const styleSheet = new CSSStyleSheet()
+		const styleSheet = new domContext.CSSStyleSheet()
 		styleSheet.replaceSync(template)
 		return styleSheet;
 	}
@@ -86,7 +88,7 @@ export function SCSS(template:any, ...params:cssParam[]) {
 			}
 
 			// observe when new child elements added
-			const observer = new MutationObserver(mutations => {
+			const observer = new domContext.MutationObserver(mutations => {
 				for (const [element, varName] of elementsDynamicProperties(iterateAddedNodes(mutations), cssVarsBySelector)) {
 					domUtils.setCSSProperty(element, varName, always(()=>localCSSVars.get(varName)!(element)));
 				}
@@ -129,8 +131,8 @@ function* iterateAddedNodes(mutations: MutationRecord[]) {
 }
 
 function* iterateDOMTree(node: Node): Generator<Element> {
-	if (!(node instanceof Element || node instanceof DocumentFragment || node instanceof Document)) return;
-	if (node instanceof Element) yield node;
+	if (!(node instanceof domContext.Element || node instanceof domContext.DocumentFragment || node instanceof domContext.Document)) return;
+	if (node instanceof domContext.Element) yield node;
 	if (node.childNodes) {
 		for (const childNode of node.childNodes as unknown as ReadonlyArray<ChildNode>) {
 			for (const child of iterateDOMTree(childNode)) {

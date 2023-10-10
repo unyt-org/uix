@@ -271,7 +271,7 @@ export const testComponents = {
 	style: lazy(() => <ComponentWithStyle/>),
 
 	redirect: new URL("https://google.com"),
-	
+
 	/** 
 	 * Contexts demo:
 	 * 
@@ -346,6 +346,9 @@ export const testComponents = {
 		<li>Path relative to module: <a href="./assets/example.txt">Open</a></li>
 		<li>Path relative to current route on client: <a href:route="../routeExample/frontend">Open</a></li>
 	</ul>,
+
+	counterElement: await import('./modules/counterElement.eternal.tsx'),
+	// counterComponent: await import('./modules/counterComponent.eternal.tsx'),
 
 	routeExample: <div>This is a route</div>,
 

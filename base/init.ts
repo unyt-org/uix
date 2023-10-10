@@ -4,31 +4,18 @@
 import { logger } from "../utils/global_values.ts";
 import { IS_HEADLESS, VERSION } from "../utils/constants.ts";
 
-import { State } from "./state.ts";
 import { Theme } from "./theme.ts";
-import { Datex, f, expose, scope } from "unyt_core";
+import { Datex, f } from "unyt_core";
 
 import { client_type } from "unyt_core/utils/constants.ts";
 import { addStyleSheetLink } from "../utils/css_style_compat.ts";
+import { app } from "uix/app/app.ts";
 
-let stage:string|undefined = '?'
-
-if (client_type === "deno") {
-	({ stage } = (await import("../app/args.ts")))
-}
 
 if (client_type == "browser") {
 	await (await import("../session/frontend.ts")).initSession();
 }
 
-// @ts-ignore use pre injected uix app metadata
-if (globalThis._UIX_appdata) {
-	// @ts-ignore globalThis app data
-	const appdata = globalThis._UIX_appdata
-	if (appdata.backend) appdata.backend = f(appdata.backend);
-	if (appdata.host) appdata.host = f(appdata.host);
-	State._setMetadata(appdata)
-}
 
 
 // enable DATEX CLI
@@ -75,38 +62,38 @@ if (!IS_HEADLESS) {
 
 // Debug shortcuts
 
-Res.addShortcut("uix_debug", "ctrl+i")
-Handlers.handleShortcut(globalThis.window, "uix_debug", Debug.toggleDebugMode);
+// Res.addShortcut("uix_debug", "ctrl+i")
+// Handlers.handleShortcut(globalThis.window, "uix_debug", Debug.toggleDebugMode);
 
 
-Res.addShortcut("uix_theme", "ctrl+t")
-Handlers.handleShortcut(globalThis.window, "uix_theme", ()=>{
-    if (Theme.mode.val == "dark") Theme.setMode("light")
-    else Theme.setMode("dark")
-});
+// Res.addShortcut("uix_theme", "ctrl+t")
+// Handlers.handleShortcut(globalThis.window, "uix_theme", ()=>{
+//     if (Theme.mode.val == "dark") Theme.setMode("light")
+//     else Theme.setMode("dark")
+// });
 
-Res.addShortcut("uix_lang", "ctrl+l")
-Handlers.handleShortcut(globalThis.window, "uix_lang", ()=>{
-    if (Datex.Runtime.ENV.LANG == 'en') Datex.Runtime.ENV.LANG = 'de'
-    else Datex.Runtime.ENV.LANG = 'en'
-});
+// Res.addShortcut("uix_lang", "ctrl+l")
+// Handlers.handleShortcut(globalThis.window, "uix_lang", ()=>{
+//     if (Datex.Runtime.ENV.LANG == 'en') Datex.Runtime.ENV.LANG = 'de'
+//     else Datex.Runtime.ENV.LANG = 'en'
+// });
 
-// reset pointer storage
-Res.addShortcut("reset", "ctrl+shift+r")
-Handlers.handleShortcut(globalThis.window, "reset", State.resetPage);
-// reset pointer storage and endpoint
-Res.addShortcut("reset_clear_endpoint", "ctrl+r")
-Handlers.handleShortcut(globalThis.window, "reset_clear_endpoint", State.resetPageAndClearEndpoint);
+// // reset pointer storage
+// Res.addShortcut("reset", "ctrl+shift+r")
+// Handlers.handleShortcut(globalThis.window, "reset", State.resetPage);
+// // reset pointer storage and endpoint
+// Res.addShortcut("reset_clear_endpoint", "ctrl+r")
+// Handlers.handleShortcut(globalThis.window, "reset_clear_endpoint", State.resetPageAndClearEndpoint);
 
-// Unyt Pen
+// // Unyt Pen
 
-Res.addShortcut("connect_unyt_pen", {macos:"cmd+e", windows:"ctrl+e"})
-// debugging shortcuts
-Handlers.handleShortcut(globalThis.window, "connect_unyt_pen", async ()=>{
-    await UnytPen.connect();
-});
+// Res.addShortcut("connect_unyt_pen", {macos:"cmd+e", windows:"ctrl+e"})
+// // debugging shortcuts
+// Handlers.handleShortcut(globalThis.window, "connect_unyt_pen", async ()=>{
+//     await UnytPen.connect();
+// });
 
-// strings and shortcuts
-await Res.initShortcuts();
+// // strings and shortcuts
+// await Res.initShortcuts();
 
 Datex.Unyt.setUIXData(VERSION);

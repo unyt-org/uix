@@ -15,16 +15,13 @@
 // ---
 import { Logger } from "unyt_core/utils/logger.ts";
 import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
-import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
+import { Cookie, setCookie, getCookies } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
 import { Transpiler } from "./transpiler.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
-
-const { highlightText } = client_type === "deno" ? await import('https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js') : {highlightText:null};
-
-const { setCookie, getCookies } = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null, getCookies:null};
-const fileServer = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
+import { getEternalModule } from "../app/eternal-module-generator.ts";
+import { highlightText } from 'https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js'
+import {serveFile} from "https://deno.land/std@0.164.0/http/file_server.ts"
 
 const logger = new Logger("UIX Server");
 
@@ -173,8 +170,6 @@ export class Server {
     public config(root?: string|URL, options?:server_options):void
     public config(requestHandler?:requestHandler, options?:server_options):void
     public config(requestHandler_or_root?:string|URL|requestHandler, options?:server_options) {
-        if (!fileServer) throw new Error("File Server not supported");
-
         // default options
         if (!this.#options || options) {
             if (!options) options = {};
@@ -430,10 +425,11 @@ export class Server {
         return [url, normalizedPath, lineNumber, colNumber, contentType]
     }
 
+    #eternalModulesCache = new Map<string, string>()
 
     async getResponse(request: Request, normalizedPath:false|string = this.normalizeURL(request)) {
 
-        if (!this.#dir || !fileServer || normalizedPath===false) {
+        if (!this.#dir || normalizedPath===false) {
             return this.getErrorResponse(500);
         }
 
@@ -478,11 +474,21 @@ export class Server {
             const scopedCSS = addCSSScopeSelector(await Deno.readTextFile(filepath.normal_pathname), url.searchParams.get("scope")!);
             return this.getContentResponse("text/css", scopedCSS);
         }
-        if (url.searchParams.has("useDirective") && (url.ext === "tsx" || url.ext === "ts" || url.ext === "js" || url.ext === "jsx")) {
+        if (url.searchParams.has("useDirective") && url.hasFileExtension("tsx", "ts", "js", "jsx", "mts", "mjs")) {
             const {PageProvider} = await import("../routing/rendering.ts")
             if (!await PageProvider.useDirectiveMatchesForFile(filepath, url.searchParams.get("useDirective")!)) {
                 return this.getErrorResponse(406, "Not Acceptable");
             }
+        }
+
+        if (!url.searchParams.has("original") && url.hasFileExtension("eternal.tsx", "eternal.ts", "eternal.js", "eternal.jsx", "eternal.mts", "eternal.mjs")) {
+            const urlString = url.toString();
+            if (!this.#eternalModulesCache.has(urlString)) {
+                const specifier = url + '?original'
+                const eternalModuleSource = await getEternalModule(filepath, specifier);
+                this.#eternalModulesCache.set(urlString, eternalModuleSource)
+            } 
+            return this.getContentResponse("text/javascript", this.#eternalModulesCache.get(urlString));
         }
 
         if (this.#options.directory_indices && filepath.fs_is_dir) {
@@ -572,7 +578,7 @@ export class Server {
 
             return this.getContentResponse("text/html", html);
         }
-        const response = await fileServer.serveFile(request, filepath.normal_pathname);
+        const response = await serveFile(request, filepath.normal_pathname);
 
         if (this.#options.cors) {
             response.headers.append("Access-Control-Allow-Origin", "*");
@@ -584,7 +590,7 @@ export class Server {
 
 
     protected findFilePath(url: Path, normalizedPath: string, resolveTs: boolean, isSafari: boolean) {
-        if (!this.#dir || !fileServer) return;
+        if (!this.#dir) return;
 
         let filepath = this.#dir.getChildPath(normalizedPath);
           

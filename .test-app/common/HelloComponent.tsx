@@ -11,11 +11,17 @@ const count = $$(0);
 		<p>
 		Counter: {count}
 		</p>
-		<button onclick={()=>count.val++}>Increase Counter</button>
+		<button onclick:display={()=>this.myMethod()}>Increase Counter</button>
 	</div>
 )
 export class HelloComponent extends UIXComponent<{name:string}> {
 
 	@content val = <div>CONTENT <b>{count}</b></div>
-}
 
+	@property x = 10;
+	y = 10;
+
+	@property myMethod() {
+
+	}
+}

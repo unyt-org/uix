@@ -1,16 +1,20 @@
 {
-	"importMap": "./importmap.dev.json",
-	"compilerOptions": {
-		"module": "esnext",
-		"target": "es2022",
-		"noImplicitOverride":true,
-		"removeComments": true,
-		"preserveConstEnums": true,
-		"esModuleInterop": true,
-		"experimentalDecorators": true,
-		"emitDecoratorMetadata": true,
-		"jsx": "react-jsx",
-		"jsxImportSource": "uix",
-		"lib": ["deno.window", "dom"]
-	}
+    "_publicImportMap": "./importmap.json",
+    "importMap": "./.datex-cache/importmap.lock.json",
+    "compilerOptions": {
+        "module": "esnext",
+        "target": "es2022",
+        "noImplicitOverride": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "jsx": "react-jsx",
+        "jsxImportSource": "uix",
+        "lib": [
+            "deno.window",
+            "dom"
+        ]
+    }
 }

@@ -3,15 +3,24 @@ import { invalid } from "../common/errors.tsx";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { Entrypoint } from "uix/html/entrypoints.ts";
-import { renderStatic, renderWithHydration, renderDynamic } from "uix/html/render-methods.ts";
+import { renderStatic, renderWithHydration, renderDynamic, renderStaticWithoutJS } from "uix/html/render-methods.ts";
 
+
+import {counter} from "./counter.eternal.ts";
+
+counter();
+console.log("COUNTER = " + counter)
 
 export default {
 	'/:component/backend\\+dynamic' : (ctx, {component}) => renderDynamic(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)), 
 	'/:component/backend\\+static'  : (ctx, {component}) => renderStatic(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
+	'/:component/backend\\+staticnojs'  : (ctx, {component}) => renderStaticWithoutJS(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
 	'/:component/backend\\+hydrated': (ctx, {component}) => renderWithHydration(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
 	'/:component/frontend': null,
 	'/x/*': null,
+
+	// just debug, remove
+	'/counterElementHydrated': (await import('../common/modules/counterElement.eternal.tsx')).default,
 
 	// set and get private data on the backend, associated with the current endpoint session
 	'setPrivateValue/:key/:val': async (ctx, {key, val}) => {

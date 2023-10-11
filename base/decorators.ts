@@ -214,13 +214,13 @@ function _use(element_class:typeof HTMLElement, name:context_name, kind:context_
 	setMetadata(IMPORT_PROPS, [params[0], params[1]??name]);
 }
 
-
-
-/** @standalone to declare methods that also work in a standlone context */
-export function standalone(target: any, name?: string, method?:any):any
-export function standalone(...args:any[]) {
+/** @display to declare methods that also work in a standlone context */
+export function display(target: any, name?: string, method?:any):any
+export function display(...args:any[]) {
 	return handleDecoratorArgs(args, _standalone);
 }
+
+
 
 function _standalone(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
 	if (is_static) {

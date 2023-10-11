@@ -109,12 +109,12 @@ In this example, `"button was clicked"` is logged on the backend when the button
 > since the origin context is the frontend (display) context.
 
 
-### Scenario 3: Display context event handlers
+### Scenario 3: Event handlers in the display context
 
 Now that we understand the default behaviour of functions, lets take a look at a
 different scenario: 
 
-> What if we *want* to execute the `onclick` handler in the last
+> What if we *want* to execute the `onclick` handler from the last
 > example in the browser, despite the button being created and rendered in the
 > backend?
 
@@ -123,7 +123,7 @@ or we want to download a file, or ...
 
 To achieve this, we only need to make one small change in our example code: replacing
 the `onclick` attribute with a labeled `onclick:display` attribute.
-This tells UIX that the event handler function must be transfered to the display context:
+This tells UIX that the event handler function must be transferred to the display context:
 
 ```ts
 /// file: backend/entrypoint.ts
@@ -131,17 +131,16 @@ This tells UIX that the event handler function must be transfered to the display
 const counter = $$(0)
 
 export default 
-	<button onclick:display={() => { // add a :display label
-		console.log("button was clicked")
-		counter.val++
-	}}>
-		I was clicked {counter} times
-	</button>
+    <button onclick:display={() => { // add a :display label
+        console.log("button was clicked")
+        counter.val++
+    }}>
+        I was clicked {counter} times
+    </button>
 ```
 
 But if we try to run this code now, we will get an error: `Uncaught ReferenceError: counter is not defined`.
-This happens because the event handler function was tranfered from its original context to a new display context,
-in which the `counter` variable is not available.
+This happens because the event handler function now lives in a new display context and can no longer access variables from its original context per default.
 
 To fix this, we need to explicitly state that we want to access the `counter` variable from the original context.
 This is done with a `use()` declaration at the top of the function body:
@@ -151,13 +150,13 @@ This is done with a `use()` declaration at the top of the function body:
 const counter = $$(0)
 
 export default 
-	<button onclick:display={() => {
-		use (counter) // use the counter variable from the origin context
-		console.log("button was clicked")
-		counter.val++
-	}}>
-		I was clicked {counter} times
-	</button>
+    <button onclick:display={() => {
+        use (counter) // use the counter variable from the origin context
+        console.log("button was clicked")
+        counter.val++
+    }}>
+        I was clicked {counter} times
+    </button>
 ```
 
 Now everything works as expected.
@@ -170,7 +169,7 @@ Now everything works as expected.
 
 ### Restorable contexts (eternal modules)
 
-Modules with the file extension `.eternal.ts`, `.eternal.tsx`, `.eternal.js`, etc.
+Modules with the file extension `.eternal.ts`, `.eternal.tsx`, or `.eternal.js`
 keep a persistent context across restarts of an endpoint.
 
 The state of the module is stored as DATEX and recreated when the endpoint is

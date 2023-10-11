@@ -130,21 +130,20 @@ export default (
 )
 ```
 
-This behaviour can be overriden: To always call an event handler in the browser (display) context, wrap the
-handler with `UIX.inDisplayContext()`:
+This behaviour can be overriden: To always call an event handler in the browser (display) context, use the `:display` label for the `onclick` attribute:
 
 ```tsx
 // backend/entrypoint.ts
 export default (
-    <input type="button" value="Click me" onclick={UIX.inDisplayContext(()=>console.log("always called on the frontend"))}/>
+    <input type="button" value="Click me" onclick:label={()=>console.log("always called on the frontend")}/>
 )
 ```
 
-When an element in a component is decorated with `@standalone`, all handlers for the element are executed in the display context per default:
+When an element in a component is decorated with `@display`, all handlers for the element are executed in the display context per default:
 ```tsx
 // backend/MyComponent.ts
 export class MyComponent extends UIX.BaseComponent {
-    @standalone button = <button onclick={()=>console.log("click handler in standalone mode, called in the browser context")}>Click Me!</button>
+    @display button = <button onclick={()=>console.log("click handler in standalone mode, called in the browser context")}>Click Me!</button>
 }
 ```
 

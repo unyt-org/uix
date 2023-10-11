@@ -19,7 +19,7 @@ In general, UIX distinguished between two context types:
  * **Backend context**: a module loaded on a backend endpoint
  * **Display context**: a module loaded on a frontend endpoint
 
-Values and functions can exist in different contexts within a UIX app. They can also be mobed between contexts and exist
+Values and functions can exist in different contexts within a UIX app. They can also be moved between contexts and exist
 in multiple contexts at once.
 
 The **origin context** of a value is the module context in which the value was originally created. This can be a backend or display context.
@@ -53,21 +53,22 @@ export function register() {
 ```
 
 Per default, all of those functions behave as you would expect in any JavaScript code.
+But there is also some special UIX-specific behaviour, as you will see in the following examples.
 
 
 ### Scenario 1: Stationary exported functions
 
 Per default, all functions in a UIX app are stationary, meaning that they only exist
-in there origin context and cannot be transferred to another endpoint.
+in their origin context and cannot be transferred to another endpoint.
 
-However, they can still be called from other endpoints, but the function execution always
+However, they can still be *called* from other endpoints - the function execution just always
 happens in the origin context.
 
-As a simple example, let't call a exported backend function from the frontend:
+As a simple example, let't call an exported backend function from the frontend:
 ```ts
 /// file: backend/entrypoint.ts
 export function callMe() {
-	return "thanks"
+    return "thanks"
 }
 ```
 ```ts
@@ -94,12 +95,12 @@ it is still executed on the backend entrypoint, also when the element is display
 const counter = $$(0)
 
 export default 
-	<button onclick={() => {
-		console.log("button was clicked")
-		counter.val++
-	}}>
-		I was clicked {counter} times
-	</button>
+    <button onclick={() => {
+        console.log("button was clicked")
+        counter.val++
+    }}>
+        I was clicked {counter} times
+    </button>
 ```
 In this example, `"button was clicked"` is logged on the backend when the button is clicked in the browser.
 

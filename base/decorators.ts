@@ -217,14 +217,14 @@ function _use(element_class:typeof HTMLElement, name:context_name, kind:context_
 /** @display to declare methods that also work in a standlone context */
 export function display(target: any, name?: string, method?:any):any
 export function display(...args:any[]) {
-	return handleDecoratorArgs(args, _standalone);
+	return handleDecoratorArgs(args, _display);
 }
 
 
 
-function _standalone(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
+function _display(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
 	if (is_static) {
-		logger.error("@UIX.standalone cannot be used on static class fields");
+		logger.error("@UIX.display cannot be used on static class fields");
 		return;
 	}
 

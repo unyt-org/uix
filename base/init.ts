@@ -10,6 +10,8 @@ import { Datex } from "unyt_core";
 import { client_type } from "unyt_core/utils/constants.ts";
 import { addStyleSheetLink } from "../utils/css_style_compat.ts";
 
+import "../hydration/dom-pointer-source.ts"
+
 
 if (client_type == "browser") {
 	await (await import("../session/frontend.ts")).initSession();

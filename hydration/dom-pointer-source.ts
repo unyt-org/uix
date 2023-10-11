@@ -1,6 +1,7 @@
 import { Datex } from "unyt_core";
 import { NOT_EXISTING, ValueError } from "unyt_core/datex_all.ts";
 import { querySelector } from "../standalone/shadow_dom_selector.ts";
+import { client_type } from "unyt_core/utils/constants.ts";
 
 // proxy for Storage, binds existing UIX DOM Elements to pointer values
 
@@ -32,5 +33,7 @@ class DOMPointerSource implements Datex.PointerSource {
 	
 }
 
-export const domPointerSource = new DOMPointerSource();
-Datex.Pointer.registerPointerSource(domPointerSource, 1)
+if (client_type == "browser") {
+	const domPointerSource = new DOMPointerSource();
+	Datex.Pointer.registerPointerSource(domPointerSource, 1)
+}

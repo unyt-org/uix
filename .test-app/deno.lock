@@ -12,7 +12,7 @@
     "http://localhost:4242/app/config-files.ts": "05084b7c01479a1fcb5a5aec44b36ed24f4a41f74f099b91d60a69b7c789ee3c",
     "http://localhost:4242/app/dom-context.ts": "31d11b0b5da40a237ee43cf40a43ec93144f3a4eadfa2b8158dbe2d841572b79",
     "http://localhost:4242/app/eternal-module-generator.ts": "8233dd8bf0b1569cdd0027d9c73cb1d35a7ecde5b082c5be37057b0d4198e310",
-    "http://localhost:4242/app/frontend-manager.ts": "3d19ca78a5f4e5a5dd358ddbbf8c2c5ac469e882c21352897bd968ec28033c5f",
+    "http://localhost:4242/app/frontend-manager.ts": "9fc23d24e7e5178f4fd9f27eca2f505a7ae69ac3c7d7c00e06339f3769ff8aaf",
     "http://localhost:4242/app/http-over-datex.ts": "6f7023129fae8e506b9ce142df7aa34bb46ac1cff657801ebc907d5c63d5ff10",
     "http://localhost:4242/app/options.ts": "d670ea141d58909d93c40405e8ce2a6cfe7aa072e5521cc940f4c4b17b29cc98",
     "http://localhost:4242/app/shared-deno.ts": "e389bf1241c0d97322ec62429b3a61ee7b4973dd4e319b081575063dc128e0f9",

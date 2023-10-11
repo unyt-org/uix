@@ -30,27 +30,27 @@ For a given value, more than one host context can exist at the same time.
 
 Functions appear in many different places within a UIX app: 
  * As event handlers, e.g.
-  ```tsx
-	const button = 
-		<button onclick={() => console.log("clicked")}>
-			Click me
-		</button>
-  ```
+```tsx
+const button = 
+    <button onclick={() => console.log("clicked")}>
+        Click me
+    </button>
+```
  * As component methods
-  	```tsx
-	@Component
-	class MyComponent extends UIXComponent {
-		myMethod() {
-			...
-		}
-	}
-  ```
+```tsx
+@Component
+class MyComponent extends UIXComponent {
+    myMethod() {
+        ...
+    }
+}
+```
  * Or as exported API functions from the backend
- 	```tsx
-	export function register() {
+```tsx
+export function register() {
 
-	}
-  ```
+}
+```
 
 Per default, all of those functions behave as you would expect in any JavaScript code.
 

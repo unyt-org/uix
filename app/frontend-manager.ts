@@ -20,11 +20,13 @@ import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } fro
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
 import { RenderMethod } from "../html/render-methods.ts";
-import { Context, ContextBuilder, ContextGenerator } from "../routing/context.ts";
+import { Context, ContextBuilder, ContextGenerator, getHTTPRequestEndpoint } from "../routing/context.ts";
 import { Entrypoint, raw_content } from "../html/entrypoints.ts";
 import { createErrorHTML } from "../html/errors.tsx";
 import { client_type } from "unyt_core/utils/constants.ts";
 import { domUtils } from "./dom-context.ts";
+import { Element } from "../uix-dom/dom/mod.ts";
+import { getLiveNodes } from "../hydration/partial.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -192,11 +194,36 @@ export class FrontendManager extends HTMLProvider {
 
 	#static_client_scripts:(URL|string)[] = []
 
-	#sse_controllers = new Set<(cmd: string) => void>()
+	#sse_senders = new Set<(cmd: string) => void>()
+	#sse_observers = new Map<(cmd: string) => void, Map<Datex.Pointer, Function>>()
 
-	sendSSECommand(cmd: string) {
-		for (const controller of this.#sse_controllers) controller(cmd);
-		return this.#sse_controllers.size;
+	sendGlobalSSECommand(cmd: string, data?: string) {
+		for (const sender of this.#sse_senders) this.sendSSECommand(sender, cmd, data);
+		return this.#sse_senders.size;
+	}
+
+	sendSSECommand(sender: (cmd: string) => void, cmd: string, data?: string) {
+		sender(cmd + (data ? ' ' + data : ''));
+	}
+
+	removeSSESender(sender: (cmd: string) => void) {
+		for (const [ptr, handler] of this.#sse_observers.get(sender) ?? []) {
+			ptr.unobserve(handler as any);
+		}
+		this.#sse_senders.delete(sender)
+	}
+
+	addSSEObserver(pointerId: string, sender: (cmd: string) => void) {
+		// TODO: handle element updates
+		const handler = (v:any, k:any) => {
+			logger.info("sse observer >>", k, v);
+		}
+		const ptr = Datex.Pointer.get(pointerId)!;
+
+		if (!this.#sse_observers.has(sender)) this.#sse_observers.set(sender, new Map())
+		this.#sse_observers.get(sender)!.set(ptr, handler);
+
+		Datex.Pointer.get(pointerId)!.observe(handler)
 	}
 
 	getTranspilerForPath(path: Path.File) {
@@ -244,28 +271,47 @@ export class FrontendManager extends HTMLProvider {
 
 		this.server.path("/@uix/sse", async (req) => {
 
+			// TODO: check if endpoint has pointer permissions if pointer observe requested
+			const endpoint = getHTTPRequestEndpoint(req.request);
+
 			let controller:ReadableStreamDefaultController|undefined;
 			const sendSSECommand = (cmd: string) => {
 				controller?.enqueue(new TextEncoder().encode(`data: ${cmd}\r\n\r\n`));
 			}
-			this.#sse_controllers.add(sendSSECommand)
+			this.#sse_senders.add(sendSSECommand)
 
 			const body = new ReadableStream({
 				start: (ctrl) => {
 					controller = ctrl;
 				},
 				cancel: () => {
-					if (controller) this.#sse_controllers.delete(sendSSECommand)
+					if (controller) this.removeSSESender(sendSSECommand)
 				},
 			});
 
-			// is not yet reloaded client with old app usid - trigger RELOAD once
-			const usid = new URL(req.request.url).searchParams.get("usid");
-			if (!usid) {
-				sendSSECommand("ERROR Cannot enable hot reloading, no app usid found")
+			const searchParams = new URL(req.request.url).searchParams;
+			
+			// usid handling (for hot reloading)
+			const usid = searchParams.get("usid");
+			if (searchParams.has("usid")) {
+				if (!usid) {
+					sendSSECommand("ERROR Cannot enable hot reloading, empty app usid")
+				}
+				// is not yet reloaded client with old app usid - trigger RELOAD once
+				else if (usid !== app.uniqueStartId) {
+					sendSSECommand("RELOAD")
+				}
 			}
-			else if (usid !== app.uniqueStartId) {
-				sendSSECommand("RELOAD")
+			
+			// pointer observer via sse
+			const observe = searchParams.get("observe");
+			if (observe) {
+				logger.debug("sse observe from " + endpoint, observe)
+				// TODO: enable, handle element updates
+				// const pointers = JSON.parse(observe);
+				// for (const ptrId of pointers) {
+				// 	this.addSSEObserver(ptrId, sendSSECommand)
+				// }
 			}
 
 			try {
@@ -276,7 +322,7 @@ export class FrontendManager extends HTMLProvider {
 				}))
 			}
 			finally {
-				this.#sse_controllers.delete(sendSSECommand)
+				this.removeSSESender(sendSSECommand)
 			}
 			
 		});
@@ -287,7 +333,7 @@ export class FrontendManager extends HTMLProvider {
 			try {
 				const dx = decodeURIComponent(path.replace("/@uix/datex/", ""));
 				// TODO: rate limiting
-				console.log("datex-via-http:",dx);
+				// TODO: endpoint cookie verification
 
 				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:Datex.BROADCAST});
 				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON}));
@@ -586,7 +632,7 @@ catch {
 		this.#logger.success("hot reloading enabled");
 		const script = `
 ${"import"} {BackgroundRunner} from "uix/background-runner/background-runner.ts";
-const runner = await BackgroundRunner.get();
+const runner = BackgroundRunner.get();
 runner.enableHotReloading();
 `
 		await this.transpiler.addVirtualFile(this.debugPrefix.slice(1)+"hot-reload.ts", script);
@@ -617,7 +663,7 @@ runner.enableHotReloading();
 		if (this.#ignore_reload) return;
 
 		// new hot reloading via sse
-		let updatesTriggered = this.sendSSECommand("RELOAD");
+		let updatesTriggered = this.sendGlobalSSECommand("RELOAD");
 		updatesTriggered += reload_handlers.size;
 
 		// old hot reloading
@@ -658,7 +704,7 @@ runner.enableHotReloading();
 	 * @param context request context
 	 * @returns 
 	 */
-	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers]> {
+	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers, contentElement?: Element]> {
 		// extract content from provider, depending on path
 		const {content, render_method, status_code, headers} = await resolveEntrypointRoute({
 			entrypoint: entrypoint,
@@ -673,10 +719,10 @@ runner.enableHotReloading();
 		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData, headers];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [await getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData, headers];
+		if (content instanceof Datex.Markdown) return [await getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, lang}), render_method, status_code, openGraphData, headers];
 
 		// convert content to valid HTML string
-		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang}), render_method, status_code, openGraphData, headers];
+		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, lang}), render_method, status_code, openGraphData, headers, content];
 		
 		// invalid content was created, should not happen
 		else if (content && typeof content == "object") {
@@ -687,7 +733,7 @@ runner.enableHotReloading();
 		else return [domUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData, headers];
 	}
 
-	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider) {
+	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider, recursiveError = true) {
 		const url = new Path(requestEvent.request.url);
 		const pathAndQueryParameters = url.pathname + url.search;
 		const compat = Server.isSafariClient(requestEvent.request);
@@ -700,7 +746,7 @@ runner.enableHotReloading();
 			// TODO:
 			// Datex.Runtime.ENV.LANG = lang;
 			// await Datex.Runtime.ENV.$.LANG.setVal(lang);
-			const [prerendered_content, render_method, status_code, open_graph_meta_tags, headers] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
+			const [prerendered_content, render_method, status_code, open_graph_meta_tags, headers, contentElement] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
 
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == RenderMethod.RAW_CONTENT) {
@@ -713,16 +759,25 @@ runner.enableHotReloading();
 				const combinedHeaders = headers ?? new Headers();
 				combinedHeaders.set('content-language', lang)
 
+				// get live pointer ids for sse observer
+				let liveNodePointers = null;
+				if (contentElement && render_method === RenderMethod.STANDALONE) {
+					liveNodePointers = getLiveNodes(contentElement, false).map(e => Datex.Pointer.getByValue(e)?.id).filter(e=>!!e);
+				}
+
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
-					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, this.#static_client_scripts, ['uix/style/document.css', ...entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', ...entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang),
+					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, this.#static_client_scripts, ['uix/style/document.css', ...entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', ...entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang, liveNodePointers),
 					undefined, status_code, combinedHeaders
 				);
 			}
-		} catch (e) {
-			console.log(e)
-			await this.server.sendError(requestEvent, 500);
+		} catch (error) {
+			console.log(error)
+			if (recursiveError) {
+				await this.handleRequest(requestEvent, path, conn, error, false);
+			}
+			else this.server.sendError(requestEvent, 500);
 		}
 	}
 

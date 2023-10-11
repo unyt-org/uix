@@ -13,6 +13,8 @@ import { createErrorHTML } from "../html/errors.tsx";
 import { Context, ContextGenerator } from "./context.ts";
 import { UIXComponent } from "../components/UIXComponent.ts";
 import { logger } from "../utils/global_values.ts";
+import { domContext } from "uix/app/dom-context.ts";
+import { DocumentFragment, Element } from "../uix-dom/dom/mod.ts";
 
 
 // URLPattern polyfill
@@ -33,7 +35,7 @@ if (!globalThis.URLPattern) {
 export async function createSnapshot<T extends Element|DocumentFragment>(content:T, render_method = RenderMethod.HYDRATION):Promise<T> {
 	await preloadElementOnBackend(content);
 	// @ts-ignore
-	content[CACHED_CONTENT] = await getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC_NO_JS, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
+	content[CACHED_CONTENT] = await getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
 	return content;
 }
 
@@ -142,7 +144,7 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 	}
 
 	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: returnValue})
-	if (hasError) resolved.render_method = RenderMethod.STATIC; // override: render errors as static
+	if (hasError) resolved.render_method = RenderMethod.STANDALONE; // override: render errors as static
 
 	return resolved;
 }
@@ -375,7 +377,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	// only load once in recursive calls when deepest level reached
 	if (!resolved.loaded) {
 		// preload in deno, TODO: better solution?
-		if (IS_HEADLESS && (entrypointData.entrypoint instanceof Element || entrypointData.entrypoint instanceof DocumentFragment)) {
+		if (IS_HEADLESS && (entrypointData.entrypoint instanceof domContext.Element || entrypointData.entrypoint instanceof domContext.DocumentFragment)) {
 			await preloadElementOnBackend(entrypointData.entrypoint)
 		}
 

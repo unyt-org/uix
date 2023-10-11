@@ -1,5 +1,11 @@
+import { transferable } from "unyt_core/types/js-function.ts";
 
 const count = $$(0);
+
+const helloWorld = transferable(() => {
+	alert("HELLOW ROLD");
+	console.log("HELLO WORLD")
+})
 
 export default
 	<div>
@@ -12,7 +18,7 @@ export default
 			I was clicked {count} times
 		</button>
 
-		<button onclick:display={() => alert("Hey there")}>
+		<button onclick:display={() => use (helloWorld) && helloWorld()}>
 			Show Alert
 		</button>
 

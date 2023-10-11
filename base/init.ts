@@ -5,18 +5,15 @@ import { logger } from "../utils/global_values.ts";
 import { IS_HEADLESS, VERSION } from "../utils/constants.ts";
 
 import { Theme } from "./theme.ts";
-import { Datex, f } from "unyt_core";
+import { Datex } from "unyt_core";
 
 import { client_type } from "unyt_core/utils/constants.ts";
 import { addStyleSheetLink } from "../utils/css_style_compat.ts";
-import { app } from "uix/app/app.ts";
 
 
 if (client_type == "browser") {
 	await (await import("../session/frontend.ts")).initSession();
 }
-
-
 
 // enable DATEX CLI
 if (client_type === "deno") Datex.enableCLI();

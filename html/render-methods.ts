@@ -5,20 +5,23 @@ import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
 
 
 /**
- * Default: Server side prerendering, content hydration over DATEX
+ * Default rendering method.
+ * Server side prerendering, content hydration over DATEX.
+ * \@display properties and functions and :display attributes are supported, during initialization only with JSON compatible values.
+ * Provides a full DATEX Runtime on the frontend.
  * @param content HTML element or text content
  */
-export function renderWithHydration<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYDRATION, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effects for components created on the client side (renderWithHydration)")
+export function renderHydrated<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYDRATION, T> {
+	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderWithHydration)")
 	return new RenderPreset(RenderMethod.HYDRATION, content)
 }
 
 /**
- * Default: Server side prerendering, replacing with content on frontend
+ * Server side prerendering, overriding with content on frontend
  * @param content HTML element or text content
  */
 export function renderPreview<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYDRATION, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effects for components created on the client side (renderPreview)")
+	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderPreview)")
 	const preset = new RenderPreset(RenderMethod.HYDRATION, content)
 	// @ts-ignore
 	preset[DX_IGNORE] = true;
@@ -27,30 +30,35 @@ export function renderPreview<T extends html_content_or_generator>(content:T): R
 
 
 /**
- * Just serve static HTML pages to the frontend, + some frontend JS for functionality,
+ * Serve server-side rendererd HTML to the frontend, enable limited JS interactivity
+ * Provides no DATEX runtime functionality on the frontend.
+ * \@display properties and functions and :display attributes are supported, but only with JSON compatible values.
  * but content is not loaded over DATEX
  * @param content HTML element or text content
  */
-export function renderStatic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STATIC, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effects for components created on the client side (renderStatic)")
-	return new RenderPreset(RenderMethod.STATIC, content)
+export function renderStandalone<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STANDALONE, T> {
+	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderStandalone)")
+	return new RenderPreset(RenderMethod.STANDALONE, content)
 }
 
 /**
  * Just serve static HTML pages to the frontend, no frontend JS at all
+ * Dynamic functionality like event listeners, \@display and :display is completely ignored
  * @param content HTML element or text content
  */
-export function renderStaticWithoutJS<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STATIC_NO_JS, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effects for components created on the client side (renderStaticWithoutJS)")
-	return new RenderPreset(RenderMethod.STATIC_NO_JS, content)
+export function renderStatic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STATIC, T> {
+	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderStatic)")
+	return new RenderPreset(RenderMethod.STATIC, content)
 }
 
 /**
- * No server side prerendering, loading all content over DATEX
+ * No server side prerendering, serve all content over DATEX.
+ * Provides a full DATEX runtime on the frontend.
+ * \@display properties and functions and :display attributes are fully supported
  * @param content HTML element or text content
  */
 export function renderDynamic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.DYNAMIC, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effects for components created on the client side (renderDynamic)")
+	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderDynamic)")
 	return new RenderPreset(RenderMethod.DYNAMIC, content)
 }
 
@@ -59,8 +67,8 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
 
 export enum RenderMethod {
 	HYDRATION, // Server side prerendering, content hydration over DATEX
-	STATIC, // Just serve static HTML pages to the frontend, + some frontend JS for functionality
-	STATIC_NO_JS, // Just serve static HTML pages to the frontend, no frontend JS at all
+	STANDALONE, // Serve server-side rendererd HTML to the frontend, enable limited JS interactivity
+	STATIC, // Just serve static HTML pages to the frontend, no frontend JS at all
 	DYNAMIC, // No server side prerendering, loading all content over DATEX
 	RAW_CONTENT, // Serve raw file content
 }
@@ -69,7 +77,7 @@ export enum RenderMethod {
 export class RenderPreset<R extends RenderMethod = RenderMethod,T extends html_content_or_generator<any,any> = html_content_or_generator> {
 	constructor(public readonly __render_method:R, public readonly __content:T) {
 		// don't transmit from backend to frontend via DATEX if static
-		if (this.__render_method == RenderMethod.STATIC || this.__render_method == RenderMethod.STATIC_NO_JS) {
+		if (this.__render_method == RenderMethod.STANDALONE || this.__render_method == RenderMethod.STATIC) {
 			// @ts-ignore
 			this[DX_IGNORE] = true;
 		}

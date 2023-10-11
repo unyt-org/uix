@@ -37,7 +37,7 @@ export class BackendManager {
 
 	get web_entrypoint() {
 		// don't use web entrypoint if static rendering for default content
-		if (this.#content_provider instanceof RenderPreset && (this.#content_provider.__render_method == RenderMethod.STATIC || this.#content_provider.__render_method == RenderMethod.STATIC_NO_JS)) return undefined;
+		if (this.#content_provider instanceof RenderPreset && (this.#content_provider.__render_method == RenderMethod.STANDALONE || this.#content_provider.__render_method == RenderMethod.STATIC)) return undefined;
 		return this.#web_entrypoint
 	}
 	get module() {return this.#module}

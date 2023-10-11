@@ -138,26 +138,36 @@ export class ContextBuilder {
 	}
 
 	getEndpoint(request: Request) {
-		if (!request) return null;
-		const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers);
-		if (!endpointCookie) return null;
-		else {
-			try {
-				return f(endpointCookie as any);
-			}
-			// invalid cookie content, reset
-			catch {
-				deleteCookie(UIX_COOKIE.endpoint, this.#ctx.responseHeaders)
-				return null;
-			}
-		}
-		// TODO signature validation
+		return getHTTPRequestEndpoint(request, this.#ctx.responseHeaders)
 	}
 
 	build() {
 		return this.#ctx;
 	}
+
 }
 
+/**
+ * Returns the (validated) endpoint from which a HTTP request was sent
+ * @param request 
+ * @param responseHeaders optional response headers that are modified if cookies are deleted in case of invalid cookie data
+ * @returns 
+ */
+export function getHTTPRequestEndpoint(request: Request, responseHeaders?: Headers) {
+	if (!request) return null;
+	const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers);
+	if (!endpointCookie) return null;
+	else {
+		try {
+			return f(endpointCookie as any);
+		}
+		// invalid cookie content, reset
+		catch {
+			if (responseHeaders) deleteCookie(UIX_COOKIE.endpoint, responseHeaders)
+			return null;
+		}
+	}
+	// TODO signature validation
+}
 
 export type ContextGenerator = () => Context

@@ -13,6 +13,8 @@ import { logger } from "../utils/global_values.ts";
 import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
 import { getInjectedAppData, getInjectedImportmap } from "./app-data.ts";
 
+import "../base/init.ts"
+
 
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
 

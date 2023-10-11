@@ -4,7 +4,7 @@ import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { HelloComponent } from "../common/HelloComponent.tsx";
 import { Entrypoint } from "uix/html/entrypoints.ts";
-import { renderStatic } from "uix/html/render-methods.ts";
+import { renderStandalone } from "uix/html/render-methods.ts";
 import { logger } from "uix/utils/global_values.ts";
 import { bindToOrigin } from "uix/utils/datex_over_http.ts";
 // import { counter } from "backend/counter.eternal.ts";
@@ -29,13 +29,13 @@ export default {
 	'setSharedValueFrontend/:key/:val': (async (ctx, {key, val}) => {
 		const sharedData = await ctx.getSharedData()
 		sharedData[key] = val;
-		return renderStatic(`${key}=${val}`)
+		return renderStandalone(`${key}=${val}`)
 	}),
 
 	'getSharedValueFrontend/:key': (async (ctx, {key}) => {
 		const sharedData = await ctx.getSharedData()
 		const val = sharedData[key];
-		return renderStatic(`${key}=${val}`)
+		return renderStandalone(`${key}=${val}`)
 	}),
 
 

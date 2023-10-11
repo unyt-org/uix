@@ -1,5 +1,6 @@
 import { Logger } from "unyt_core/utils/logger.ts";
 import { getInjectedAppData } from "../app/app-data.ts";
+import { SSEListener } from "./sse-listener.ts";
 // import { getServiceWorkerThread, ThreadModule } from "unyt_core/threads/threads.ts";
 
 const logger = new Logger("background-runner")
@@ -14,12 +15,8 @@ export class BackgroundRunner {
 	// 	console.log("thread",this.thread)
 	// }
 
-
-	private constructor(){
-		this.#handleSSECommand("ERROR", (data) => logger.error(data))
-	}
 	static #instance?: BackgroundRunner
-	static async get() {
+	static get() {
 		if (!this.#instance) {
 			this.#instance = new BackgroundRunner();
 			// await this.#instance.#init()
@@ -27,53 +24,40 @@ export class BackgroundRunner {
 		return this.#instance;
 	}
 
-	#listeningToSSE = false;
-	#commandCallbacks = new Map<string, Set<(data?: string)=>void>>();
-	#listenToSSE() {
-		if (this.#listeningToSSE) return true;
-
-		const usid = getInjectedAppData()?.usid;
-
-		if (!usid) return false;
-		this.#listeningToSSE = true;
-		const path = "/@uix/sse?usid=" + (usid??'');
-
-		const evtSource = new EventSource(path, {
-			withCredentials: true,
-		});
-		evtSource.addEventListener("message", (e) => {
-			const [cmd, ...data] = (e.data as string).split(" ");
-
-			if (this.#commandCallbacks.has(cmd)) {
-				for (const callback of this.#commandCallbacks.get(cmd)!) callback(data.join(" "))
-			}
-		});
-
-		evtSource.onopen = () => {
-			logger.debug("listening to server side events (usid: "+usid+")")
-		}
-
-		// try fast reconnect
-		evtSource.onerror = () => {
-			evtSource.close();
-			this.#listeningToSSE = false;
-			setTimeout(()=>this.#listenToSSE(), 500)
-		}
-	}
-
-	#handleSSECommand(cmd: string, callback: (data?:string)=>void) {
-		const valid = this.#listenToSSE();
-		if (!valid) return false;
-		if (!this.#commandCallbacks.has(cmd)) this.#commandCallbacks.set(cmd, new Set())
-		this.#commandCallbacks.get(cmd)!.add(callback);
-		return true;
-	}
+	#hotReloadListener?: SSEListener;
 
 	// TODO: implement with sw thread
 	enableHotReloading() {
-		const enabled = this.#handleSSECommand("RELOAD", () => window.location.reload())
-		if (enabled) logger.success("Hot reloading enabled");
-		else logger.error("Could not enable hot reloading");
+		if (this.#hotReloadListener) return;
+		const usid = getInjectedAppData()?.usid;
+		if (!usid) {
+			logger.error("Could not enable hot reloading");
+			return false;
+		}
+
+		this.#hotReloadListener = new SSEListener(
+			{'usid': usid},
+			() => logger.debug("listening to server side events (usid: "+usid+")")
+		)
+		// reload window on RELOAD command
+		this.#hotReloadListener.handleSSECommand("RELOAD", () => window.location.reload())
+		return true;
+	}
+
+	observePointers(ids:string[]) {
+		const listener = new SSEListener({
+			'observe': JSON.stringify(ids)
+		});
+		// TODO: handle element updates
+		listener.handleSSECommand("UPDATE_TEXT", () => {
+
+		})
+		listener.handleSSECommand("UPDATE_HTML", () => {
+
+		})
+		listener.handleSSECommand("UPDATE_ATTR", () => {
+			
+		})
 	}
 
 }

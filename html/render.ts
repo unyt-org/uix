@@ -12,6 +12,8 @@ import { Theme } from "../base/theme.ts";
 import { logger } from "../utils/global_values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
+import { JSTransferableFunction } from "unyt_core/types/js-function.ts";
+import { getLiveNodes } from "uix/hydration/partial.ts";
 
 let stage:string|undefined = '?'
 
@@ -115,7 +117,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 
 	if (el instanceof domContext.DocumentFragment) {
 		const content = [];
-		for (const child of (el.childNodes as unknown as domContext.Node[])) {
+		for (const child of (el.childNodes as unknown as Node[])) {
 			content.push(await _getOuterHTML(child, opts, collectedStylsheets, isStandaloneContext));
 		}
 		return content.join("\n");
@@ -167,16 +169,14 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 
  		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
 		let script = `  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
+
 		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS]) {
 			
 			for (const listener of listeners) {
 
-				const standaloneFunction = (listener as any)[STANDALONE];
-				const forceBindToOriginContext = !isStandaloneContext&&!standaloneFunction;
-				const listenerFn = (forceBindToOriginContext ? bindToOrigin(listener) : listener);
+				const listenerFn = getFunctionWithContext(listener, isStandaloneContext);
 
 				// special form "action" on submit
-				// FIXME
 				if (event == "submit" && Datex.Pointer.getByValue(listenerFn)) {
 					attrs.push(`action="/@uix/form-action/${Datex.Pointer.getByValue(listenerFn)!.idString()}/"`);
 				} 
@@ -185,36 +185,14 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 				else {
 					hasScriptContent = true;
 
+					const fnSource = getFunctionSource(listener, isStandaloneContext)
 					script += `{\n`
-	
-					for (const [varName, value] of Object.entries((listener as any)[EXTERNAL_SCOPE_VARIABLES]??[])) {
-						// handle special case: this
-						if (varName == "this") {
-							script += `const ctx = querySelector('[data-ptr="${Datex.Pointer.getByValue((listener as any)[EXTERNAL_SCOPE_VARIABLES]['this'])?.id}"]'); // injected context\n`
-						}
-						// handle functions
-						else if (typeof value == "function") {
-							const boundFunction = bindToOrigin(value as (...args: unknown[]) => unknown)
-							script += `const ${varName} = ${getFunctionSource(boundFunction, "ctx")};// injected context\n`
-						}
-						// cannot yet handle other values
-						else {
-							throw new Error("Invalid bound value from external scope: " + varName + ". Only functions are supported");
-						}
-					}
-					
-					// else if (!context) {
-					// 	throw new Error("Cannot infer 'this' in runInDisplayContext(). Please provide it as an argument.")
-					// }
-
-					script += `  el.addEventListener("${event}", ${getFunctionSource(listenerFn, "ctx")});`
+					script += fnSource.companionSource;
+					script += `  el.addEventListener("${String(event)}", ${fnSource.source});`
 					script += `\n}\n`
 				}
 
-				
-
 			}
-			
 		}
 		if (hasScriptContent) opts._injectedJsData.init.push(script);
 	}
@@ -227,7 +205,54 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 	// return start + inner + end;
 }
 
-function getFunctionSource(fn: Function, contextName = "ctx") {
+function getFunctionWithContext(fn: (...args: unknown[]) => unknown, isStandaloneContext?: boolean) {
+	const isStandaloneFunction = (fn as any)[STANDALONE] || fn instanceof JSTransferableFunction;
+	const forceBindToOriginContext = !isStandaloneContext&&!isStandaloneFunction;
+	return (forceBindToOriginContext ? bindToOrigin(fn) : fn);
+}
+
+function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneContext: boolean) {
+	const listenerFn = getFunctionWithContext(fn, isStandaloneContext)
+
+	let companionSource = ''
+
+	const dependencies = (fn as any)[EXTERNAL_SCOPE_VARIABLES] ?? {};
+	if (listenerFn instanceof JSTransferableFunction) Object.assign(dependencies, listenerFn.deps)
+
+	let hasContext = false;
+	const ctxId = Datex.Pointer.getByValue(dependencies['this'])?.id;
+	if (ctxId) {
+		hasContext = true;
+		companionSource += `const ctx = querySelector('[data-ptr="${ctxId}"]');\n`
+	}
+
+	// add deps if transferable js fn
+
+	for (const [varName, value] of Object.entries(dependencies)) {
+		// this already injected
+		if (varName == "this") continue;
+		// handle functions
+		else if (typeof value == "function") {
+			const fnSource = getFunctionSource(value as (...args: unknown[]) => unknown, isStandaloneContext);
+			companionSource += fnSource.companionSource;
+			companionSource += `const ${varName} = ${fnSource.source};\n`
+		}
+		// cannot yet handle other values
+		else {
+			throw new Error("Cannot bind variable '" + varName + "' to a standalone display context with use() - this type not supported.");
+		}
+	}
+	
+	// else if (!context) {
+	// 	throw new Error("Cannot infer 'this' in runInDisplayContext(). Please provide it as an argument.")
+	// }
+
+	const source = hasContext ? getFunctionWrapper(listenerFn, "ctx") : listenerFn.toString()
+
+	return {source, companionSource}
+}
+
+function getFunctionWrapper(fn: Function, contextName = "ctx") {
 	const fnSource = fn.toString();
 
 	// native function not supported
@@ -343,31 +368,28 @@ if (!domContext.Element.prototype.getOuterHTML) {
 
 
 
-export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:RenderMethod = RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en"){
+export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:RenderMethod = RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en", livePointers?: string[]){
 	let files = '';
-	let importmap = ''
+	let metaScripts = ''
 
-	// use js if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content
-	const use_js = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
-	const add_importmap = render_method != RenderMethod.STATIC_NO_JS;
+	// use frontendRuntime if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content and standalone js
+	const useFrontendRuntime = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
+	const add_importmap = render_method != RenderMethod.STATIC;
 
-	//js files
-	if (use_js) {
+	// js files
+	if (useFrontendRuntime) {
 		files += '<script type="module">'
 
 		// js imports
 		files += indent(4) `
 			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("unyt_core/runtime/display.ts", compat_import_map).toString()}";\ndisableInitScreen();\n` : ''}
 			const {f} = (await import("${provider.resolveImport("unyt_core", compat_import_map).toString()}"));
-			const {State} = (await import("${provider.resolveImport("uix/base/state.ts", compat_import_map).toString()}")); 
 			const {Routing} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts", compat_import_map).toString()}"));` 
 			// await new Promise(resolve=>setTimeout(resolve,5000))
 
 		// files += `\nDatex.MessageLogger.enable();`
 
-
 		// set app info
-		// files += indent(4) `\nState._setMetadata({name:"${provider.app_options.name??''}", version:"${provider.app_options.version??''}", stage:"${stage??''}", backend:f("${Datex.Runtime.endpoint.toString()}")${Datex.Unyt.endpoint_info.app?.host ? `, host:f("${Datex.Unyt.endpoint_info.app.host}")`: ''}${Datex.Unyt.endpoint_info.app?.domains ? `, domains:${JSON.stringify(Datex.Unyt.endpoint_info.app.domains)}`: ''}});`
 
 		for (const file of js_files) {
 			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file, compat_import_map).toString()}");`
@@ -399,9 +421,9 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 		files += '\n</script>\n'
 	}
 
-	// inject UIX app metadata
-	if (render_method != RenderMethod.STATIC_NO_JS) {
-		files += indent(4) `
+	// inject UIX app metadata and static js files
+	if (render_method != RenderMethod.STATIC) {
+		metaScripts += indent(4) `
 			<script type="uix-app">
 				${JSON.stringify({
 					name: provider.app_options.name, 
@@ -414,12 +436,21 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 				}, null, "    ")}
 			</script>\n`
 
+		// add pointer sse observers
+		if (livePointers) {
+			files += indent `<script type="module">
+				const {BackgroundRunner} = (await import("${provider.resolveImport("uix/background-runner/background-runner.ts", compat_import_map).toString()}"));
+				const backgroundRunner = BackgroundRunner.get();
+				backgroundRunner.observePointers(${JSON.stringify(livePointers)});
+			</script>`	
+		}
+
 		for (const file of static_js_files) {
 			if (file) files += indent(4) `<script type="module" src="${provider.resolveImport(file, compat_import_map).toString()}"></script>`
 		}
 	}
 
-	if (add_importmap) importmap = `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;
+	if (add_importmap) metaScripts += `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;
 	
 	let global_style = '';
 	// stylesheets
@@ -466,7 +497,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 				${provider.app_options.name ? `<title>${provider.app_options.name}</title>` : ''}
 				${favicon}
 				${provider.app_options.installable ? `<link rel="manifest" href="manifest.json">` : ''}
-				${importmap}
+				${metaScripts}
 				${global_style}
 				${files}
 				${prerendered_content instanceof Array ? prerendered_content[0] : ''}

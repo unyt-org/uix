@@ -77,10 +77,20 @@ $ deno run -Aq --importmap https://dev.cdn.unyt.org/importmap.json https://dev.c
 ```
 
 ## Architecture of a UIX Project
+With UIX, frontend and backend source code and other resources can be combined in one single project.
 
-With UIX, frontend and backend source code or other resources can be put into a single project.
+```
+.
+└── UIX/
+    ├── backend/
+    │   ├── .dx                 // Config file for deployment
+    │   └── entrypoint.tsx      // Backend entrypoint
+    ├── common/
+    ├── frontend/
+    │   └── entrypoint.tsx      // Frontend entrypoint
+    ├── app.dx                  // Endpoint config file
+    └── deno.json               // Deno config file
+```
 
-Files in the `frontend` directory of the project are only available to frontend endpoints (browser clients), while files in the `backend` directory are only available to backend endpoints (Deno).
-
-However, a key feature of UIX is that backend modules can be imported from frontend modules and vice versa.
-Files in the `common` directory are accessible from the frontend and backend.
+Per default all content in the `frontend` directory is only available to frontend endpoints (browser clients), while content in the `backend` directory is available to backend endpoints (Deno runtime). Thanks to Cross-Realm Imports, UIX allows import and usage of backend-modules inside the frontend code and vice versa.
+Files in the `common` directory are accessible from both the `frontend` and `backend`.

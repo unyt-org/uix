@@ -1,4 +1,4 @@
-import { scope, expose } from "unyt_core/datex.ts";
+import { scope, expose } from "datex-core-legacy/datex.ts";
 import { stage } from "../app/args.ts";
 
 // uix.stage

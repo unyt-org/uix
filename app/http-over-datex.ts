@@ -1,4 +1,4 @@
-import { Logger } from "unyt_core/datex_all.ts";
+import { Logger } from "datex-core-legacy/datex_all.ts";
 import { Server } from "../server/server.ts";
 
 const logger = new Logger("HTTP-over-DATEX");

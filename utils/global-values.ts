@@ -1,5 +1,5 @@
-import { Datex } from "unyt_core";
-import { client_type } from "unyt_core/utils/constants.ts";
+import { Datex } from "datex-core-legacy";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 
 export const logger = new Datex.Logger("UIX");
 

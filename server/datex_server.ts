@@ -2,9 +2,9 @@
  * DATEX ComInterface with web server (TCP / HTTP / Websockets)
  */
 
-import { Datex , pointer, meta, expose, scope, datex } from "unyt_core";
+import { Datex , pointer, meta, expose, scope, datex } from "datex-core-legacy";
 import { Server } from "./server.ts";
-import { type datex_meta } from "unyt_core/datex_all.ts";
+import { type datex_meta } from "datex-core-legacy/datex_all.ts";
 
 /** common class for all interfaces (WebSockets, TCP Sockets, GET Requests, ...)*/
 export abstract class ServerDatexInterface implements Datex.ComInterface {

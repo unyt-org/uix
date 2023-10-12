@@ -1,7 +1,7 @@
-import { Datex } from "unyt_core";
+import { Datex } from "datex-core-legacy";
 import { getAppOptions } from "./config-files.ts";
 import { env, root_path } from "./args.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 import "./dom-context.ts";
 import { app } from "./app.ts";
 const logger = new Datex.Logger("UIX App Runner");

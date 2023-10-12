@@ -1,4 +1,4 @@
-import { transferable } from "unyt_core/types/js-function.ts";
+import { transferable } from "datex-core-legacy/types/js-function.ts";
 
 const count = $$(0);
 

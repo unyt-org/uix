@@ -5,8 +5,8 @@ import { HTTPStatus } from "uix/html/http-status.ts";
 import { HelloComponent } from "../common/HelloComponent.tsx";
 import { Entrypoint } from "uix/html/entrypoints.ts";
 import { renderStandalone } from "uix/html/render-methods.ts";
-import { logger } from "uix/utils/global_values.ts";
-import { bindToOrigin } from "uix/utils/datex_over_http.ts";
+import { logger } from "../../utils/global-values.ts";
+import { bindToOrigin } from "../../utils/datex-over-http.ts";
 // import { counter } from "backend/counter.eternal.ts";
 
 // /* <button onclick={(() => count.val++).inDisplayContext.with({count})}>Increase Counter</button> */

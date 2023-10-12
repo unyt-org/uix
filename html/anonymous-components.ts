@@ -1,5 +1,5 @@
-import { Datex } from "unyt_core/datex.ts";
-import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
+import { Datex } from "datex-core-legacy/datex.ts";
+import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../uix-dom/jsx/parser.ts";
 import { UIXComponent } from "../components/UIXComponent.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";

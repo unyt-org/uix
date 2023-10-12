@@ -1,5 +1,5 @@
 import { Context } from "./context.ts";
-import { createFilter } from "uix/routing/route-filter.ts";
+import { createFilter } from "./route-filter.ts";
 
 export function contextMatchesRequestMethod(requestMethod:string, context: Context) {
 	return context.request?.method === requestMethod;

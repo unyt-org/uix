@@ -1,18 +1,18 @@
-import { Datex } from "unyt_core";
+import { Datex } from "datex-core-legacy";
 import { OpenGraphInformation } from "../base/open-graph.ts";
-import { indent } from "unyt_core/utils/indent.ts";
+import { indent } from "datex-core-legacy/utils/indent.ts";
 import type { HTMLProvider } from "./html-provider.ts";
 import { COMPONENT_CONTEXT, STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { app } from "../app/app.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
-import { bindToOrigin } from "../utils/datex_over_http.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { bindToOrigin } from "../utils/datex-over-http.ts";
 import { RenderMethod } from "./render-methods.ts";
 import { Theme } from "../base/theme.ts";
-import { logger } from "../utils/global_values.ts";
+import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
-import { JSTransferableFunction } from "unyt_core/types/js-function.ts";
+import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 import { getLiveNodes } from "uix/hydration/partial.ts";
 
 let stage:string|undefined = '?'

@@ -1,4 +1,4 @@
-import { Datex } from "unyt_core/datex.ts";
+import { Datex } from "datex-core-legacy/datex.ts";
 import { Context } from "../routing/context.ts";
 import { Path } from "../utils/path.ts";
 import { HTTPStatus } from "./http-status.ts";

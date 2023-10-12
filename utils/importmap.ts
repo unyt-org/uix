@@ -1,5 +1,5 @@
 import { Path } from "../utils/path.ts";
-import { Logger } from "unyt_core/utils/logger.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
 const logger = new Logger("UIX Import Map");
 
 /**

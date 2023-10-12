@@ -1,9 +1,7 @@
 // deno-lint-ignore-file no-async-promise-executor
-import { constructor, Datex, property, replicator, template, get} from "unyt_core"
-import { logger } from "../utils/global_values.ts"
-import { assignDefaultPrototype } from "../utils/utils.ts"
-import { Class, Logger, METADATA, ValueError } from "unyt_core/datex_all.ts"
-import { IS_HEADLESS } from "../utils/constants.ts"
+import { constructor, Datex, property, replicator, template, get} from "datex-core-legacy"
+import { logger } from "../utils/global-values.ts"
+import { Class, Logger, METADATA, ValueError } from "datex-core-legacy/datex_all.ts"
 import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, ORIGIN_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import { Path } from "../utils/path.ts";
 import { RouteManager } from "../html/entrypoints.ts";
@@ -11,17 +9,18 @@ import { Context } from "../routing/context.ts";
 import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../standalone/scroll_container.ts";
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open-graph.ts";
 import { bindContentProperties } from "../standalone/bound_content_properties.ts";
-import { DX_IGNORE, INIT_PROPS } from "unyt_core/runtime/constants.ts"
+import { DX_IGNORE, INIT_PROPS } from "datex-core-legacy/runtime/constants.ts"
 import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css_style_compat.ts";
-import { indent } from "unyt_core/utils/indent.ts"
+import { indent } from "datex-core-legacy/utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize-js.ts";
-import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex_over_http.ts"
-import type { DynamicCSSStyleSheet } from "../utils/css_template_strings.ts";
+import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex-over-http.ts"
+import type { DynamicCSSStyleSheet } from "../utils/css-template-strings.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts"
 import { Theme } from "../base/theme.ts";
 import { jsxInputGenerator } from "../html/anonymous-components.ts";
 import { bindObserver, domContext, domUtils } from "../app/dom-context.ts";
+import { UIX } from "../uix.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -45,8 +44,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
     protected static shadow_stylesheets:string[] =  [
         // global base style
-        new URL('../style/base.css', import.meta.url).toString(),
-        new URL('../style/fontawesome.css', import.meta.url).toString()
+        new URL('../style/base.css', import.meta.url).toString()
     ]
     
 
@@ -774,7 +772,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         this.handleIdProps(constructed);
    
         // @standlone props only relevant for backend
-        if (IS_HEADLESS) this.loadStandaloneProps();
+        if (UIX.isHeadless) this.loadStandaloneProps();
 
         if (constructed) await this.onConstruct?.();
         // this.bindOriginMethods();
@@ -1019,7 +1017,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         await new Promise((r) => setTimeout(r, 0)); // dom changes
 
         await new Promise((r) => setTimeout(r, 0)); // dom changes
-        if (!IS_HEADLESS) await this.onDisplay?.();
+        if (!UIX.isHeadless) await this.onDisplay?.();
         await new Promise((r) => setTimeout(r, 0)); // dom changes
 
         this.#create_lifecycle_ready_resolve?.();
@@ -1348,3 +1346,45 @@ export namespace BaseComponent {
         title?: string
     }
 }
+
+// get object-like keys that need to be cloned from the prototype
+export function getCloneKeys(object:any):Set<string> {
+    const clone_keys = new Set<string>();
+    for (const [key, value] of Object.entries(object)) {
+        if (value && typeof value == "object") clone_keys.add(key);
+    }
+    return clone_keys;
+}
+
+
+// required for DEFAULT_OPTIONS prototype
+function assignDefaultPrototype<T extends object>(default_object:T, object:T, clone_keys:Iterable<string> = getCloneKeys(default_object)):T {
+    let res_object:T;
+
+    // use provided object
+    if (object && Object.keys(object).length) {
+        if (default_object && !default_object.isPrototypeOf(object)) Object.setPrototypeOf(object, default_object);
+        res_object = object;
+    } 
+    // default
+    else {
+        res_object = Object.create(default_object??{});
+    }
+
+    // clone non-primitive properties (if only in prototype and not in created object) - ignore DatexValues and pointers
+    for (let key of clone_keys) {
+        // @ts-ignore
+        if (!res_object.hasOwnProperty(key) && res_object[key] === default_object[key] &&  !(
+            // don't clone fake primitives
+            res_object[key] instanceof Datex.Ref || 
+            res_object[key] instanceof Datex.Type ||
+            res_object[key] instanceof Datex.Target ||
+            res_object[key] instanceof Datex.Quantity
+        ) && !Datex.Pointer.getByValue(res_object[key])) {
+            res_object[key] = structuredClone(res_object[key])
+        }
+    }
+
+    return res_object;
+}
+

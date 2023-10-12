@@ -1,6 +1,6 @@
-import { client_type } from "unyt_core/utils/constants.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { enableDatexBindings } from "../uix-dom/datex-bindings/mod.ts";
-import { DOMContext } from "uix/uix-dom/dom/DOMContext.ts";
+import { DOMContext } from "../uix-dom/dom/DOMContext.ts";
 
 export const domContext = (client_type == "browser" ? globalThis.window : await import("../uix-dom/dom/mod.ts")) as DOMContext;
 export const {domUtils, bindObserver} = enableDatexBindings(domContext)

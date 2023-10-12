@@ -1,6 +1,6 @@
-import { Datex, $$, static_pointer } from "unyt_core"
-import { IS_HEADLESS } from "../utils/constants.ts"
-import { domContext } from "uix/app/dom-context.ts";
+import { Datex, $$, static_pointer } from "datex-core-legacy"
+import { domContext } from "../app/dom-context.ts";
+import { UIX } from "../uix.ts";
 
 const logger = new Datex.Logger("uix theme");
 
@@ -182,7 +182,7 @@ export class Theme  {
 			this.update(mode == "dark" ? this.#current_dark_theme : this.#current_light_theme, mode);
 
 			// css global color scheme
-			if (!IS_HEADLESS) {
+			if (!UIX.isHeadless) {
 				document.body.style.colorScheme = mode;
 				document.body.dataset.colorScheme = mode;
 			}
@@ -287,7 +287,7 @@ export class Theme  {
 
 		// add to document
 		if (!this.#current_theme_style_sheet_added) {
-			if (!IS_HEADLESS) document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
+			if (!UIX.isHeadless) document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
 			this.#current_theme_style_sheet_added = true;
 		}
 	}
@@ -305,7 +305,7 @@ export class Theme  {
 
 		// add to document
 		if (!this.#global_style_sheet_added) {
-			if (!IS_HEADLESS) document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
+			if (!UIX.isHeadless) document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
 			this.#global_style_sheet_added = true;
 		}
 	}

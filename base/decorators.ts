@@ -1,10 +1,11 @@
-import { Datex } from "unyt_core";
-import { context_kind, context_meta_getter, context_meta_setter, context_name, handleDecoratorArgs, METADATA } from "unyt_core/datex_all.ts";
-import { logger } from "../utils/global_values.ts";
-import { getCloneKeys } from "../utils/utils.ts";
-import { UIXComponent } from "../components/UIXComponent.ts";
-import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
+import { Datex } from "datex-core-legacy";
+import { context_kind, context_meta_getter, context_meta_setter, context_name, handleDecoratorArgs, METADATA } from "datex-core-legacy/datex_all.ts";
+import { logger } from "../utils/global-values.ts";
+import { getCloneKeys, UIXComponent } from "../components/UIXComponent.ts";
+import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { domContext } from "../app/dom-context.ts";
+
+
 
 /**
  * @Component decorators for custom new elements and default elements

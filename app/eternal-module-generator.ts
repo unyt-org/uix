@@ -1,6 +1,5 @@
-import { doc } from "https://deno.land/x/deno_doc/mod.ts";
-import { Path } from "uix/utils/path.ts";
-
+import { doc } from "https://deno.land/x/deno_doc@0.68.0/mod.ts";
+import { Path } from "../utils/path.ts";
 
 export async function getEternalModule(filePath: Path, specifier: string) {
 	const tree = await doc(filePath.toString(), {

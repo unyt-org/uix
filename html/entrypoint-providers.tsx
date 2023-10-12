@@ -1,14 +1,14 @@
-import { Datex } from "unyt_core/datex.ts";
+import { Datex } from "datex-core-legacy/datex.ts";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { Context } from "../routing/context.ts";
-import { convertANSIToHTML } from "../utils/ansi_to_html.ts";
+import { convertANSIToHTML } from "../utils/ansi-to-html.ts";
 import { Path } from "../utils/path.ts";
-import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
+import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "../app/app.ts";
 import { Entrypoint, RouteHandler, html_generator } from "./entrypoints.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { createErrorHTML } from "./errors.tsx";
 import { HTTPError } from "./http-error.ts";
@@ -110,7 +110,7 @@ export function provideValueDebugView(value: unknown) {
 			
 // 			</script>
 // 			<script type="module">
-// 				import { datex, Datex } from "unyt_core";
+// 				import { datex, Datex } from "datex-core-legacy";
 // 				import { DatexValueTreeView } from "uix_std/datex/value_tree_view.ts"
 // 				import { dx_value_manager } from "uix_std/datex/resource_manager.ts";
 

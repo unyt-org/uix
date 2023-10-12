@@ -1,11 +1,11 @@
-import { Datex, f } from "unyt_core/datex.ts";
+import { Datex, f } from "datex-core-legacy/datex.ts";
 import type { appOptions } from "./options.ts";
-import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
+import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
 import { http_over_datex, live_frontend, stage, watch, watch_backend } from "./args.ts";
 import { BackendManager } from "./backend-manager.ts";
-import { Server } from "uix/server/server.ts";
-import { FrontendManager } from "uix/app/frontend-manager.ts";
-import { Path } from "uix/utils/path.ts";
+import { Server } from "../server/server.ts";
+import { FrontendManager } from "./frontend-manager.ts";
+import { Path } from "../utils/path.ts";
 
 const logger = new Datex.Logger("UIX App");
 

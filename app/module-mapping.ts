@@ -1,9 +1,8 @@
-import { cache_path } from "unyt_core/runtime/cache_path.ts";
+import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { normalizedAppOptions } from "./options.ts";
 import { Path } from "../utils/path.ts";
-import { ImportMap } from "../utils/importmap.ts";
 import { walk } from "https://deno.land/std@0.177.0/fs/walk.ts";
-import { getEternalModule } from "uix/app/eternal-module-generator.ts";
+import { getEternalModule } from "./eternal-module-generator.ts";
 
 const eternalExts = [
 	'ts',

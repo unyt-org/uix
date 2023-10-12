@@ -1,5 +1,5 @@
 import { AppPlugin } from "../app/config-files.ts";
-import { Logger } from "unyt_core/utils/logger.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
 const logger = new Logger("Git Deploy Plugin");

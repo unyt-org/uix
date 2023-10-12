@@ -1,20 +1,20 @@
 import { Path } from "../utils/path.ts";
-import { Datex } from "unyt_core";
+import { Datex } from "datex-core-legacy";
 import {evaluateFilter, filter} from "./route-filter.ts";
-import { IS_HEADLESS } from "../utils/constants.ts";
 import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_generator } from "../html/entrypoints.ts"
 
 import { CACHED_CONTENT, getOuterHTML } from "../html/render.ts";
 import { HTTPStatus } from "../html/http-status.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { RenderPreset, RenderMethod } from "../html/render-methods.ts"
-import { client_type } from "unyt_core/utils/constants.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { createErrorHTML } from "../html/errors.tsx";
 import { Context, ContextGenerator } from "./context.ts";
 import { UIXComponent } from "../components/UIXComponent.ts";
-import { logger } from "../utils/global_values.ts";
-import { domContext } from "uix/app/dom-context.ts";
+import { logger } from "../utils/global-values.ts";
+import { domContext } from "../app/dom-context.ts";
 import { DocumentFragment, Element } from "../uix-dom/dom/mod.ts";
+import { UIX } from "../uix.ts";
 
 
 // URLPattern polyfill
@@ -377,7 +377,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	// only load once in recursive calls when deepest level reached
 	if (!resolved.loaded) {
 		// preload in deno, TODO: better solution?
-		if (IS_HEADLESS && (entrypointData.entrypoint instanceof domContext.Element || entrypointData.entrypoint instanceof domContext.DocumentFragment)) {
+		if (UIX.isHeadless && (entrypointData.entrypoint instanceof domContext.Element || entrypointData.entrypoint instanceof domContext.DocumentFragment)) {
 			await preloadElementOnBackend(entrypointData.entrypoint)
 		}
 
@@ -410,7 +410,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 
 export async function preloadElementOnBackend(element:Element|DocumentFragment, parent?:Element|DocumentFragment) {
 	// preload in deno, TODO: better solution?
-	if (IS_HEADLESS) {
+	if (UIX.isHeadless) {
 
 		const promises = [];
 

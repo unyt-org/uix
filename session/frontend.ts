@@ -1,4 +1,4 @@
-import { Datex } from "unyt_core/datex.ts";
+import { Datex } from "datex-core-legacy/datex.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "./cookies.ts";
 import { getSharedDataPointer } from "./shared-data.ts";
 

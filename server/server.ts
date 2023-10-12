@@ -13,8 +13,8 @@
 /** Imports **/
 
 // ---
-import { Logger } from "unyt_core/utils/logger.ts";
-import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
+import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { Cookie, setCookie, getCookies } from "https://deno.land/std@0.177.0/http/cookie.ts";
 import { Path } from "../utils/path.ts";
 import { Transpiler } from "./transpiler.ts";
@@ -510,7 +510,7 @@ export class Server {
                 if (url.protocol == "http:" && url.hostname !== "localhost") {
                     url.protocol = "https:"
                 }
-                const script = `import { datex } from "unyt_core";\n\nconst exports = await datex.get("${url}");\nexport default exports;`
+                const script = `import { datex } from "datex-core-legacy";\n\nconst exports = await datex.get("${url}");\nexport default exports;`
                 return this.getContentResponse("text/javascript", script);
             }
             

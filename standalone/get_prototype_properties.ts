@@ -1,4 +1,4 @@
-import type { Class } from "unyt_core/utils/global_types.ts";
+import type { Class } from "datex-core-legacy/utils/global_types.ts";
 
 /**
  * returns list of all property names and there corresponding value,

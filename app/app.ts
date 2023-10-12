@@ -1,4 +1,4 @@
-import { Datex, f } from "unyt_core";
+import { Datex, f } from "datex-core-legacy";
 
 import type { FrontendManager  } from "./frontend-manager.ts";
 import { Path } from "../utils/path.ts";
@@ -6,11 +6,11 @@ import { ImportMap } from "../utils/importmap.ts";
 import type { Server } from "../server/server.ts";
 
 import type { appOptions, normalizedAppOptions } from "./options.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
-import { displayInit } from "unyt_core/runtime/display.ts";
-import { ServiceWorker } from "uix/sw/sw-installer.ts";
-import { logger } from "../utils/global_values.ts";
-import { endpoint_config } from "unyt_core/runtime/endpoint_config.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { displayInit } from "datex-core-legacy/runtime/display.ts";
+import { ServiceWorker } from "../sw/sw-installer.ts";
+import { logger } from "../utils/global-values.ts";
+import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
 import { getInjectedAppData, getInjectedImportmap } from "./app-data.ts";
 
 import "../base/init.ts"

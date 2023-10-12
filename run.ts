@@ -2,13 +2,13 @@
  * This script starts a UIX app
  */
 
-import { Datex, datex } from "unyt_core/no_init.ts"; // required by getAppConfig
-import type { Datex as _Datex } from "unyt_core"; // required by getAppConfig
+import { Datex, datex } from "datex-core-legacy/no_init.ts"; // required by getAppConfig
+import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppConfig
 
-import type {Datex as DatexType} from "unyt_core";
+import type {Datex as DatexType} from "datex-core-legacy";
 
 import { getAppOptions } from "./app/config-files.ts";
-import { getExistingFile } from "./utils/file_utils.ts";
+import { getExistingFile } from "./utils/file-utils.ts";
 import { command_line_options, login, root_path, stage } from "./app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./app/options.ts";
 import { runLocal } from "./runners/run-local.ts";

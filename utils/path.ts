@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-namespace
-import { client_type } from "unyt_core/utils/constants.ts";
-import { getCallerFile } from "unyt_core/utils/caller_metadata.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 
 const relative = client_type === "deno" ? (await import("https://deno.land/std@0.172.0/path/mod.ts")).relative : null;
 

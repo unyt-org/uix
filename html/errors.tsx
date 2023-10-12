@@ -1,10 +1,10 @@
-import { logger } from "unyt_core/datex_all.ts";
+import { logger } from "datex-core-legacy/datex_all.ts";
 import { app } from "../app/app.ts";
-import { unsafeHTML } from "../uix_short.ts";
+import { unsafeHTML } from "../uix-short.ts";
 import { HTTPError } from "./http-error.ts";
 import { HTTPStatus } from "./http-status.ts";
-import { bindToOrigin } from "../utils/datex_over_http.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
+import { bindToOrigin } from "../utils/datex-over-http.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { domUtils } from "../app/dom-context.ts";
 
 function createErrorMessageHTML(title: string, message?: string|Element, attachment?: Element, statusCode?: number, displayLocation?: string) {

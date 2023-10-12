@@ -1,10 +1,10 @@
 import { Path } from "../utils/path.ts";
-import { Logger } from "unyt_core/utils/logger.ts";
-import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
+import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import "unyt_core/utils/auto_map.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
-import { cache_path } from "unyt_core/runtime/cache_path.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 
 const logger = new Logger("ts import resolver");
 

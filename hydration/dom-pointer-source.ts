@@ -1,7 +1,7 @@
-import { Datex } from "unyt_core";
-import { NOT_EXISTING, ValueError } from "unyt_core/datex_all.ts";
+import { Datex } from "datex-core-legacy";
+import { NOT_EXISTING, ValueError } from "datex-core-legacy/datex_all.ts";
 import { querySelector } from "../standalone/shadow_dom_selector.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 
 // proxy for Storage, binds existing UIX DOM Elements to pointer values
 

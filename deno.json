@@ -1,5 +1,9 @@
 {
-	"importMap": "./importmap.dev.json",
+	"imports": {
+        "datex-core-legacy" : "https://dev.cdn.unyt.org/unyt_core/datex.ts",
+        "datex-core-legacy/" : "https://dev.cdn.unyt.org/unyt_core/",
+        "unyt_tests/": "https://dev.cdn.unyt.org/unyt_tests/"
+    },
 	"compilerOptions": {
 		"module": "esnext",
 		"target": "es2022",

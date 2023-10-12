@@ -1,32 +1,32 @@
 import { Transpiler } from "../server/transpiler.ts";
 import { TypescriptImportResolver } from "../server/ts-import-resolver.ts";
 
-import { $$, Datex } from "unyt_core";
+import { $$, Datex } from "datex-core-legacy";
 import { Server } from "../server/server.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "./app.ts";
 import { Path } from "../utils/path.ts";
 import { BackendManager } from "./backend-manager.ts";
-import { getExistingFile, getExistingFileExclusive } from "../utils/file_utils.ts";
-import { logger } from "../utils/global_values.ts";
+import { getExistingFile, getExistingFileExclusive } from "../utils/file-utils.ts";
+import { logger } from "../utils/global-values.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
 import { HTMLProvider } from "../html/html-provider.ts";
 
-import { UIX_CACHE_PATH } from "../utils/constants.ts";
 import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
 import { provideValue } from "../html/entrypoint-providers.tsx";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
-import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "unyt_core/utils/interface-generator.ts"
+import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "datex-core-legacy/utils/interface-generator.ts"
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
 import { RenderMethod } from "../html/render-methods.ts";
 import { Context, ContextBuilder, ContextGenerator, getHTTPRequestEndpoint } from "../routing/context.ts";
 import { Entrypoint, raw_content } from "../html/entrypoints.ts";
 import { createErrorHTML } from "../html/errors.tsx";
-import { client_type } from "unyt_core/utils/constants.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { domUtils } from "./dom-context.ts";
 import { Element } from "../uix-dom/dom/mod.ts";
 import { getLiveNodes } from "../hydration/partial.ts";
+import { UIX } from "../uix.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -247,7 +247,7 @@ export class FrontendManager extends HTMLProvider {
 		this.server.path("/robots.txt", (req, path)=>this.handleRobotsTXT(req, path));
 
 		this.server.path(/^\/@uix\/cache\/.*$/, async (req, path)=>{
-			await req.respondWith(await serveDir!(req.request, {fsRoot:UIX_CACHE_PATH.pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
+			await req.respondWith(await serveDir!(req.request, {fsRoot:UIX.cacheDir.pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
 		});
 
 		this.server.path(/^\/@uix\/form-action\/.*$/, (req, path, con)=>{
@@ -496,7 +496,7 @@ export class FrontendManager extends HTMLProvider {
 
 	// TODO: currently only default import working
 	// private async updateDxMapFile(dx_import_relative:string, ts_map_path:Path, dx_import_path?:Path, compat = false) {
-	// 	const content = `import { datex } from "unyt_core";\n\nconst exports = await datex.get("${dx_import_relative}");\nexport default exports;` ;
+	// 	const content = `import { datex } from "datex-core-legacy";\n\nconst exports = await datex.get("${dx_import_relative}");\nexport default exports;` ;
 	// 	await this.transpiler.addVirtualFile(ts_map_path, content, true);
 	// }
 
@@ -603,7 +603,7 @@ export class FrontendManager extends HTMLProvider {
 		if (!this.server) return;
 
 		const script = `
-${"import"} {Datex, datex, $$} from "unyt_core";
+${"import"} {Datex, datex, $$} from "datex-core-legacy";
 ${"import"} { ServiceWorker } from "uix/sw/sw-installer.ts";
 
 const logger = new Datex.Logger("UIX Dev");
@@ -647,7 +647,7 @@ runner.enableHotReloading();
 		const {sharedDeno} = await import("./shared-deno.ts");
 
 		const script = `
-		${"import"} {datex} from "unyt_core";
+		${"import"} {datex} from "datex-core-legacy";
 		globalThis.Deno = await datex \`${Datex.Pointer.getByValue(sharedDeno)?.idString()}\`
 		`
 		await this.transpiler.addVirtualFile(this.debugPrefix.slice(1)+"deno.ts", script);

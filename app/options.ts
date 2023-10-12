@@ -1,7 +1,6 @@
-import type { Tuple } from "unyt_core/types/tuple.ts";
+import type { Tuple } from "datex-core-legacy/types/tuple.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import { Path } from "../utils/path.ts";
-import { logger } from "uix/utils/global_values.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 

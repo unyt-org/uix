@@ -1,5 +1,5 @@
 // register service worker
-import { ServiceWorker } from "uix/sw/sw-installer.ts";
+import { ServiceWorker } from "../../sw/sw-installer.ts";
 import "./default.ts";
 
 // ignore SafFarI for now

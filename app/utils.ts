@@ -1,8 +1,8 @@
 import { Path } from "../utils/path.ts";
 import { app } from "./app.ts";
-import { UIX_CACHE_PATH } from "../utils/constants.ts";
-import { Datex } from "unyt_core/datex.ts";
+import { Datex } from "datex-core-legacy/datex.ts";
 import { normalizedAppOptions } from "./options.ts";
+import { UIX } from "../uix.ts";
 
 /**
  * Resolves file paths to web paths, keeps everything else (web urls, import aliases)
@@ -23,7 +23,7 @@ export function convertToWebPath(filePath:URL|string, includeDefaultDomain = fal
 	const path = new Path(filePath, app.base_url);
 
 	// is /@uix/cache
-	if (path.isChildOf(UIX_CACHE_PATH)) return (includeDefaultDomain ? getDefaultDomainPrefix() : '') + path.getAsRelativeFrom(UIX_CACHE_PATH).replace(/^\.\//, "/@uix/cache/");
+	if (path.isChildOf(UIX.cacheDir)) return (includeDefaultDomain ? getDefaultDomainPrefix() : '') + path.getAsRelativeFrom(UIX.cacheDir).replace(/^\.\//, "/@uix/cache/");
 	// is /@uix/src
 	else return (includeDefaultDomain ? getDefaultDomainPrefix() : '') + path.getAsRelativeFrom(app.base_url).replace(/^\.\//, "/@uix/src/")
 }

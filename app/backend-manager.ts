@@ -1,8 +1,8 @@
 import { ALLOWED_ENTRYPOINT_FILE_NAMES } from "./app.ts";
 import { Path } from "../utils/path.ts";
-import { getExistingFileExclusive } from "../utils/file_utils.ts";
+import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
-import { logger } from "../utils/global_values.ts";
+import { logger } from "../utils/global-values.ts";
 import { PageProvider } from "../html/entrypoint-providers.tsx";
 import { RenderMethod, RenderPreset } from "../html/render-methods.ts";
 import { Entrypoint } from "../html/entrypoints.ts";

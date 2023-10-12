@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-namespace
 
-import { logger } from "uix/utils/global_values.ts";
+import { logger } from "../utils/global-values.ts";
 
 // TODO: remove
 export namespace ServiceWorker {

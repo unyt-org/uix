@@ -1,8 +1,8 @@
-import { Datex } from "unyt_core/datex.ts";
-import { primitive } from "unyt_core/datex_all.ts";
+import { Datex } from "datex-core-legacy/datex.ts";
+import { primitive } from "datex-core-legacy/datex_all.ts";
 import { domContext, domUtils } from "uix/app/dom-context.ts";
-import { logger } from "uix/utils/global_values.ts";
-import { always } from "unyt_core/functions.ts";
+import { logger } from "./global-values.ts";
+import { always } from "datex-core-legacy/functions.ts";
 import type { CSSStyleDeclaration, CSSStyleRule, CSSStyleSheet, Document, Element, HTMLElement, Node, ShadowRoot } from "uix/uix-dom/dom/mod.ts";
 
 
@@ -17,19 +17,17 @@ export interface DynamicCSSStyleSheet extends CSSStyleSheet {
 }
 
 /**
- * Alternative to JSX, just using native JS template strings
- * @param template html template string
- * @param content 
+ * Define reactive (S)CSS style sheets with JS template strings
+ * @param template css template string
  * @returns 
  */
-export function SCSS(value:any): CSSStyleSheet
-export function SCSS(template:TemplateStringsArray|string, ...params:cssParam[]): DynamicCSSStyleSheet
-export function SCSS(template:any, ...params:cssParam[]) {
-	const isTemplate = template?.raw instanceof Array && template instanceof Array;
+export function SCSS(template:TemplateStringsArray|string, ...params:cssParam[]): DynamicCSSStyleSheet {
+	const isTemplate = (template as TemplateStringsArray)?.raw instanceof Array && template instanceof Array;
 	// non template value - convert to HTML node
 	if (!isTemplate) {
-		const styleSheet = new domContext.CSSStyleSheet()
-		styleSheet.replaceSync(template)
+		const styleSheet = new domContext.CSSStyleSheet() as DynamicCSSStyleSheet;
+		styleSheet.replaceSync(template as string)
+		styleSheet.activate = () => {} // no activation needed for static style sheet
 		return styleSheet;
 	}
 	// template

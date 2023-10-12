@@ -1,6 +1,6 @@
-import type { Datex } from "unyt_core"
+import type { Datex } from "datex-core-legacy"
 
-import { DX_PTR } from "unyt_core/runtime/constants.ts";
+import { DX_PTR } from "datex-core-legacy/runtime/constants.ts";
 import { STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
 
 export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")

@@ -1,13 +1,14 @@
 import { Api, test } from "../backend/public.ts";
 
-import { add, always, and, map, not, select } from "unyt_core/functions.ts";
+import { add, always, and, map, not, select } from "datex-core-legacy/functions.ts";
 import { blankTemplate, style, template } from "uix/html/anonymous-components.ts";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
-import { inDisplayContext } from "uix/utils/datex_over_http.ts";
+import { inDisplayContext } from "../../utils/datex-over-http.ts";
 import { UIXComponent } from "uix/components/UIXComponent.ts";
 import { lazy, provideError } from "uix/html/entrypoint-providers.tsx";
 import { unsafeHTML } from "uix/uix_short.ts";
+import { enableOverlayScrollbars } from "uix/utils/overlay-scrollbars.ts";
 
 /**
  * Put examples for all components in the testComponents object.
@@ -55,7 +56,6 @@ const TemplateCompWithShadowRootTemplate = template(
 
 const BlankTemplateComp = blankTemplate(({children}) => <div style="color:orange; font-size:2em">custom layout before{...children}custom layout after</div>)
 const TemplateCompWithOptions = template<{a:number, b?:number}, never>(({a,b}) => <div>a={a}, b={b}</div>);
-
 
 @template(<>
     <shadow-root>
@@ -250,8 +250,8 @@ export class ComponentWithOptions extends UIXComponent<{image?:HTMLImageElement,
 )
 export class ComponentWithStyle extends UIXComponent {
 
-	// TODO: source maps for @standalone
-	@standalone override onDisplay() {
+	// TODO: source maps for @display
+	@display override onDisplay() {
 		console.log("displaying ComponentWithStyle")
 	}
 }
@@ -351,6 +351,31 @@ export const testComponents = {
 	// counterComponent: await import('./modules/counterComponent.eternal.tsx'),
 
 	routeExample: <div>This is a route</div>,
+
+	overlayScrollbars: () => 
+		enableOverlayScrollbars(<div style="margin:40px;box-sizing:border-box;background:#eee; height: 200px;overflow:scroll">
+			Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque 
+			laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi 
+			architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas 
+			sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione 
+			voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit 
+			amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut 
+			labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum
+			exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?
+			 Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae 
+			 consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur.
+			 Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque 
+			laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi 
+			architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas 
+			sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione 
+			voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit 
+			amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut 
+			labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum
+			exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?
+			 Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae 
+			 consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur
+			 <div style="background:cornflowerblue;width:1000px;height:30px;">Wide Div</div>
+		</div>),
 
 	// shows error alert with stack trace
 	errorExample: () => {

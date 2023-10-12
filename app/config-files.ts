@@ -1,5 +1,5 @@
 // no explicit imports, should also work without import maps...
-import {getExistingFile} from "../utils/file_utils.ts";
+import {getExistingFile} from "../utils/file-utils.ts";
 import { command_line_options } from "../app/args.ts";
 
 const default_importmap = "https://dev.cdn.unyt.org/importmap.json";

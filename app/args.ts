@@ -1,7 +1,7 @@
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
 import { Path } from "../utils/path.ts";
-import { getExistingFile } from "../utils/file_utils.ts";
-import { VERSION } from "../utils/constants.ts";
+import { getExistingFile } from "../utils/file-utils.ts";
+import { UIX } from "../uix.ts";
 
 export const command_line_options = new CommandLineOptions("UIX", "Fullstack Web Framework with DATEX Integration.\nVisit https://unyt.org/uix for more information", "../RUN.md");
 
@@ -24,7 +24,7 @@ export const login = command_line_options.option("login", {type:"boolean", descr
 export const version = command_line_options.option("version", {type:"boolean", description: "Get the version of your UIX installation"});
 
 if (version) {
-	console.log(`UIX ${VERSION == "beta" ? "beta" : "v." + VERSION} (${new URL("../", import.meta.url)})`);
+	console.log(`UIX ${UIX.version == "beta" ? "beta" : "v." + UIX.version} (${new URL("../", import.meta.url)})`);
 	Deno.exit(0);
 }
 

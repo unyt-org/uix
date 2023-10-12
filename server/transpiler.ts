@@ -1,8 +1,8 @@
 import { Path } from "../utils/path.ts"; 
-import { Logger } from "unyt_core/utils/logger.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { TypescriptImportResolver } from "./ts-import-resolver.ts";
-import { getCallerDir } from "unyt_core/utils/caller_metadata.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
+import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;

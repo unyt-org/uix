@@ -1,12 +1,12 @@
 // deno-lint-ignore-file no-control-regex
-import { Datex } from "unyt_core";
+import { Datex } from "datex-core-legacy";
 import { HTML } from "./html/template-strings.ts";
-import { SCSS } from "./utils/css_template_strings.ts";
+import { SCSS } from "./utils/css-template-strings.ts";
 
 
 /** make decorators global */
-import { bindToOrigin } from "./utils/datex_over_http.ts";
-import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, Component as _Component, standalone as _standalone} from "./base/decorators.ts";
+import { bindToOrigin } from "./utils/datex-over-http.ts";
+import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, Component as _Component, display as _display} from "./base/decorators.ts";
 import { Theme } from "uix/base/theme.ts";
 import { domUtils } from "uix/app/dom-context.ts";
 
@@ -17,7 +17,7 @@ declare global {
 	const child: typeof _child;
 	const Component: typeof _Component;
 	const NoResources: typeof _NoResources;
-	const standalone: typeof _standalone;
+	const display: typeof _display;
 	const bindOrigin: typeof _bindOrigin;
 }
 
@@ -34,7 +34,7 @@ globalThis.Component = _Component;
 // @ts-ignore global
 globalThis.NoResources = _NoResources;
 // @ts-ignore global
-globalThis.standalone = _standalone;
+globalThis.display = _display;
 // @ts-ignore global
 globalThis.bindOrigin = _bindOrigin;
 

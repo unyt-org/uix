@@ -3,7 +3,7 @@
  * is supported in TS (https://github.com/microsoft/TypeScript/issues/32794)
  */
 
-import { Equals } from "unyt_core/utils/global_types.ts";
+import { Equals } from "datex-core-legacy/utils/global_types.ts";
 
 
 type Separator = '/'|'-'
@@ -79,8 +79,5 @@ function exampleRouteMapping<const T extends Label, U extends Label, V extends L
 	return [] as any
 }
 
-const exampleParamObject = exampleRouteMapping('/xyx/lol/d/:paramA/:bb/:paramC/');
-exampleParamObject.paramA
-exampleParamObject.bb
-exampleParamObject.paramC
-exampleParamObject.invalidParam
+const exampleParamObject = exampleRouteMapping('/xyx/lol/:okay/:xy/xyx/:grg');
+exampleParamObject.xy

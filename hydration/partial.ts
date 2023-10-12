@@ -1,6 +1,6 @@
-import { Datex } from "unyt_core/datex.ts";
+import { Datex } from "datex-core-legacy/datex.ts";
 import type { Element, Node } from "uix/uix-dom/dom/mod.ts";
-import { logger } from "unyt_core/utils/global_values.ts";
+import { logger } from "datex-core-legacy/utils/global_values.ts";
 
 /**
  * Returns a list of all nodes in a DOM tree that have live pointer binding

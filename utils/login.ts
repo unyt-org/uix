@@ -1,4 +1,4 @@
-import { Datex,f } from "unyt_core/datex.ts";
+import { Datex,f } from "datex-core-legacy/datex.ts";
 import home_dir from "https://deno.land/x/dir@1.5.1/home_dir/mod.ts";
 import { Path } from "../utils/path.ts";
 

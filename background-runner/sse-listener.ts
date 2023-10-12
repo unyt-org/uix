@@ -1,4 +1,4 @@
-import { Logger } from "unyt_core/utils/logger.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
 const logger = new Logger("sse-listener")
 
 declare const EventSource:any;

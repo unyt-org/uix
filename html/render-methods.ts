@@ -1,7 +1,7 @@
-import { IS_HEADLESS } from "../utils/constants.ts";
-import { logger } from "../utils/global_values.ts";
+import { UIX } from "../uix.ts";
+import { logger } from "../utils/global-values.ts";
 import { html_content_or_generator } from "./entrypoints.ts";
-import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
+import { DX_IGNORE } from "datex-core-legacy/runtime/constants.ts";
 
 
 /**
@@ -12,7 +12,7 @@ import { DX_IGNORE } from "unyt_core/runtime/constants.ts";
  * @param content HTML element or text content
  */
 export function renderHydrated<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYDRATION, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderWithHydration)")
+	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderWithHydration)")
 	return new RenderPreset(RenderMethod.HYDRATION, content)
 }
 
@@ -21,7 +21,7 @@ export function renderHydrated<T extends html_content_or_generator>(content:T): 
  * @param content HTML element or text content
  */
 export function renderPreview<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYDRATION, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderPreview)")
+	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderPreview)")
 	const preset = new RenderPreset(RenderMethod.HYDRATION, content)
 	// @ts-ignore
 	preset[DX_IGNORE] = true;
@@ -37,7 +37,7 @@ export function renderPreview<T extends html_content_or_generator>(content:T): R
  * @param content HTML element or text content
  */
 export function renderStandalone<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STANDALONE, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderStandalone)")
+	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderStandalone)")
 	return new RenderPreset(RenderMethod.STANDALONE, content)
 }
 
@@ -47,7 +47,7 @@ export function renderStandalone<T extends html_content_or_generator>(content:T)
  * @param content HTML element or text content
  */
 export function renderStatic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STATIC, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderStatic)")
+	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderStatic)")
 	return new RenderPreset(RenderMethod.STATIC, content)
 }
 
@@ -58,7 +58,7 @@ export function renderStatic<T extends html_content_or_generator>(content:T): Re
  * @param content HTML element or text content
  */
 export function renderDynamic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.DYNAMIC, T> {
-	if (!IS_HEADLESS) logger.warn("render methods have no effect for components created on the client side (renderDynamic)")
+	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderDynamic)")
 	return new RenderPreset(RenderMethod.DYNAMIC, content)
 }
 

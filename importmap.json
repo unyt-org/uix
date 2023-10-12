@@ -1,27 +1,12 @@
 {
 	"imports": {
-		"unyt/": "https://cdn.unyt.org/",
-		"unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
         "datex-core-js-legacy" : "https://cdn.unyt.org/unyt_core/datex.ts",
+		"datex-core-legacy/" : "https://cdn.unyt.org/unyt_core/",
 
 		"uix": "./uix.ts",
-
-		"unyt_core/": "https://cdn.unyt.org/unyt_core/",
-		"datex-core-js-legacy/" : "https://cdn.unyt.org/unyt_core/",
-
 		"uix/": "./",
-		"uix_std/": "./uix_std/",
 		"unyt_tests/": "https://cdn.unyt.org/unyt_tests/",
-		"unyt_web/": "https://cdn.unyt.org/unyt_web/",
-		"unyt_node/": "https://cdn.unyt.org/unyt_node/",
-		"unyt_cli/": "https://cdn.unyt.org/unyt_cli/",
 
-		"supranet/": 	"https://portal.unyt.org/ts_module_resolver/",
-
-		"uix/jsx-runtime": "./jsx-runtime/jsx.ts",
-
-		"backend/": "./backend/",
-		"common/": "./common/",
-		"frontend/": "./frontend/"
+		"uix/jsx-runtime": "./jsx-runtime/jsx.ts"
 	}
 }

@@ -1,7 +1,7 @@
-import { Logger } from "unyt_core/utils/logger.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getInjectedAppData } from "../app/app-data.ts";
 import { SSEListener } from "./sse-listener.ts";
-// import { getServiceWorkerThread, ThreadModule } from "unyt_core/threads/threads.ts";
+// import { getServiceWorkerThread, ThreadModule } from "datex-core-legacy/threads/threads.ts";
 
 const logger = new Logger("background-runner")
 

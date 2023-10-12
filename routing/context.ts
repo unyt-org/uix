@@ -1,7 +1,7 @@
-import { StorageMap } from "unyt_core/types/storage_map.ts";
-import { Datex, f } from "unyt_core/datex.ts";
-import { BROADCAST, Endpoint } from "unyt_core/types/addressing.ts";
-import { client_type } from "unyt_core/utils/constants.ts";
+import { StorageMap } from "datex-core-legacy/types/storage_map.ts";
+import { Datex, f } from "datex-core-legacy/datex.ts";
+import { BROADCAST, Endpoint } from "datex-core-legacy/types/addressing.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
 import { getSharedDataPointer } from "../session/shared-data.ts";
 

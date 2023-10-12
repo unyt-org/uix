@@ -1,37 +1,25 @@
-# Component Standalone Mode
-
-## Contexts in a UIX app
-
-Components and other values can exist in different contexts within a UIX app. They can also be moved between contexts or exist
-in multiple contexts at once.
-
- * **Backend context**: on a backend entrypoint module
- * **Display context**: on a frontend entrypoint module
- * **Standalone context**: special variant of a **display context**, has no module context
-
-The **origin context** of a value is the module context in which the value was created. This can be a backend or display context.
+# Rendering Modes
 
 
 ## Standalone Mode
-UIX Components are rendered in standalone mode with `UIX.renderStatic`.
+UIX Components are rendered in standalone mode with `renderStandalone`.
 In this mode, static HTML is prerendered on the backend and sent to the frontend. 
-The UIX library and other core libraries are not initialized.
+The UIX library and other core libraries are not initialized on the frontend.
 
 It is still possible to add interactivity and other TS functionality to components in standalone mode:
 
-Component methods and properties that are decorated with `@standalone` or `@bindOrigin` are available in standalone contexts.
-Any other values, like variables from the module or global scope are not available.
+Component methods and properties that are decorated with `@display` or event handlers defined with a `*:display` attribute are available in standalone contexts.
 
 ```tsx
 
 @Component
 export class ButtonComponent extends BaseComponent {
     // standalone properties
-    @standalone clickCounter = 0;
-    @standalone @id count = <span>{this.options.text}</span>;
-    @standalone @content button = <button onclick={()=>this.handleClick()}>I was clicked {this.count} times</button>;
+    @display clickCounter = 0;
+    @display @id count = <span>{this.options.text}</span>;
+    @display @content button = <button onclick={()=>this.handleClick()}>I was clicked {this.count} times</button>;
 
-    @standalone handleClick() {
+    @display handleClick() {
         // standalone context: only standalone properties are available
         this.clickCounter++;
         this.count.innerText = this.clickCounter.toString();
@@ -39,13 +27,13 @@ export class ButtonComponent extends BaseComponent {
 }
 ```
 
-## Supported values in Standalone Mode
+### Supported values in Standalone Mode
 
 The following values can be used as standalone properties:
  * JSON-compatible values (Arrays, number, strings, ...)
  * HTML Elements (only in combiniation with `@content`, `@child` or `@layout`)
 
-## Lifecycle
+### Lifecycle
 
 Some internal component lifecycle handlers are also supported in standalone mode.
 They must be explicitly enabled with `@standalone`.
@@ -54,7 +42,7 @@ They must be explicitly enabled with `@standalone`.
 @Component
 export class ButtonComponent extends BaseComponent {
 
-    @standalone override onDisplay() {
+    @display override onDisplay() {
         console.log("displayed in standalone mode: " + this.standalone)
     }
 
@@ -63,7 +51,7 @@ export class ButtonComponent extends BaseComponent {
 The `standalone` property is `true` when the component is loaded in standalone mode.
 
 
-## Using UIX library functions
+### Using UIX library functions
 
 Keep in mind that reactive functionality is not supported in standalone mode.
 If you want to use JSX, you need to explicitly import the UIX JSX Runtime:
@@ -72,7 +60,7 @@ If you want to use JSX, you need to explicitly import the UIX JSX Runtime:
 @Component
 export class ButtonComponent extends BaseComponent {
 
-    @standalone override async onDisplay() {
+    @display override async onDisplay() {
         await import("uix/jsx-runtime/jsx.ts");
         this.append(<div>Content</div>)
     }
@@ -90,7 +78,7 @@ import { UIX } from "uix";
 @Component
 export class ButtonComponent extends BaseComponent {
 
-    @standalone override async onDisplay() {
+    @display override async onDisplay() {
         // explict import in standalone mode
         const { UIX } = await import("uix");
         UIX.Theme.setMode("dark");
@@ -100,7 +88,6 @@ export class ButtonComponent extends BaseComponent {
 
 ```
 
-## Origin contexts in standalone mode
 
 ### Event handlers
 

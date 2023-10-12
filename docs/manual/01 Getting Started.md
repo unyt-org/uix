@@ -1,16 +1,16 @@
 # Getting Started with UIX
 
-[UIX](https://uix.unyt.org) is a full-stack web framework for developing reactive web apps with restorable and shared state.
-UIX apps run on a [deno](https://docs.deno.com/runtime/manual) backend and use modern web technologies.
-The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing reactivity and cross-device data exchange functionality.
+[UIX](https://uix.unyt.org) is a free open-source full-stack web framework for developing reactive web apps with restorable and shared state.
+UIX apps run on a [deno](https://docs.deno.com/runtime/manual) backend using state-of-the-art web technologies.
+The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing usefull functionality such as reactivity and cross-device data exchange.
 
-The core principles of UIX:
+**Our core principles**
  * Complete compatiblity with web standards
  * Compatible with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org supranet concepts
  * Code for backend and frontend is written as ES6 TypeScript modules
 
-Main features of UIX:
- * Reactivity
+**Main features**
+ * Full-stack Reactivity
  * Server side rendering with partial hydration
  * Hybrid backend/frontend routing
  * Cross-realm imports
@@ -18,20 +18,21 @@ Main features of UIX:
  * Reusable Components
  * SCSS Supports
  * Shared memory
+ * [And many more](https://uix.unyt.org)...
 
-UIX also makes the development and deployment process easy with:
+UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. This is why UIX shipes with integrated features such as:
  * Hot reloading
- * Integrated testing
+ * Testing library
  * Stage management
  * Version management
  * Automated deployment
 
-### Installing the UIX command line tool
+### CLI Installation
 
 #### Linux / MacOS
 
 ```bash
-curl -s https://dev.cdn.unyt.org/uix/install.sh | sh
+$ curl -s https://dev.cdn.unyt.org/uix/install.sh | sh
 ```
 If the `uix` command is not available afterwards, you might have to run `source ~/.bash_profile`.
 
@@ -39,36 +40,41 @@ If the `uix` command is not available afterwards, you might have to run `source 
 
 On MacOS, UIX can also be installed with homebrew:
 ```bash
-brew tap unyt-org/uix
-brew install uix
+$ brew tap unyt-org/uix
+$ brew install uix
 ```
 
-## Creating a new UIX Project
+## UIX Project Setup
 
-You can get started by cloning a simple UIX example project from https://github.com/unyt-org/uix-base-project:
+Get started by cloning the most simple UIX example project from https://github.com/unyt-org/uix-base-project:
 ```bash
-git clone git@github.com:unyt-org/uix-base-project.git
+$ git clone git@github.com:unyt-org/uix-base-project.git
 ```
 
 > [!NOTE]
-> We recommend using [Visual Studio Code](https://code.visualstudio.com/download) as an IDE.
-> In VS Code, you can also install the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) extension
+> We recommend using [Visual Studio Code](https://code.visualstudio.com/download) as preferred IDE.
+> In VS Code, you may want to install the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) extension
 > for UIX and DATEX language support.
 
 
 
-
 ## Running a UIX Project
+To run your UIX project make sure the [app.dx]() configuration file exists.
+Execute the `uix` command in the root directory of your application (where the `app.dx` is located) to initialize and run the project.
 
-
-
-To run the UIX project, run the following command in the project root directory (where the `app.dx` is located):
 ```bash
-deno run -Aq --importmap https://dev.cdn.unyt.org/importmap.json https://dev.cdn.unyt.org/uix/run.ts
+$ uix
 ```
-Alternatively, you can install the UIX command line tool.
 
+You may want to pass in following args to the UIX command line utility:
+* `--port {PORT}` / `-p {PORT}` - Specify the port on your local machine where the UIX should run
+* `--watch` / `-w` - Setup file watch
+* `--live` / `-l` - Enable hot reloading
 
+To run the UIX project without the UIX CLI installation, you may run the following command in the project root directory 
+```bash
+$ deno run -Aq --importmap https://dev.cdn.unyt.org/importmap.json https://dev.cdn.unyt.org/uix/run.ts
+```
 
 ## Architecture of a UIX Project
 

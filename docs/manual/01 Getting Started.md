@@ -15,7 +15,7 @@ The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) 
  * Hybrid backend/frontend routing
  * Cross-realm imports
  * JSX support
- * Reusable Components
+ * Reusable Web Components
  * SCSS Supports
  * Shared memory
  * [And many more](https://uix.unyt.org)...

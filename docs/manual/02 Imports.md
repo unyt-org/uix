@@ -1,9 +1,10 @@
 # Cross-Realm Imports
 
-Modules in the `frontend` directory of an UIX App can use exported values from modules in the `backend` directory, as if they are running on the same device and within the same process. This is accomplished via DATEX exchange between the frontend and backend endpoints.
+Modules in the `frontend` directory of a UIX app can use exported values from modules in the `backend` directory, as if they are running on the same device and within the same process. 
+This is accomplished with DATEX exchange between the frontend and backend endpoints.
 
 Modules from the common directory can be imported from both the backend and frontend.
-*The exports from common modules don't share a state between the backend and frontend endpoints, every module is initialized indvidually on each endpoint.*
+*The exports from common modules don't share a state between the backend and frontend endpoints, every module is initialized individually on each endpoint.*
 
 **Cross-Realm Import Example**:
 
@@ -30,7 +31,7 @@ console.log(await getData()); // [1,2,3]
 
 > [!WARNING]
 > Because network requests are asynchronous, imported functions always return a `Promise` that must be awaited.
-> You should keep in mind that all value updates are propagated asynchronously between endpoints.
+> For the same reason, all value updates are propagated asynchronously between endpoints.
 
 ## Security
 

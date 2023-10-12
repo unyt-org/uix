@@ -100,7 +100,7 @@ export default {
 
 ## Creating components
 
-[Components](./04%20Components.md) defined with functions or component classes can also be instanciated with JSX.
+[Components](./04%20Components.md) defined with functions or component classes can also be instantiated with JSX.
 In addition to the default DOM element attributes, all component options can also be set via JSX attributes:
 
 ```tsx

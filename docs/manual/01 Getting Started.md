@@ -44,21 +44,21 @@ $ brew tap unyt-org/uix
 $ brew install uix
 ```
 
-## UIX Project Setup
+## Initial Project Setup
 
 Get started by cloning the most simple UIX example project from https://github.com/unyt-org/uix-base-project:
 ```bash
 $ git clone git@github.com:unyt-org/uix-base-project.git
 ```
 
-> [!NOTE]
+> [!NOTE]
 > We recommend using [Visual Studio Code](https://code.visualstudio.com/download) as preferred IDE.
 > In VS Code, you may want to install the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) extension
 > for UIX and DATEX language support.
 
 
 
-## Running a UIX Project
+## Running your UIX App
 To run your UIX project make sure the [app.dx]() configuration file exists.
 Execute the `uix` command in the root directory of your application (where the `app.dx` is located) to initialize and run the project.
 
@@ -71,7 +71,7 @@ You may want to pass in following args to the UIX command line utility:
 * `--watch` / `-w` - Setup file watch
 * `--live` / `-l` - Enable hot reloading
 
-To run the UIX project without the UIX CLI installation, you may run the following command in the project root directory 
+To run your UIX project without the UIX CLI installation, you may run the following command in the project root directory to achieve similar results:
 ```bash
 $ deno run -Aq --importmap https://dev.cdn.unyt.org/importmap.json https://dev.cdn.unyt.org/uix/run.ts
 ```

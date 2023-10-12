@@ -6,7 +6,7 @@ The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) 
 
 **Our core principles**
  * Complete compatiblity with web standards
- * Compatible with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org supranet concepts
+ * Fully compatible with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org Supranet concepts
  * Code for backend and frontend is written as ES6 TypeScript modules
 
 **Main features**

@@ -92,5 +92,5 @@ With UIX, frontend and backend source code and other resources can be combined i
     └── deno.json               // Deno config file
 ```
 
-Per default all content in the `frontend` directory is only available to frontend endpoints (browser clients), while content in the `backend` directory is available to backend endpoints (Deno runtime). Thanks to Cross-Realm Imports, UIX allows import and usage of backend-modules inside the frontend code and vice versa.
+Per default all content in the `frontend` directory is only available to frontend endpoints (browser clients), while content in the `backend` directory is available to backend endpoints (Deno runtime). Thanks to [Cross-Realm Imports](./02%20Imports.md#cross-realm-imports), UIX allows import and usage of backend-modules inside the frontend code and vice versa.
 Files in the `common` directory are accessible from both the `frontend` and `backend`.

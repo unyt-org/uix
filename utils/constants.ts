@@ -16,7 +16,12 @@ export const IS_HEADLESS = client_type === "deno";
 // } catch {};
 
 // polyfills
-if (!IS_HEADLESS) await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
+if (!IS_HEADLESS) {
+    try {
+        await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
+    }
+    catch {}
+}
 
 // if (!IS_HEADLESS) {
 // 	(function attachShadowRoots(root) {

@@ -306,6 +306,11 @@ export namespace HTMLUtils {
             
         }
 
+        // value attribute
+        else if (attr == "value") {
+            (element as HTMLInputElement).value = formatAttributeValue(val,root_path)
+        }
+
         // normal attribute
         else element.setAttribute(attr, formatAttributeValue(val,root_path));
 

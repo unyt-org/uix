@@ -3,21 +3,22 @@
 [UIX](https://uix.unyt.org) is an open-source full-stack web framework for developing reactive web apps with restorable and shared state.
 UIX apps run on a [deno](https://docs.deno.com/runtime/manual) backend and use state-of-the-art web technologies.
 The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing usefull functionality such as reactivity and cross-device data exchange.
+In contrast to frameworks like React, UIX provides *direct wiring* to the DOM for reactivity and does not need a virtual DOM.
 
 **Our core principles**
- * Complete compatiblity with web standards
- * Fully compatible with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org Supranet concepts
- * Code for backend and frontend is written as ES6 TypeScript modules
+ * Complete compatibility with web standards
+ * Full compatibility with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org Supranet principles
+ * Both backend and frontend code is written as ES6 TypeScript modules
 
 **Main features**
  * Cross-network reactivity
  * Server side rendering with partial hydration
  * Hybrid backend/frontend routing
  * Cross-realm imports
+ * Shared memory
  * JSX support
  * Reusable Web Components
  * SCSS support
- * Shared memory
  * [And many more](https://uix.unyt.org)...
 
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 

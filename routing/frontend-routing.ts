@@ -9,6 +9,7 @@ import { KEEP_CONTENT } from "../html/entrypoint-providers.tsx";
 import { displayError } from "../html/errors.tsx";
 import { domUtils } from "../app/dom-context.ts";
 import { PartialHydration } from "../hydration/partial-hydration.ts";
+import { Context } from "./context.ts";
 
 /**
  * Generalized implementation for setting the route in the current tab URL
@@ -54,7 +55,10 @@ export namespace Routing {
 		if (frontend_entrypoint || backend_entrypoint) {
 			enableFrontendRouting();
 		}
-		const backend_available = backend_entrypoint ? await initEndpointContent(backend_entrypoint) : false;
+
+		const hydrationPtr = (document.querySelector("meta[name='uix-hydration-root']"))?.content
+
+		const backend_available = backend_entrypoint ? await initEndpointContent(backend_entrypoint, hydrationPtr) : false;
 		const frontend_available = (!backend_available &&  frontend_entrypoint) ? await initEndpointContent(frontend_entrypoint) : false;
 
 		// no content for path found after initial loading
@@ -63,14 +67,21 @@ export namespace Routing {
 		}
 	}
 
-	async function initEndpointContent(entrypoint:Entrypoint) {
-		const content = await getContentFromEntrypoint(entrypoint)
+	async function initEndpointContent(entrypoint:Entrypoint, hydrationPtr?: string) {
+		const content = await getContentFromEntrypoint(entrypoint, undefined, hydrationPtr)
 		if (content != null && content !== KEEP_CONTENT) await setContent(content, entrypoint)
 		return content != null
 	}
 
-	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL()) {
-		const { content } = await resolveEntrypointRoute({entrypoint, route});
+	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL(), hydrationPtr?: string) {
+		let context = undefined;
+		if (hydrationPtr) {
+			context = new Context()
+			if (route) context.path = route.routename
+			// @ts-ignore
+			context._hydrationPtr = hydrationPtr
+		}
+		const { content } = await resolveEntrypointRoute({entrypoint, route, context});
 		return content;
 	}
 

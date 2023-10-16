@@ -2,6 +2,7 @@ import type { Datex } from "datex-core-legacy"
 
 import { DX_PTR } from "datex-core-legacy/runtime/constants.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 
 export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
 
@@ -118,7 +119,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
  * the module context is available inside the wrapped function.
  */
 export function bindToDisplayContext<F extends (...args:any)=>any>(fn: F): F extends (...args:any)=>Promise<any> ? Promise<F> : F {
-	const error = new Error("Function bound with bindToDisplayContext cannot be called from a backend function");
+	const error = client_type == "browser" ? undefined : new Error("Function bound with bindToDisplayContext cannot be called from a backend function");
 	return JSTransferableFunction.functionIsAsync(fn) ? 
 		JSTransferableFunction.createAsync(fn, {errorOnOriginContext: error}) : 
 		JSTransferableFunction.create(fn, {errorOnOriginContext: error}) as any;

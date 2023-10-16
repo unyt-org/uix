@@ -13,6 +13,7 @@ import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
+import { Element } from "../uix-dom/dom/mod.ts";
 
 let stage:string|undefined = '?'
 
@@ -384,7 +385,7 @@ if (!domContext.Element.prototype.getOuterHTML) {
 
 
 
-export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:RenderMethod = RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en", livePointers?: string[]){
+export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:RenderMethod = RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en", livePointers?: string[], contentElement?: Element){
 	let files = '';
 	let metaScripts = ''
 
@@ -464,6 +465,12 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 		for (const file of static_js_files) {
 			if (file) files += indent(4) `<script type="module" src="${provider.resolveImport(file, compat_import_map).toString()}"></script>`
 		}
+	}
+
+	const hydrationRootPtr = contentElement && Datex.Pointer.getByValue(contentElement)
+
+	if (render_method == RenderMethod.HYDRATION && hydrationRootPtr) {
+		metaScripts += indent(4) `<meta name="uix-hydration-root" content="${hydrationRootPtr.id}"></meta>\n`
 	}
 
 	if (add_importmap) metaScripts += `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;

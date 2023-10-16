@@ -526,9 +526,6 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     declare [METADATA]:any
     declare [OPEN_GRAPH]?:OpenGraphInformation
 
-    protected SCROLL_TO_BOTTOM = false;
-    protected FORCE_SCROLL_TO_BOTTOM = false;
-    protected CONTENT_PADDING = true;
 
     /**
      * true if component is in standalone mode (UIX library not loaded)
@@ -539,7 +536,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
 
     protected is_skeleton = false // true if component not yet fully initialized, still displayed as skeleton and not associated with DATEX object
 
-    constructor(options?:Datex.DatexObjectInit<O>) {
+    constructor(options:Datex.DatexObjectInit<O>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
 
@@ -547,7 +544,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
         // pre-init options before other DATEX state is initialized 
         // (this should not happen when reconstructing, because options are undefined or have [INIT_PROPS])
-        else this.initOptions(options);
+        else if (options) this.initOptions(options);
 
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {

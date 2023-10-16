@@ -1,5 +1,6 @@
 import { Datex } from "datex-core-legacy/datex.ts";
 import type { Element, Node } from "../uix-dom/dom/mod.ts";
+import { UIXComponent } from "../components/UIXComponent.ts";
 
 /**
  * Returns a list of all nodes in a DOM tree that have live pointer binding
@@ -14,15 +15,21 @@ export function getLiveNodes(treeRoot: Element, includeEventListeners = true, _l
 
 	let isLive = false;
 
-	for (const val of (serialized.content instanceof Array ? serialized.content : [serialized.content]) ?? []) {
-		if (val instanceof Element) getLiveNodes(val, includeEventListeners, _list);
-		else {
-			const ptr = Datex.Pointer.pointerifyValue(val);
-			if (ptr instanceof Datex.Pointer) {
-				isLive = true;
+	// if (treeRoot instanceof UIXComponent) isLive = true;
+
+	// iterate children
+	if (!isLive) {
+		for (const val of (serialized.content instanceof Array ? serialized.content : [serialized.content]) ?? []) {
+			if (val instanceof Element) getLiveNodes(val, includeEventListeners, _list);
+			else {
+				const ptr = Datex.Pointer.pointerifyValue(val);
+				if (ptr instanceof Datex.Pointer) {
+					isLive = true;
+				}
 			}
 		}
 	}
+	
 	
 	if (!isLive) {
 		for (const [_attr, val] of Object.entries(serialized.attr ?? {})) {

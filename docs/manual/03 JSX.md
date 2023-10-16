@@ -1,11 +1,10 @@
 # JSX
 
-UIX supports JSX syntax for creating HTML/SVG elements and UIX components.
+UIX supports JSX syntax for creating HTML and SVG elements.
 
 ## Creating native DOM elements
 
 All native DOM elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>` ...) can be created with JSX. 
-
 
 ```tsx
 const section = 
@@ -53,7 +52,7 @@ export default
 
 #### Style
 
-The `style` attribute also accepts an object with style declarations. The style properties can be pointer values that 
+The `style` attribute accepts a string or an object with style declarations. The style properties can be pointer values that 
 get dynamically updated.
 
 ```tsx
@@ -65,7 +64,7 @@ export default <div style={{color:'blue', padding:'10px'}}></div>
 const borderWidth = $$(0);
 setInterval(()=>borderWidth.val++, 1000)
 
-export default <div id="sd" style={{borderStyle:'solid', borderWidth}}>content</div>
+export default <div style={{borderStyle:'solid', borderWidth}}>content</div>
 ```
 
 #### Paths
@@ -89,15 +88,23 @@ export default {
 }
 ```
 
+If you need paths that are relative to the current URL as displayed in the browser, you can use the special `href:route` attribute:
+
+```tsx
+// frontend/entrypoint.ts
+export default {
+    '/some/path' : <a href:route="./other-path"/>, // resolves to "/some/other-path"
+    '/some/other-path': "Hello there"
+}
+```
 
 ## Creating components
 
-Component defined with functions or Component classes can also be created with JSX.
-In addition to the default DOM element attributes, all Component options can also be set
-via JSX attributes:
+[Components](./04%20Components.md) defined with functions or component classes can also be instantiated with JSX.
+In addition to the default DOM element attributes, all component options can also be set via JSX attributes:
 
 ```tsx
-const comp = <UIX.Components.TextView style="color:green" text="text content"/>
+const comp = <MyComponent style="color:green" text="text content"/>
 ```
 
 

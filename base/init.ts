@@ -11,9 +11,10 @@ import { addStyleSheetLink } from "../utils/css-style-compat.ts";
 
 import { UIX } from "../uix.ts";
 
+import { initSession } from "../session/frontend.ts";
 
 if (client_type == "browser") {
-	await (await import("../session/frontend.ts")).initSession();
+	await initSession();
 }
 
 // enable DATEX CLI

@@ -1,5 +1,5 @@
 import { StorageMap } from "datex-core-legacy/types/storage_map.ts";
-import { Datex, f } from "datex-core-legacy/datex.ts";
+import { Datex, f, template } from "datex-core-legacy/datex.ts";
 import { BROADCAST, Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
@@ -37,12 +37,14 @@ const emptyMatch = Object.freeze({});
 Symbol.dispose ??= Symbol.for("Symbol.dispose")
 
 
+// @template("uix:Context")
 export class Context
 	<
 		SharedData extends Record<string, unknown> = Record<string, unknown>,
 		PrivateData extends Record<string, unknown> = Record<string, unknown>
 	> 
 {
+
 	request?: Request
 	requestData: RequestData = {
 		address: null
@@ -54,13 +56,12 @@ export class Context
 	searchParams!: URLSearchParams
 
 	language = "en";
-	endpoint: Datex.Endpoint = BROADCAST
+	endpoint: Datex.Endpoint = client_type == "browser" ? Datex.Runtime.endpoint : BROADCAST
 
 	get responseHeaders() {
 		if (!this._responseHeaders) this._responseHeaders = new Headers();
 		return this._responseHeaders
 	}
-
 
 	private _responseHeaders?: Headers
 

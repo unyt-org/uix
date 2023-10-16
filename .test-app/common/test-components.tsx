@@ -4,19 +4,20 @@ import { add, always, and, map, not, select } from "datex-core-legacy/functions.
 import { blankTemplate, style, template } from "uix/html/anonymous-components.ts";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
-import { inDisplayContext } from "../../utils/datex-over-http.ts";
+import { bindToDisplayContext } from "uix/utils/datex-over-http.ts";
 import { UIXComponent } from "uix/components/UIXComponent.ts";
 import { lazy, provideError } from "uix/html/entrypoint-providers.tsx";
-import { unsafeHTML } from "uix/uix_short.ts";
+import { unsafeHTML } from "uix/uix-short.ts";
 import { enableOverlayScrollbars } from "uix/utils/overlay-scrollbars.ts";
+import { FormComponent } from "../common/FormComponent.tsx";
 
 /**
  * Put examples for all components in the testComponents object.
  * Every component can be displayed under the paths:
  *   /[key]/frontend 		(Fully rendered on the frontend)
- *   /[key]/backend+static 	(Fully server side rendered)
- *   /[key]/backend+dynamic (Loaded from the backend via DATEX)
- *   /[key]/backend+hydrated
+ *   /[key]/static 	(Fully server side rendered)
+ *   /[key]/dynamic (Loaded from the backend via DATEX)
+ *   /[key]/hydrated
  * 
  * (e.g. http://localhost:4201/textInput/backend+static )
  */
@@ -36,7 +37,7 @@ const TemplateComp = template(<div style="color:red; font-size:2em"/>)
 // allow children
 const TemplateCompWithShadowRoot = template(
 	<div style="color:green; font-size:2em" shadow-root>
-		<input type="button" value="click me!" onclick={inDisplayContext(e => console.log("click",e.target))} onmousedown={e => console.log("mousedown",e.target)}/>
+		<input type="button" value="click me!" onclick={bindToDisplayContext(e => console.log("click",e.target))} onmousedown={e => console.log("mousedown",e.target)}/>
 		custom layout before
 		<slot/>
 		custom layout after
@@ -263,8 +264,8 @@ export const testComponents = {
 
 	templateAndComponent: lazy(() => 
 		<Container>
-			<TemplateWithOptions   x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></TemplateWithOptions>
-			<ComponentWithOptions x={a} map={exampleObject.$.map} image={<ExampleImage/> as HTMLImageElement}></ComponentWithOptions>
+			<TemplateWithOptions  x={a} map={exampleObject.$.map} image={<ExampleImage/>}></TemplateWithOptions>
+			<ComponentWithOptions x={a} map={exampleObject.$.map} image={<ExampleImage/>}></ComponentWithOptions>
 		</Container>
 	),
 
@@ -281,12 +282,12 @@ export const testComponents = {
 	 * -> When the button is created and rendered on the frontend, the onclick
 	 *    handler is called on the *frontend*
 	 * 
- 	 * By wrapping it with UIX.inDisplayContext(), the onmousedown handler is always called on
+ 	 * By wrapping it with UIX.bindToDisplayContext(), the onmousedown handler is always called on
 	 * the *frontend*, also in standalone mode
 	*/
 	contexts: 
 		<button 
-			onmousedown={inDisplayContext(() => console.log("mouse down"))} 
+			onmousedown={bindToDisplayContext(() => console.log("mouse down"))} 
 			onmouseup={Api.method1}
 			onclick={async e => {
 				console.log("clicked",e);
@@ -308,6 +309,10 @@ export const testComponents = {
 		`}
 		{unsafeHTML('<div>Unsafe HTML<script type="text/javascript">alert(1)</script></div>')}
 	</div>,
+
+	form: () => <FormComponent name="World42"/>,
+
+	doSomething: () => import("./modules/doSomething.tsx"),
 
 	list: <Container>
 		<ListView></ListView>

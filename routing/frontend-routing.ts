@@ -8,6 +8,7 @@ import { Entrypoint, html_content_or_generator } from "../html/entrypoints.ts";
 import { KEEP_CONTENT } from "../html/entrypoint-providers.tsx";
 import { displayError } from "../html/errors.tsx";
 import { domUtils } from "../app/dom-context.ts";
+import { PartialHydration } from "../hydration/partial-hydration.ts";
 
 /**
  * Generalized implementation for setting the route in the current tab URL
@@ -80,7 +81,13 @@ export namespace Routing {
 			current_content = content;
 			// TODO:
 			if (content == null) return;
-			if (content instanceof Array) {
+
+			// partial hydration, no need to set new dom nodes 
+			else if (content instanceof PartialHydration) {
+				return;
+			}
+
+			else if (content instanceof Array) {
 				document.body.innerHTML = "";
 				domUtils.append(document.body, content) // add to document
 			}

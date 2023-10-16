@@ -5,20 +5,12 @@
         "unyt_tests/": "https://dev.cdn.unyt.org/unyt_tests/"
     },
 	"compilerOptions": {
-		"module": "esnext",
-		"target": "es2022",
-		"noImplicitOverride":true,
-		"removeComments": true,
-		"preserveConstEnums": true,
-		"esModuleInterop": true,
-		"experimentalDecorators": true,
-		"emitDecoratorMetadata": true,
 		"jsx": "react-jsx",
 		"jsxImportSource": "uix",
 		"lib": ["deno.window"]
 	},
 	"tasks": {
-		"expose-uix": "deno run -Aq --reload https://dev.cdn.unyt.org/uix/server/standalone-file-server.ts -w --port 4242",
+		"expose-uix": "deno run --import-map importmap.dev.json -Aq --reload https://dev.cdn.unyt.org/uix/server/standalone-file-server.ts --import-map importmap.dev.json -w --port 4242",
 		"run-test-app": "cd .test-app && deno run -Aqr ../run.ts -blr --port 4201",
 		"generate-api-docs": "deno run -Aqr --import-map importmap.dev.json https://dev.cdn.unyt.org/doc-generator/run.ts --import-map importmap.dev.json --base ./ -m ./uix.ts --out ./docs/api"
 	}

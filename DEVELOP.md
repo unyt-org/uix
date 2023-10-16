@@ -7,6 +7,15 @@
  4. Expose the local UIX library on `localhost:4242` by running `deno task expose-uix`
  3. Start the test app on `localhost:4201` with `deno task run-test-app` from the root directory
 
+## Updating the RUN.md files (uix --help)
+
+When new command line arguments are added or updated, run 
+```bash
+deno run -A run.ts --generate-help
+```
+once to update the `RUN.md` file.
+This file is used for `uix --help` (See https://github.com/unyt-org/command-line-args for more information)
+
 ## Using the local development UIX library in other projects
 
 You can test your local UIX library in UIX apps on the same host:

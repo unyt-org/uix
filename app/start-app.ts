@@ -46,7 +46,10 @@ export async function startApp(options:appOptions = {}, original_base_url?:strin
 	}
 
 	// also override endpoint default
-	if (backend_with_default_export) Datex.Runtime.endpoint_entrypoint = backend_with_default_export.content_provider;
+	if (backend_with_default_export) {
+		Datex.Runtime.endpoint_entrypoint = backend_with_default_export.entrypointProxy;
+		backend_with_default_export.content_provider[Datex.DX_SOURCE] = Datex.Runtime.endpoint.toString(); // use @@local::#entrypoint as dx source
+	}
 
 
 	let server:Server|undefined

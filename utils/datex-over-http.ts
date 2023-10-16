@@ -1,7 +1,7 @@
 import type { Datex } from "datex-core-legacy"
 
 import { DX_PTR } from "datex-core-legacy/runtime/constants.ts";
-import { STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
+import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 
 export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
 
@@ -117,16 +117,9 @@ export function getValueInitializer(value:any, forceDatex = false): string {
  * This is the counterpart to UIX.bindToOrigin, which always ensures that
  * the module context is available inside the wrapped function.
  */
-export function bindToDisplayContext<F extends (...args:any)=>any>(fn: F, externalScopeVariables?:Record<string, unknown>): F {
-	// @ts-ignore
-	fn[STANDALONE] = true;
-	// @ts-ignore
-	if (externalScopeVariables) fn[EXTERNAL_SCOPE_VARIABLES] = externalScopeVariables;
-	return fn;
+export function bindToDisplayContext<F extends (...args:any)=>any>(fn: F): F extends (...args:any)=>Promise<any> ? Promise<F> : F {
+	const error = new Error("Function bound with bindToDisplayContext cannot be called from a backend function");
+	return JSTransferableFunction.functionIsAsync(fn) ? 
+		JSTransferableFunction.createAsync(fn, {errorOnOriginContext: error}) : 
+		JSTransferableFunction.create(fn, {errorOnOriginContext: error}) as any;
 }
-
-/**
- * @deprecated use bindToDisplayContext
- */
-export const inDisplayContext = bindToDisplayContext;
-export type inDisplayContext = typeof bindToDisplayContext

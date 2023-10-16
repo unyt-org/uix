@@ -260,7 +260,9 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	 */
 	async getTextContent() {
 		if (this.is_web) {
-			return (await fetch(this)).text()
+			const res = await fetch(this);
+			if (res.ok) return res.text()
+			else throw res.text();
 		}
 		else {
 			return Deno.readTextFile(this);

@@ -12,7 +12,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	if (params.reload) {
 		const deno_lock_path = getExistingFile(root_path, './deno.lock');
 		if (deno_lock_path) {
-			console.log("removing " + new URL(deno_lock_path).pathname);
+			// console.log("removing " + new URL(deno_lock_path).pathname);
 			await Deno.remove(deno_lock_path)
 		}
 	}

@@ -7,9 +7,8 @@ import { Theme } from "./theme.ts";
 import { Datex } from "datex-core-legacy";
 
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { addStyleSheetLink } from "../utils/css_style_compat.ts";
+import { addStyleSheetLink } from "../utils/css-style-compat.ts";
 
-import "../hydration/dom-pointer-source.ts"
 import { UIX } from "../uix.ts";
 
 

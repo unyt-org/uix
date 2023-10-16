@@ -144,7 +144,7 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 	}
 
 	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: returnValue})
-	if (hasError) resolved.render_method = RenderMethod.STANDALONE; // override: render errors as static
+	if (hasError) resolved.render_method = RenderMethod.BACKEND; // override: render errors as static
 
 	return resolved;
 }
@@ -171,18 +171,23 @@ function resolveModule(entrypointData: entrypointData<{default?:Entrypoint}>): P
 }
 
 function generateURLParamsObject(matches: URLPatternResult) {
-	return new Proxy({} as Record<string,string>, {
-		get(target, identifier) {
-			if (typeof identifier=="symbol") {
-				return (target as any)[identifier];
-			}
-			if (!matches) throw new Error("Missing URL parameter ':" + identifier + "'");
-			for (const group of Object.values(matches)) {
-				if (group.groups?.[identifier] != undefined) return group.groups[identifier];
-			}
-			throw new Error("Missing URL parameter ':" + identifier + "'");
-		}
-	})
+	const params:Record<string, string> = {};
+	const groups = {
+		...matches.hash.groups??{},
+		...matches.hostname.groups??{},
+		...matches.password.groups??{},
+		...matches.pathname.groups??{},
+		...matches.port.groups??{},
+		...matches.protocol.groups??{},
+		...matches.search.groups??{},
+		...matches.username.groups??{},
+	}
+	for (const [key, val] of Object.entries(groups)) {
+		// ignore number keys
+		if (!isNaN(Number(key))) continue;
+		params[key] = val as string;
+	}
+	return params;
 }
 
 async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>): Promise<resolvedEntrypointData|undefined> {

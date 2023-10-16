@@ -10,7 +10,7 @@ import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, update
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open-graph.ts";
 import { bindContentProperties } from "../standalone/bound_content_properties.ts";
 import { DX_IGNORE, INIT_PROPS } from "datex-core-legacy/runtime/constants.ts"
-import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css_style_compat.ts";
+import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css-style-compat.ts";
 import { indent } from "datex-core-legacy/utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize-js.ts";
 import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex-over-http.ts"
@@ -30,13 +30,12 @@ export type standaloneProperties = Record<string, (standaloneContentPropertyData
 // deno-lint-ignore no-namespace
 export namespace UIXComponent {
     export interface Options {
-        class?: string,
         title?: string
     }
 }
 
-@template("uix:uixcomponent") 
-export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
+@template("uix:component") 
+export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -517,9 +516,9 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     /************************************ END STATIC ***************************************/
 
     // options
-    @property declare options:Datex.JSValueWith$<O & UIXComponent.Options>; // uses element.DEFAULT_OPTIONS as default options (also for all child elements)
+    @property declare options:Datex.ObjectRef<O>; // uses element.DEFAULT_OPTIONS as default options (also for all child elements)
 
-    declare public props: Datex.DatexObjectInit<O & UIXComponent.Options> & {children?:ChildElement|ChildElement[]}
+    declare public props: Datex.DatexObjectInit<O> & {children?:ChildElement|ChildElement[]}
 
     declare $:Datex.Proxy$<this> // reference to value (might generate pointer property, if no underlying pointer reference)
     declare $$:Datex.PropertyProxy$<this> // always returns a pointer property reference
@@ -540,7 +539,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
     protected is_skeleton = false // true if component not yet fully initialized, still displayed as skeleton and not associated with DATEX object
 
-    constructor(options?:Datex.DatexObjectInit<O & UIXComponent.Options>) {
+    constructor(options?:Datex.DatexObjectInit<O>) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
 
@@ -557,7 +556,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
                 return;
             }
             // ignore if currently hydrating static element
-            if (this.hasAttribute("data-static")) {
+            if (this.hasAttribute("uix-static")) {
                 this.is_skeleton = true;
                 logger.debug("hydrating component " + (<typeof UIXComponent>this.constructor)[Datex.DX_TYPE]);
             }
@@ -657,7 +656,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     }
 
     // default constructor
-    @constructor async construct(options?:Datex.DatexObjectInit<O & UIXComponent.Options>): Promise<void> {
+    @constructor async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
         // options already handled in constructor
 
         // handle default component options (class, ...)
@@ -722,7 +721,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         }
     }
 
-    private initOptions(options?: Datex.DatexObjectInit<O & UIXComponent.Options>){
+    private initOptions(options?: Datex.DatexObjectInit<O>){
         if (this.options) {
             console.log("already has options");
             return;
@@ -731,8 +730,8 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         const clone_option_keys = (<any>this.constructor).CLONE_OPTION_KEYS;
 
         // get options from html attributes
-        if (!options) options = <O & UIXComponent.Options>{}; 
-        options = <Datex.DatexObjectInit<O & UIXComponent.Options>> $$(options);           
+        if (!options) options = <O>{}; 
+        options = <Datex.DatexObjectInit<O>> $$(options);           
         for (let i=0;i < this.attributes.length; i++) {
             const name = this.attributes[i].name;
             // don't override provided options object
@@ -825,7 +824,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     public getStandaloneInit() {
         let js_code = '';
  
-        js_code += `const self = querySelector("[data-ptr='${this.getAttribute("data-ptr")}']");\n`
+        js_code += `const self = querySelector("[uix-ptr='${this.getAttribute("uix-ptr")}']");\n`
         js_code += `bindPrototype(self, globalThis.UIX_Standalone.${this.constructor.name});\n`
 
         const scope = this.constructor.prototype;
@@ -912,7 +911,7 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
         if (!this.is_skeleton) return;
 
         this.is_skeleton = false;
-        this.removeAttribute("data-static");
+        this.removeAttribute("uix-static");
 
         // continue component lifecycle
         const type = Datex.Type.ofValue(this);
@@ -1089,11 +1088,6 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
     override remove() {
         logger.debug("remove element ?", this.id || this.constructor.name);
         super.remove();
-    }
-
-    /** replace this element in parent **/
-    public override replaceWith(element:HTMLElement) {
-        return this.parentElement?.replaceChild(element, this);
     }
 
     public observeOption(key:keyof O & UIXComponent.Options, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
@@ -1337,15 +1331,6 @@ export abstract class UIXComponent<O = BaseComponent.Options, ChildElement = JSX
 
 }
 
-// TODO: remove depcrecated, use UIXComponent
-export const BaseComponent = UIXComponent
-export type BaseComponent = UIXComponent;
-export namespace BaseComponent {
-    export interface Options {
-        class?: string,
-        title?: string
-    }
-}
 
 // get object-like keys that need to be cloned from the prototype
 export function getCloneKeys(object:any):Set<string> {

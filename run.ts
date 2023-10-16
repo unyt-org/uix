@@ -9,7 +9,7 @@ import type {Datex as DatexType} from "datex-core-legacy";
 
 import { getAppOptions } from "./app/config-files.ts";
 import { getExistingFile } from "./utils/file-utils.ts";
-import { command_line_options, login, root_path, stage } from "./app/args.ts";
+import { clear, command_line_options, login, root_path, stage } from "./app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./app/options.ts";
 import { runLocal } from "./runners/run-local.ts";
 import { runRemote } from "./runners/run-remote.ts";
@@ -17,9 +17,23 @@ import { GitDeployPlugin } from "./plugins/git-deploy.ts";
 import { triggerLogin } from "./utils/login.ts";
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
 import { createProxyImports } from "./app/module-mapping.ts";
+import { ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
+import { logger } from "./utils/global-values.ts";
 
 // login flow
 if (login) await triggerLogin();
+
+
+if (clear) {
+	try {
+		await Deno.remove(ptr_cache_path, {recursive :true})
+		await Deno.mkdir(ptr_cache_path, {recursive: true})
+		logger.warn("Cleared eternal states on backend")
+	}
+	catch (e) {
+		console.error(e)
+	}
+}
 
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR

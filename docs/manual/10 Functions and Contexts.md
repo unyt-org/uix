@@ -197,7 +197,7 @@ declarations to restore the original context.
 Nevertheless, there are some constraints you should keep in mind:
  1) Variables that are accessed with `use()` are readonly - they cannot be reassigned. The values are immutable per default. This restriction does not apply to pointer values. If you need mutable values, use pointers.
  2) All values accessed with `use()` must be DATEX-compatible
- 3) When content is rendered on the backend with `renderStandalone`, `use()` declarations are limited to functions
+ 3) When content is rendered on the backend with `renderBackend`, `use()` declarations are limited to functions
 
 `use` declarations must always be added at the beginninf of a function body.
 Multiple `use` statements in one function are not allowed.

@@ -2,7 +2,7 @@ import { Datex } from "datex-core-legacy";
 import { OpenGraphInformation } from "../base/open-graph.ts";
 import { indent } from "datex-core-legacy/utils/indent.ts";
 import type { HTMLProvider } from "./html-provider.ts";
-import { COMPONENT_CONTEXT, STANDALONE, EXTERNAL_SCOPE_VARIABLES } from "../standalone/bound_content_properties.ts";
+import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_properties.ts";
 import { convertToWebPath } from "../app/utils.ts";
 import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
@@ -13,7 +13,6 @@ import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
-import { getLiveNodes } from "uix/hydration/partial.ts";
 
 let stage:string|undefined = '?'
 
@@ -137,7 +136,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
 
-	const dataPtr = el.attributes.getNamedItem("data-ptr")?.value;
+	const dataPtr = el.attributes.getNamedItem("uix-ptr")?.value;
 
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];
@@ -150,7 +149,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 		}
 		attrs.push(`${attrib.name}="${val}"`) // TODO escape
 	}
-	attrs.push("data-static");
+	attrs.push("uix-static");
 
 
 	// inject event listeners
@@ -167,8 +166,9 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 		} while ((parent = parent?.parentElement));
 
 
- 		const contextPtr = context?.attributes.getNamedItem("data-ptr")?.value;
-		let script = `  const el = querySelector('[data-ptr="${dataPtr}"]');\n  const ctx = querySelector('[data-ptr="${contextPtr}"]');\n`
+ 		const contextPtr = context?.attributes.getNamedItem("uix-ptr")?.value;
+		let script = `  const el = querySelector('[uix-ptr="${dataPtr}"]');\n`
+		script += `el[EVENT_LISTENERS] ??= new Map();\n`
 
 		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS]) {
 			
@@ -184,12 +184,15 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 				// normal event listener
 				else {
 					hasScriptContent = true;
-
+					const eventName = String(event);
 					const fnSource = getFunctionSource(listener, isStandaloneContext)
 					script += `{\n`
 					script += fnSource.companionSource;
-					script += `  el.addEventListener("${String(event)}", ${fnSource.source});`
-					script += `\n}\n`
+					script += `const __f__ = ${fnSource.source};\n`;
+					script += `if (!el[EVENT_LISTENERS].has("${eventName}")) el[EVENT_LISTENERS].set("${eventName}", new Set());\n`;
+					script += `el[EVENT_LISTENERS].get("${eventName}").add(__f__);\n`;
+					script += `el.addEventListener("${eventName}", __f__);\n`
+					script += `}\n`
 				}
 
 			}
@@ -216,14 +219,13 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 
 	let companionSource = ''
 
-	const dependencies = (fn as any)[EXTERNAL_SCOPE_VARIABLES] ?? {};
-	if (listenerFn instanceof JSTransferableFunction) Object.assign(dependencies, listenerFn.deps)
+	const dependencies = listenerFn instanceof JSTransferableFunction ? listenerFn.deps : {};
 
 	let hasContext = false;
 	const ctxId = Datex.Pointer.getByValue(dependencies['this'])?.id;
-	if (ctxId) {
+	if (ctxId && dependencies['this'] instanceof domContext.Element) {
 		hasContext = true;
-		companionSource += `const ctx = querySelector('[data-ptr="${ctxId}"]');\n`
+		companionSource += `const ctx = querySelector('[uix-ptr="${ctxId}"]');\n`
 	}
 
 	// add deps if transferable js fn
@@ -237,9 +239,19 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 			companionSource += fnSource.companionSource;
 			companionSource += `const ${varName} = ${fnSource.source};\n`
 		}
+		// handle dom elements
+		else if (value instanceof domContext.Element) {
+			const ptrId = Datex.Pointer.getByValue(value)?.id;
+			if (ptrId) {
+				companionSource += `const ${varName} = querySelector('[uix-ptr="${ptrId}"]');\n`
+			}
+			else {
+				throw new Error("Cannot bind variable '" + varName + "' to a display context with use() - DOM element has no pointer.");
+			}
+		}
 		// cannot yet handle other values
 		else {
-			throw new Error("Cannot bind variable '" + varName + "' to a standalone display context with use() - this type not supported.");
+			throw new Error("Cannot bind variable '" + varName + "' to a display context with use() - this type not supported.");
 		}
 	}
 	
@@ -293,20 +305,24 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 	const html = await _getOuterHTML(el, opts);
 
 	let script = `<script type="module">\n`
-	// global imports and definitions
-	script += `import {querySelector, querySelectorAll} from "uix/standalone/shadow_dom_selector.ts";\n`
-	script += `import {bindPrototype} from "uix/standalone/get_prototype_properties.ts";\n`
-	script += `import {bindContentProperties} from "uix/standalone/bound_content_properties.ts";\n`
-	script += `globalThis.querySelector = querySelector;\nglobalThis.querySelectorAll = querySelectorAll;\n`
-	script += `globalThis.bindPrototype = bindPrototype;\n`
-	script += `globalThis.bindContentProperties = bindContentProperties;\n`
 
-	// inject declarations
-	script += `globalThis.UIX_Standalone = {};\n`
-	for (const [name, val] of Object.entries(scriptData.declare)) {
-		script += `globalThis.UIX_Standalone.${name} = ${val};\n`
+	if (opts?.injectStandaloneJS) {
+		// global imports and definitions
+		script += `import {querySelector, querySelectorAll} from "uix/uix-dom/dom/shadow_dom_selector.ts";\n`
+		script += `import {bindPrototype} from "uix/standalone/get_prototype_properties.ts";\n`
+		script += `import {bindContentProperties} from "uix/standalone/bound_content_properties.ts";\n`
+		script += `globalThis.querySelector = querySelector;\nglobalThis.querySelectorAll = querySelectorAll;\n`
+		script += `globalThis.bindPrototype = bindPrototype;\n`
+		script += `globalThis.bindContentProperties = bindContentProperties;\n`
+		script += `const EVENT_LISTENERS = Symbol.for("DOMUtils.EVENT_LISTENERS");\n`
+
+		// inject declarations
+		script += `globalThis.UIX_Standalone = {};\n`
+		for (const [name, val] of Object.entries(scriptData.declare)) {
+			script += `globalThis.UIX_Standalone.${name} = ${val};\n`
+		}
 	}
-
+	
 	// initialization scripts
 	let init_script = "";
 	for (const val of scriptData.init) {

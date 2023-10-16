@@ -1,5 +1,5 @@
-import { Path } from "../utils/path.ts";
-import { IS_HEADLESS } from "./constants.ts";
+import { UIX } from "../uix.ts";
+import { Path } from "./path.ts";
 
 // fake CSSStyleDeclaration element with proxy to update css property names
 export class PlaceholderCSSStyleDeclaration extends Array /*implements CSSStyleDeclaration*/ {
@@ -158,7 +158,7 @@ export function addStyleSheetLink(element:HTMLElement|ShadowRoot, url:string|URL
         element.appendChild(link);
 
         // onload not working with JSDom
-        if (IS_HEADLESS) {
+        if (UIX.isHeadless) {
 
             // handle non existing css file -> try to fetch corresponding scss file
             const path = new Path(url);

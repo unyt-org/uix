@@ -10,3 +10,17 @@ export const {domUtils, bindObserver} = enableDatexBindings(domContext)
 if (client_type !== "browser") {
 	Object.assign(globalThis, domContext);
 }
+
+// declare domContext global
+declare global {
+	const document: typeof domContext.document
+
+	const HTMLElement: typeof domContext.HTMLElement
+	type HTMLElement = typeof domContext.HTMLElement
+
+	const HTMLDivElement: typeof domContext.HTMLDivElement
+	type HTMLDivElement = typeof domContext.HTMLDivElement
+
+	const HTMLImageElement: typeof domContext.HTMLImageElement
+	type HTMLImageElement = typeof domContext.HTMLImageElement
+}

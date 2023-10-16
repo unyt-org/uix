@@ -33,12 +33,12 @@ export function renderPreview<T extends html_content_or_generator>(content:T): R
  * Serve server-side rendererd HTML to the frontend, enable limited JS interactivity
  * Provides no DATEX runtime functionality on the frontend.
  * \@display properties and functions and :display attributes are supported, but only with JSON compatible values.
- * but content is not loaded over DATEX
+ * Content is not loaded over DATEX
  * @param content HTML element or text content
  */
-export function renderStandalone<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STANDALONE, T> {
-	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderStandalone)")
-	return new RenderPreset(RenderMethod.STANDALONE, content)
+export function renderBackend<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.BACKEND, T> {
+	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderBackend)")
+	return new RenderPreset(RenderMethod.BACKEND, content)
 }
 
 /**
@@ -67,7 +67,7 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
 
 export enum RenderMethod {
 	HYDRATION, // Server side prerendering, content hydration over DATEX
-	STANDALONE, // Serve server-side rendererd HTML to the frontend, enable limited JS interactivity
+	BACKEND, // Serve server-side rendererd HTML to the frontend, runtime + reactivity on the backend, display context native js functionality
 	STATIC, // Just serve static HTML pages to the frontend, no frontend JS at all
 	DYNAMIC, // No server side prerendering, loading all content over DATEX
 	RAW_CONTENT, // Serve raw file content
@@ -77,7 +77,7 @@ export enum RenderMethod {
 export class RenderPreset<R extends RenderMethod = RenderMethod,T extends html_content_or_generator<any,any> = html_content_or_generator> {
 	constructor(public readonly __render_method:R, public readonly __content:T) {
 		// don't transmit from backend to frontend via DATEX if static
-		if (this.__render_method == RenderMethod.STANDALONE || this.__render_method == RenderMethod.STATIC) {
+		if (this.__render_method == RenderMethod.BACKEND || this.__render_method == RenderMethod.STATIC) {
 			// @ts-ignore
 			this[DX_IGNORE] = true;
 		}

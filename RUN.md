@@ -1,6 +1,13 @@
 # Run Options
 This file contains an auto-generated list of the available command line options.
 
+## DATEX Core
+DATEX Runtime for JavaScript/TypeScript.
+Visit https://unyt.org/datex for more information
+
+ * `-v, --verbose`            Show logs for all levels, including debug logs
+ * `-c, --cache-path`         Overrides the default path for datex cache files (.datex-cache)
+
 ## UIX
 Fullstack Web Framework with DATEX Integration.
 Visit https://unyt.org/uix for more information
@@ -13,19 +20,14 @@ Visit https://unyt.org/uix for more information
  * `--stage`                  Current deployment stage (default: dev)
  * `--env`                    Exposed environment variables (for remote deployment)
  * `--login`                  Show login dialog
+ * `--clear`                  Clear all eternal states on the backend
+ * `--version`                Get the version of your UIX installation
  * `--import-map`             Import map path
  * `-r, --reload`             Force reload deno caches
  * `--enable-tls`             Run the web server with TLS
  * `--inspect`                Enable debugging for the deno process
  * `--unstable`               Enable unstable deno features
  * `-d, --detach`             Keep the app running in background
-
-## DATEX Core
-DATEX Runtime for JavaScript/TypeScript.
-Visit https://unyt.org/datex for more information
-
- * `-v, --verbose`            Show logs for all levels, including debug logs
- * `-c, --cache-path`         Overrides the default path for datex cache files (.datex-cache)
 
 ## General Options
 

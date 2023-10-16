@@ -1,3 +1,3 @@
-import { HelloComponent } from "../HelloComponent.tsx";
+import { FormComponent } from "../FormComponent.tsx";
 
-export default <HelloComponent name="World42"/>;
+export default <FormComponent name="World42"/>;

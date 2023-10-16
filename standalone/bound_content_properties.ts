@@ -2,8 +2,6 @@
 export const COMPONENT_CONTEXT: unique symbol = globalThis.uix_COMPONENT_CONTEXT ??= Symbol("COMPONENT_CONTEXT");
 // @ts-ignore sfgafari workaround
 export const STANDALONE: unique symbol = globalThis.uix_STANDALONE ??= Symbol("STANDALONE");
-// @ts-ignore sfgafari workaround
-export const EXTERNAL_SCOPE_VARIABLES: unique symbol = Symbol("STANDALONE_CONTEXT");
 
 // @ts-ignore TODO: reenable
 const PROPS_MAP = globalThis.uix_PROPS_MAP ??= Symbol("PROPS_MAP");

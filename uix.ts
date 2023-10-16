@@ -29,7 +29,12 @@ export namespace UIX {
 }
 
 // polyfills
-if (!UIX.isHeadless) await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
+if (!UIX.isHeadless) {
+    try {
+        await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
+    }
+    catch {}
+}
 
 // create cache dir if not exists
 if (UIX.isHeadless && !UIX.cacheDir.fs_exists) Deno.mkdirSync(_cacheDir, {recursive:true})

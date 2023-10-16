@@ -11,7 +11,7 @@ import { logger } from "../utils/global-values.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
 import { HTMLProvider } from "../html/html-provider.ts";
 
-import { getGlobalStyleSheetLinks } from "../utils/css_style_compat.ts";
+import { getGlobalStyleSheetLinks } from "../utils/css-style-compat.ts";
 import { provideValue } from "../html/entrypoint-providers.tsx";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
@@ -607,13 +607,13 @@ ${"import"} {Datex, datex, $$} from "datex-core-legacy";
 ${"import"} { ServiceWorker } from "uix/sw/sw-installer.ts";
 
 const logger = new Datex.Logger("UIX Dev");
-export const reload = $$(Datex.Function.createFromJSFunction(async function(){
+export const reload = async function(){
 	logger.info("Reload triggered");
 	await ServiceWorker.clearCache();
 	window.location.reload();
-}));
+};
 try {
-	await datex \`${Datex.Runtime.endpoint}::#public.provider.addReloadHandler(\${reload})\`;
+	await datex (\`#public.provider.addReloadHandler(?)\`, [reload], f('${Datex.Runtime.endpoint}'));
 }
 catch {
 	logger.warn("Could not enable live page reloads");
@@ -761,7 +761,7 @@ runner.enableHotReloading();
 
 				// get live pointer ids for sse observer
 				let liveNodePointers = null;
-				if (contentElement && render_method === RenderMethod.STANDALONE) {
+				if (contentElement && render_method === RenderMethod.BACKEND) {
 					liveNodePointers = getLiveNodes(contentElement, false).map(e => Datex.Pointer.getByValue(e)?.id).filter(e=>!!e);
 				}
 

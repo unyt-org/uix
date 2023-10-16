@@ -21,23 +21,19 @@ export const env = command_line_options.option("env", {type:"string", multiple: 
 
 export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});
 
-export const version = command_line_options.option("version", {type:"boolean", description: "Get the version of your UIX installation"});
+// clear
+export const clear = command_line_options.option("clear", {type:"boolean", description: "Clear all eternal states on the backend"});
+
+// print uix version
+const version = command_line_options.option("version", {type:"boolean", description: "Get the version of your UIX installation"});
 
 if (version) {
 	console.log(`UIX ${UIX.version == "beta" ? "beta" : "v." + UIX.version} (${new URL("../", import.meta.url)})`);
 	Deno.exit(0);
 }
 
+
 if (!config_path && !CommandLineOptions.collecting) {
 	throw "Could not find an app.dx or app.json config file in " + _path.pathname
 }
 export const root_path = (config_path ? new Path(config_path).parent_dir : null) as Path.File;
-
-// const login = command_line_options.command("login", {
-
-// });
-
-// if (login) {
-// 	console.log("LOGIN")
-// 	Deno.exit(0);
-// }

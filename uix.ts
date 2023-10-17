@@ -1,14 +1,13 @@
 // deno-lint-ignore-file no-namespace
 // Global constants
-import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { Path } from "./utils/path.ts";
-import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
+import { Path } from "./src/utils/path.ts";
+import { Datex } from "datex-core-legacy";
 
 
 /**
  * get UIX cache path
  */
-const _cacheDir = new Path<Path.Protocol.File, true>('./uix/', cache_path);
+const _cacheDir = new Path<Path.Protocol.File, true>('./uix/', Datex.cache_path);
 
 /**
  * get version from ./version file
@@ -23,18 +22,18 @@ catch {/*ignore*/}
 export namespace UIX {
 	
 	export const version = _version
-	export const isHeadless = client_type === "deno"
+	export const isHeadless = Datex.client_type === "deno"
 	export const cacheDir = _cacheDir;
 
 }
 
-// polyfills
-if (!UIX.isHeadless) {
-    try {
-        await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
-    }
-    catch {}
-}
+// polyfills TODO: still required (saFarI?)
+// if (!UIX.isHeadless) {
+//     try {
+//         await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
+//     }
+//     catch {}
+// }
 
 // create cache dir if not exists
 if (UIX.isHeadless && !UIX.cacheDir.fs_exists) Deno.mkdirSync(_cacheDir, {recursive:true})

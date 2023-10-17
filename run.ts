@@ -7,18 +7,18 @@ import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppC
 
 import type {Datex as DatexType} from "datex-core-legacy";
 
-import { getAppOptions } from "./app/config-files.ts";
-import { getExistingFile } from "./utils/file-utils.ts";
-import { clear, command_line_options, login, root_path, stage } from "./app/args.ts";
-import { normalizeAppOptions, normalizedAppOptions } from "./app/options.ts";
-import { runLocal } from "./runners/run-local.ts";
-import { runRemote } from "./runners/run-remote.ts";
-import { GitDeployPlugin } from "./plugins/git-deploy.ts";
-import { triggerLogin } from "./utils/login.ts";
+import { getAppOptions } from "./src/app/config-files.ts";
+import { getExistingFile } from "./src/utils/file-utils.ts";
+import { clear, command_line_options, login, root_path, stage } from "./src/app/args.ts";
+import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
+import { runLocal } from "./src/runners/run-local.ts";
+import { runRemote } from "./src/runners/run-remote.ts";
+import { GitDeployPlugin } from "./src/plugins/git-deploy.ts";
+import { triggerLogin } from "./src/utils/login.ts";
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
-import { createProxyImports } from "./app/module-mapping.ts";
+import { createProxyImports } from "./src/app/module-mapping.ts";
 import { ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
-import { logger } from "./utils/global-values.ts";
+import { logger } from "./src/utils/global-values.ts";
 
 // login flow
 if (login) await triggerLogin();

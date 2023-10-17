@@ -1,4 +1,4 @@
-import { Datex } from "datex-core-legacy/datex.ts";
+import { Datex } from "datex-core-legacy";
 
 console.log("lazy loaded module")
 

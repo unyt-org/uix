@@ -1,0 +1,150 @@
+name: ci
+
+on:
+  push:
+    paths:
+      - 'Cargo.toml'
+      - 'html-parser/core/**'
+      - 'html-parser/plugin/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches-ignore: [master]
+    paths:
+      - 'Cargo.toml'
+      - 'html-parser/core/**'
+      - 'html-parser/plugin/**'
+      - '.github/workflows/**'
+
+jobs:
+  build:
+    name: ${{ matrix.kind }} ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        os: [macOS-latest, windows-latest, ubuntu-latest]
+
+    env:
+      GH_ACTIONS: true
+      RUST_BACKTRACE: full
+      DENO_BUILD_MODE: release
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v1
+
+      - name: Install rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: '1.60.0'
+
+      - name: Log versions
+        run: |
+          rustc --version
+          cargo --version
+
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Remove Some Cache
+        if: matrix.os == 'windows-latest'
+        run: |
+          rm target/release/gn_root -Recurse -ErrorAction Ignore
+          rm target/debug/gn_root -Recurse -ErrorAction Ignore
+
+      - name: Build
+        env:
+          RUST_BACKTRACE: 1
+        run: cargo clean && cargo build --release
+
+      - name: Build ARM64 Linux
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          RUST_BACKTRACE: 1
+        shell: bash
+        run: |
+          # Keep the Linux x86_64 build artifact around since
+          # we'll be clearing it to build the ARM64 artifact
+          cp target/release/libplugin.so .
+
+          target=aarch64-unknown-linux-gnu
+          arm64_cargo_config=$(cat <<CONFIG
+          [build]
+          target = "$target"
+          rustflags = ["-C", "linker=clang", "-C", "link-arg=--target=$target", "-C", "link-arg=-fuse-ld=lld"]
+          CONFIG
+          )
+
+          install -D <(printf %s "$arm64_cargo_config") .cargo/config.toml
+          rustup target add "$target"
+
+          # Add ARM64 Ubuntu repos
+          sed -E '/^deb/!d; s|.+/|deb [arch=arm64] http://ports.ubuntu.com/|' /etc/apt/sources.list | sudo tee /etc/apt/sources.list.d/sources-arm64.list
+          sudo dpkg --add-architecture arm64
+          sudo bash -c 'apt update; true'
+
+          # Install ARM64 deps
+          ubuntu_version=$(grep VERSION_ID /etc/os-release | tr -dc '[:digit:].')
+          gcc_lib=
+
+          case $ubuntu_version in
+            20.04 ) gcc_lib=libgcc-9-dev ;;
+            22.04 ) gcc_lib=libgcc-11-dev ;;
+            * )
+              echo "Unsupported Ubuntu version" >&2
+              exit 1
+              ;;
+          esac
+
+          sudo apt install libgcc-s1:arm64 libc6:arm64 libc6-dev:arm64 "$gcc_lib:arm64" -y
+
+          # Make sure the ARM64 dependency libraries are found by the linker
+          (
+            cd /usr/lib/aarch64-linux-gnu
+            for lib in gcc_s util rt pthread m dl c; do
+              for file in lib$lib.so.*; do
+                link_path=lib$lib.so
+                if [[ -f $file && ! -e $link_path ]]; then
+                  sudo ln -s "$file" "$link_path"
+                fi
+              done
+            done
+          )
+
+          if cargo clean && cargo build --release; then
+            lib=target/$target/release/libplugin.so
+            cp "$lib" "${lib%.so}-linux-aarch64.so"
+          else
+            echo "Failed to build Linux ARM64 target"
+          fi
+
+          # Put the x86_64 build artifact back
+          install -D libplugin.so target/release/libplugin.so
+
+      - name: Release Plugin
+        uses: softprops/action-gh-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: 'release draft'
+          draft: true
+          files: |
+            target/release/libplugin.dylib
+            target/release/plugin.dll
+            target/release/libplugin.so
+            target/aarch64-unknown-linux-gnu/release/libplugin-linux-aarch64.so

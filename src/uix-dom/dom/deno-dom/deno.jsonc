@@ -1,0 +1,13 @@
+{
+  "fmt": {
+    "exclude": [
+      "./wpt",
+      "./bench/node_modules",
+      "./src/dom/selectors/nwsapi.js",
+      "./src/dom/selectors/sizzle.js",
+      "./target",
+      "./html-parser",
+      "./.vim"
+    ]
+  }
+}

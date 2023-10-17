@@ -1,0 +1,1 @@
+export type DOMContext = typeof import("./mod.ts")

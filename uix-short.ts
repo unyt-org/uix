@@ -1,14 +1,14 @@
 // deno-lint-ignore-file no-control-regex
 import { Datex } from "datex-core-legacy";
-import { HTML } from "./html/template-strings.ts";
-import { SCSS } from "./utils/css-template-strings.ts";
+import { HTML } from "./src/html/template-strings.ts";
+import { SCSS } from "./src/utils/css-template-strings.ts";
 
 
 /** make decorators global */
-import { bindToOrigin } from "./utils/datex-over-http.ts";
+import { bindToOrigin } from "./src/utils/datex-over-http.ts";
 import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, Component as _Component, display as _display} from "./base/decorators.ts";
-import { Theme } from "uix/base/theme.ts";
-import { domUtils } from "uix/app/dom-context.ts";
+import { Theme } from "./src/base/theme.ts";
+import { domUtils } from "./src/app/dom-context.ts";
 
 declare global {
 	const content: typeof _content;

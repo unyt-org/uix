@@ -1,6 +1,6 @@
 import { Api, test } from "../backend/public.ts";
 
-import { add, always, and, map, not, select } from "datex-core-legacy/functions.ts";
+import { add, always, and, map, not, select } from "datex-core-legacy";
 import { blankTemplate, style, template } from "uix/html/anonymous-components.ts";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";

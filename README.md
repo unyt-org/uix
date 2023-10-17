@@ -1,4 +1,4 @@
-<img alt="UIX - The Fullstack Framework" src="./logos/banner.svg" style="max-width:400px">
+<img alt="UIX - The Fullstack Framework" src="./src/logos/banner.svg" style="max-width:400px">
 
 ## What is UIX?
 [UIX](https://uix.unyt.org) is a modern open-source full-stack web framework for developing reactive web apps with *restorable and shared state*.

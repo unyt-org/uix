@@ -5,7 +5,6 @@ import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_genera
 
 import { CACHED_CONTENT, getOuterHTML } from "../html/render.ts";
 import { HTTPStatus } from "../html/http-status.ts";
-import { convertToWebPath } from "../app/utils.ts";
 import { RenderPreset, RenderMethod } from "../html/render-methods.ts"
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { createErrorHTML } from "../html/errors.tsx";
@@ -15,6 +14,7 @@ import { logger } from "../utils/global-values.ts";
 import { domContext } from "../app/dom-context.ts";
 import { DocumentFragment, Element } from "../uix-dom/dom/mod.ts";
 import { UIX } from "../uix.ts";
+import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 
 // URLPattern polyfill
@@ -32,7 +32,7 @@ if (!globalThis.URLPattern) {
  * @param render_method 
  * @returns 
  */
-export async function createSnapshot<T extends Element|DocumentFragment>(content:T, render_method = RenderMethod.HYDRATION):Promise<T> {
+export async function createSnapshot<T extends Element|DocumentFragment>(content:T, render_method = RenderMethod.HYBRID):Promise<T> {
 	await preloadElementOnBackend(content);
 	// @ts-ignore
 	content[CACHED_CONTENT] = await getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
@@ -69,9 +69,9 @@ type get_render_method<C extends Entrypoint, Path extends string = string> =
 				// if generator returns preset -> return RenderPreset.__render_method
 				T extends RenderPreset<infer R, infer T2> ? R :
 				// else return default RenderMethod.HYDRATION
-				RenderMethod.HYDRATION
+				RenderMethod.HYBRID
 			) :
-			RenderMethod.HYDRATION
+			RenderMethod.HYBRID
 		)
 	);
 
@@ -288,7 +288,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 
 	let resolved: resolvedEntrypointData = {
 		content: undefined,
-		render_method: RenderMethod.HYDRATION,
+		render_method: RenderMethod.HYBRID,
 		remaining_route: entrypointData.route,
 		loaded: false,
 		status_code: 200

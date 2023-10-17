@@ -11,18 +11,18 @@ import { DX_IGNORE } from "datex-core-legacy/runtime/constants.ts";
  * Provides a full DATEX Runtime on the frontend.
  * @param content HTML element or text content
  */
-export function renderHydrated<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYDRATION, T> {
-	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderWithHydration)")
-	return new RenderPreset(RenderMethod.HYDRATION, content)
+export function renderHybrid<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYBRID, T> {
+	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderHybrid)")
+	return new RenderPreset(RenderMethod.HYBRID, content)
 }
 
 /**
  * Server side prerendering, overriding with content on frontend
  * @param content HTML element or text content
  */
-export function renderPreview<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYDRATION, T> {
+export function renderPreview<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYBRID, T> {
 	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderPreview)")
-	const preset = new RenderPreset(RenderMethod.HYDRATION, content)
+	const preset = new RenderPreset(RenderMethod.HYBRID, content)
 	// @ts-ignore
 	preset[DX_IGNORE] = true;
 	return preset
@@ -66,7 +66,7 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
 
 
 export enum RenderMethod {
-	HYDRATION, // Server side prerendering, content hydration over DATEX
+	HYBRID, // Server side prerendering, content hydration over DATEX
 	BACKEND, // Serve server-side rendererd HTML to the frontend, runtime + reactivity on the backend, display context native js functionality
 	STATIC, // Just serve static HTML pages to the frontend, no frontend JS at all
 	DYNAMIC, // No server side prerendering, loading all content over DATEX

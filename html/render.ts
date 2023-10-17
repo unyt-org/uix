@@ -3,7 +3,6 @@ import { OpenGraphInformation } from "../base/open-graph.ts";
 import { indent } from "datex-core-legacy/utils/indent.ts";
 import type { HTMLProvider } from "./html-provider.ts";
 import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_properties.ts";
-import { convertToWebPath } from "../app/utils.ts";
 import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { bindToOrigin } from "../utils/datex-over-http.ts";
@@ -14,6 +13,8 @@ import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 import { Element } from "../uix-dom/dom/mod.ts";
+import { blobToBase64 } from "../uix-dom/datex-bindings/blob-to-base64.ts";
+import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 let stage:string|undefined = '?'
 
@@ -142,12 +143,14 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];
 		let val = attrib.value;
+
 		// relative web path (@...)
 		if (val.startsWith("file://")) val = convertToWebPath(val);
 		// blob -> data url
 		else if (val.startsWith("blob:")) {
-			val = await blobToBase64(val) as string;
+			val = await blobToBase64(val);
 		}
+
 		attrs.push(`${attrib.name}="${val}"`) // TODO escape
 	}
 	attrs.push("uix-static");
@@ -356,14 +359,6 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 	return [script, html];
 }
 
-async function blobToBase64(blobUri:string|URL) {
-	const blob = await fetch(blobUri).then(r => r.blob());
-	return new Promise<string|ArrayBuffer|null>((resolve, _) => {
-	  const reader = new FileReader();
-	  reader.onloadend = () => resolve(reader.result);
-	  reader.readAsDataURL(blob);
-	});
-  }
 
 // https://gist.github.com/developit/54f3e3d1ce9ed0e5a171044edcd0784f
 // @ts-ignore
@@ -385,12 +380,12 @@ if (!domContext.Element.prototype.getOuterHTML) {
 
 
 
-export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:RenderMethod = RenderMethod.HYDRATION, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en", livePointers?: string[], contentElement?: Element){
+export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:RenderMethod = RenderMethod.HYBRID, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en", livePointers?: string[], contentElement?: Element){
 	let files = '';
 	let metaScripts = ''
 
 	// use frontendRuntime if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content and standalone js
-	const useFrontendRuntime = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYDRATION) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
+	const useFrontendRuntime = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYBRID) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
 	const add_importmap = render_method != RenderMethod.STATIC;
 
 	// js files
@@ -399,8 +394,8 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 
 		// js imports
 		files += indent(4) `
-			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("unyt_core/runtime/display.ts", compat_import_map).toString()}";\ndisableInitScreen();\n` : ''}
-			const {f} = (await import("${provider.resolveImport("unyt_core", compat_import_map).toString()}"));
+			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("datex-core-legacy/runtime/display.ts", compat_import_map).toString()}";\ndisableInitScreen();\n` : ''}
+			const {f} = (await import("${provider.resolveImport("datex-core-legacy", compat_import_map).toString()}"));
 			const {Routing} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts", compat_import_map).toString()}"));` 
 			// await new Promise(resolve=>setTimeout(resolve,5000))
 
@@ -469,7 +464,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 
 	const hydrationRootPtr = contentElement && Datex.Pointer.getByValue(contentElement)
 
-	if (render_method == RenderMethod.HYDRATION && hydrationRootPtr) {
+	if (render_method == RenderMethod.HYBRID && hydrationRootPtr) {
 		metaScripts += indent(4) `<meta name="uix-hydration-root" content="${hydrationRootPtr.id}"></meta>\n`
 	}
 

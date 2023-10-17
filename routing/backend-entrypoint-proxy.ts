@@ -22,7 +22,7 @@ import { resolveEntrypointRoute } from "./rendering.ts";
 export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 	return async function(ctx: Context, _params:Record<string,string>) {
 
-		let render_method = RenderMethod.HYDRATION;
+		let render_method = RenderMethod.HYBRID;
 		let content = undefined;
 
 		// get from hydration cache
@@ -35,7 +35,7 @@ export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 		else ({ content, render_method } = await resolveEntrypointRoute({entrypoint, route: Path.Route(ctx.path)}));
 		
 		// partial hydration, only return live nodes
-		if (render_method == RenderMethod.HYDRATION && content instanceof domContext.Element) {
+		if (render_method == RenderMethod.HYBRID && content instanceof domContext.Element) {
 			return new PartialHydration(content as Element);
 		}
 		

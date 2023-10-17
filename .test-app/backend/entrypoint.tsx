@@ -3,7 +3,7 @@ import { invalid } from "../common/errors.tsx";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { Entrypoint } from "uix/html/entrypoints.ts";
-import { renderHydrated, renderDynamic, renderStatic, renderBackend } from "uix/html/render-methods.ts";
+import { renderHybrid, renderDynamic, renderStatic, renderBackend } from "uix/html/render-methods.ts";
 
 
 import {counter} from "./counter.eternal.ts";
@@ -13,7 +13,7 @@ console.log("COUNTER = " + counter)
 
 export default {
 	'/:component/dynamic' : (ctx, {component}) => renderDynamic(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)), 
-	'/:component/hydrated': (ctx, {component}) => renderHydrated(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
+	'/:component/hybrid': (ctx, {component}) => renderHybrid(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
 	'/:component/backend': (ctx, {component}) => renderBackend(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
 	'/:component/static'  : (ctx, {component}) => renderStatic(testComponents[component as keyof typeof testComponents] || new HTTPError(HTTPStatus.NOT_FOUND)),
 	'/:component/frontend': null,

@@ -31,7 +31,7 @@ export async function callCompat(ptrId: string, args: unknown[]) {
  * @returns 
  */
 export async function callDatex(ptrId: string, args: unknown[]) {
-	const {Datex} = await import("unyt_core");
+	const {Datex} = await import("datex-core-legacy");
 	await Datex.Supranet.connect();
 	return datex(`${ptrId}(Tuple(?))`, [args]);
 }

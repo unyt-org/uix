@@ -14,6 +14,8 @@ import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
 import { getInjectedAppData, getInjectedImportmap } from "./app-data.ts";
 
 import "../base/init.ts"
+import { bindingOptions } from "./dom-context.ts";
+import { convertToWebPath } from "./convert-to-web-path.ts";
 
 
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
@@ -232,3 +234,6 @@ export const app = new UIXApp();
 // @ts-ignore
 globalThis.reset = app.reset
 
+bindingOptions.mapFileURL = (url) => {
+	return convertToWebPath(url);
+}

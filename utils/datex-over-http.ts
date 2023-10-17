@@ -79,7 +79,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 	
 	if (forceDatex) {
 		return `await (async () => {
-			await import("unyt_core");
+			await import("datex-core-legacy");
 			await Datex.Supranet.connect();
 			return datex('${ptr.idString()}');
 		})()

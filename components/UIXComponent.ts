@@ -15,12 +15,12 @@ import { indent } from "datex-core-legacy/utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize-js.ts";
 import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex-over-http.ts"
 import type { DynamicCSSStyleSheet } from "../utils/css-template-strings.ts";
-import { convertToWebPath } from "../app/utils.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts"
 import { Theme } from "../base/theme.ts";
 import { jsxInputGenerator } from "../html/anonymous-components.ts";
 import { bindObserver, domContext, domUtils } from "../app/dom-context.ts";
 import { UIX } from "../uix.ts";
+import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};

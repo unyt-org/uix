@@ -5,13 +5,13 @@ import { convertANSIToHTML } from "../utils/ansi-to-html.ts";
 import { Path } from "../utils/path.ts";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import type { Cookie } from "https://deno.land/std@0.177.0/http/cookie.ts";
-import { convertToWebPath } from "../app/utils.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "../app/app.ts";
 import { Entrypoint, RouteHandler, html_generator } from "./entrypoints.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { createErrorHTML } from "./errors.tsx";
 import { HTTPError } from "./http-error.ts";
+import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 const { setCookie } = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;

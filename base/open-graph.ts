@@ -1,4 +1,4 @@
-import { convertToWebPath } from "../app/utils.ts";
+import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 export const OPEN_GRAPH = Symbol("OPEN_GRAPH");
 

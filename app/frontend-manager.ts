@@ -767,7 +767,7 @@ runner.enableHotReloading();
 				}
 
 				// cache hydration pointer
-				if (contentElement && render_method == RenderMethod.HYDRATION) {
+				if (contentElement && render_method == RenderMethod.HYBRID) {
 					hydrationCache.add(contentElement)
 				}
 
@@ -803,7 +803,7 @@ runner.enableHotReloading();
 	}
 
 	private async handleThreadWorker(requestEvent: Deno.RequestEvent, _path:string) {
-		const url = import.meta.resolve("unyt_core/threads/thread-worker.ts");
+		const url = import.meta.resolve("datex-core-legacy/threads/thread-worker.ts");
 		const request = new Request(url, {headers: requestEvent.request.headers})
 		requestEvent.respondWith(await fetch(request));		
 	}

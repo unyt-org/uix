@@ -2,9 +2,8 @@ import { Path } from "../utils/path.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { ImportMap } from "../utils/importmap.ts";
-import "unyt_core/utils/auto_map.ts";
+import "datex-core-legacy/utils/auto_map.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 
 const logger = new Logger("ts import resolver");
 

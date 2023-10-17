@@ -463,6 +463,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 		<html lang="${lang}">
 			<head>
 				<meta charset="UTF-8">
+				<meta name="color-scheme" content="dark light">
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 				<meta name="theme-color"/>	
 				${await open_graph_meta_tags?.getMetaTags()}

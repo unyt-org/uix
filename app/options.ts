@@ -1,6 +1,7 @@
 import type { Tuple } from "unyt_core/types/tuple.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import { Path } from "../utils/path.ts";
+import { logger } from "unyt_core/utils/global_values.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 
@@ -35,6 +36,7 @@ export interface normalizedAppOptions extends appOptions {
 }
 export async function normalizeAppOptions(options:appOptions = {}, base_url?:string|URL): Promise<[normalizedAppOptions, URL]> {
 	const n_options = <normalizedAppOptions> {};
+	logger.info("opts ", options)
 		
 	// determine base url
 	if (typeof base_url == "string" && !base_url.startsWith("file://")) base_url = 'file://' + base_url;

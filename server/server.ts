@@ -136,6 +136,7 @@ type requestHandler = (req: Deno.RequestEvent, path:string, con:Deno.Conn)=>void
 
 type server_options = {
     cors?: boolean, // enable cors, default: false
+    default_headers?: Record<string, string>, // default headers to add to all file responses
     transpilers?: {[path:string]: TypescriptTranspiler}, // use transpiler for specific web path, if set, ts files are transpiled, and the js content is returned to the browser (+ virtual files can be added). The transpilers for the first matching path in the list is used. 
     resolve_index_html?: boolean, // resolve / path to index.html, default: false
     request_proxies?: RequestProxy[] // request proxies are called for file requests that match their extensions which are requested directly from a browser session, not as a script import or deno import
@@ -158,6 +159,10 @@ export class Server {
 
     #running = false;
     #port = port++
+
+    setDefaultHeaders(headers: Record<string,string>) {
+        this.#options.default_headers = headers;
+    }
 
     get running(){return this.#running}
     get port(){return this.#port}
@@ -585,6 +590,10 @@ export class Server {
             response.headers.append("Access-Control-Allow-Origin", "*");
             response.headers.append("Access-Control-Allow-Headers", "*");
         }
+        if (this.#options.default_headers) {
+            for (const [name, value] of Object.entries(this.#options.default_headers))
+            response.headers.set(name, value);
+        }
 
         return response;
     }
@@ -667,6 +676,10 @@ export class Server {
             normalHeaders.set("Access-Control-Allow-Headers", "*")
         }
         normalHeaders.set("Content-Type", type);
+        if (this.#options.default_headers) {
+            for (const [name, value] of Object.entries(this.#options.default_headers))
+            normalHeaders.set(name, value);
+        }
 
         const res = new Response(content, {headers:normalHeaders, status});
         if (cookies) {

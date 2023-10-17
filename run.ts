@@ -16,6 +16,7 @@ import { runRemote } from "./runners/run-remote.ts";
 import { GitDeployPlugin } from "./plugins/git-deploy.ts";
 import { triggerLogin } from "./utils/login.ts";
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
+import { logger } from "unyt_core/utils/global_values.ts";
 
 // login flow
 if (login) await triggerLogin();
@@ -75,6 +76,7 @@ await datex`
 // find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
 const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(root_path, [new GitDeployPlugin()]), root_path);
 await runBackends(options);
+logger.info("nopts ", options)
 
 async function getDXConfigData(path: URL) {
 	const dx = await datex.get(path) as Record<string,any>;

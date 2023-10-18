@@ -47,6 +47,15 @@ $ brew tap unyt-org/uix
 $ brew install uix
 ```
 
+#### Windows
+
+Installation via `deno install`:
+
+```bash
+$ deno install --import-map https://cdn.unyt.org/importmap.dev.json -Ar -n uix https://cdn.unyt.org/uix/run.ts
+```
+
+
 ## Initial Project Setup
 
 Get started by cloning a simple UIX example project from https://github.com/unyt-org/uix-base-project:

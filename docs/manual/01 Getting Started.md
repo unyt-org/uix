@@ -12,14 +12,14 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
  * Both backend and frontend code is written as ES6 TypeScript modules
 
 **Main features**
- * Cross-network reactivity
- * Server side rendering with partial hydration
- * Hybrid backend/frontend routing
- * Cross-realm imports
- * Shared memory
- * JSX support
- * Reusable Web Components
- * SCSS support
+ * [Cross-network reactivity](02%20Imports%20and%20Synchronization.md#Reactivity)
+ * [Server side rendering with partial hydration](07%20Rendering%20Modes.md)
+ * [Hybrid backend/frontend routing](05%20Entrypoints%20and%20Routing.md)
+ * [Cross-realm imports](./02%20Imports%20and%20Synchronization.md)
+ * [Shared memory](02%20Imports%20and%20Synchronization.md#Synchronization)
+ * [JSX support](./03%20JSX.md)
+ * [Reusable web components](./04%20Components.md)
+ * [SCSS support](./11%20Style%20and%20Themes.md#SCSS)
  * [And many more](https://uix.unyt.org)...
 
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
@@ -79,7 +79,7 @@ $ uix
 ```
 
 You can pass the following args to the UIX command line utility:
-* `-p`, `--port`                - Specify the port
+* `-p {PORT}`, `--port {PORT}`                - Specify the port
 * `-b`, `--watch-backend`       - Restart the backend deno process when backend files are modified
 * `-l`, `--live`                - Automatically reload connected browsers tabs when files are modified
 * `-w`, `--watch`               - Recompile frontend scripts when files are modified
@@ -90,11 +90,11 @@ You can pass the following args to the UIX command line utility:
 ---
 
 * `--hod`, `--http-over-datex`  - Enable HTTP-over-DATEX (default: true)
-* `--stage`                     - Current deployment stage (default: dev)
-* `--env`                       - Exposed environment variables (for remote deployment)
+* `--stage {STAGE}`             - Current deployment stage (default: dev)
+* `--env {NAME=VAL}`            - Exposed environment variables (for remote deployment)
 * `--clear`                     - Clear all eternal states on the backend
 * `--version`                   - Get the version of your UIX installation
-* `--import-map`                - Import map path
+* `--import-map {PATH}`         - Import map path
 * `--enable-tls`                - Run the web server with TLS
 * `--inspect`                   - Enable debugging for the deno process
 * `--unstable`                  - Enable unstable deno features

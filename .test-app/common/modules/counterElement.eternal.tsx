@@ -18,7 +18,7 @@ export default
 			I was clicked {count} times
 		</button>
 
-		<button onclick:display={() => use (helloWorld) && helloWorld()}>
+		<button onclick:frontend={() => use (helloWorld) && helloWorld()}>
 			Show Alert
 		</button>
 

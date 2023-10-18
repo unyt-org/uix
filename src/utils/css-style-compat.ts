@@ -1,4 +1,4 @@
-import { UIX } from "../uix.ts";
+import { UIX } from "../../uix.ts";
 import { Path } from "./path.ts";
 
 // fake CSSStyleDeclaration element with proxy to update css property names

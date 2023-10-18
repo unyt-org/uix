@@ -13,6 +13,8 @@ import { logger } from "../utils/global-values.ts";
 import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
 import { getInjectedAppData, getInjectedImportmap } from "./app-data.ts";
 
+import "../base/uix-datex-module.ts"
+
 import "../base/init.ts"
 import { bindingOptions } from "./dom-context.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";

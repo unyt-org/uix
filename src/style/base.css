@@ -10,6 +10,12 @@ light-root {
     display: contents;
 }
 
+:root {
+    --current_text_color: var(--text);
+    --current_text_color_highlight: var(--text_highlight);
+    color: var(--current_text_color);
+}
+
 /* Scrollbar */
 /* ::-webkit-scrollbar {
     width: 0;

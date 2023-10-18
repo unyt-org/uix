@@ -229,7 +229,7 @@ export class Transpiler {
 
         // logger.info("file watcher activated for " + this.src_dir.pathname);
 
-        for await (const event of this.#main_fs_watcher = Deno.watchFs(this.src_dir.pathname, {recursive: true})) {
+        for await (const event of this.#main_fs_watcher = Deno.watchFs(this.src_dir.normal_pathname, {recursive: true})) {
             try {
 				for (const path of event.paths) {
 					this.handleFileWatchUpdate(path);
@@ -345,13 +345,14 @@ export class Transpiler {
     protected async transpileSCSS(path:Path.File, src_path:Path.File) {
         await this.loadSCSSDependencies(src_path);
         try {
-            const compiler = sass!([path.pathname], {})
+            // remove /C: for winDoWs
+            const compiler = sass!([path.pathname.replace(/^\/\w:/,"")], {})
             const css = (compiler.to_string("expanded") as Map<string,string>).get(path.name.split(".")[0]);
             if (css==null) {
-                logger.error("could not transpile scss: " + path.pathname);
+                logger.error("could not transpile scss: " + path.normal_pathname);
                 return;
             }
-            await Deno.writeTextFile(this.getFileWithMappedExtension(path), css);
+            await Deno.writeTextFile(this.getFileWithMappedExtension(path).normal_pathname, css);
             // TODO:
             // await this.transpileScopedCss(path, src_path)
         }
@@ -361,7 +362,7 @@ export class Transpiler {
     }
 
     protected async loadSCSSDependencies(src_path:Path.File) {
-        const content = await Deno.readTextFile(src_path);
+        const content = await Deno.readTextFile(src_path.normal_pathname);
         for (const dep of content.matchAll(/^\s*@use\s*"([^"]*)"/gm)) {
             let import_path = new Path<Path.Protocol.File>(dep[1], src_path);
             if (!import_path.ext) import_path = import_path.getWithFileExtension("scss");
@@ -410,7 +411,7 @@ export class Transpiler {
 
         logger.info("file watcher activated for " + virtual_path);
 
-        const path = await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path));
+        const path = await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
         this.syncVirtualFile(virtual_path, src_path);
         return path;
     }
@@ -426,7 +427,7 @@ export class Transpiler {
 					const src_path = new Path(path);
 
                     logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
-                    await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path));
+                    await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
 				}
             }
             catch (e) {
@@ -457,8 +458,8 @@ export class Transpiler {
         const dist_path = this.getDistPath(path, compat, false);
         if (!dist_path) throw new Error("could not create virtual file")
         dist_path.parent_dir.fsCreateIfNotExists();
-        if (typeof content == "string") await Deno.writeTextFile(dist_path, content);
-        else await Deno.writeFile(dist_path, content);
+        if (typeof content == "string") await Deno.writeTextFile(dist_path.normal_pathname, content);
+        else await Deno.writeFile(dist_path.normal_pathname, content);
         // transpile?
         if (this.isTranspiledFile(dist_path)) {
             await this.transpile(dist_path, path, compat);
@@ -520,12 +521,12 @@ export class Transpiler {
                 jsxImportSource: "uix"
             } as const : null;
             // TODO: remove jsxAutomatic:true, currently only because of caching problems
-            const transpiled = await transpile!(await Deno.readTextFile(ts_dist_path), {
+            const transpiled = await transpile!(await Deno.readTextFile(ts_dist_path.normal_pathname), {
                 inlineSourceMap: !!this.#options.sourceMap, 
                 inlineSources: !!this.#options.sourceMap,
                 ...jsxOptions
             });
-            if (transpiled != undefined) await Deno.writeTextFile(js_dist_path, transpiled);
+            if (transpiled != undefined) await Deno.writeTextFile(js_dist_path.normal_pathname, transpiled);
             else throw "unknown error"
         }
         catch (e) {
@@ -534,51 +535,4 @@ export class Transpiler {
        
         return js_dist_path;
     }
-  
-  
-    private async transpileToJSDenoEmitLegacy(ts_dist_path:Path.File) { 
-        try {
-            // @ts-ignore emit workaround *******
-            const {files, diagnostics} = await Deno.emit(ts_dist_path.pathname, {
-                check: false,
-                compilerOptions: {
-                    checkJs: false,
-                }
-            });
-
-            const compiled_path = ts_dist_path.toString()+".js";
-
-            if (!files[compiled_path] && diagnostics.length) {
-                // @ts-ignore emit diagnostics
-                const error = Deno.formatDiagnostics(diagnostics).replaceAll(this.#dist_dir?.toString(), "").replaceAll(this.#dist_dir_compat?.toString(), "")
-                logger.error("could not transpile " + ts_dist_path + ": " + error);
-                Deno.writeTextFileSync(this.getFileWithMappedExtension(ts_dist_path, true), error)
-            }
-
-            // else if (files[compiled_path]){
-            //     const path = new Path(compiled_path);
-            //     const content = files[compiled_path];
-
-            //     if (!path.is_web) {
-            //         const js_path = path.hasFileExtension('map') ? path.getWithFileExtension('js.map', true) : path.getWithFileExtension('js', true)
-            //         await Deno.writeTextFile(js_path, content);
-            //     }
-            // }
-
-            for (const [_path, content] of <[string, string][]>Object.entries(files)) {
-                const path = new Path(_path);
-
-                if (!path.is_web) {
-                    const js_path = path.hasFileExtension('map') ? path.getWithFileExtension('js.map', true) : path.getWithFileExtension('js', true)
-                    Deno.writeTextFileSync(js_path, content);
-                }
-            }
-            return true;
-        }
-        catch {
-            return false;
-        }
-    }
-
-
 }

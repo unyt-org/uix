@@ -8,18 +8,18 @@ The UIX library and other core libraries are not initialized on the frontend.
 
 It is still possible to add interactivity and other TS functionality to components in standalone mode:
 
-Component methods and properties that are decorated with `@display` or event handlers defined with a `*:display` attribute are available in standalone contexts.
+Component methods and properties that are decorated with `@frontend` or event handlers defined with a `*:frontend` attribute are available in standalone contexts.
 
 ```tsx
 
 @Component
 export class ButtonComponent extends BaseComponent {
     // standalone properties
-    @display clickCounter = 0;
-    @display @id count = <span>{this.options.text}</span>;
-    @display @content button = <button onclick={()=>this.handleClick()}>I was clicked {this.count} times</button>;
+    @frontend clickCounter = 0;
+    @frontend @id count = <span>{this.options.text}</span>;
+    @frontend @content button = <button onclick={()=>this.handleClick()}>I was clicked {this.count} times</button>;
 
-    @display handleClick() {
+    @frontend handleClick() {
         // standalone context: only standalone properties are available
         this.clickCounter++;
         this.count.innerText = this.clickCounter.toString();
@@ -42,7 +42,7 @@ They must be explicitly enabled with `@standalone`.
 @Component
 export class ButtonComponent extends BaseComponent {
 
-    @display override onDisplay() {
+    @frontend override onDisplay() {
         console.log("displayed in standalone mode: " + this.standalone)
     }
 
@@ -60,7 +60,7 @@ If you want to use JSX, you need to explicitly import the UIX JSX Runtime:
 @Component
 export class ButtonComponent extends BaseComponent {
 
-    @display override async onDisplay() {
+    @frontend override async onDisplay() {
         await import("uix/jsx-runtime/jsx.ts");
         this.append(<div>Content</div>)
     }
@@ -78,7 +78,7 @@ import { UIX } from "uix";
 @Component
 export class ButtonComponent extends BaseComponent {
 
-    @display override async onDisplay() {
+    @frontend override async onDisplay() {
         // explict import in standalone mode
         const { UIX } = await import("uix");
         UIX.Theme.setMode("dark");
@@ -117,7 +117,7 @@ export default (
 )
 ```
 
-This behaviour can be overriden: To always call an event handler in the browser (display) context, use the `:display` label for the `onclick` attribute:
+This behaviour can be overriden: To always call an event handler in the browser (display) context, use the `:frontend` label for the `onclick` attribute:
 
 ```tsx
 // backend/entrypoint.ts
@@ -126,11 +126,11 @@ export default (
 )
 ```
 
-When an element in a component is decorated with `@display`, all handlers for the element are executed in the display context per default:
+When an element in a component is decorated with `@frontend`, all handlers for the element are executed in the display context per default:
 ```tsx
 // backend/MyComponent.ts
 export class MyComponent extends UIX.BaseComponent {
-    @display button = <button onclick={()=>console.log("click handler in standalone mode, called in the browser context")}>Click Me!</button>
+    @frontend button = <button onclick={()=>console.log("click handler in standalone mode, called in the browser context")}>Click Me!</button>
 }
 ```
 

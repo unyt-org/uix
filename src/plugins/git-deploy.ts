@@ -29,7 +29,7 @@ export class GitDeployPlugin implements AppPlugin {
 		}
 
 		for (const [fileName, content] of Object.entries(workflows)) {
-			await Deno.writeTextFile(workflowDir.getChildPath(fileName), content)
+			await Deno.writeTextFile(workflowDir.getChildPath(fileName).normal_pathname, content)
 		}
 
 	}

@@ -31,7 +31,7 @@ export async function createProxyImports(options: normalizedAppOptions, baseURL:
 	// add .eternal.ts proxy modules
 	const promises = []
 	const cachePath = new Path(cache_path);
-	for await (const e of walk!(baseURL.pathname, {includeDirs: false, exts: eternalExts.map(x => '.eternal.'+x)})) {
+	for await (const e of walk!(new Path(baseURL).normal_pathname, {includeDirs: false, exts: eternalExts.map(x => '.eternal.'+x)})) {
 		const path = new Path(e.path);
 		if (path.isChildOf(cachePath)) continue;
 		promises.push(createEternalProxyFile(new Path(e.path), baseURL));
@@ -49,12 +49,12 @@ export async function createProxyImports(options: normalizedAppOptions, baseURL:
 
 async function updateDenoConfigImportMap(denoConfigPath:URL, proxyImportMapPath:Path) {
 	// update import map path in deno.json
-	const denoConfig = JSON.parse(await Deno.readTextFile(denoConfigPath));
+	const denoConfig = JSON.parse(await Deno.readTextFile(new Path(denoConfigPath).normal_pathname));
 	let importMapPath: Path|undefined = undefined;
 	// create outsourced import map as backup if imports are inline
 	if (denoConfig.imports) {
 		importMapPath = new Path("./importmap.json", denoConfigPath)
-		await Deno.writeTextFile(importMapPath, JSON.stringify({imports: denoConfig.imports}, null, "    "))
+		await Deno.writeTextFile(importMapPath.normal_pathname, JSON.stringify({imports: denoConfig.imports}, null, "    "))
 	}
 	else if (denoConfig._publicImportMap || denoConfig.importMap) {
 		importMapPath = new Path(denoConfig._publicImportMap || denoConfig.importMap, denoConfigPath);
@@ -66,16 +66,15 @@ async function updateDenoConfigImportMap(denoConfigPath:URL, proxyImportMapPath:
 			importMap: proxyImportMapPath.getAsRelativeFrom(denoConfigPath),
 			compilerOptions: denoConfig.compilerOptions
 		}
-		await Deno.writeTextFile(denoConfigPath, JSON.stringify(newDenoConfig, null, "    "))
+		await Deno.writeTextFile(new Path(denoConfigPath).normal_pathname, JSON.stringify(newDenoConfig, null, "    "))
 	}
 }
 
 async function createEternalProxyFile(path: Path, baseURL: URL): Promise<[Path|string, Path|string][]>{
 
-	const specifier = '_originalEternalModule/' + path.getAsRelativeFrom(baseURL).replace(/^\.\//, '');
-
+	const specifier = '_originalEternalModule/' + path.getAsRelativeFrom(baseURL).replace(/^\.\//, '').replaceAll("\\", "/");
 	const proxyPath = new Path('./eternal/'+ path.filename, cache_path);
-	await Deno.mkdir(proxyPath.parent_dir.pathname, {recursive: true});
+	await Deno.mkdir(proxyPath.parent_dir.normal_pathname, {recursive: true});
 
 	const eternalModule = await getEternalModule(path, specifier);
 	await Deno.writeTextFile(proxyPath, eternalModule)

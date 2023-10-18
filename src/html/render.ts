@@ -250,12 +250,12 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 				companionSource += `const ${varName} = querySelector('[uix-ptr="${ptrId}"]');\n`
 			}
 			else {
-				throw new Error("Cannot bind variable '" + varName + "' to a display context with use() - DOM element has no pointer.");
+				throw new Error("Cannot bind variable '" + varName + "' to a frontend context with use() - DOM element has no pointer.");
 			}
 		}
 		// cannot yet handle other values
 		else {
-			throw new Error("Cannot bind variable '" + varName + "' to a display context with use() - this type not supported.");
+			throw new Error("Cannot bind variable '" + varName + "' to a frontend context with use() - this type not supported.");
 		}
 	}
 	

@@ -361,11 +361,11 @@ export class DOMUtils {
             root_path = undefined;
         }
 
-        // display context event handler function
-        if (attr.endsWith(":display")) {
+        // frontend context event handler function
+        if (attr.endsWith(":frontend")) {
             if (typeof val !== "function") throw new Error(`Invalid value for attribute "${attr}" - must be a function`)
             if (client_type == "browser" || val instanceof JSTransferableFunction) {
-                // don't change, already a JSTransferableFunction or in display context
+                // don't change, already a JSTransferableFunction or in frontend context
             }
             else if (JSTransferableFunction.functionIsAsync(val as (...args: unknown[]) => unknown)) {
                 // async! (always returns true, doesn't await promise)
@@ -375,7 +375,7 @@ export class DOMUtils {
             else {
                 val = JSTransferableFunction.create(val as (...args: unknown[]) => unknown)
             }
-            attr = attr.replace(":display", "");
+            attr = attr.replace(":frontend", "");
 
         }
 

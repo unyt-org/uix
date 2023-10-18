@@ -81,7 +81,7 @@ export class BackendManager {
 	}
 
 	async watchFiles(){
-		for await (const event of Deno.watchFs(this.#scope.pathname, {recursive: true})) {
+		for await (const event of Deno.watchFs(this.#scope.normal_pathname, {recursive: true})) {
 			this.restart()
 		}
 	}

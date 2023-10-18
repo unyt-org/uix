@@ -12,7 +12,7 @@ export default await lazyEternal ?? $$(
 			I was clicked {count} times
 		</button>
 
-		<button onclick:display={() => alert("Hey there")}>
+		<button onclick:frontend={() => alert("Hey there")}>
 			Show Alert
 		</button>
 

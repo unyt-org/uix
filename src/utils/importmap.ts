@@ -135,7 +135,7 @@ export class ImportMap {
 	#writeToFile(){
 		if (!this.#path) throw new Error("import map is readonly")
 		try {
-			Deno.writeTextFileSync(this.#path, this.toString())
+			Deno.writeTextFileSync(this.#path.normal_pathname, this.toString())
 		}
 		catch {
 			logger.error("could not update import map")

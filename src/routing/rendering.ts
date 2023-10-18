@@ -13,7 +13,7 @@ import { UIXComponent } from "../components/UIXComponent.ts";
 import { logger } from "../utils/global-values.ts";
 import { domContext } from "../app/dom-context.ts";
 import type { DocumentFragment, Element } from "../uix-dom/dom/mod.ts";
-import { UIX } from "../uix.ts";
+import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 

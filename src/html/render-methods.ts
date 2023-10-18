@@ -1,4 +1,4 @@
-import { UIX } from "../uix.ts";
+import { UIX } from "../../uix.ts";
 import { logger } from "../utils/global-values.ts";
 import { html_content_or_generator } from "./entrypoints.ts";
 import { DX_IGNORE } from "datex-core-legacy/runtime/constants.ts";
@@ -7,7 +7,7 @@ import { DX_IGNORE } from "datex-core-legacy/runtime/constants.ts";
 /**
  * Default rendering method.
  * Server side prerendering, content hydration over DATEX.
- * \@display properties and functions and :display attributes are supported, during initialization only with JSON compatible values.
+ * \@frontend properties and functions and :frontend attributes are supported, during initialization only with JSON compatible values.
  * Provides a full DATEX Runtime on the frontend.
  * @param content HTML element or text content
  */
@@ -32,7 +32,7 @@ export function renderPreview<T extends html_content_or_generator>(content:T): R
 /**
  * Serve server-side rendererd HTML to the frontend, enable limited JS interactivity
  * Provides no DATEX runtime functionality on the frontend.
- * \@display properties and functions and :display attributes are supported, but only with JSON compatible values.
+ * \@frontend properties and functions and :frontend attributes are supported, but only with JSON compatible values.
  * Content is not loaded over DATEX
  * @param content HTML element or text content
  */
@@ -43,7 +43,7 @@ export function renderBackend<T extends html_content_or_generator>(content:T): R
 
 /**
  * Just serve static HTML pages to the frontend, no frontend JS at all
- * Dynamic functionality like event listeners, \@display and :display is completely ignored
+ * Dynamic functionality like event listeners, \@frontend and :frontend is completely ignored
  * @param content HTML element or text content
  */
 export function renderStatic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STATIC, T> {
@@ -54,7 +54,7 @@ export function renderStatic<T extends html_content_or_generator>(content:T): Re
 /**
  * No server side prerendering, serve all content over DATEX.
  * Provides a full DATEX runtime on the frontend.
- * \@display properties and functions and :display attributes are fully supported
+ * \@frontend properties and functions and :frontend attributes are fully supported
  * @param content HTML element or text content
  */
 export function renderDynamic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.DYNAMIC, T> {
@@ -67,7 +67,7 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
 
 export enum RenderMethod {
 	HYBRID, // Server side prerendering, content hydration over DATEX
-	BACKEND, // Serve server-side rendererd HTML to the frontend, runtime + reactivity on the backend, display context native js functionality
+	BACKEND, // Serve server-side rendererd HTML to the frontend, runtime + reactivity on the backend, frontend context native js functionality
 	STATIC, // Just serve static HTML pages to the frontend, no frontend JS at all
 	DYNAMIC, // No server side prerendering, loading all content over DATEX
 	RAW_CONTENT, // Serve raw file content

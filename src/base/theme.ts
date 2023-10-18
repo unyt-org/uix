@@ -1,6 +1,6 @@
 import { Datex, $$, static_pointer } from "datex-core-legacy"
 import { domContext } from "../app/dom-context.ts";
-import { UIX } from "../uix.ts";
+import { UIX } from "../../uix.ts";
 
 const logger = new Datex.Logger("uix theme");
 

@@ -18,8 +18,6 @@ export async function startApp(options:appOptions = {}, original_base_url?:strin
 
 	const [nOptions, baseURL] = await normalizeAppOptions(options, original_base_url);
 
-	// logger.info("options", {...n_options})
-
 	// for unyt log
 	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
 

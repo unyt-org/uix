@@ -4,7 +4,7 @@ import { Path } from "../utils/path.ts";
 export async function getEternalModule(filePath: Path, specifier: string) {
 	const tree = await doc(filePath.toString(), {
 		load: async (specifier) => {
-			if (specifier == filePath.toString()) return {kind: "module", specifier, content: await Deno.readTextFile(filePath)};
+			if (specifier == filePath.toString()) return {kind: "module", specifier, content: await Deno.readTextFile(filePath.normal_pathname)};
 			return {kind: "external", specifier};
 		},
 		resolve() {

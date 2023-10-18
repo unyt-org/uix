@@ -1,3 +1,3 @@
-[submodule "uix-dom"]
-	path = uix-dom
+[submodule "src/uix-dom"]
+	path = src/uix-dom
 	url = https://github.com/unyt-org/uix-dom.git

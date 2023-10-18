@@ -1,7 +1,7 @@
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
-import type {runParams} from "../run.ts";
-
+import type {runParams} from "../../run.ts";
+import { Path } from "../utils/path.ts";
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions) {
 
@@ -42,7 +42,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	}
 
 	if (params.deno_config_path) {
-		config_params.push("--config", params.deno_config_path instanceof URL && params.deno_config_path.protocol=="file:" ? params.deno_config_path.pathname : params.deno_config_path.toString())
+		config_params.push("--config", params.deno_config_path instanceof URL && params.deno_config_path.protocol=="file:" ? new Path(params.deno_config_path).normal_pathname : params.deno_config_path.toString())
 	}
 	if (options.import_map.path) {
 		config_params.push("--import-map", options.import_map.path?.is_web ? options.import_map.path.toString() : options.import_map.path?.normal_pathname)
@@ -62,8 +62,13 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	}, {capture: true});
 
 	Deno.addSignalListener("SIGINT", ()=>Deno.exit())
-    Deno.addSignalListener("SIGTERM", ()=>Deno.exit())
-    Deno.addSignalListener("SIGQUIT", ()=>Deno.exit())
+
+	try {
+		// not supported by WiNdoWs
+		await Deno.addSignalListener("SIGTERM", ()=>Deno.exit())
+		await Deno.addSignalListener("SIGQUIT", ()=>Deno.exit())
+	}
+	catch {}
 
 	await run();
 

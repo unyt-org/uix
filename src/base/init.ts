@@ -9,7 +9,7 @@ import { Datex } from "datex-core-legacy";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { addStyleSheetLink } from "../utils/css-style-compat.ts";
 
-import { UIX } from "../uix.ts";
+import { UIX } from "../../uix.ts";
 
 import { initSession } from "../session/frontend.ts";
 

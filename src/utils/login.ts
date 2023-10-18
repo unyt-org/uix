@@ -16,6 +16,6 @@ export async function triggerLogin() {
 	};
 
 	const serialized = Datex.Runtime.valueToDatexString(new Datex.Tuple(config));
-	await Deno.writeTextFile(uixHomeDir.getChildPath(".dx"), serialized)
+	await Deno.writeTextFile(uixHomeDir.getChildPath(".dx").normal_pathname, serialized)
 
 }

@@ -208,24 +208,24 @@ export function use(...args:any[]) {
 function _use(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?, string?] = []) {
 
 	if (kind != "field" && kind != "method") {
-		logger.error("@UIX.use has to be used on a field or method");
+		logger.error("@use has to be used on a field or method");
 		return;
 	}
 
 	setMetadata(IMPORT_PROPS, [params[0], params[1]??name]);
 }
 
-/** @display to declare methods that also work in a standlone context */
-export function display(target: any, name?: string, method?:any):any
-export function display(...args:any[]) {
-	return handleDecoratorArgs(args, _display);
+/** \@frontend decorator to declare methods that always run on the frontend */
+export function frontend(target: any, name?: string, method?:any):any
+export function frontend(...args:any[]) {
+	return handleDecoratorArgs(args, _frontend);
 }
 
 
 
-function _display(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
+function _frontend(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
 	if (is_static) {
-		logger.error("@UIX.display cannot be used on static class fields");
+		logger.error("@frontend cannot be used on static class fields");
 		return;
 	}
 

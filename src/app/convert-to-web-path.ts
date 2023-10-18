@@ -1,4 +1,4 @@
-import { UIX } from "../uix.ts";
+import { UIX } from "../../uix.ts";
 import { Path } from "../utils/path.ts";
 import { app } from "./app.ts";
 import { getDefaultDomainPrefix } from "./default-domain.ts";

@@ -19,7 +19,7 @@ import { addCSSScopeSelector } from "../utils/css-scoping.ts"
 import { Theme } from "../base/theme.ts";
 import { jsxInputGenerator } from "../html/anonymous-components.ts";
 import { bindObserver, domContext, domUtils } from "../app/dom-context.ts";
-import { UIX } from "../uix.ts";
+import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 export type propInit = {datex?:boolean};
@@ -1149,7 +1149,6 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     protected async insertStyleSheetLink(url:URL) {
         if (this.shadowRoot) await addStyleSheetLink(this.shadowRoot, url);
         const tagName = "uix-"  + String(this.constructor.name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // TODO: rename
-        console.log("global " +url, tagName)
         return addGlobalStyleSheetLink(url, tagName);
     }
 

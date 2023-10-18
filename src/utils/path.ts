@@ -12,7 +12,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	constructor(path:Path.representation = "./", base?:string|URL) {
 		path = Path.#formatPath(path, !base);
 		if (!base && !Path.pathIsURL(path)) base = getCallerFile() // resolve path relative to caller file
-
+		if (typeof base == "string" && base.match(/^\w:(\\|\/)/)) base = 'file:///' + base;
 		super(path, base);
 	}
 
@@ -68,6 +68,9 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	 * @returns 
 	 */
 	static #formatPath(path:Path.representation, abs_path_as_file_path = true) {
+		// wIndoWs
+		if (typeof path == "string" && path.match(/^\w:(\\|\/)/)) path = 'file:///' + path;
+
 		// absolute url
 		if (path instanceof URL) return path;
 		else if (typeof path == "string" && path.match(/^[A-Za-z0-9]+\:/)) return new URL(path);
@@ -250,7 +253,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 			return (await fetch(this)).arrayBuffer()
 		}
 		else {
-			return Deno.readFile(this);
+			return Deno.readFile(this.normal_pathname);
 		}
 	}
 
@@ -265,7 +268,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 			else throw res.text();
 		}
 		else {
-			return Deno.readTextFile(this);
+			return Deno.readTextFile(this.normal_pathname);
 		}
 	}
 

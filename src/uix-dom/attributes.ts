@@ -24,10 +24,10 @@ const elementEventHandlerAttributesBase = [
 
 export const elementEventHandlerAttributes = [
 	...elementEventHandlerAttributesBase,
-	...elementEventHandlerAttributesBase.map(v => `${v}:display`)
+	...elementEventHandlerAttributesBase.map(v => `${v}:frontend`)
 ]
 
-export type elementEventHandlerAttribute = typeof elementEventHandlerAttributesBase[number]|`${typeof elementEventHandlerAttributesBase[number]}:display`
+export type elementEventHandlerAttribute = typeof elementEventHandlerAttributesBase[number]|`${typeof elementEventHandlerAttributesBase[number]}:frontend`
 
 // list of all default element attributes
 export const defaultElementAttributes = [

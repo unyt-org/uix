@@ -1,6 +1,6 @@
 import { logger } from "datex-core-legacy/datex_all.ts";
 import { app } from "../app/app.ts";
-import { unsafeHTML } from "../uix-short.ts";
+import { unsafeHTML } from "../../uix-short.ts";
 import { HTTPError } from "./http-error.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { bindToOrigin } from "../utils/datex-over-http.ts";

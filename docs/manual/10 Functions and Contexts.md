@@ -22,7 +22,7 @@ In general, UIX distinguished between two context types:
 Values and functions can exist in different contexts within a UIX app. They can also be moved between contexts and exist
 in multiple contexts at once.
 
-The **origin context** of a value is the module context in which the value was originally created. This can be a backend or display context.
+The **origin context** of a value is the module context in which the value was originally created. This can be a backend or frontend context.
 When a value is moved to another context, this new context is called the **host context**.
 For a given value, more than one host context can exist at the same time.
 
@@ -87,7 +87,7 @@ When using functions as callbacks for events on HTML elements, they
 are also stationary per default and are executed inside their origin context.
 
 This means that when an event handler is defined on a HTML element exported from a backend entrypoint,
-it is still executed on the backend entrypoint, also when the element is displayed in the browser (display context):
+it is still executed on the backend entrypoint, also when the element is displayed in the browser (frontend context):
 
 ```tsx
 /// file: backend/entrypoint.ts
@@ -106,10 +106,10 @@ In this example, `"button was clicked"` is logged on the backend when the button
 
 > [!NOTE]
 > If the exact same entrypoint module was a frontend entrypoint, the logs would also be shown in the frontend,
-> since the origin context is the frontend (display) context.
+> since the origin context is the frontend (frontend) context.
 
 
-### Scenario 3: Event handlers in the display context
+### Scenario 3: Event handlers in the frontend context
 
 Now that we understand the default behaviour of functions, lets take a look at a
 different scenario: 
@@ -122,8 +122,8 @@ There are many reasons for such a behaviour: Maybe we want to show an alert to t
 or we want to download a file, or ...
 
 To achieve this, we only need to make one small change in our example code: replacing
-the `onclick` attribute with a labeled `onclick:display` attribute.
-This tells UIX that the event handler function must be transferred to the display context:
+the `onclick` attribute with a labeled `onclick:frontend` attribute.
+This tells UIX that the event handler function must be transferred to the frontend context:
 
 ```ts
 /// file: backend/entrypoint.ts
@@ -131,7 +131,7 @@ This tells UIX that the event handler function must be transferred to the displa
 const counter = $$(0)
 
 export default 
-    <button onclick:display={() => { // add a :display label
+    <button onclick:frontend={() => { // add a :frontend label
         console.log("button was clicked")
         counter.val++
     }}>
@@ -140,7 +140,7 @@ export default
 ```
 
 But if we try to run this code now, we will get an error: `Uncaught ReferenceError: counter is not defined`.
-This happens because the event handler function now lives in a new display context and can no longer access variables from its original context per default.
+This happens because the event handler function now lives in a new frontend context and can no longer access variables from its original context per default.
 
 To fix this, we need to explicitly state that we want to access the `counter` variable from the original context.
 This is done with a `use()` declaration at the top of the function body:
@@ -150,7 +150,7 @@ This is done with a `use()` declaration at the top of the function body:
 const counter = $$(0)
 
 export default 
-    <button onclick:display={() => {
+    <button onclick:frontend={() => {
         use (counter) // use the counter variable from the origin context
         console.log("button was clicked")
         counter.val++

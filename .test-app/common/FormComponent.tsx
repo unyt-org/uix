@@ -20,11 +20,11 @@ const logDisplay = bindToDisplayContext(function () {
 		<p>
 		Counter: {count}
 		</p>
-		<button onclick:display={logDisplay}>Log (Display)</button>
+		<button onclick:frontend={logDisplay}>Log (Display)</button>
 		<button onclick={log}>Log</button>
-		<button onclick:display={() => alert()}>Alert (Display)</button>
-		<button onclick:display={() => use(alert) && alert("alert")}>Alert</button>
-		<button onclick:display={() => use(this) && this.increaseCounter()}>Increase Counter</button>
+		<button onclick:frontend={() => alert()}>Alert (Display)</button>
+		<button onclick:frontend={() => use(alert) && alert("alert")}>Alert</button>
+		<button onclick:frontend={() => use(this) && this.increaseCounter()}>Increase Counter</button>
 	</div>
 })
 export class FormComponent extends UIXComponent {
@@ -35,7 +35,7 @@ export class FormComponent extends UIXComponent {
 
 	// @content val = <div>CONTENT <b>{count}</b></div>
 
-	@display x = 10;
+	@frontend x = 10;
 	y = 10;
 
 	increaseCounter() {

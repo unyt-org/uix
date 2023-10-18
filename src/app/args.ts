@@ -1,7 +1,7 @@
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
 import { Path } from "../utils/path.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
-import { UIX } from "../uix.ts";
+import { UIX } from "../../uix.ts";
 
 export const command_line_options = new CommandLineOptions("UIX", "Fullstack Web Framework with DATEX Integration.\nVisit https://unyt.org/uix for more information", "../RUN.md");
 
@@ -34,6 +34,6 @@ if (version) {
 
 
 if (!config_path && !CommandLineOptions.collecting) {
-	throw "Could not find an app.dx or app.json config file in " + _path.pathname
+	throw "Could not find an app.dx or app.json config file in " + _path.normal_pathname
 }
 export const root_path = (config_path ? new Path(config_path).parent_dir : null) as Path.File;

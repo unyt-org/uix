@@ -53,7 +53,7 @@ $ uix --stage production
 
 ### Options
 
-Per default, they can contain the following options:
+Per default, a .dx file can contain the following options:
 * `endpoint`: (endpoint) The endpoint that should be used for this directory
 
 Additional options for backend endpoint may be passed according to the options defined in [Deployment](./11%20Deployment.md).

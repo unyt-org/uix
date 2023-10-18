@@ -9,7 +9,7 @@ import type {Datex as DatexType} from "datex-core-legacy";
 
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
-import { clear, command_line_options, login, root_path, stage } from "./src/app/args.ts";
+import { clear, command_line_options, enableTLS, login, root_path, stage } from "./src/app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
@@ -65,7 +65,7 @@ export type runParams = {
 
 const params: runParams = {
 	reload: command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
-	enableTLS: command_line_options.option("enable-tls", {type:"boolean", description: "Run the web server with TLS"}),
+	enableTLS: enableTLS,
 	inspect: command_line_options.option("inspect", {type:"boolean", description: "Enable debugging for the deno process"}),
 	unstable: command_line_options.option("unstable", {type:"boolean", description: "Enable unstable deno features"}),
 	detach: command_line_options.option("detach", {type:"boolean", aliases: ["d"], default: false, description: "Keep the app running in background"}),

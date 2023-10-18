@@ -5,7 +5,8 @@ import { UIX } from "../../uix.ts";
 
 export const command_line_options = new CommandLineOptions("UIX", "Fullstack Web Framework with DATEX Integration.\nVisit https://unyt.org/uix for more information", "../RUN.md");
 
-const path = command_line_options.option("path", {aliases:["p"], collectNotPrefixedArgs: true, type:"string", description: "The root path for the UIX app (parent directory for app.dx and deno.json)"});
+
+const path = command_line_options.option("path", {collectNotPrefixedArgs: true, type:"string", description: "The root path for the UIX app (parent directory for app.dx and deno.json)"});
 const _path = new Path(path??'./', 'file://' + Deno.cwd() + '/');
 
 // look for app.dx parent dir to find a valid root path
@@ -20,6 +21,11 @@ export const stage = command_line_options.option("stage", {type:"string", defaul
 export const env = command_line_options.option("env", {type:"string", multiple: true, description: "Exposed environment variables (for remote deployment)"});
 
 export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});
+
+export const port = command_line_options.option("port", {aliases:["p"], default: 80, type:"number", description: "The port for the HTTP server"});
+
+export const enableTLS = command_line_options.option("enable-tls", {type:"boolean", description: "Enable TLS for the HTTP server"});
+
 
 // clear
 export const clear = command_line_options.option("clear", {type:"boolean", description: "Clear all eternal states on the backend"});

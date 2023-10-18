@@ -4,6 +4,7 @@
         "datex-core-legacy/": "https://dev.cdn.unyt.org/unyt_core/",
         "uix": "http://localhost:4242/uix.ts",
         "uix/": "http://localhost:4242/src/",
+        "uix/uix-short.ts": "http://localhost:4242/uix-short.ts",
         "unyt_tests/": "https://dev.cdn.unyt.org/unyt_tests/",
         "uix/jsx-runtime": "http://localhost:4242/src/jsx-runtime/jsx.ts"
     }

@@ -79,10 +79,26 @@ $ uix
 ```
 
 You can pass the following args to the UIX command line utility:
-* `--port {PORT}` / `-p {PORT}` - Specify the port on your local machine where the HTTP server should run
-* `--watch` / `-w` - Setup file watcher to automatically re-transpile TypeScript and SCSS files on change
-* `--live` / `-l` - Enable hot reloading on file change
-* `--inspect` - Enable debugging of the deno process
+* `-p`, `--port`                - Specify the port
+* `-b`, `--watch-backend`       - Restart the backend deno process when backend files are modified
+* `-l`, `--live`                - Automatically reload connected browsers tabs when files are modified
+* `-w`, `--watch`               - Recompile frontend scripts when files are modified
+* `-d`, `--detach`              - Keep the app running in background
+* `-r`, `--reload`              - Force reload deno caches
+* `-h`, `--help`                - Show the help page
+
+---
+
+* `--hod`, `--http-over-datex`  - Enable HTTP-over-DATEX (default: true)
+* `--stage`                     - Current deployment stage (default: dev)
+* `--env`                       - Exposed environment variables (for remote deployment)
+* `--clear`                     - Clear all eternal states on the backend
+* `--version`                   - Get the version of your UIX installation
+* `--import-map`                - Import map path
+* `--enable-tls`                - Run the web server with TLS
+* `--inspect`                   - Enable debugging for the deno process
+* `--unstable`                  - Enable unstable deno features
+
 
 To run your UIX project without installing the UIX CLI, you can alternatively run the following command in the project root directory:
 ```bash

@@ -1,3 +1,0 @@
-[submodule "dom/deno-dom"]
-	path = dom/deno-dom
-	url = https://github.com/unyt-org/deno-dom.git

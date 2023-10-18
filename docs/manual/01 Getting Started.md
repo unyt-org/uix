@@ -116,6 +116,7 @@ With UIX, frontend and backend source code and other resources can be combined i
     │   └── entrypoint.tsx      // Backend entrypoint
     ├── common/                 // Common modules accessible from backend and frontend
     ├── frontend/
+    │   ├── .dx                 // Config file for the frontend endpoint
     │   └── entrypoint.tsx      // Frontend entrypoint
     ├── app.dx                  // App config file
     └── deno.json               // Deno config file

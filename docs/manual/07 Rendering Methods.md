@@ -4,7 +4,7 @@ It is a core principle of UIX that code can be used interchangable on the fronte
 This means that most components and JSX element definitions can either be created on the frontend (commmonly known as 'client-side rendering')
 or on the backend (commonly known as 'server-side rendering').
 
-This chapter will explain the different rendering modes for server-side rendering that can mostly be used
+This chapter will explain the different rendering methods for server-side rendering that can mostly be used
 interchangably to provide UI from the *backend*.
 
 > [!NOTE]
@@ -15,10 +15,10 @@ interchangably to provide UI from the *backend*.
 ## Overview
 
 UIX distinguishes between four backend rendering methods:
- * *static* rendering
- * *backend* rendering
- * *hybrid* rendering
- * *dynamic* rendering
+ * [*static* rendering](#static-rendering)
+ * [*backend* rendering](#backend-rendering)
+ * [*hybrid* rendering](#hybrid-rendering) (default)
+ * [*dynamic* rendering](#dynamic-rendering)
 
 With the exception of static rendering, all of the rendering methods
 provide reactive elements.
@@ -30,175 +30,96 @@ to the browser as pure HTML.
 ## Static Rendering
 
 As the name suggests, static rendering can be used for completely static pages
-that provide no JS-based interactivity (forms are still supported).
+that provide no JavaScript-based interactivity (forms and form action methods are still supported).
 
 Example:
 ```ts
+// file: backend/entrypoint.tsx
+import {renderStatic} from "uix/base/render-methods.ts";
+import type {Context} from "uix/routing/context.ts";
+
+function handleForm(ctx: Context) {
+    // handle form submit
+}
+
+export default renderStatic(
+    <form action={handleForm}>
+        My Static Form
+        <input type="text" name="name" placeholder="name"/>
+        <input type="submit" value="Submit form data"/>
+    </form>
+)
+
+```
+
+## Backend Rendering
+
+When using backend rendering, there is no UIX or DATEX library loaded on the client-side.
+All reactivity happens on the backend. 
+
+You can still execute JavaScript on the frontend using [`@frontend` decorators or `:frontend` labels](10%20Functions%20and%20Contexts.md#scenario-3-event-handlers-in-the-frontend-context),
+but keep in mind that only default browser APIs are available.
+
+```ts
+// file: backend/entrypoint.tsx
 import {renderStatic} from "uix/base/render-methods.ts";
 
-```
+const counter = $$(0);
 
-
-## Standalone Mode
-UIX Components are rendered in standalone mode with `renderStandalone`.
-In this mode, static HTML is prerendered on the backend and sent to the frontend. 
-The UIX library and other core libraries are not initialized on the frontend.
-
-It is still possible to add interactivity and other TS functionality to components in standalone mode:
-
-Component methods and properties that are decorated with `@frontend` or event handlers defined with a `*:frontend` attribute are available in standalone contexts.
-
-```tsx
-
-@Component
-export class ButtonComponent extends BaseComponent {
-    // standalone properties
-    @frontend clickCounter = 0;
-    @frontend @id count = <span>{this.options.text}</span>;
-    @frontend @content button = <button onclick={()=>this.handleClick()}>I was clicked {this.count} times</button>;
-
-    @frontend handleClick() {
-        // standalone context: only standalone properties are available
-        this.clickCounter++;
-        this.count.innerText = this.clickCounter.toString();
-    }
-}
-```
-
-### Supported values in Standalone Mode
-
-The following values can be used as standalone properties:
- * JSON-compatible values (Arrays, number, strings, ...)
- * HTML Elements (only in combiniation with `@content`, `@child` or `@layout`)
-
-### Lifecycle
-
-Some internal component lifecycle handlers are also supported in standalone mode.
-They must be explicitly enabled with `@standalone`.
-
-```tsx
-@Component
-export class ButtonComponent extends BaseComponent {
-
-    @frontend override onDisplay() {
-        console.log("displayed in standalone mode: " + this.standalone)
-    }
-
-}
-```
-The `standalone` property is `true` when the component is loaded in standalone mode.
-
-
-### Using UIX library functions
-
-Keep in mind that reactive functionality is not supported in standalone mode.
-If you want to use JSX, you need to explicitly import the UIX JSX Runtime:
-
-```tsx
-@Component
-export class ButtonComponent extends BaseComponent {
-
-    @frontend override async onDisplay() {
-        await import("uix/jsx-runtime/jsx.ts");
-        this.append(<div>Content</div>)
-    }
-
-}
-
-```
-
-If you want to use any other UIX-specific functionality, you need to explicitly import UIX:
-
-```tsx
-// import in the module scope - not available in standalone mode
-import { UIX } from "uix";
-
-@Component
-export class ButtonComponent extends BaseComponent {
-
-    @frontend override async onDisplay() {
-        // explict import in standalone mode
-        const { UIX } = await import("uix");
-        UIX.Theme.setMode("dark");
-    }
-
-}
-
-```
-
-
-### Event handlers
-
-Event handlers added to an element (e.g. in JSX) are always executed in their origin context per default.
-This means that when the HTML element was created on the backend, the event handler is always called on the backend.
-
-```tsx
-// backend/entrypoint.ts
-export default UIX.renderStatic(
-    <input type="button" value="Click me" onclick={()=>console.log("called on the backend")}/>
+export default renderBackend(
+    <div>
+        Counter: {counter}
+        <button onclick={() => counter.val++}>Increment counter</button>
+        <button onclick:frontend={() => alert("Hello")}>Show alert</button>
+    </div>
 )
+
 ```
 
-```tsx
-// backend/entrypoint.ts
-export default (
-    <input type="button" value="Click me" onclick={()=>console.log("also called on the backend")}/>
-)
-```
+> [!NOTE]
+> Event handlers assigned to a JSX element (like the `onclick` handler on the increment button in the example above) are always executed in their origin context per default.
+> This means that when the HTML element is created on the backend, the event handler is also called on the backend per default.
+> 
+> You can read more about this behaviour in the chapter [Functions and Contexts](./10%20Functions%20and%20Contexts.md)
 
-When the element is created on the frontend, the handler is called on the frontend as expected:
 
-```tsx
-// frontend/entrypoint.ts
-export default (
-    <input type="button" value="Click me" onclick={()=>console.log("called on the frontend")}/>
-)
-```
+## Hybrid Rendering
 
-This behaviour can be overriden: To always call an event handler in the browser (display) context, use the `:frontend` label for the `onclick` attribute:
+Hybrid rendering is the default method used for server-side rendering.
 
-```tsx
-// backend/entrypoint.ts
-export default (
-    <input type="button" value="Click me" onclick:label={()=>console.log("always called on the frontend")}/>
-)
-```
+It behaves similarily to [backend rendering](#backend-rendering), with the only difference
+that there a complete UIX library and DATEX runtime is available on the frontend.
 
-When an element in a component is decorated with `@frontend`, all handlers for the element are executed in the display context per default:
-```tsx
-// backend/MyComponent.ts
-export class MyComponent extends UIX.BaseComponent {
-    @frontend button = <button onclick={()=>console.log("click handler in standalone mode, called in the browser context")}>Click Me!</button>
-}
-```
+### Component Lifecycle
 
-### Component methods
+When a component is rendered with hybrid rendering,
+the `onConstruct` and `onCreate` lifecycle methods are called on
+the backend. 
 
-Component methods decorated with `@bindOrigin` are always executed in the origin context of the component.
+If `onDisplay` is marked with `@frontend`, it is called
+as soon as the component is available on the frontend.
+Without the `@frontend` decorator, onDisplay is never called.
 
 ```tsx
-// backend/MyComponent.ts
-export class MyComponent extends UIX.BaseComponent {
+@template()
+export class ButtonComponent extends Component {
 
-    // standalone functionality - available in the browser standalone context
-    @standalone button = <button onclick={()=>this.clickHandler()}>Click Me!</button>
-
-    // clickHandler is executed in the backend context, but can be called from the
-    // standalone context
-    @bindOrigin clickHandler {
-        console.log("button was clicked");
-        this.clicks++;
-        this.internalHander();
+    onCreate() {
+        console.log("created") // called on the backend
     }
-    
-    // internal component functionality in the backend context
-    clicks = 0
-    internalHandler() {
-        console.log("doing internal stuff on the backend")
+ 
+    @frontend onDisplay() {
+        console.log("displayed") // called on the frontend
     }
 
 }
 ```
 
-Per default, methods decorated with `@bindOrigin` only support JSON compatible values as arguments and return values. 
-To enable full DATEX support, use `@bindOrigin({datex:true})`
+
+## Dynamic Rendering
+
+Dynamic rendering behaves exactly the same as hybrid rendering, with the only difference that
+there is no HTML pre-rendering. 
+The content is only visible after the UIX and DATEX libraries are initialized on the frontend.
+
+We recommend to only use this mode if server-side rendering leads to problems or is explicitly not wanted.

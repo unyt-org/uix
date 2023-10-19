@@ -60,9 +60,10 @@ All reactivity happens on the backend.
 You can still execute JavaScript on the frontend using [`@frontend` decorators or `:frontend` labels](10%20Functions%20and%20Contexts.md#scenario-3-event-handlers-in-the-frontend-context),
 but keep in mind that only default browser APIs are available.
 
+Example:
 ```ts
 // file: backend/entrypoint.tsx
-import {renderStatic} from "uix/base/render-methods.ts";
+import {renderBackend} from "uix/base/render-methods.ts";
 
 const counter = $$(0);
 
@@ -73,7 +74,6 @@ export default renderBackend(
         <button onclick:frontend={() => alert("Hello")}>Show alert</button>
     </div>
 )
-
 ```
 
 > [!NOTE]
@@ -89,6 +89,22 @@ Hybrid rendering is the default method used for server-side rendering.
 
 It behaves similarily to [backend rendering](#backend-rendering), with the only difference
 that there a complete UIX library and DATEX runtime is available on the frontend.
+
+Example:
+```ts
+// file: backend/entrypoint.tsx
+import {renderHybrid} from "uix/base/render-methods.ts";
+
+const counter = $$(0);
+
+export default renderHybrid(
+    <div>
+        Counter: {counter}
+        <button onclick={() => counter.val++}>Increment counter</button>
+        <button onclick:frontend={() => alert("Hello")}>Show alert</button>
+    </div>
+)
+```
 
 ### Component Lifecycle
 
@@ -123,3 +139,19 @@ there is no HTML pre-rendering.
 The content is only visible after the UIX and DATEX libraries are initialized on the frontend.
 
 We recommend to only use this mode if server-side rendering leads to problems or is explicitly not wanted.
+
+Example:
+```ts
+// file: backend/entrypoint.tsx
+import {renderDynamic} from "uix/base/render-methods.ts";
+
+const counter = $$(0);
+
+export default renderDynamic(
+    <div>
+        Counter: {counter}
+        <button onclick={() => counter.val++}>Increment counter</button>
+        <button onclick:frontend={() => alert("Hello")}>Show alert</button>
+    </div>
+)
+```

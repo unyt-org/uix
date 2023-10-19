@@ -6,7 +6,7 @@
 
 ## What is UIX?
 
-UIX is an open-source full-stack web framework for developing reactive web apps with *restorable and shared state*.
+UIX is an open-source full-stack framework for developing reactive web apps with *restorable and shared state*.
 UIX runs on a [deno](https://docs.deno.com/runtime/manual) backend and 
 supports both *single- and multi page* applications 
 with frontend or server-side rendering and hydration.

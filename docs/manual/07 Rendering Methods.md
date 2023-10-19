@@ -1,4 +1,42 @@
-# Rendering Modes
+# Rendering Methods
+
+It is a core principle of UIX that code can be used interchangable on the frontend and backend.
+This means that most components and JSX element definitions can either be created on the frontend (commmonly known as 'client-side rendering')
+or on the backend (commonly known as 'server-side rendering').
+
+This chapter will explain the different rendering modes for server-side rendering that can mostly be used
+interchangably to provide UI from the *backend*.
+
+> [!NOTE]
+> The rendering modes discussed in this chapter are not supported for frontend (client-side) rendering.
+> Using rendering modes on the frontend will not lead to errors to keep compatibility, but they don't
+> have any effect in regards to performance and loading times.
+
+## Overview
+
+UIX distinguishes between four backend rendering methods:
+ * *static* rendering
+ * *backend* rendering
+ * *hybrid* rendering
+ * *dynamic* rendering
+
+With the exception of static rendering, all of the rendering methods
+provide reactive elements.
+
+Static, backend and hybrid rendering pre-render the UI on the backend and send it
+to the browser as pure HTML.
+
+
+## Static Rendering
+
+As the name suggests, static rendering can be used for completely static pages
+that provide no JS-based interactivity (forms are still supported).
+
+Example:
+```ts
+import {renderStatic} from "uix/base/render-methods.ts";
+
+```
 
 
 ## Standalone Mode

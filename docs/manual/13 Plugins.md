@@ -9,7 +9,7 @@ default in any UIX app.
 
 ## Using plugins
 
-Plugins can be used in the `app.dx` file with the `plugin` keyword.
+Plugins can be used in an `app.dx` file with the `plugin` keyword.
 The content of the plugin body depends on the plugin.
 
 Example (`git_deploy` plugin):

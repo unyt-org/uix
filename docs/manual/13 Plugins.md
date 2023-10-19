@@ -52,9 +52,9 @@ The plugin name must start with `[A-Za-z_]` and can only contain `[A-Za-z0-9_]`.
 
 ```ts
 // file: my-plugin.ts
-import { AppPlugin } from "uix/src/app/app-plugin.ts";
+import { AppPlugin } from "uix/app/app-plugin.ts";
 
-export default MyPlugin implements AppPlugin<{text: string} {
+export default class MyPlugin implements AppPlugin<{text: string}> {
     // the identifier used for this plugin in a DATEX file 
     name = "my_plugin"
 

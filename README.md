@@ -37,7 +37,7 @@ This is why UIX ships with integrated features such as:
 ## Documentation
 
 > [!NOTE]
-> You can find all [UIX](https://uix.unyt.org) documentation and ressources on [docs.unyt.org](https://docs.unyt.org).
+> You can find all [UIX](https://uix.unyt.org) documentation and resources on [docs.unyt.org](https://docs.unyt.org).
 > Please be aware that the documentation is work in progress and may change in the future.
 
 1. [Getting Started](./docs/manual/01%20Getting%20Started.md)
@@ -82,7 +82,8 @@ you can take a look at UIX DOM.
 
 ## Contributing
 
-Please take a look at the [Development Guidelines](./DEVELOP.md) to contribute.
+We welcome every contribution!<br>
+Please take a look at the [development guidelines](./DEVELOP.md) and the unyt.org [contribution guidlines](https://github.com/unyt-org/.github-private/blob/main/CONTRIBUTING.md).
 
 ## Connect with us
 

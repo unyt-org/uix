@@ -4,8 +4,8 @@ It is a core principle of UIX that code can be used interchangably on the fronte
 This means that most components and JSX element definitions can either be created on the frontend (commmonly known as 'client-side rendering')
 or on the backend (commonly known as 'server-side rendering').
 
-This chapter will explain the different rendering methods for server-side rendering that can mostly be used
-interchangably to provide UI from the *backend*.
+This chapter will explain the different rendering methods for server-side rendering (that can mostly be used
+interchangably) to provide UI from the *backend*.
 
 > [!NOTE]
 > The rendering modes discussed in this chapter are not supported for frontend (client-side) rendering.

@@ -50,11 +50,16 @@ $ uix --stage production
 ## The .dx files
 
 `.dx` files can be put in frontend or backend directories.
+A `.dx` configuration file in a backend directory is applied to the backend endpoint,
+a `.dx` file in a frontend directory is applied to each frontend endpoint.
 
 ### Options
 
-Per default, a .dx file can contain the following options:
+Per default, a .dx config file can contain the following options:
 * `endpoint`: (endpoint) The endpoint that should be used for this directory
+* `connect`: (boolean) Connect to the supranet on start (default: true)
+* `keys`: (Crypto.ExportedKeySet) Set custom private + public keys for this endpoint
+
 
 Additional options for backend endpoint may be passed according to the options defined in [Deployment](./11%20Deployment.md).
 

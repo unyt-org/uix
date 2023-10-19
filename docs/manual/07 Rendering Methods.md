@@ -1,6 +1,6 @@
 # Rendering Methods
 
-It is a core principle of UIX that code can be used interchangable on the frontend and backend.
+It is a core principle of UIX that code can be used interchangably on the frontend and backend.
 This means that most components and JSX element definitions can either be created on the frontend (commmonly known as 'client-side rendering')
 or on the backend (commonly known as 'server-side rendering').
 

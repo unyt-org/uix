@@ -1,7 +1,7 @@
 import {Datex} from "unyt_core";
 import {UIX} from "uix";
 import { getAppOptions } from "./config-files.ts";
-import { env, root_path } from "./args.ts";
+import { env, rootPath } from "./args.ts";
 import { client_type } from "unyt_core/utils/constants.ts";
 const logger = new Datex.Logger("UIX App Runner");
 
@@ -18,5 +18,5 @@ for (const envVar of env) {
 
 
 // get app.dx / app.json
-const config = await getAppOptions(root_path);
-UIX.app.start(config, root_path)
+const config = await getAppOptions(rootPath);
+UIX.app.start(config, rootPath)

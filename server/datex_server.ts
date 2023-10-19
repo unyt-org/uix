@@ -415,7 +415,7 @@ class WebsocketStreamComInterface extends ServerDatexInterface {
         });
     }
 
-    protected async sendRequest(dx:ArrayBuffer, to:Datex.Endpoint) {
+    protected sendRequest(dx:ArrayBuffer, to:Datex.Endpoint) {
 
         // try to find an other endpoint over which the requested endpoint is connected
         if (!this.connected_endpoint_streams.has(to)) {
@@ -424,7 +424,14 @@ class WebsocketStreamComInterface extends ServerDatexInterface {
         }
 
         // send to a connected endpoint
-        else this.connected_endpoint_streams.get(to).write(dx)
+        else {
+            try {
+                this.connected_endpoint_streams.get(to).write(dx)
+            }
+            catch (e) {
+                console.log(e)
+            }
+        }
     }
 }
 
@@ -449,45 +456,50 @@ class WebsocketComInterface extends ServerDatexInterface {
 
 
     private handleRequest(requestEvent:Deno.RequestEvent){
-        const req = requestEvent.request; 
-        if (req.headers.get("upgrade") != "websocket") {
-            return new Response(null, { status: 501 });
+        try {
+            const req = requestEvent.request; 
+            if (req.headers.get("upgrade") != "websocket") {
+                return new Response(null, { status: 501 });
+            }
+
+            const { socket, response } = Deno.upgradeWebSocket(req);
+            requestEvent.respondWith(response);
+
+            socket.onmessage = async (e:MessageEvent<ArrayBuffer>) => {
+
+                const dmx_block = e.data;
+
+                let header: Datex.dxb_header;
+
+                // bind endpoint to this socket connection
+                if (!this.socket_endpoints.has(socket)) {
+                    header = await this.handleBlock(new Uint8Array(dmx_block).buffer, undefined, header => {
+                        this.logger.debug("endpoint registered: " + header.sender);
+                        
+                        this.connected_endpoints.set(header.sender, socket);
+                        this.endpoints.add(header.sender)
+
+                        // assign interface officially to this endpoint
+                        Datex.CommonInterface.addInterfaceForEndpoint(header.sender, this);
+
+                        this.socket_endpoints.set(socket, header.sender)
+                    })
+                }
+                else {
+                    header = await this.handleBlock(new Uint8Array(dmx_block).buffer, this.socket_endpoints.get(socket), null)
+                }
+
+                /* an other endpoint is reachable over this interface*/
+                if (header && header.sender!=this.socket_endpoints.get(socket) && !this.reachable_endpoints.has(header.sender)) {
+                    this.logger.debug("reachable endpoint registered: " + header.sender);
+                    this.reachable_endpoints.set(header.sender, this.socket_endpoints.get(socket))
+                    Datex.CommonInterface.addIndirectInterfaceForEndpoint(header.sender, this)
+                }
+            };
         }
-
-        const { socket, response } = Deno.upgradeWebSocket(req);
-        requestEvent.respondWith(response);
-
-        socket.onmessage = async (e:MessageEvent<ArrayBuffer>) => {
-
-            const dmx_block = e.data;
-
-            let header: Datex.dxb_header;
-
-            // bind endpoint to this socket connection
-            if (!this.socket_endpoints.has(socket)) {
-                header = await this.handleBlock(new Uint8Array(dmx_block).buffer, undefined, header => {
-                    this.logger.debug("endpoint registered: " + header.sender);
-                    
-                    this.connected_endpoints.set(header.sender, socket);
-                    this.endpoints.add(header.sender)
-
-                    // assign interface officially to this endpoint
-                    Datex.CommonInterface.addInterfaceForEndpoint(header.sender, this);
-
-                    this.socket_endpoints.set(socket, header.sender)
-                })
-            }
-            else {
-                header = await this.handleBlock(new Uint8Array(dmx_block).buffer, this.socket_endpoints.get(socket), null)
-            }
-
-            /* an other endpoint is reachable over this interface*/
-            if (header && header.sender!=this.socket_endpoints.get(socket) && !this.reachable_endpoints.has(header.sender)) {
-                this.logger.debug("reachable endpoint registered: " + header.sender);
-                this.reachable_endpoints.set(header.sender, this.socket_endpoints.get(socket))
-                Datex.CommonInterface.addIndirectInterfaceForEndpoint(header.sender, this)
-            }
-        };
+        catch (e) {
+            console.log("Socket Error 1", e)
+        }
 
     }
 
@@ -499,7 +511,14 @@ class WebsocketComInterface extends ServerDatexInterface {
         }
 
         // send to a connected endpoint
-        if (this.connected_endpoints.has(to)) this.connected_endpoints.get(to).send(dx)
+        if (this.connected_endpoints.has(to)) {
+            try {
+                this.connected_endpoints.get(to).send(dx)
+            }
+            catch (e) {
+                console.log("Socket Error 2", e);
+            }
+        }
     }
 }
 

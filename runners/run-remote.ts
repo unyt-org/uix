@@ -1,5 +1,5 @@
 import { normalizedAppOptions } from "../app/options.ts";
-import type {runParams} from "../run.ts";
+import type {runParams} from "./runner.ts";
 import { stage, env, watch } from "../app/args.ts";
 import { ESCAPE_SEQUENCES } from "unyt_core/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";

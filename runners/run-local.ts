@@ -1,6 +1,6 @@
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file_utils.ts";
-import type {runParams} from "../run.ts";
+import type {runParams} from "./runner.ts";
 import { Path } from "../utils/path.ts";
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions) {

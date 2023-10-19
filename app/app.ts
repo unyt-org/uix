@@ -129,7 +129,7 @@ class UIXApp {
 		// logger.info("options", {...n_options})
 
 		// for unyt log
-		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
+		Datex.Unyt.setAppInfo({name:n_options.name, version:n_options.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") && Deno.env.get("UIX_HOST_ENDPOINT")!.startsWith("@") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
 
 		// set .dx path to backend
 		if (n_options.backend.length) {

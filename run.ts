@@ -5,24 +5,28 @@
 import { Datex, datex } from "unyt_core/no_init.ts"; // required by getAppConfig
 import type { Datex as _Datex } from "unyt_core"; // required by getAppConfig
 
-import type {Datex as DatexType} from "unyt_core";
-
 import { getAppOptions } from "./app/config-files.ts";
 import { getExistingFile } from "./utils/file_utils.ts";
-import { command_line_options, login, root_path, stage } from "./app/args.ts";
+import { command_line_options, login, rootPath, stage } from "./app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./app/options.ts";
 import { runLocal } from "./runners/run-local.ts";
 import { runRemote } from "./runners/run-remote.ts";
-import { GitDeployPlugin } from "./plugins/git-deploy.ts";
+import GitDeployPlugin from "./plugins/git-deploy.ts";
+import LocalDockerRunner from "./runners/run-local-docker.ts";
+
 import { triggerLogin } from "./utils/login.ts";
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
-import { logger } from "unyt_core/utils/global_values.ts";
+import { getDXConfigData } from "./app/dx-config-parser.ts";
+import type { runParams } from "./runners/runner.ts";
+
+const logger = new Datex.Logger("UIX Runner");
 
 // login flow
 if (login) await triggerLogin();
 
-Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
-Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
+Datex.Logger.development_log_level = Datex.LOG_LEVEL.WARNING
+Datex.Logger.production_log_level = Datex.LOG_LEVEL.WARNING;
+
 
 const CI_INDICATOR_VARS = [
 	'CI',
@@ -37,17 +41,6 @@ function isCIRunner() {
 	return false;
 }
 
-/**
- * command line params + files
- */
-export type runParams = {
-    reload: boolean | undefined;
-    enableTLS: boolean | undefined;
-    inspect: boolean | undefined;
-    unstable: boolean | undefined;
-	detach: boolean | undefined;
-    deno_config_path: string | URL | null;
-}
 
 const params: runParams = {
 	reload: command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
@@ -56,53 +49,64 @@ const params: runParams = {
 	unstable: command_line_options.option("unstable", {type:"boolean", description: "Enable unstable deno features"}),
 	detach: command_line_options.option("detach", {type:"boolean", aliases: ["d"], default: false, description: "Keep the app running in background"}),
 
-	deno_config_path: getExistingFile(root_path, './deno.json')
+	deno_config_path: getExistingFile(rootPath, './deno.json')
 }
 
 // forced command line args capture, exit after this point
 if (CommandLineOptions.collecting) await CommandLineOptions.capture()
 
-/**
- * Mock #public.uix
- */
-await datex`
-	#public.uix = {
-		stage: function (options) (
-			options.${stage} default @@local
-		)
+
+async function loadPlugins() {
+	const plugins = [new GitDeployPlugin()];
+
+	const pluginDx = getExistingFile(rootPath, './plugins.dx');
+	if (pluginDx) {
+		let pluginData = await datex.get<Iterable<string|URL>>(pluginDx);
+		if (pluginData instanceof URL || typeof pluginData == "string") pluginData = [pluginData];
+		if (pluginData instanceof Datex.Tuple) pluginData = pluginData.toArray();
+	
+		for (const pluginUrl of pluginData??[]) {
+			const pluginClass = (await import(pluginUrl.toString())).default;
+			const plugin = new pluginClass();
+			logger.debug(`Loaded plugin "${plugin.name}" (${pluginUrl})`);
+	
+			// name collision, override existing plugin
+			const existingPlugin = plugins.find(p => p.name === plugin.name);
+			if (existingPlugin) {
+				plugins.splice(plugins.indexOf(existingPlugin), 1);
+				logger.warn(`Plugin "${plugin.name}" was overridden with ${pluginUrl}`)
+			}
+			
+			plugins.push(plugin);
+		}
 	}
-`
-
-// find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
-const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(root_path, [new GitDeployPlugin()]), root_path);
-await runBackends(options);
-logger.info("nopts ", options)
-
-async function getDXConfigData(path: URL) {
-	const dx = await datex.get(path) as Record<string,any>;
-	const requiredLocation: DatexType.Endpoint = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
-	const stageEndpoint: DatexType.Endpoint = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
-	const port: number = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'port'), true, true);
-	let volumes: URL[]|undefined = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'volumes'), true, true);
-	if (!volumes) volumes = []
-	else if (!(volumes instanceof Array)) volumes = [volumes];
-
-	let domains:string[] = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
-	// make sure customDomains is a string array
-	if (domains instanceof Datex.Tuple) domains = domains.toArray();
-	else if (typeof domains == "string") domains = [domains];
-	// @ts-ignore check for default @@local
-	else if (domains === Datex.LOCAL_ENDPOINT) domains = [];
-	domains = domains?.filter(d=>d!==Datex.LOCAL_ENDPOINT) ?? [];
-
-	return {
-		port,
-		requiredLocation,
-		stageEndpoint,
-		domains,
-		volumes
-	}
+	return plugins;
 }
+
+async function mockUIX() {
+	/**
+	 * Mock #public.uix
+	 */
+	await datex`
+		#public.uix = {
+			stage: function (options) (
+				options.${stage} default @@local
+			)
+		}
+	`
+}
+
+await mockUIX();
+// find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
+const plugins = await loadPlugins();
+const runners = [new LocalDockerRunner()];
+const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(rootPath, plugins), rootPath);
+
+// make sure UIX mock is not overridden
+await mockUIX();
+
+await runBackends(options);
+
 
 async function runBackends(options: normalizedAppOptions) {
 
@@ -112,43 +116,39 @@ async function runBackends(options: normalizedAppOptions) {
 		return;
 	}
 
-	for (const backend of options.backend) {
-		const backendDxFile = backend.getChildPath(".dx");
-		
+	for (const backend of options.backend) {		
 		try {
-			let requiredLocation: DatexType.Endpoint|undefined;
-			let stageEndpoint: DatexType.Endpoint|undefined;
-			let volumes: URL[]|undefined
-			const domains:Record<string, number|null> = {}; // domain name -> internal port
-			if (backendDxFile.fs_exists) {
-				let backendDomains: string[]|undefined;
-				({requiredLocation, stageEndpoint, domains: backendDomains, volumes} = await getDXConfigData(backendDxFile))
-				for (const domain of backendDomains) {
-					domains[domain] = null; // no port mapping specified per default
-				}
-			}
+			const {requiredLocation, stageEndpoint, domains, volumes} = await getDXConfigData(backend, options);
 
-			let autoPort = 80;
-			for (const frontend of options.frontend) {
-				const frontendDxFile = frontend.getChildPath(".dx");
-				if (frontendDxFile.fs_exists) {
-					const {domains: frontendDomains, port} = await getDXConfigData(frontendDxFile);
-
-					if (frontendDomains) {
-						const domainPort = port ?? autoPort++;
-						for (const domain of frontendDomains) {
-							domains[domain] = domainPort; // no port mapping specified per default
+			if (requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation?.toString() !== Deno.env.get("UIX_HOST_ENDPOINT")) {
+				// custom runner
+				if (typeof requiredLocation == "string") {
+					let found = false;
+					for (const runner of runners) {
+						if (runner.name == requiredLocation) {
+							await runner.run({
+								params,
+								baseURL: new_base_url,
+								options,
+								backend,
+								endpoint: stageEndpoint,
+								domains,
+								volumes
+							})
+							found = true;
 						}
 					}
+					if (!found) {
+						logger.error(`UIX app runner for location "${requiredLocation}" not found`);
+						Deno.exit(1);
+					}
 				}
-			}
-
-			// console.log(domains)
-
-			// run on a remote host
-			if (requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation?.toString() !== Deno.env.get("UIX_HOST_ENDPOINT")) {
-				runRemote(params, new_base_url, options, backend, requiredLocation, stageEndpoint, domains, volumes);
-			}
+				// run on a remote host (docker host)
+				if (requiredLocation instanceof Datex.Endpoint ) {
+					runRemote(params, new_base_url, options, backend, requiredLocation, stageEndpoint, domains, volumes);
+				}
+			} 
+			
 			// run locally
 			else {
 				// local run in CI not allowed

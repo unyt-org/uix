@@ -374,7 +374,10 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 		if (!relative) throw new Error("relative path utils only supported in deno")
 		let rel = relative(_path.pathname, this.pathname);
 		if (!(rel.startsWith("./") || rel.startsWith("../"))) rel = "./" + rel;
+
 		if (this.is_dir && !rel.endsWith("/")) rel += "/";
+
+		if (rel.startsWith("./../")) rel = rel.replace("./../", "../")
 
 		// re-add query params
 		if (this.search) rel += this.search;

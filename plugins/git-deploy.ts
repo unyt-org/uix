@@ -2,10 +2,10 @@ import { AppPlugin } from "../app/config-files.ts";
 import { Logger } from "unyt_core/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
+import { Datex } from "unyt_core/mod.ts";
 const logger = new Logger("Git Deploy Plugin");
-declare const Datex: any; // cannot import Datex here, circular dependency problems
 
-export class GitDeployPlugin implements AppPlugin {
+export default class GitDeployPlugin implements AppPlugin {
 	name = "git_deploy"
 
 	async apply(data: Record<string, unknown>) {
@@ -22,14 +22,14 @@ export class GitDeployPlugin implements AppPlugin {
 		const workflows = this.generateGithubWorkflows(data);
 
 		// first delete all old uix-deploy.yml files
-		for await (const entry of Deno.readDir(workflowDir)) {
+		for await (const entry of Deno.readDir(workflowDir.normal_pathname)) {
 			if (entry.isFile && entry.name.startsWith("uix-deploy-") && entry.name.endsWith(".yml")) {
-				await Deno.remove(workflowDir.getChildPath(entry.name))
+				await Deno.remove(workflowDir.getChildPath(entry.name).normal_pathname)
 			}
 		}
 
 		for (const [fileName, content] of Object.entries(workflows)) {
-			await Deno.writeTextFile(workflowDir.getChildPath(fileName), content)
+			await Deno.writeTextFile(workflowDir.getChildPath(fileName).normal_pathname, content)
 		}
 
 	}

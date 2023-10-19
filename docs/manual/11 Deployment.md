@@ -22,13 +22,11 @@ Unyt.org provides public docker hosts (`@+unyt_eu1`, `@+unyt_eu2`) that can be u
 
 If you want to set up you own docker host on your server, take a look at the [Docker Host](https://github.com/unyt-org/docker-host/) documentation.
 
-## Configuration
-
 The following options can be set in a backend `.dx` file to configure a remote docker host.
 
-* `location`: (endpoint or string) A [docker host](https://github.com/unyt-org/docker-host/) endpoint (e.g. `@+unyt_eu1` or a self-hosted endpoint) where the UIX should be hosted. The default is `@@local`, meaning that the app is run locally and not on a docker host.
-* `domain`: *(text or text[])* One or multiple custom domains on which the web server is listening. This only works if the location is set to a docker host and the domain is pointing to the ip address of the docker host.
-* `volumes`: *(url or url[])* Directories that are mapped to persistent docker volumes when running on a docker host
+* `location`: (endpoint or string) A docker host endpoint (e.g. `@+unyt_eu1` or a self-hosted endpoint) where the UIX should be hosted. The default is `@@local`, meaning that the app is run locally and not on a docker host.
+* `domain`: *(text or text[])* One or multiple custom domains on which the web server is listening. This only works if the domain is pointing to the ip address of the docker host.
+* `volumes`: *(url or url[])* Directories that are mapped to persistent docker volumes on the docker host
 
 **Example:**
 

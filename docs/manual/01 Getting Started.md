@@ -1,6 +1,6 @@
 # Getting Started with UIX
 
-UIX is an open-source full-stack web framework for developing reactive web apps with *restorable and shared state*.
+UIX is an open-source full-stack framework for developing reactive web apps with *restorable and shared state*.
 UIX apps run on a [deno](https://docs.deno.com/runtime/manual) backend and use state-of-the-art web technologies.
 
 The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity and cross-device data exchange*.

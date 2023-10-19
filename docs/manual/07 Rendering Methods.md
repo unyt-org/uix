@@ -10,7 +10,7 @@ interchangably).
 > [!NOTE]
 > The rendering modes discussed in this chapter are not supported for frontend (client-side) rendering.
 > Using rendering modes on the frontend will not lead to errors to keep compatibility, but they don't
-> have any effect in regards to performance and loading times.
+> have any effect with regards to performance and loading times.
 
 ## Overview
 

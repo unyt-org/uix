@@ -12,14 +12,14 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
  * Both backend and frontend code is written as ES6 TypeScript modules
 
 **Main features**
- * Cross-network reactivity
- * Server side rendering with partial hydration
- * Hybrid backend/frontend routing
- * Cross-realm imports
- * Shared memory
- * JSX support
- * Reusable Web Components
- * SCSS support
+ * [Cross-network reactivity](02%20Imports%20and%20Synchronization.md#Reactivity)
+ * [Server side rendering with partial hydration](07%20Rendering%20Modes.md)
+ * [Hybrid backend/frontend routing](05%20Entrypoints%20and%20Routing.md)
+ * [Cross-realm imports](./02%20Imports%20and%20Synchronization.md)
+ * [Shared memory](02%20Imports%20and%20Synchronization.md#Synchronization)
+ * [JSX support](./03%20JSX.md)
+ * [Reusable web components](./04%20Components.md)
+ * [SCSS support](./11%20Style%20and%20Themes.md#SCSS)
  * [And many more](https://uix.unyt.org)...
 
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
@@ -47,12 +47,12 @@ $ brew tap unyt-org/uix
 $ brew install uix
 ```
 
-#### Windows
+#### Windows / other systems
 
 Installation via `deno install`:
 
 ```bash
-$ deno install --import-map https://cdn.unyt.org/importmap.dev.json -Ar -n uix https://cdn.unyt.org/uix/run.ts
+$ deno install --import-map https://cdn.unyt.org/importmap.json -Ar -n uix https://cdn.unyt.org/uix/run.ts
 ```
 
 
@@ -79,10 +79,26 @@ $ uix
 ```
 
 You can pass the following args to the UIX command line utility:
-* `--port {PORT}` / `-p {PORT}` - Specify the port on your local machine where the HTTP server should run
-* `--watch` / `-w` - Setup file watcher to automatically re-transpile TypeScript and SCSS files on change
-* `--live` / `-l` - Enable hot reloading on file change
-* `--inspect` - Enable debugging of the deno process
+* `-p {PORT}`, `--port {PORT}`                - Specify the port
+* `-b`, `--watch-backend`       - Restart the backend deno process when backend files are modified
+* `-l`, `--live`                - Automatically reload connected browsers tabs when files are modified
+* `-w`, `--watch`               - Recompile frontend scripts when files are modified
+* `-d`, `--detach`              - Keep the app running in background
+* `-r`, `--reload`              - Force reload deno caches
+* `-h`, `--help`                - Show the help page
+
+---
+
+* `--hod`, `--http-over-datex`  - Enable HTTP-over-DATEX (default: true)
+* `--stage {STAGE}`             - Current deployment stage (default: dev)
+* `--env {NAME=VAL}`            - Exposed environment variables (for remote deployment)
+* `--clear`                     - Clear all eternal states on the backend
+* `--version`                   - Get the version of your UIX installation
+* `--import-map {PATH}`         - Import map path
+* `--enable-tls`                - Run the web server with TLS
+* `--inspect`                   - Enable debugging for the deno process
+* `--unstable`                  - Enable unstable deno features
+
 
 To run your UIX project without installing the UIX CLI, you can alternatively run the following command in the project root directory:
 ```bash
@@ -100,6 +116,7 @@ With UIX, frontend and backend source code and other resources can be combined i
     │   └── entrypoint.tsx      // Backend entrypoint
     ├── common/                 // Common modules accessible from backend and frontend
     ├── frontend/
+    │   ├── .dx                 // Config file for the frontend endpoint
     │   └── entrypoint.tsx      // Frontend entrypoint
     ├── app.dx                  // App config file
     └── deno.json               // Deno config file

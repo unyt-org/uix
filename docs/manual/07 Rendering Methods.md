@@ -33,7 +33,7 @@ As the name suggests, static rendering can be used for completely static pages
 that provide no JavaScript-based interactivity (forms and form action methods are still supported).
 
 Example:
-```ts
+```tsx
 // file: backend/entrypoint.tsx
 import {renderStatic} from "uix/base/render-methods.ts";
 import type {Context} from "uix/routing/context.ts";
@@ -61,7 +61,7 @@ You can still execute JavaScript on the frontend using [`@frontend` decorators o
 but keep in mind that only default browser APIs are available.
 
 Example:
-```ts
+```tsx
 // file: backend/entrypoint.tsx
 import {renderBackend} from "uix/base/render-methods.ts";
 
@@ -91,7 +91,7 @@ It behaves similarily to [backend rendering](#backend-rendering), with the only 
 that there a complete UIX library and DATEX runtime is available on the frontend.
 
 Example:
-```ts
+```tsx
 // file: backend/entrypoint.tsx
 import {renderHybrid} from "uix/base/render-methods.ts";
 

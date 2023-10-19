@@ -5,7 +5,7 @@ This means that most components and JSX element definitions can either be create
 or on the backend (commonly known as 'server-side rendering').
 
 This chapter will explain the different rendering methods for server-side rendering (that can mostly be used
-interchangably) to provide UI from the *backend*.
+interchangably).
 
 > [!NOTE]
 > The rendering modes discussed in this chapter are not supported for frontend (client-side) rendering.

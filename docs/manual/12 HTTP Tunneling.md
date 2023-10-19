@@ -13,7 +13,7 @@ HTTP Tunneling can be disabled by starting the UIX app with `--http-over-datex=f
 
 > [!NOTE]
 > We don't recommend to use HTTP tunneling for production.
-> There are rate limits and transmission delays leading to longer page
+> There are rate limits and transmission delays, leading to longer page
 > loading times.
 > You can still use your custom `unyt.app` domain (or other domains that you own)
 > when deploying your app on a [docker host](./11%20Deployment.md#remote-docker-hosts)

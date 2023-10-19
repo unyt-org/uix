@@ -10,6 +10,7 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
  * Complete compatibility with web standards
  * Full compatibility with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org Supranet principles
  * Both backend and frontend code is written as ES6 TypeScript modules
+ * No javascript bundlers
 
 **Main features**
  * [Cross-network reactivity](02%20Imports%20and%20Synchronization.md#Reactivity)

@@ -104,7 +104,7 @@ export class TypescriptImportResolver {
             resolved = specifier;
             // ignored entry in import map, can be ignored?
             if (imports[specifier] && this.import_map.isEntryTemporary(specifier)) {}
-            else logger.error("Cannot resolve import '"+specifier+"'") // should not happen, but can ignore for now in workaround impl, because imports are resolved for all ts files in the source directory, even those without correct import map imports
+            else logger.warn("Cannot resolve import '"+specifier+"'") // should not happen, but can ignore for now in workaround impl, because imports are resolved for all ts files in the source directory, even those without correct import map imports
         }
 
         return this.resolveRelativeImportMapImport(resolved, path);
@@ -133,7 +133,7 @@ export class TypescriptImportResolver {
             logger.warn("file does not exist: " + path);
             return;
         }
-		const content = await Deno.readTextFile(path);
+		const content = await Deno.readTextFile(path.normal_pathname);
 
 		const resolved_content = content.replace(TypescriptImportResolver.import_specifier_regex!, (_match: string, p1:string, import_specifier:string)=>{
             const resolved = this.resolveImportSpecifier(import_specifier, reference_path);
@@ -166,7 +166,7 @@ export class TypescriptImportResolver {
             return;
         }
 
-        const content = await Deno.readTextFile(path);
+        const content = await Deno.readTextFile(path.normal_pathname);
 
         const new_imported = new Set<string>();
         const replacers = new Map<string, Map<string,Set<string>>>().setAutoDefault(Map); // import path -> (key -> imports)
@@ -203,7 +203,7 @@ export class TypescriptImportResolver {
             for (const ext of this.custom_extensions) {
                 if (abs_import_path?.filename.endsWith(ext)) {
                     if (!this.oos_handler) {
-                        logger.error("could not resolve custom interface path (no handler): " + reference_path.pathname);
+                        logger.error("could not resolve custom interface path (no handler): " + reference_path.normal_pathname);
                         return `${p1}"[could not resolve path]"`
                     }
                     is_ext = true;
@@ -214,7 +214,7 @@ export class TypescriptImportResolver {
             if (is_ext || is_oos || is_prefix) {
 
                 if (!this.oos_handler) {
-                    logger.error("could not resolve out of scope path (no handler): " + reference_path.pathname);
+                    logger.error("could not resolve out of scope path (no handler): " + reference_path.normal_pathname);
                     return `${p1}"[could not resolve path]"`
                 }
 
@@ -271,7 +271,7 @@ export class TypescriptImportResolver {
             this.last_imported_for_path.set(path.toString(), new_imported);
         }
 
-        await Deno.writeTextFile(path, new_content);
+        //await Deno.writeTextFile(path, new_content);
         this.currently_resolving.delete(path.toString())
     }
 

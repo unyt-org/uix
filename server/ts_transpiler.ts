@@ -238,7 +238,7 @@ export class TypescriptTranspiler {
 
         // logger.info("file watcher activated for " + this.src_dir.pathname);
 
-        for await (const event of this.#main_fs_watcher = Deno.watchFs(this.src_dir.pathname, {recursive: true})) {
+        for await (const event of this.#main_fs_watcher = Deno.watchFs(this.src_dir.normal_pathname, {recursive: true})) {
             try {
 				for (const path of event.paths) {
 					this.handleFileWatchUpdate(path);
@@ -370,7 +370,7 @@ export class TypescriptTranspiler {
     }
 
     protected async loadSCSSDependencies(src_path:Path.File) {
-        const content = await Deno.readTextFile(src_path);
+        const content = await Deno.readTextFile(src_path.normal_pathname);
         for (const dep of content.matchAll(/^\s*@use\s*"([^"]*)"/gm)) {
             let import_path = new Path<Path.Protocol.File>(dep[1], src_path);
             if (!import_path.ext) import_path = import_path.getWithFileExtension("scss");
@@ -419,14 +419,14 @@ export class TypescriptTranspiler {
 
         logger.info("file watcher activated for " + virtual_path);
 
-        const path = await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path));
+        const path = await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
         this.syncVirtualFile(virtual_path, src_path);
         return path;
     }
 
 
     private async syncVirtualFile(virtual_path:Path.File, src_path:Path.File){
-        const watcher = Deno.watchFs(src_path.pathname);
+        const watcher = Deno.watchFs(src_path.normal_pathname);
         this.#fs_watchers.set(virtual_path.toString(), watcher);
 
         for await (const event of watcher) {
@@ -435,7 +435,7 @@ export class TypescriptTranspiler {
 					const src_path = new Path(path);
 
                     logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
-                    await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path));
+                    await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
 				}
             }
             catch (e) {
@@ -546,7 +546,7 @@ export class TypescriptTranspiler {
     private async transpileToJSDenoEmitLegacy(ts_dist_path:Path.File) { 
         try {
             // @ts-ignore emit workaround *******
-            const {files, diagnostics} = await Deno.emit(ts_dist_path.pathname, {
+            const {files, diagnostics} = await Deno.emit(ts_dist_path.normal_pathname, {
                 check: false,
                 compilerOptions: {
                     checkJs: false,

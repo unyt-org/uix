@@ -29,7 +29,7 @@ if (version) {
 }
 
 if (!config_path && !CommandLineOptions.collecting) {
-	throw "Could not find an app.dx or app.json config file in " + _path.pathname
+	throw "Could not find an app.dx or app.json config file in " + _path.normal_pathname
 }
 export const root_path = (config_path ? new Path(config_path).parent_dir : null) as Path.File;
 

@@ -287,7 +287,7 @@ export class Server {
         else logger.info(`available on ${enable_tls?"https":"http"}://localhost${this.port==80?'':':'+this.port}`);
         this.#running = true;
 
-        (async ()=>{
+        const serve = async () => {
             try {
                 for await (const conn of server) {
                     let handled:boolean|void = false;
@@ -298,8 +298,11 @@ export class Server {
             }
             catch (e){
                 console.error("Fatal server error: ", e)
+                serve();
             }
-        })()
+        }
+
+        serve();
     }
 
 

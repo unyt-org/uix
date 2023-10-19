@@ -211,7 +211,7 @@ export class FrontendManager extends HTMLProvider {
 
 		// bind /@uix/frontend to scope
 		this.server.path(new RegExp(String.raw `^${this.srcPrefixRegex}${this.scope.name}\/.*`), (req, path)=>{
-			return path.replace(this.#web_path.pathname, '/');
+			return path.replace(this.#web_path.normal_pathname, '/');
 		});
 
 		// handled default web paths
@@ -220,7 +220,7 @@ export class FrontendManager extends HTMLProvider {
 		this.server.path("/robots.txt", (req, path)=>this.handleRobotsTXT(req, path));
 
 		this.server.path(/^\/@uix\/cache\/.*$/, async (req, path)=>{
-			await req.respondWith(await serveDir!(req.request, {fsRoot:UIX_CACHE_PATH.pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
+			await req.respondWith(await serveDir!(req.request, {fsRoot:UIX_CACHE_PATH.normal_pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
 		});
 
 		this.server.path(/^\/@uix\/form-action\/.*$/, (req, path, con)=>{
@@ -685,7 +685,7 @@ runner.enableHotReloading();
 
 	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider) {
 		const url = new Path(requestEvent.request.url);
-		const pathAndQueryParameters = url.pathname + url.search;
+		const pathAndQueryParameters = url.normal_pathname + url.search;
 		const compat = Server.isSafariClient(requestEvent.request);
 		const lang = UIX.ContextBuilder.getRequestLanguage(requestEvent.request);
 		try {

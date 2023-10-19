@@ -1,6 +1,7 @@
 // no explicit imports, should also work without import maps...
 import {getExistingFile} from "../utils/file_utils.ts";
 import { command_line_options } from "../app/args.ts";
+import { Path } from "../utils/path.ts";
 
 const default_importmap = "https://dev.cdn.unyt.org/importmap.json";
 const arg_import_map = command_line_options.option("import-map", {type:"URL", description: "Import map path"});
@@ -37,7 +38,7 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 		}
 
 	}
-	else throw "Could not find an app.dx or app.json config file in " + root_path.pathname
+	else throw "Could not find an app.dx or app.json config file in " + new Path(root_path).normal_pathname
 
 
 	// overwrite --import-map path
@@ -47,7 +48,7 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 	const deno_path = getExistingFile(root_path, './deno.json');
 	if (!config.import_map_path && !config.import_map && deno_path) {
 		try {
-			const deno = JSON.parse(await Deno.readTextFile(deno_path));
+			const deno = JSON.parse(await Deno.readTextFile(new Path(deno_path).normal_pathname));
 			
 			// imports
 			if (deno.imports) {

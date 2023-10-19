@@ -25,10 +25,10 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
 This is why UIX ships with integrated features such as:
  * Hot reloading
- * Testing library
- * Stage management
+ * [Testing library](https://github.com/unyt-org/unyt-tests/)
+ * [Stage management](./08%20Configuration.md#app-deployment-stages)
  * Version management
- * Automated deployment
+ * [Automated deployment](./11%20Deployment.md)
 
 ### CLI Installation
 

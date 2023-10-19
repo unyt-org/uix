@@ -2,6 +2,7 @@
 
 UIX provides a way to write app plugins in the form of [DATEX Plugins](https://github.com/unyt-org/datex-specification)
 and use them in `app.dx` files.
+App plugins are always called before the UIX app is started.
 
 An example for an app plugin is the [Git Deploy Plugin](https://cdn.unyt.org/uix/plugins/git-deploy.ts) which is available per
 default in any UIX app.
@@ -31,7 +32,7 @@ plugin git_deploy (
     on: 'push',
     branch: 'main'
   )
-)
+);
 ```
 
 Plugin initialization might also not contain any content at all:
@@ -76,5 +77,5 @@ export default class MyPlugin implements AppPlugin<{text: string}> {
   ```dx
   plugin my_plugin ({
     text: "Hello Plugin"
-  })
+  });
   ```

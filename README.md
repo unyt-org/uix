@@ -54,7 +54,7 @@ This is why UIX ships with integrated features such as:
 4. [Components](./docs/manual/04%20Components.md)
 5. [Entrypoints and Routing](./docs/manual/05%20Entrypoints%20and%20Routing.md)
 6. ~States~
-7. [Rendering Methods](./docs/manual/07%Rendering%20Methods.md)
+7. [Rendering Methods](./docs/manual/07%20Rendering%20Methods.md)
 8. [Configuration](./docs/manual/08%20Configuration.md)
 9. [Localization](./docs/manual/09%20Localization.md)
 10. [Functions and Contexts](./docs/manual/10%20Functions%20and%20Contexts.md)

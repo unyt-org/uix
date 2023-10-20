@@ -28,7 +28,7 @@ export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 		// get from hydration cache
 		if ((ctx as any)._hydrationPtr) {
 			content = hydrationCache.get((ctx as any)._hydrationPtr)
-			logger.info("hydcache", content)
+			// logger.info("hydcache", content)
 		}
 
 		// resolve entrypoint

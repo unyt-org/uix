@@ -47,16 +47,31 @@ To run a UIX app in a specific stage, use the `--stage` options:
 $ uix --stage production
 ```
 
+Per default, running a UIX app in a different stage does not have any noticable effect.
+
+The current stage can be accessed via `app.stage`:
+```ts
+import { app } from "uix/app/app.ts";
+const stage = app.stage // "production"
+```
+
+In `app.dx` files, the `#public.uix.stage` helper function can be used to access the stage,
+enabling custom [deployment configurations](./11%20Deployment.md).
+
 ## The .dx files
 
 `.dx` files can be put in frontend or backend directories.
+A `.dx` configuration file in a backend directory is applied to the backend endpoint,
+a `.dx` file in a frontend directory is applied to each frontend endpoint.
 
 ### Options
 
-Per default, a .dx file can contain the following options:
+Per default, a `.dx` config file can contain the following options:
 * `endpoint`: (endpoint) The endpoint that should be used for this directory
+* `connect`: (boolean) Connect to the supranet on start (default: true)
+* `keys`: (Crypto.ExportedKeySet) Set custom private + public keys for this endpoint
 
-Additional options for backend endpoint may be passed according to the options defined in [Deployment](./11%20Deployment.md).
+Additional options may be passed in for backend endpoints `.dx` configurations (See [Deployment](./11%20Deployment.md)).
 
 
 ### The "stage" helper function
@@ -67,8 +82,8 @@ the `#public.uix.stage` helper function can be used:
 use stage from #public.uix; // import the 'stage' helper function
 
 endpoint: stage {
-    dev: 		@+my_app_dev,  // selected when running in 'dev' stage
-    staging:	@+my_app_stag, // selected when running in 'staging' stage
-    prod: 		@+my_app_prod  // selected when running in 'prod' stage
+    dev:        @+my_app_dev,  // selected when running in 'dev' stage
+    staging:    @+my_app_stag, // selected when running in 'staging' stage
+    prod:       @+my_app_prod  // selected when running in 'prod' stage
 }
 ```

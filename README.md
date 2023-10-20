@@ -1,10 +1,18 @@
 <img alt="UIX - The Fullstack Framework" src="./src/logos/banner.svg" style="max-width:400px">
 
-## What is UIX?
-[UIX](https://uix.unyt.org) is a modern open-source full-stack web framework for developing reactive web apps with *restorable and shared state*.
-UIX supports both *single- and multi page* applications with frontend or server-side rendering including hydration and uses state-of-the-art web features.
+[uix.unyt.org](https://uix.unyt.org) &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; a unyt.org project 
 
-The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing usefull functionality such as *reactivity and cross-device data exchange*.
+--------------------------
+
+## What is UIX?
+
+UIX is an open-source full-stack framework for developing reactive web apps with *restorable and shared state*.
+UIX runs on a [deno](https://docs.deno.com/runtime/manual) backend and 
+supports both *single- and multi page* applications 
+with frontend or server-side rendering and hydration.
+
+
+The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity and cross-device data exchange*.
 In contrast to frameworks like React, UIX provides *direct wiring* to the DOM for reactivity and does not need a virtual DOM.
 
 There are many ways to create UIX applications:
@@ -12,34 +20,32 @@ There are many ways to create UIX applications:
  * defining UIX states with **DATEX**
  * using the **UIX Web Editor** (still in development)
 
-The UIX library is designed in a modular approach that makes it easy for developers to add custom components and logic as needed.
-
+The UIX library is designed with  a modular approach that makes it easy for developers to add custom components and logic as needed.
 
 
 **Main features**
- * Cross-network reactivity
- * Server side rendering with partial hydration
- * Hybrid backend/frontend routing
- * Cross-realm imports
- * Shared memory
- * JSX support
- * Reusable Web Components
- * SCSS support
+ * [Cross-network reactivity](./docs/manual/02%20Imports%20and%20Synchronization.md#Reactivity)
+ * [Server side rendering with partial hydration](./docs/manual/07%20Rendering%20Modes.md)
+ * [Hybrid backend/frontend routing](./docs/manual/05%20Entrypoints%20and%20Routing.md)
+ * [Cross-realm imports](./docs/manual/02%20Imports%20and%20Synchronization.md)
+ * [Shared memory](./docs/manual/02%20Imports%20and%20Synchronization.md#Synchronization)
+ * [JSX support](./docs/manual/03%20JSX.md)
+ * [Reusable web components](./docs/manual/04%20Components.md)
+ * [SCSS support](./docs/manual/11%20Style%20and%20Themes.md#SCSS)
  * [And many more](https://uix.unyt.org)...
 
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
 This is why UIX ships with integrated features such as:
  * Hot reloading
- * Testing library
- * Stage management
+ * [Testing library](https://github.com/unyt-org/unyt-tests/)
+ * [Stage management](./docs/manual/08%20Configuration.md#app-deployment-stages)
  * Version management
- * Automated deployment
-
+ * [Automated deployment](./docs/manual/11%20Deployment.md)
 
 ## Documentation
 
 > [!NOTE]
-> You can find all [UIX](https://uix.unyt.org) documentation and ressources on [docs.unyt.org](https://docs.unyt.org).
+> You can find all [UIX](https://uix.unyt.org) documentation and resources on [docs.unyt.org](https://docs.unyt.org).
 > Please be aware that the documentation is work in progress and may change in the future.
 
 1. [Getting Started](./docs/manual/01%20Getting%20Started.md)
@@ -47,10 +53,14 @@ This is why UIX ships with integrated features such as:
 3. [JSX](./docs/manual/03%20JSX.md)
 4. [Components](./docs/manual/04%20Components.md)
 5. [Entrypoints and Routing](./docs/manual/05%20Entrypoints%20and%20Routing.md)
-6. [States](./docs/manual/06%20States.md)
-7. [Standalone Mode](./docs/manual/07%20Standalone%20Mode.md)
+6. ~States~
+7. [Rendering Methods](./docs/manual/07%Rendering%20Methods.md)
 8. [Configuration](./docs/manual/08%20Configuration.md)
-8. [Localization](./docs/manual/09%20Localization.md)
+9. [Localization](./docs/manual/09%20Localization.md)
+10. [Functions and Contexts](./docs/manual/10%20Functions%20and%20Contexts.md)
+11. [Deployment](./docs/manual/11%20Deployment.md)
+12. [HTTP Tunneling](./docs/manual/12%20HTTP%20Tunneling.md)
+13. [Plugins](./docs/manual/13%20Plugins.md)
 
 ## Examples
 Feel free to browse a collection of UIX projects on [uix.unyt.org/templates](https://uix.unyt.org/templates).
@@ -81,7 +91,8 @@ you can take a look at UIX DOM.
 
 ## Contributing
 
-Please take a look at the [Development Guidelines](./DEVELOP.md) to contribute.
+We welcome every contribution!<br>
+Please take a look at the [development guidelines](./DEVELOP.md) and the unyt.org [contribution guidlines](https://github.com/unyt-org/.github-private/blob/main/CONTRIBUTING.md).
 
 ## Connect with us
 

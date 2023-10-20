@@ -1,15 +1,16 @@
 # Getting Started with UIX
 
-[UIX](https://uix.unyt.org) is an open-source full-stack web framework for developing reactive web apps with *restorable and shared state*.
+UIX is an open-source full-stack framework for developing reactive web apps with *restorable and shared state*.
 UIX apps run on a [deno](https://docs.deno.com/runtime/manual) backend and use state-of-the-art web technologies.
 
-The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing usefull functionality such as *reactivity and cross-device data exchange*.
+The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity and cross-device data exchange*.
 In contrast to frameworks like React, UIX provides *direct wiring* to the DOM for reactivity and does not need a virtual DOM.
 
 **Our core principles**
  * Complete compatibility with web standards
  * Full compatibility with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org Supranet principles
  * Both backend and frontend code is written as ES6 TypeScript modules
+ * No JavaScript bundlers
 
 **Main features**
  * [Cross-network reactivity](02%20Imports%20and%20Synchronization.md#Reactivity)
@@ -25,10 +26,10 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
 This is why UIX ships with integrated features such as:
  * Hot reloading
- * Testing library
- * Stage management
+ * [Testing library](https://github.com/unyt-org/unyt-tests/)
+ * [Stage management](./08%20Configuration.md#app-deployment-stages)
  * Version management
- * Automated deployment
+ * [Automated deployment](./11%20Deployment.md)
 
 ### CLI Installation
 

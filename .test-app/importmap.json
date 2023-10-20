@@ -2,6 +2,8 @@
     "imports": {
         "datex-core-legacy": "https://dev.cdn.unyt.org/unyt_core/datex.ts",
         "datex-core-legacy/": "https://dev.cdn.unyt.org/unyt_core/",
+        "unyt_core": "https://dev.cdn.unyt.org/unyt_core/datex.ts",
+        "unyt_core/": "https://dev.cdn.unyt.org/unyt_core/",
         "uix": "http://localhost:4242/uix.ts",
         "uix/": "http://localhost:4242/src/",
         "uix/uix-short.ts": "http://localhost:4242/uix-short.ts",

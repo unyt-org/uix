@@ -49,7 +49,7 @@ This is why UIX ships with integrated features such as:
 > Please be aware that the documentation is work in progress and may change in the future.
 
 1. [Getting Started](./docs/manual/01%20Getting%20Started.md)
-2. [Imports](./docs/manual/02%20Imports.md)
+2. [Imports](./docs/manual/02%20Imports%20and%20Synchronization.md)
 3. [JSX](./docs/manual/03%20JSX.md)
 4. [Components](./docs/manual/04%20Components.md)
 5. [Entrypoints and Routing](./docs/manual/05%20Entrypoints%20and%20Routing.md)

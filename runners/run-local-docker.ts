@@ -1,6 +1,6 @@
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
 import { Path } from "../utils/path.ts";
-import { stage } from "../app/args.ts";
+import { stage, watch } from "../app/args.ts";
 import { createHash } from "https://deno.land/std@0.91.0/hash/mod.ts";
 import { Datex } from "unyt_core/mod.ts";
 import { UIXRunner, runOptions } from "./runner.ts";
@@ -29,6 +29,15 @@ export default class LocalDockerRunner implements UIXRunner {
 		await execCommand(`docker network inspect ${network} &>/dev/null || docker network create ${network}`)
 
 
+		// first make sure container is not already running
+		await new Deno.Command("docker-compose", {
+			args: [
+				"-f",
+				filePath.normal_pathname,
+				"down"
+			]
+		}).output();
+
 		const output = await new Deno.Command("docker-compose", {
 			args: [
 				// "compose",
@@ -46,6 +55,21 @@ export default class LocalDockerRunner implements UIXRunner {
 		else {
 			const id = (await execCommand("docker ps -l")).split("\n")[1]?.split(" ")[0] ?? "unknown id";
 			console.log(ESCAPE_SEQUENCES.GREEN + runOptions.endpoint + (Object.keys(runOptions.domains).length ? ` (${Object.keys(runOptions.domains).map(domain=>`https://${domain}`).join(", ")})` : '') +" is running in local docker container ("+id+")" + ESCAPE_SEQUENCES.RESET);
+			
+			if (runOptions.params.detach || id === "unknown id") {
+				return;
+			}
+		
+			else {
+				await new Deno.Command("docker", {
+					args: [
+						"logs",
+						"--follow",
+						id
+					]
+				}).spawn().status;
+			}
+
 		}
 
 	}
@@ -61,6 +85,11 @@ export default class LocalDockerRunner implements UIXRunner {
 
 		const volumeName = name.replace(/[^a-zA-Z0-9_.-]/g, '-') + '-datex-cache'
 
+		// TODO: generic arg sanitisation (also for run-remote)
+		// TODO: inject args dynamically? not in docker compose file
+		const args = [];
+		if (watch) args.push("--watch");
+
 		const dockerCompose = {
 			version: "3",
 
@@ -68,7 +97,7 @@ export default class LocalDockerRunner implements UIXRunner {
 				"uix-app": {
 					container_name: `${name}`,
 					image: "denoland/deno",
-					
+
 					expose: ["80"],
 
 					environment: [
@@ -85,7 +114,7 @@ export default class LocalDockerRunner implements UIXRunner {
 					labels: traefikLabels,
 					
 					entrypoint: "/bin/sh",
-    				command: `-c "deno run --import-map https://dev.cdn.unyt.org/uix/importmap.dev.json -Aqr https://dev.cdn.unyt.org/uix/run.ts -r --port 80 --stage ${stage} --cache-path /datex-cache"`,
+    				command: `-c "deno run --import-map https://dev.cdn.unyt.org/uix/importmap.dev.json -Aqr https://dev.cdn.unyt.org/uix/run.ts -r --port 80 --stage ${stage} --cache-path /datex-cache ${args.join(" ")}"`,
 		
 					restart: "always"
 				}

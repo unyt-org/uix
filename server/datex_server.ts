@@ -446,6 +446,10 @@ class WebsocketComInterface extends ServerDatexInterface {
     private connected_endpoints = new Map<Datex.Target, any>();
     private socket_endpoints = new WeakMap<WebSocket, Datex.Endpoint>() 
 
+    public get activeConnections() {
+        return this.connected_endpoints.size
+    }
+
     init() {
         this.logger.success("init");
 
@@ -464,6 +468,15 @@ class WebsocketComInterface extends ServerDatexInterface {
 
             const { socket, response } = Deno.upgradeWebSocket(req);
             requestEvent.respondWith(response);
+
+            const dispose = () => {
+                const endpoint = this.socket_endpoints.get(socket)!;
+                this.connected_endpoints.delete(endpoint)
+                this.socket_endpoints.delete(socket)
+            }
+
+            socket.onclose = dispose
+            socket.onerror = dispose
 
             socket.onmessage = async (e:MessageEvent<ArrayBuffer>) => {
 
@@ -507,7 +520,7 @@ class WebsocketComInterface extends ServerDatexInterface {
         // try to find an other endpoint over which the requested endpoint is connected
         if (!this.connected_endpoints.has(to)) {
             if (this.reachable_endpoints.has(to)) to = this.reachable_endpoints.get(to);
-            else {this.logger.error("alias " + to + " not connected");return;}
+            else {console.log(to + " not reachable via redirect");return;}
         }
 
         // send to a connected endpoint
@@ -516,7 +529,9 @@ class WebsocketComInterface extends ServerDatexInterface {
                 this.connected_endpoints.get(to).send(dx)
             }
             catch (e) {
-                console.log("Socket Error 2", e);
+                this.socket_connection.delete(this.connected_endpoints.get(to));
+                this.connected_endpoints.delete(to);
+                console.log("Socket Error sending to " + to, e);
             }
         }
     }
@@ -535,8 +550,6 @@ export namespace DatexServer {
     export const web_push_interface = <WebPushInterface> WebPushInterface.getInstance();
     
     export async function init(interfaces=["http", "tcp", "tcp_cli", "websocket", "websocketstream", "webpush"], parent_node?:Datex.Endpoint, server?:Server) {
-
-
         
         if (parent_node) {
             console.log("Connecting to parent node: " + parent_node);

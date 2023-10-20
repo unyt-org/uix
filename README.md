@@ -25,7 +25,7 @@ The UIX library is designed with  a modular approach that makes it easy for deve
 
 **Main features**
  * [Cross-network reactivity](./docs/manual/02%20Imports%20and%20Synchronization.md#Reactivity)
- * [Server side rendering with partial hydration](./docs/manual/07%20Rendering%20Modes.md)
+ * [Server side rendering with partial hydration](./docs/manual/07%20Rendering%20Methods.md)
  * [Hybrid backend/frontend routing](./docs/manual/05%20Entrypoints%20and%20Routing.md)
  * [Cross-realm imports](./docs/manual/02%20Imports%20and%20Synchronization.md)
  * [Shared memory](./docs/manual/02%20Imports%20and%20Synchronization.md#Synchronization)

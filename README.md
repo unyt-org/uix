@@ -31,7 +31,7 @@ The UIX library is designed with  a modular approach that makes it easy for deve
  * [Shared memory](./docs/manual/02%20Imports%20and%20Synchronization.md#Synchronization)
  * [JSX support](./docs/manual/03%20JSX.md)
  * [Reusable web components](./docs/manual/04%20Components.md)
- * [SCSS support](./docs/manual/11%20Style%20and%20Themes.md#SCSS)
+ * [SCSS support](./docs/manual/14%20Style%20and%20Theme.md#SCSS)
  * [And many more](https://uix.unyt.org)...
 
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 

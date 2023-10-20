@@ -1,4 +1,4 @@
-import { renderBackend } from "uix/html/render-methods.ts";
+import { renderBackend } from "uix/base/render-methods.ts";
 
 export const invalid = renderBackend(
 	<div style="margin:10px">

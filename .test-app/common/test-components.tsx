@@ -80,6 +80,7 @@ class ClassComponent extends Component {
 		this.description.innerText = "New description ...";
     }
 }
+console.log("ClassComponent", typeof ClassComponent)
 
 @template<{title:string}>(({title}) =>
 	<article>

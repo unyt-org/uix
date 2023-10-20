@@ -149,9 +149,8 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 		}
 	}
 	else generator = function(maybeClass:any) {
-
 		// decorator
-		if (Object.isPrototypeOf(maybeClass)) {
+		if (Component.isPrototypeOf(maybeClass)) {
 			maybeClass._init_module = module;
 			const decoratedClass = defaultOptions(maybeClass)
 			decoratedClass.template = generator

@@ -43,7 +43,7 @@ export type appMetadata = {
 	usid?: string
 }
 
-class UIXApp {
+class App {
 
 	constructor() {
 		// get import map from <script type=importmap>
@@ -231,7 +231,7 @@ class UIXApp {
 /**
  * The currrent UIXApp, accessible on a client or on the backend
  */
-export const app = new UIXApp();
+export const app = new App();
 
 // @ts-ignore
 globalThis.reset = app.reset

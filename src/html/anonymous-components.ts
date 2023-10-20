@@ -1,10 +1,11 @@
 import { Datex } from "datex-core-legacy";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../uix-dom/jsx/parser.ts";
-import { UIXComponent } from "../components/UIXComponent.ts";
-import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
+import { Component } from "../components/Component.ts";
+import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import type { Element, Node, HTMLElement, HTMLTemplateElement, CSSStyleSheet } from "../uix-dom/dom/mod.ts";
+import { defaultOptions } from "../base/decorators.ts";
 
 /**
  * cloneNode(true), but also clones shadow roots.
@@ -61,7 +62,7 @@ type Equals<X, Y> =
 type Props<Options extends Record<string,unknown>, Children, handleAllProps = true> = JSX.DatexValueObject<Options> & 
 (
 	handleAllProps extends true ? 
-		(JSX.IntrinsicAttributes & 
+		(JSX._IntrinsicAttributes & 
 			(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: Children}))
 		) : unknown
 )
@@ -128,9 +129,9 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 	const module = getCallerFile();
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
-		if (UIXComponent.isPrototypeOf(propsOrClass)) {
+		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			const decoratedClass = Component(propsOrClass)
+			const decoratedClass = defaultOptions(propsOrClass)
 			decoratedClass.template = generator
 			return decoratedClass
 		}
@@ -150,9 +151,9 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 	else generator = function(maybeClass:any) {
 
 		// decorator
-		if (UIXComponent.isPrototypeOf(maybeClass)) {
+		if (Object.isPrototypeOf(maybeClass)) {
 			maybeClass._init_module = module;
-			const decoratedClass = Component(maybeClass)
+			const decoratedClass = defaultOptions(maybeClass)
 			decoratedClass.template = generator
 			return decoratedClass
 		}
@@ -166,6 +167,8 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 	(generator as any)[SET_DEFAULT_CHILDREN] = true;
 	return generator;
 }
+
+
 
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
@@ -213,7 +216,7 @@ export function blankTemplate<Options extends Record<string, any>, Children = JS
  *     background-color: ${color};
  *   }
  * `)
- * class MyComponent extends UIXComponent {...}
+ * class MyComponent extends Component {...}
  * ```
  * @param styleGenerator 
  */
@@ -230,7 +233,7 @@ export function style<Options extends Record<string, any> = {}, Children = JSX.c
  *     background-color: magenta;
  *   }
  * `)
- * class MyComponent extends UIXComponent {...}
+ * class MyComponent extends Component {...}
  * ```
  * @param styleGenerator 
  */
@@ -243,7 +246,7 @@ export function style(style:CSSStyleSheet):((cl:typeof HTMLElement)=>any)
  *
  * ```tsx
  * ;@style("./my-style.scss")
- * class MyComponent extends UIXComponent {...}
+ * class MyComponent extends Component {...}
  * ```
  * @param styleGenerator 
  */
@@ -260,7 +263,7 @@ export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGener
 	// generator function
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
-		if (UIXComponent.isPrototypeOf(propsOrClass)) {
+		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			if (!propsOrClass.style_templates) propsOrClass.style_templates = new Set()
 			propsOrClass.style_templates.add(generator)
@@ -283,7 +286,7 @@ export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGener
 	else generator = function (propsOrClass:any) {
 
 		// decorator
-		if (UIXComponent.isPrototypeOf(propsOrClass)) {
+		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			if (!propsOrClass.style_templates) propsOrClass.style_templates = new Set()
 			propsOrClass.style_templates.add(generator)

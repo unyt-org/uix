@@ -18,7 +18,7 @@ import { getDirType } from "./utils.ts";
 import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "datex-core-legacy/utils/interface-generator.ts"
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
-import { RenderMethod } from "../html/render-methods.ts";
+import { RenderMethod } from "../base/render-methods.ts";
 import { Context, ContextBuilder, ContextGenerator, getHTTPRequestEndpoint } from "../routing/context.ts";
 import { Entrypoint, raw_content } from "../html/entrypoints.ts";
 import { createErrorHTML } from "../html/errors.tsx";
@@ -617,7 +617,7 @@ export class FrontendManager extends HTMLProvider {
 		try {
 			const module = await datex.get(path);
 			const dx_type = Datex.Type.ofValue(module)
-			const names = module && dx_type == Datex.Type.std.Object ? Object.keys(module) : [];
+			const names = module && (dx_type == Datex.Type.std.Object || dx_type == Datex.Type.js.NativeObject) ? Object.keys(module) : [];
 			return new Set(names);
 		}
 		catch { // network error, etc., TODO: warning somewhere

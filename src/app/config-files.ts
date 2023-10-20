@@ -2,14 +2,11 @@
 import {getExistingFile} from "../utils/file-utils.ts";
 import { command_line_options } from "../app/args.ts";
 import { Path } from "../utils/path.ts";
+import { Datex } from "datex-core-legacy/mod.ts";
+import type { AppPlugin } from "./app-plugin.ts";
 
 const default_importmap = "https://dev.cdn.unyt.org/importmap.json";
 const arg_import_map = command_line_options.option("import-map", {type:"URL", description: "Import map path"});
-
-export interface AppPlugin {
-	name: string
-	apply(data:any): Promise<void>|void
-}
 
 
 /**
@@ -32,6 +29,7 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 			const pluginData = await datex.get<Record<string,any>>(config_path, undefined, undefined, plugins.map(p=>p.name));
 			for (const plugin of plugins) {
 				if (pluginData[plugin.name]) {
+					console.log(`Using plugin "${plugin.name}"`);
 					await plugin.apply(pluginData[plugin.name])
 				}
 			}

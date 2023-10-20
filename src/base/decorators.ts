@@ -1,28 +1,25 @@
 import { Datex } from "datex-core-legacy";
 import { context_kind, context_meta_getter, context_meta_setter, context_name, handleDecoratorArgs, METADATA } from "datex-core-legacy/datex_all.ts";
 import { logger } from "../utils/global-values.ts";
-import { getCloneKeys, UIXComponent } from "../components/UIXComponent.ts";
+import { getCloneKeys, Component } from "../components/Component.ts";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { domContext } from "../app/dom-context.ts";
 
 
 
 /**
- * @Component decorators for custom new elements and default elements
- * @deprecated use @UIX.defaultOptions (todo)
+ * @defaultOptions to define component default options
  */
-export function Component<T extends UIXComponent.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>):any
-export function Component():any
-export function Component<C>(target: Function & { prototype: C }):any
-export function Component<C>(...args:any[]):any {
+export function defaultOptions<T extends Component.Options> (default_options:Partial<Datex.DatexObjectPartialInit<T>>):any
+export function defaultOptions():any
+export function defaultOptions<C>(target: Function & { prototype: C }):any
+export function defaultOptions<C>(...args:any[]):any {
 	const url = getCallerFile(); // TODO: called even if _init_module set
-	return handleDecoratorArgs(args, (...args)=>_Component(url, ...args));
+	return handleDecoratorArgs(args, (...args)=>_defaultOptions(url, ...args));
 }
 
-// use instead of @UIX.Component
-export const defaultOptions = Component;
 
-function _Component(url:string, component_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[any] = []) {
+function _defaultOptions(url:string, component_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[any] = []) {
 	url = Object.hasOwn(component_class, "_init_module") ?
 		component_class._init_module :
 		url;
@@ -34,10 +31,10 @@ function _Component(url:string, component_class:typeof HTMLElement, name:context
 
 	// deprecated message
 	// if (component_class.prototype instanceof Components.Base) {
-	// 	logger.warn("UIX.Components.Base is deprecated - please use UIXComponent")
+	// 	logger.warn("UIX.Components.Base is deprecated - please use Component")
 	// }
 
-	if (component_class.prototype instanceof UIXComponent) {
+	if (component_class.prototype instanceof Component) {
 
 		// set auto module (url from stack trace), not if module === null => resources was disabled with @NoResources
 		if (url && component_class._module !== null) component_class._module = url;
@@ -100,15 +97,15 @@ function _Component(url:string, component_class:typeof HTMLElement, name:context
 		})
 
 		// define custom DOM element after everything is initialized
-		// TODO: rename, also in UIXComponent.ts
+		// TODO: rename, also in Component.ts
 		domContext.customElements.define("uix-" + name, component_class)
 		return new_class //element_class
 	}
-	else throw new Error("Invalid @Component - class must extend or UIXComponent")
+	else throw new Error("Invalid @defaultOptions - class must extend or Component")
 }
 
 /**
- * @NoResources: disable external resource loading (.css, .dx), must be located below the @Component decorator
+ * @NoResources: disable external resource loading (.css, .dx), must be located below the @defaultOptions decorator
  */
 export function NoResources<C>(target: Function & { prototype: C }):any
 export function NoResources(...args:any[]):any {
@@ -118,7 +115,7 @@ export function NoResources(...args:any[]):any {
 function _NoResources(component_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter) {
 	// was called after @Component
 	if (Object.hasOwn(component_class, '_module')) {
-		throw new Error("Please put the @NoResources decorator for the component '"+name+"' below the @Component decorator");
+		throw new Error("Please put the @NoResources decorator for the component '"+name+"' below the @defaultOptions decorator");
 	}
 	component_class._use_resources = false;
 }

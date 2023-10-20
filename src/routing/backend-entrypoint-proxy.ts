@@ -1,6 +1,6 @@
 import { domContext } from "../app/dom-context.ts";
 import { Entrypoint } from "../html/entrypoints.ts";
-import { RenderMethod } from "../html/render-methods.ts";
+import { RenderMethod } from "../base/render-methods.ts";
 import { hydrationCache } from "../hydration/hydration-cache.ts";
 import { PartialHydration } from "../hydration/partial-hydration.ts";
 import { Element } from "../uix-dom/dom/mod.ts";

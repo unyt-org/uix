@@ -28,14 +28,14 @@ export type standalonePropertyData = {type:'prop'}
 export type standaloneProperties = Record<string, (standaloneContentPropertyData | standalonePropertyData) & {init?:propInit }>;
 
 // deno-lint-ignore no-namespace
-export namespace UIXComponent {
+export namespace Component {
     export interface Options {
         title?: string
     }
 }
 
 @template("uix:component") 
-export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
+export abstract class Component<O = Component.Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -47,7 +47,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     ]
     
 
-    static DEFAULT_OPTIONS:UIXComponent.Options = {};
+    static DEFAULT_OPTIONS:Component.Options = {};
     static CLONE_OPTION_KEYS: Set<string> // list of all default option keys that need to be cloned when options are initialized (non-primitive options)
 
     // guessing module stylesheets, get added to normal stylesheets array after successful fetch
@@ -128,7 +128,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         }
     }
 
-    private static async loadDatexImports(target:UIXComponent|typeof UIXComponent, valid_dx_files:string[], dx_file_values:Map<string,[any,Set<string>]>){
+    private static async loadDatexImports(target:Component|typeof Component, valid_dx_files:string[], dx_file_values:Map<string,[any,Set<string>]>){
         const allowed_imports:Record<string,[string, string]> = target[METADATA]?.[IMPORT_PROPS]?.public
 
         // try to resolve imports
@@ -140,7 +140,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
 
                 if (!valid_dx_files.length) {
                     if (!this._use_resources) throw new Error(`Could not load export '${exprt}' for component class '${this.name}' - external resources are disabled. Either remove the @NoResources decorator and create a corresponding DATEX file next to the TypeScript module file, or specifiy a different resource location in the @use decorator.`)
-                    else if (!this._module) throw new Error(`Could not load export '${exprt}' for component class '${this.name}'. The component module could not be initialized correctly (missing @Component decorator?)`);  // this.module could not be set for whatever reason
+                    else if (!this._module) throw new Error(`Could not load export '${exprt}' for component class '${this.name}'. The component module could not be initialized correctly (missing @defaultOptions decorator?)`);  // this.module could not be set for whatever reason
                     else throw new Error(`No corresponding DATEX module file found for export '${exprt}' in component class '${this.name}'. Please create a DATEX file '${this._module.replace(/\.m?(ts|js)x?$/, '.dx')} or specifiy a resource location in the @use decorator.`)
                 }
 
@@ -191,8 +191,8 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         }
     }
 
-    private static standalone_loaded = new Set<typeof UIXComponent>();
-    private static standalone_class_code = new Map<typeof UIXComponent,string>();
+    private static standalone_loaded = new Set<typeof Component>();
+    private static standalone_class_code = new Map<typeof Component,string>();
 
     private static loadStandaloneProps() {
         const scope = this.prototype;
@@ -297,9 +297,9 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     }
 
     /**
-     * returns the parent class if not UIXComponent
+     * returns the parent class if not Component
      */
-    public static getParentClass(): typeof UIXComponent {
+    public static getParentClass(): typeof Component {
         return Object.getPrototypeOf(this) != domContext.HTMLElement ? Object.getPrototypeOf(this) : null;
     }
 
@@ -328,7 +328,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
 
 
     protected static getStandaloneConstructor() {
-        if (this.name === UIXComponent.name) return indent(4) `
+        if (this.name === Component.name) return indent(4) `
             _standalone_construct() {
                 this.standalone = true;
             }
@@ -518,7 +518,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     // options
     @property declare options:Datex.ObjectRef<O>; // uses element.DEFAULT_OPTIONS as default options (also for all child elements)
 
-    declare public props: Datex.DatexObjectInit<O> & {children?:ChildElement|ChildElement[]}
+    declare public readonly props: Datex.DatexObjectInit<O> & {children?:ChildElement|ChildElement[]} & JSX._IntrinsicAttributes<this>
 
     declare $:Datex.Proxy$<this> // reference to value (might generate pointer property, if no underlying pointer reference)
     declare $$:Datex.PropertyProxy$<this> // always returns a pointer property reference
@@ -550,18 +550,18 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
 
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
-            if (!(<typeof UIXComponent>this.constructor)[Datex.DX_TYPE]) {
+            if (!(<typeof Component>this.constructor)[Datex.DX_TYPE]) {
                 logger.error("cannot construct UIX element from DOM because DATEX type could not be found")
                 return;
             }
             // ignore if currently hydrating static element
             if (this.hasAttribute("uix-static")) {
                 this.is_skeleton = true;
-                logger.debug("hydrating component " + (<typeof UIXComponent>this.constructor)[Datex.DX_TYPE]);
+                logger.debug("hydrating component " + (<typeof Component>this.constructor)[Datex.DX_TYPE]);
             }
             else {
                 // logger.debug("creating " + this.constructor[Datex.DX_TYPE] + " component from DOM");
-                return (<Datex.Type>(<typeof UIXComponent>this.constructor)[Datex.DX_TYPE]).construct(this, [], true, true);
+                return (<Datex.Type>(<typeof Component>this.constructor)[Datex.DX_TYPE]).construct(this, [], true, true);
             }
         }
 
@@ -582,7 +582,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
 
     private initShadowRootStyle() {
         this.addStyleSheet(Theme.stylesheet);
-        for (const url of (<typeof UIXComponent>this.constructor).shadow_stylesheets??[]) this.addStyleSheet(url);
+        for (const url of (<typeof Component>this.constructor).shadow_stylesheets??[]) this.addStyleSheet(url);
         // this.disableShadowForDATEX();
     }
 
@@ -663,9 +663,9 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
             domUtils.setElementAttribute(this, "class", this.options.$.class);
 
         
-        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in UIXComponent.init
+        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in Component.init
         // make sure static component data (e.g. datex module imports) is loaded
-        await (<typeof UIXComponent>this.constructor).init();
+        await (<typeof Component>this.constructor).init();
         this.loadTemplate();
         this.loadDefaultStyle()
         await this.init(true);
@@ -678,7 +678,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     @replicator async replicate() {
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
         // make sure static component data (e.g. datex module imports) is loaded
-        await (<typeof UIXComponent>this.constructor).init();
+        await (<typeof Component>this.constructor).init();
         // this.loadTemplate();
         this.loadDefaultStyle()
         await this.init();
@@ -689,9 +689,9 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
      * load template (@UIX.template)
      */
     private loadTemplate() {
-        if ((<typeof UIXComponent> this.constructor).template) {
+        if ((<typeof Component> this.constructor).template) {
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
-            const templateFn = (<typeof UIXComponent> this.constructor).template!;
+            const templateFn = (<typeof Component> this.constructor).template!;
             const template = templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this);
             domUtils.append(this, template);
         }
@@ -701,7 +701,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
      * load stylesheet from @UIX.style
      */
     private loadDefaultStyle() {
-        for (const templateFn of (<typeof UIXComponent> this.constructor).style_templates??[]) {
+        for (const templateFn of (<typeof Component> this.constructor).style_templates??[]) {
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
             const options = Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options
             const stylesheet = templateFn(options, this)
@@ -741,7 +741,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
                 } 
                 // string
                 catch {
-                    options[<keyof typeof options>name] = <Datex.RefOrValue<O & UIXComponent.Options[keyof O & UIXComponent.Options]>> this.attributes[i].value;
+                    options[<keyof typeof options>name] = <Datex.RefOrValue<O & Component.Options[keyof O & Component.Options]>> this.attributes[i].value;
                 }
             }
         }
@@ -758,7 +758,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
 
         // Component style sheets
         const loaders = []
-        for (const url of (<typeof UIXComponent>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
+        for (const url of (<typeof Component>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
     
         Datex.Pointer.onPointerForValueCreated(this, ()=>{
             bindObserver(this)
@@ -785,7 +785,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     private loadStandaloneProps() {
         let clss = <any>this.constructor;
         do {
-            (<typeof UIXComponent>clss).loadStandaloneProps();
+            (<typeof Component>clss).loadStandaloneProps();
         } while ((clss=Object.getPrototypeOf(Object.getPrototypeOf(clss))) && clss != domContext.HTMLElement && clss != domContext.Element && clss != Object); //  prototype chain, skip proxies inbetween
     }
 
@@ -807,7 +807,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     // used in render.ts
     protected standaloneEnabled() {
         return !! (
-            (<typeof UIXComponent>this.constructor).standaloneEnabled() ||
+            (<typeof Component>this.constructor).standaloneEnabled() ||
             this.standalone_handlers.size
         )
     }
@@ -830,14 +830,14 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
 
         // init props with current values
-        for (const [name, data] of Object.entries((this.constructor as typeof UIXComponent).standaloneProperties)) {
+        for (const [name, data] of Object.entries((this.constructor as typeof Component).standaloneProperties)) {
             // check if prop is method
             if (typeof this[<keyof this>name] === "function") {
                 if (originProps[name] && !(this[<keyof typeof this>name] as any)[BOUND_TO_ORIGIN]) {
                     // @ts-ignore $
                     this[<keyof typeof this>name] = bindToOrigin(this[<keyof typeof this>name], this, null, originProps[name].datex);
                 }
-                js_code += `self["${name}"] = ${UIXComponent.getStandaloneMethodContentWithMappedImports(this[<keyof this>name] as Function)};\n`;
+                js_code += `self["${name}"] = ${Component.getStandaloneMethodContentWithMappedImports(this[<keyof this>name] as Function)};\n`;
             }
             
             // init from origin context (via datex)
@@ -853,7 +853,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         // call custom standalone handlers
         for (const handler of this.standalone_handlers) {
             // workaround to always set 'this' context to UIX component, even when handler is an arrow function
-            js_code += `await (function (){return (${(<typeof UIXComponent>this.constructor).getStandaloneMethodContentWithMappedImports(handler)})()}).apply(self);\n`;
+            js_code += `await (function (){return (${(<typeof Component>this.constructor).getStandaloneMethodContentWithMappedImports(handler)})()}).apply(self);\n`;
         }
         
         // standalone constructor + lifecycle
@@ -876,7 +876,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
 
     // is element the current top parent (root) element
     public get is_root_element(){
-        return this.parentElement == document.body || (this.parentElement instanceof UIXComponent && this.parentElement.isChildPseudoRootElement(this));
+        return this.parentElement == document.body || (this.parentElement instanceof Component && this.parentElement.isChildPseudoRootElement(this));
     }
     
     #created = false; // set to true if onCreate has been called
@@ -897,7 +897,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
                 return this.assertParent(parent);
             }
             catch {
-                if (this.parentElement instanceof UIXComponent) return this.parentElement.assertNextParent(parent);
+                if (this.parentElement instanceof Component) return this.parentElement.assertNextParent(parent);
                 else throw "";
             }
         }
@@ -933,7 +933,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
      * Only executed after all components were fully constructed (DATEX initialized)
      * @param handler function to execute
      */
-    static async deferConstructed(components:UIXComponent[], handler:(...args:unknown[])=>unknown):Promise<void> {
+    static async deferConstructed(components:Component[], handler:(...args:unknown[])=>unknown):Promise<void> {
         await Promise.all(components.map(c => c.constructed))
         await handler(); 
     }
@@ -947,9 +947,9 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         this.route_initialized = false;
 
         // handle child on parent
-        if (this.parentElement instanceof UIXComponent) {
-            UIXComponent.deferConstructed([this, this.parentElement], ()=>{
-                (this.parentElement as UIXComponent).onChildRemoved(this)
+        if (this.parentElement instanceof Component) {
+            Component.deferConstructed([this, this.parentElement], ()=>{
+                (this.parentElement as Component).onChildRemoved(this)
             })
         }
     
@@ -959,7 +959,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         const scope = this.constructor.prototype;
         const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
 
-        for (const [name, content] of Object.entries((this.constructor as typeof UIXComponent).standaloneMethods)) {
+        for (const [name, content] of Object.entries((this.constructor as typeof Component).standaloneMethods)) {
             console.log("bind to origin", name, originProps?.[name])
             if (originProps?.[name]) {
                 // @ts-ignore
@@ -975,9 +975,9 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         if (this.is_skeleton) return; // ignore
 
         // handle child on parent
-        if (this.parentElement instanceof UIXComponent) {
-            UIXComponent.deferConstructed([this, this.parentElement], ()=>{
-                (this.parentElement as UIXComponent).onChildAdded(this)
+        if (this.parentElement instanceof Component) {
+            Component.deferConstructed([this, this.parentElement], ()=>{
+                (this.parentElement as Component).onChildAdded(this)
             })
         }
         
@@ -990,7 +990,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         await this.#datex_lifecycle_ready; // wait for onConstruct, init
 
         // // wait until lazy loaded if added to group component
-        // if (this.options.lazy_load && this.parentElement instanceof UIXComponent) {
+        // if (this.options.lazy_load && this.parentElement instanceof Component) {
         //     // wait until first focus
         //     await this.#first_focus
         //     this.logger.info("Lazy loading")
@@ -1037,7 +1037,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         const initial_route = !this.route_initialized;
         this.route_initialized = true;
 
-        const child = await (<UIXComponent<O & UIXComponent.Options, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
+        const child = await (<Component<O & Component.Options, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
 
         if (child == false) return []; // route not valid
         else if (typeof (<any>child)?.focus == "function") {
@@ -1089,10 +1089,10 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         super.remove();
     }
 
-    public observeOption(key:keyof O & UIXComponent.Options, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
+    public observeOption(key:keyof O & Component.Options, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
         Datex.Ref.observeAndInit(this.options.$$[key as keyof typeof this.options.$$], handler, this);
     }
-    public observeOptions(keys:(keyof O & UIXComponent.Options)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
+    public observeOptions(keys:(keyof O & Component.Options)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
         for (const key of keys) this.observeOption(key, handler);
     }
 
@@ -1108,17 +1108,17 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     public addStyleSheet(url_or_style_sheet:string|CSSStyleSheet|URL, adopt = true):Promise<void>|void {
 
         if (typeof url_or_style_sheet == "string" || url_or_style_sheet instanceof URL) {
-            url_or_style_sheet = new URL(url_or_style_sheet, (<typeof UIXComponent>this.constructor)._module);
+            url_or_style_sheet = new URL(url_or_style_sheet, (<typeof Component>this.constructor)._module);
             if (this.style_sheets_urls.includes(url_or_style_sheet.toString())) return; // stylesheet already added
 
             this.style_sheets_urls.push(url_or_style_sheet.toString());
 
             // allow fail if only potential module stylesheet
-            const allow_fail = (<typeof UIXComponent>this.constructor).module_stylesheets.includes(url_or_style_sheet.toString());
+            const allow_fail = (<typeof Component>this.constructor).module_stylesheets.includes(url_or_style_sheet.toString());
             
             // adopt CSSStylesheet (works if css does not use @import and shadowRoot exists, otherwise use <link>)
             if (adopt && this.shadowRoot) {
-                const stylesheet = UIXComponent.getURLStyleSheet(url_or_style_sheet, allow_fail);
+                const stylesheet = Component.getURLStyleSheet(url_or_style_sheet, allow_fail);
 
                 // is sync
                 if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) this.adoptStyle(stylesheet)
@@ -1216,7 +1216,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
      * @param style style text or CSSStyleSheet
      */
     protected adoptStyle(style:string|CSSStyleSheet, __pass_through = false) {
-        if (!this.shadowRoot) throw new Error("Cannot adopt style on UIXComponent - no shadow root");
+        if (!this.shadowRoot) throw new Error("Cannot adopt style on Component - no shadow root");
 
         // first add base style (this.style)
         if (!__pass_through && !this.#style_sheets.length) this.addBaseStyle();
@@ -1279,7 +1279,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
         return false;
     }
 
-    protected routeDelegate?: UIXComponent; // delegate that handles all routes for this component
+    protected routeDelegate?: Component; // delegate that handles all routes for this component
     /** called to get the current route of the component (child route) */
     getInternalRoute():string[] {
         const identifier = this.getRouteIdentifier();
@@ -1290,7 +1290,7 @@ export abstract class UIXComponent<O = UIXComponent.Options, ChildElement = JSX.
     protected getRouteIdentifier():string|undefined|void {}
 
     /** called when a route is requested from the component, return element matching the route identifier or true if route was handled */
-    protected onRoute?(identifier:string, is_initial_route:boolean):Promise<void|UIXComponent|boolean>|void|UIXComponent|boolean
+    protected onRoute?(identifier:string, is_initial_route:boolean):Promise<void|Component|boolean>|void|Component|boolean
 
     /** called when a new child is appended - currently only working for child components */
     protected onChildAdded(child:ChildElement){}

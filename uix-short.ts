@@ -6,7 +6,7 @@ import { SCSS } from "./src/utils/css-template-strings.ts";
 
 /** make decorators global */
 import { bindToOrigin } from "./src/utils/datex-over-http.ts";
-import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, Component as _Component, frontend as _frontend} from "./src/base/decorators.ts";
+import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, frontend as _frontend} from "./src/base/decorators.ts";
 import { Theme } from "./src/base/theme.ts";
 import { domUtils } from "./src/app/dom-context.ts";
 
@@ -15,7 +15,6 @@ declare global {
 	const id: typeof _id;
 	const layout: typeof _layout;
 	const child: typeof _child;
-	const Component: typeof _Component;
 	const NoResources: typeof _NoResources;
 	const frontend: typeof _frontend;
 	const bindOrigin: typeof _bindOrigin;
@@ -29,8 +28,6 @@ globalThis.id = _id;
 globalThis.child = _child;
 // @ts-ignore global
 globalThis.layout = _layout;
-// @ts-ignore global
-globalThis.Component = _Component;
 // @ts-ignore global
 globalThis.NoResources = _NoResources;
 // @ts-ignore global

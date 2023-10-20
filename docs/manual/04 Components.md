@@ -399,7 +399,7 @@ Another way to add css rules to a component is to use inline styles with the `@s
   }
 `)
 @template(...)
-class MyComponent extends UIXComponent {
+class MyComponent extends Component {
    ...
 }
 ```

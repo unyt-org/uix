@@ -26,7 +26,7 @@
     "http://localhost:4242/src/base/open-graph.ts": "b86da73ca92d9250eeeb4de1a90bf429511dfd0120908fb31eef36f5b7313aa6",
     "http://localhost:4242/src/base/theme.ts": "7e1652843082f3cc75aaabe6efbb45b11934c1a3e1b0188a630fd57e846670e0",
     "http://localhost:4242/src/base/uix-datex-module.ts": "ba5314b104f563c4efae0330c9893862708b1660fdda972bce5ffda6155a7db9",
-    "http://localhost:4242/src/components/UIXComponent.ts": "5e119ba64a31e46301e84a60532d2aced50b1d895bb1a9ef670e3958f8af4cf7",
+    "http://localhost:4242/src/components/Component.ts": "5e119ba64a31e46301e84a60532d2aced50b1d895bb1a9ef670e3958f8af4cf7",
     "http://localhost:4242/src/html/anonymous-components.ts": "5f30ae33289b23f579d6f7e3be1a0b8620aa90129bea58c0ae9acf2e5e7c834f",
     "http://localhost:4242/src/html/entrypoint-providers.tsx": "1212bccb95bb3b9f25aad73ba397c34853ce91aa2750024ceea8c31738518351",
     "http://localhost:4242/src/html/entrypoints.ts": "93b8017c4383e8f992e68427cce05199a35877c68c2d1e125462998b4ffe28df",

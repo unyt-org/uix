@@ -1,6 +1,6 @@
 import { Datex } from "datex-core-legacy";
 import { getAppOptions } from "./config-files.ts";
-import { env, root_path } from "./args.ts";
+import { env, rootPath } from "./args.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import "./dom-context.ts";
 import { app } from "./app.ts";
@@ -19,5 +19,5 @@ for (const envVar of env) {
 
 
 // get app.dx / app.json
-const config = await getAppOptions(root_path);
-app.start(config, root_path)
+const config = await getAppOptions(rootPath);
+app.start(config, rootPath)

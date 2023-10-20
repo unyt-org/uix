@@ -1,6 +1,6 @@
 import { UIX } from "../../uix.ts";
 import { logger } from "../utils/global-values.ts";
-import { html_content_or_generator } from "./entrypoints.ts";
+import { html_content_or_generator } from "../html/entrypoints.ts";
 import { DX_IGNORE } from "datex-core-legacy/runtime/constants.ts";
 
 

@@ -1,9 +1,9 @@
 import { normalizedAppOptions } from "../app/options.ts";
-import type {runParams} from "../run.ts";
 import { stage, env, watch } from "../app/args.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
 import { Path } from "../utils/path.ts";
+import { runParams } from "./runner.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 

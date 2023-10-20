@@ -6,11 +6,11 @@ import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_prope
 import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { bindToOrigin } from "../utils/datex-over-http.ts";
-import { RenderMethod } from "./render-methods.ts";
+import { RenderMethod } from "../base/render-methods.ts";
 import { Theme } from "../base/theme.ts";
 import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
-import { DOMUtils } from "../uix-dom/datex-bindings/DOMUtils.ts";
+import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 import { Element } from "../uix-dom/dom/mod.ts";
 import { blobToBase64 } from "../uix-dom/datex-bindings/blob-to-base64.ts";

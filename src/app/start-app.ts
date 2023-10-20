@@ -19,7 +19,7 @@ export async function startApp(options:appOptions = {}, original_base_url?:strin
 	const [nOptions, baseURL] = await normalizeAppOptions(options, original_base_url);
 
 	// for unyt log
-	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
+	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") && Deno.env.get("UIX_HOST_ENDPOINT")!.startsWith("@") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
 
 	// set .dx path to backend
 	if (nOptions.backend.length) {
@@ -68,9 +68,10 @@ export async function startApp(options:appOptions = {}, original_base_url?:strin
 		frontends.set(dir.toString(), frontend_manager);
 	}
 
-	// expose DATEX interfaces
-	// TODO: also enable without connect == false (For all uix servers), working, but routing problems
-	if (server && endpoint_config.connect === false) {
+
+	// expose DATEX ws server node, shown in /.dx
+	// TODO: option to disable direct backend ws connection
+	if (server && endpoint_config.ws_relay !== false) {
 		const DatexServer = (await import("../server/datex_server.ts")).DatexServer
 		DatexServer.addInterfaces(["websocket", "webpush"], server);
 		// also add custom .dx file

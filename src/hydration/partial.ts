@@ -1,6 +1,6 @@
 import { Datex } from "datex-core-legacy";
 import type { Element, Node } from "../uix-dom/dom/mod.ts";
-import { UIXComponent } from "../components/UIXComponent.ts";
+import { Component } from "../components/Component.ts";
 
 /**
  * Returns a list of all nodes in a DOM tree that have live pointer binding
@@ -15,7 +15,7 @@ export function getLiveNodes(treeRoot: Element, includeEventListeners = true, _l
 
 	let isLive = false;
 
-	// if (treeRoot instanceof UIXComponent) isLive = true;
+	// if (treeRoot instanceof Component) isLive = true;
 
 	// iterate children
 	if (!isLive) {

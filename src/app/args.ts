@@ -22,7 +22,8 @@ export const env = command_line_options.option("env", {type:"string", multiple: 
 
 export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});
 
-export const port = command_line_options.option("port", {aliases:["p"], default: 80, type:"number", description: "The port for the HTTP server"});
+// TODO: aliases:["p"],  -p xxxx not working
+export const port = command_line_options.option("port", {default: 80, type:"number", description: "The port for the HTTP server"});
 
 export const enableTLS = command_line_options.option("enable-tls", {type:"boolean", description: "Enable TLS for the HTTP server"});
 
@@ -42,4 +43,4 @@ if (version) {
 if (!config_path && !CommandLineOptions.collecting) {
 	throw "Could not find an app.dx or app.json config file in " + _path.normal_pathname
 }
-export const root_path = (config_path ? new Path(config_path).parent_dir : null) as Path.File;
+export const rootPath = (config_path ? new Path(config_path).parent_dir : null) as Path.File;

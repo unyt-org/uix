@@ -39,7 +39,7 @@ const button =
  * As component methods
 ```tsx
 @Component
-class MyComponent extends UIXComponent {
+class MyComponent extends Component {
     myMethod() {
         ...
     }

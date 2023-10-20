@@ -5,7 +5,7 @@ import { blankTemplate, style, template } from "uix/html/anonymous-components.ts
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { bindToDisplayContext } from "uix/utils/datex-over-http.ts";
-import { UIXComponent } from "uix/components/UIXComponent.ts";
+import { Component } from "uix/components/Component.ts";
 import { lazy, provideError } from "uix/html/entrypoint-providers.tsx";
 import { unsafeHTML } from "uix/uix-short.ts";
 import { enableOverlayScrollbars } from "uix/utils/overlay-scrollbars.ts";
@@ -67,7 +67,7 @@ const TemplateCompWithOptions = template<{a:number, b?:number}, never>(({a,b}) =
 	predefined child
 </>
 )
-class ClassComponent extends UIXComponent {
+class ClassComponent extends Component {
     @id declare header: HTMLHeadingElement
     @id declare description: HTMLElement
 
@@ -87,7 +87,7 @@ class ClassComponent extends UIXComponent {
         <section>Default section content</section>
     </article>
 )
-class ClassComponent2 extends UIXComponent<{title:string}> {
+class ClassComponent2 extends Component<{title:string}> {
     override onCreate() {
         console.log("options",this.options)
     }
@@ -217,7 +217,7 @@ const TemplateWithOptions = template<{image:HTMLImageElement, x: number, map: Ma
 	}
 `)
 @TemplateWithOptions
-export class ComponentWithOptions extends UIXComponent<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
+export class ComponentWithOptions extends Component<{image?:HTMLImageElement, x: number, map: Map<string, string>, }> {
 	protected override onCreate() {
 		console.debug("CompontentWithOptions image", this.options.image, this.options.$.image)
 		console.debug("ComponentWithOptions x", this.options.x, this.options.$.x)
@@ -249,7 +249,7 @@ export class ComponentWithOptions extends UIXComponent<{image?:HTMLImageElement,
 		Lorem Ispum blalblablababl...
 	</div>
 )
-export class ComponentWithStyle extends UIXComponent {
+export class ComponentWithStyle extends Component {
 
 	// TODO: source maps for @frontend
 	@frontend override onDisplay() {

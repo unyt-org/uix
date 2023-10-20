@@ -1,5 +1,5 @@
 import { bindToDisplayContext } from "uix/utils/datex-over-http.ts";
-import { UIXComponent } from "uix/components/UIXComponent.ts";
+import { Component } from "uix/components/Component.ts";
 import { template } from "uix/html/anonymous-components.ts";
 
 
@@ -27,7 +27,7 @@ const logDisplay = bindToDisplayContext(function () {
 		<button onclick:frontend={() => use(this) && this.increaseCounter()}>Increase Counter</button>
 	</div>
 })
-export class FormComponent extends UIXComponent {
+export class FormComponent extends Component {
 
 	protected override onCreate(): void|Promise<void> {
 	  this.options.title = "test"

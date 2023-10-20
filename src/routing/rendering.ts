@@ -5,11 +5,11 @@ import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_genera
 
 import { CACHED_CONTENT, getOuterHTML } from "../html/render.ts";
 import { HTTPStatus } from "../html/http-status.ts";
-import { RenderPreset, RenderMethod } from "../html/render-methods.ts"
+import { RenderPreset, RenderMethod } from "../base/render-methods.ts"
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { createErrorHTML } from "../html/errors.tsx";
 import { Context, ContextGenerator } from "./context.ts";
-import { UIXComponent } from "../components/UIXComponent.ts";
+import { Component } from "../components/Component.ts";
 import { logger } from "../utils/global-values.ts";
 import { domContext } from "../app/dom-context.ts";
 import type { DocumentFragment, Element } from "../uix-dom/dom/mod.ts";
@@ -396,7 +396,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		else if (entrypointData.route && typeof resolved.content?.resolveRoute == "function") {
 
 			// wait until at least construct lifecycle finished
-			if (entrypointData.entrypoint instanceof UIXComponent) await entrypointData.entrypoint.constructed
+			if (entrypointData.entrypoint instanceof Component) await entrypointData.entrypoint.constructed
 
 			if (!await resolveRouteForRouteManager(resolved.content as RouteManager, entrypointData.route, entrypointData.context)) {
 				resolved.content = null; // reset content, route could not be resolved
@@ -420,7 +420,7 @@ export async function preloadElementOnBackend(element:Element|DocumentFragment, 
 		const promises = [];
 
 		// fake dom append for UIX Component
-		if (element instanceof UIXComponent) {
+		if (element instanceof Component) {
 			let resolved = false;
 			const timeoutSec = `${(element.CREATE_TIMEOUT/1000)}s`
 			await Promise.race([

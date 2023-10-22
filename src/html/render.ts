@@ -22,7 +22,6 @@ if (client_type === "deno") {
 	({ stage } = (await import("../app/args.ts")))
 }
 
-
 type injectScriptData = {declare:Record<string,string>, init:string[]};
 
 type _renderOptions = {includeShadowRoots?:boolean,  _injectedJsData?:injectScriptData, lang?:string}
@@ -301,6 +300,7 @@ const isNormalFunction = (fnSrc:string) => {
 
 
 export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, lang?:string}):Promise<[header_script:string, html_content:string]> {
+
 	if ((el as any)[CACHED_CONTENT]) return (el as any)[CACHED_CONTENT];
 
 	const scriptData:injectScriptData = {declare:{}, init:[]};
@@ -535,7 +535,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 			</head>
 			<body style="visibility:hidden; color-scheme:${Theme.mode}" data-color-scheme="${Theme.mode}">
 				<template shadowrootmode=open>
-					<slot id=main></slot>
+					<slot></slot>
 					${body_style}
 				</template>` +
 (prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')) + `

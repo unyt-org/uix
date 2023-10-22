@@ -84,6 +84,8 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 			normalizedVolumes.push(relativeVolumePath)
 		}
 	
+		// tell docker host to use uix v.0.1
+		env.push(`UIX_VERSION=0.1`)
 
 		const container = await datex<any> `
 			use ContainerManager from ${requiredLocation};

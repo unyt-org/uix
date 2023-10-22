@@ -108,6 +108,7 @@ async function loadPlugins() {
 	return plugins;
 }
 
+console.log("run")
 
 /**
  * Mock #public.uix

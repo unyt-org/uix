@@ -5,11 +5,10 @@ export const logger = new Datex.Logger("UIX");
 
 // main container
 export const root_container = client_type === "browser" ?
-	( <HTMLElement> document.querySelector("#main") ?? document.body.shadowRoot?.querySelector("#main") ?? document.createElement("slot"))
+	( <HTMLElement> document.querySelector("template > slot") ?? document.body.shadowRoot?.querySelector(":host > slot") ?? document.createElement("slot"))
 	: null;
 
 if (client_type === "browser") {
-	root_container!.id = "main"
 	// init body shadow root
 	if (!document.body.shadowRoot) {
 		document.body.attachShadow({mode:'open'});

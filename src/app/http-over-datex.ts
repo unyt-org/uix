@@ -12,7 +12,7 @@ logger.success("enabled");
 		this.server = server;
 	}
 
-	@property static request(request: Request) {
+	@property static request(request: any/*Request*/) {
 
 		// @ts-ignore clone headers (TODO: required why?)
 		request.headers = new Headers(request.headers);

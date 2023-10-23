@@ -26,12 +26,8 @@ This configuration is useful for complex web applications with user-specific UI 
 should not be available on the backend.
 
 ## 2. Just a Backend Entrypoint
-UI generated on the backend entrypoint is sent to the frontend client.
-There are multiple options for the transfer process:
- * `UIX.renderStatic`: The content is transferred to the frontend as static HTML (Server Side Rendering). The UIX Library does not need to be fully loaded on the frontend client, but lots of interactivity and data synchronisation features are not available.
- * `UIX.renderStaticWithoutJS`: Stricter version of `UIX.renderStatic`. No JavaScript is used on the Frontend, just static HTML and CSS.
- * `UIX.renderDynamic`: The content is transferred to the frontend via DATEX, allowing a full-featured UIX Library on the frontend.
- * `UIX.renderWithHydration`: Default transfer process. Content is first provided as static HTML, which can be immediately displayed on the frontend. After the UIX Library is loaded, the static content is gradually replaced with content loaded via DATEX (Hydration).
+UI generated on the backend entrypoint is "moved" to the frontend client.
+UIX supports [multiple methods](./07%20Rendering%20Methods.md) for backend rendering.
 
 ## 3. Backend and Frontend Entrypoints
 When entrypoint exports for both the frontend and the backend are available, they are automatically merged.
@@ -43,16 +39,17 @@ This configuration normally only makes senses in combination with [Entrypoint Ro
 HTML Elements are directly appended to the document body. The can be created with
 normal DOM APIs (`document.createElement()`) or with JSX syntax:
 ```tsx
-export default <div>Content</div> satisfies UIX.Entrypoint
+export default <div>Content</div> satisfies Entrypoint
 ```
 
 Like other entrypoint values, HTML Elements are DATEX compatible and their content can be synchronized.
-Keep in mind that the content is not updated when it is provided with `UIX.renderStatic`.
+Keep in mind that the content is not updated when it is provided with [`renderStatic`](./07%20Rendering%20Methods.md#static-rendering).
+
 ```tsx
 const counter = $$(0);
 setInterval(()=>counter.val++,1000);
 
-export default <div>Count: {counter}</div> satisfies UIX.Entrypoint
+export default <div>Count: {counter}</div> satisfies Entrypoint
 ```
 
 ## Strings
@@ -60,14 +57,14 @@ Strings are displayed as text appended to the document body (color and backgroun
 
 Examples:
 ```typescript
-export default "Hi World" satisfies UIX.Entrypoint
+export default "Hi World" satisfies Entrypoint
 ```
 ```typescript
 const content = $$("content");
-export default content satisfies UIX.Entrypoint;
+export default content satisfies Entrypoint;
 content.val = "new content"
 ```
-(If you only want to display plain text without a parent HTML document and CSS styles, you can use `UIX.provideContent("text content")`)
+(If you only want to display plain text without a parent HTML document and CSS styles, you can use `provideContent("text content")`)
 
 
 ## Route Maps
@@ -82,10 +79,10 @@ A simple Route Map could look like this:
 export default {
     '/home': <HomePage/>,
     '/about': <div>About us...</div>
-} satisfies UIX.Entrypoint
+} satisfies Entrypoint
 ```
 
-Since Route Maps are valid `UIX.Entrypoint` values, multiple Route Maps can be nested. Because a route part must exactly match the route pattern key,
+Since Route Maps are valid `Entrypoint` values, multiple Route Maps can be nested. Because a route part must exactly match the route pattern key,
 the parent route key must end with `*` so that the route is followed.
 ```tsx
 export default {
@@ -93,7 +90,7 @@ export default {
         '/first': 'First Article...',
         '/second': 'Second Article...'
     }
-} satisfies UIX.Entrypoint
+} satisfies Entrypoint
 ```
 
 
@@ -108,7 +105,7 @@ export default {
     '/page/(1|2|3)/': (ctx) => `This is page ${ctx.urlPattern.pathname.groups[0]}` 
     // Fallback if nothing else matches
     '*': 'Not found' 
-} satisfies UIX.Entrypoint
+} satisfies Entrypoint
 ```
 
 ## Route Map Filters
@@ -123,18 +120,18 @@ route depending on the HTTP request method:
 export default {
     '/login': {
         // Provide login page
-        [RequestMethod.GET]: UIX.provideFile("./common/index.html"),
+        [RequestMethod.GET]: provideFile("./common/index.html"),
         // Handle POST method triggered from login page    
         [RequestMethod.POST]: (ctx) => handleLogin(ctx)
     }
-} satisfies UIX.Entrypoint
+} satisfies Entrypoint
 ```
 
 Custom route filters can be created with the `createFilter()` method from `"uix/routing/route-filter.ts"`:
 ```tsx
 
-const isAdmin = createFilter((ctx: UIX.Context) => ctx.privateData.isAdmin)
-const isPayingCustomer = createFilter((ctx: UIX.Context) => ctx.privateData.isPayingCustomer)
+const isAdmin = createFilter((ctx: Context) => ctx.privateData.isAdmin)
+const isPayingCustomer = createFilter((ctx: Context) => ctx.privateData.isPayingCustomer)
 
 export default {
     '/api/*': {
@@ -142,7 +139,7 @@ export default {
         [isPayingCustomer]: ctx => handleAPICall(ctx, {rateLimit: 1000}),
         '*' :               ctx => handleAPICall(ctx, {rateLimit: 10}),
     }
-} satisfies UIX.Entrypoint
+} satisfies Entrypoint
 ```
 
 In this example, API calls are triggered with different rate limits depending on the type of
@@ -155,25 +152,25 @@ Blobs are directly displayed as files in the browser (Creating a file response w
 
 Example:
 ```typescript
-export default datex.get('./image.png') satisfies UIX.Entrypoint
+export default datex.get('./image.png') satisfies Entrypoint
 ```
 
 ## Filesystem Files
 In a deno environment, `Deno.FSFile` values can be returned as entrypoint values. They create a file response with the correct mime type.
 
-The `UIX.provideFile()` function can also be used to return files from the local file system.
+The `provideFile()` function can also be used to return files from the local file system.
 
 ```typescript
-export default UIX.provideFile('./image.png') satisfies UIX.Entrypoint
+export default provideFile('./image.png') satisfies Entrypoint
 ```
 
 ## Redirects
 
 `URL` objects result in a redirect response (HTTP Status Code **304**) to the given URL.
-This can also be achieved with `UIX.provideRedirect()`:
+This can also be achieved with `provideRedirect()`:
 
 ```typescript
-export default UIX.provideRedirect('https://example.unyt.app') satisfies UIX.Entrypoint
+export default provideRedirect('https://example.unyt.app') satisfies Entrypoint
 ```
 
 
@@ -182,18 +179,18 @@ export default UIX.provideRedirect('https://example.unyt.app') satisfies UIX.Ent
 Virtual redirects are similar to normal redirects, but they directly return a response with the content of the redirect URL, not a redirect response (HTTP Status **304**).
 
 ```typescript
-export default UIX.provideVirtualRedirect('/example/home') satisfies UIX.Entrypoint
+export default provideVirtualRedirect('/example/home') satisfies Entrypoint
 ```
 
 ## Dynamic Entrypoint Functions
 In the example above, a Dynamic Entrypoint Function is used to return custom content based on the context of a route.
-Dynamic Entrypoint Functions take a single argument, a [`UIX.Context`](#uixcontext) object and return a `UIX.Entrypoint` or `Promise<UIX.Entrypoint>` 
+Dynamic Entrypoint Functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>` 
 
 Example:
 ```tsx
-export default (ctx: UIX.Context) => {
+export default (ctx: Context) => {
     return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`
-} satisfies UIX.Entrypoint
+} satisfies Entrypoint
 ```
 
 When an entrypoint function throws an error, the error value is returned like a normal return value, but with an HTTP Status Code **500**.
@@ -205,11 +202,11 @@ When a Component is encountered in the route chain, the `onRoute` method is call
 
 
 ```typescript
-class UIX.BaseComponent {
+class CComponent {
     // return the child element to which the route is resolved
     // if the route contains more sections, onRoute is called on this child element with the next route
     // section as the identifier
-    onRoute(identifier:string, is_initial_route:boolean):UIX.BaseComponent|boolean|void
+    onRoute(identifier:string, is_initial_route:boolean):Component|boolean|void
     // return internal state of last resolved route
     getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
 }
@@ -218,7 +215,8 @@ class UIX.BaseComponent {
 ### Example
 Component Routing can be used to display or focus on different child components depending on the route.
 ```tsx
-class Parent extends UIX.BaseComponent {
+@template()
+class Parent extends Component {
     #activeChild?: HTMLElement
 
     override onRoute(identifier:string) {
@@ -276,7 +274,7 @@ In contrast to a Dynamic Entrypoint Function, which only take a UIX Context as a
 ```typescript
 export interface RouteHandler {
     // return entrypoint for a route
-    getRoute(route:Path.Route, context:UIX.Context): Entrypoint|Promise<Entrypoint> 
+    getRoute(route:Path.Route, context:Context): Entrypoint|Promise<Entrypoint> 
 }
 ```
 
@@ -296,7 +294,7 @@ The `RouteManager` interface is implemented by UIX Components.
 ```typescript
 interface RouteManager {
     // return part of route that could be resolved
-    resolveRoute(route:Path.Route, context:UIX.Context): Path.route_representation|Promise<Path.route_representation> 
+    resolveRoute(route:Path.Route, context:Context): Path.route_representation|Promise<Path.route_representation> 
     // return internal state of last resolved route
     getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
 }
@@ -320,7 +318,7 @@ abstract class EntrypointProxy implements RouteHandler {
      * @param context UIX context
      * @returns entrypoint override or null
      */
-    abstract intercept?(route:Path.Route, context: UIX.Context): void|Entrypoint|Promise<void|Entrypoint>
+    abstract intercept?(route:Path.Route, context: Context): void|Entrypoint|Promise<void|Entrypoint>
 
     /**
      * This method is called after a route was resolved by the entrypoint
@@ -334,16 +332,16 @@ abstract class EntrypointProxy implements RouteHandler {
      * @param context UIX context
      * @returns entrypoint override or null
      */
-    abstract transform?(content: Entrypoint, render_method: RenderMethod, route:Path.Route, context: UIX.Context): void|Entrypoint|Promise<void|Entrypoint>
+    abstract transform?(content: Entrypoint, render_method: RenderMethod, route:Path.Route, context: Context): void|Entrypoint|Promise<void|Entrypoint>
 }
 ```
 
 
 
 
-# UIX.Context
+# Context
 
-A `UIX.Context` is created for each entrypoint request (when requesting a URL from a backend entrypoint or when redirecting to a URL on the frontend) and can be accessed in [Dynamic Entrypoint Functions](#dynamic-entrypoint-functions), [Route Managers](#route-managers) and [Route Handlers](#route-handlers).
+A UIX `Context` is created for each entrypoint request (when requesting a URL from a backend entrypoint or when redirecting to a URL on the frontend) and can be accessed in [Dynamic Entrypoint Functions](#dynamic-entrypoint-functions), [Route Managers](#route-managers) and [Route Handlers](#route-handlers).
 It contains information about the client, about the route, and about the HTTP request (only on backend entrypoints).
 
 ```typescript

@@ -346,20 +346,20 @@ It contains information about the client, about the route, and about the HTTP re
 
 ```typescript
 interface Context {
-	request?: Request
-	requestData = {
-		address: string | null
-	}
+    request?: Request
+    requestData = {
+        address: string | null
+    }
 
-	path: string
-	params: Record<string,string>;
-	urlPattern?: URLPatternResult
-	searchParams: URLSearchParams
+    path: string
+    params: Record<string,string>;
+    urlPattern?: URLPatternResult
+    searchParams: URLSearchParams
 
-	language: string
-	endpoint: Datex.Endpoint
+    language: string
+    endpoint: Datex.Endpoint
 
-	getSharedData(): Promise<Record<string, unknown>>
-	getPrivateData(): Promise<Record<string, unknown>>
+    getSharedData(): Promise<Record<string, unknown>>
+    getPrivateData(): Promise<Record<string, unknown>>
 }
 ```

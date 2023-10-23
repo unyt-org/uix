@@ -1,7 +1,5 @@
 # Styles and Themes
 
-# Component styles
-
 ## External style files
 
 To apply css styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
@@ -52,8 +50,7 @@ fontSize.val = "20px"
 In this example, the `font-size` property is bound to a pointer, and the color is bound to a computed value, where `it` references an element for which the selector is applied.
 
 
-
-# Themes
+## Themes
 
 Via the `UIX.Theme` namespace, global themes can be registered and activated.
 The default themes provided by UIX are `uix-light` and `uix-dark`.

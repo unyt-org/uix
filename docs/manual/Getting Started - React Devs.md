@@ -317,4 +317,14 @@ export default function() {
 }
 ```
 
+In UIX, you should always try to update the minimal amount of data.
+This is why in this case, you could return just one div and make only the content reactive:
+
+```tsx
+export function IsGreaterThan1({random}) {
+  const text = always(() => random > 1 ? "Is greater than 1" : "Is less than or equal 1");
+  return <div>{text}</div>
+}
+```
+
 ...

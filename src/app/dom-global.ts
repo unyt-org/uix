@@ -4,6 +4,15 @@ import type * as api from "../uix-dom/dom/deno-dom/src/api.ts"
 declare global {
 	const document: api.Document
 
+	const DocumentFragment: typeof api.DocumentFragment
+	type DocumentFragment = api.DocumentFragment
+
+	const Document: typeof api.Document
+	type Document = api.Document
+	
+	const Element: typeof api.Element
+	type Element = api.Element
+	
 	const HTMLElement: typeof api.HTMLElement
 	type HTMLElement = api.HTMLElement
 
@@ -21,4 +30,6 @@ declare global {
 
 	const HTMLOptionElement: typeof api.HTMLOptionElement
 	type HTMLOptionElement = api.HTMLOptionElement
+
+
 }

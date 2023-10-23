@@ -45,13 +45,14 @@ class MyComponent extends Component {
     }
 }
 ```
- * Or as exported API functions from the backend
+ * Or as exported API functions from the backend#
 ```tsx
 export function register() {
-
+    // ...
 }
 ```
 
+<br/>
 Per default, all of those functions behave as you would expect in any JavaScript code.
 But there is also some special UIX-specific behaviour, as you will see in the following examples.
 

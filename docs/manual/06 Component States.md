@@ -1,0 +1,32 @@
+# Component states
+
+All HTML attributes, children, and the `options` property are DATEX compatible and part of the component state by default.
+
+Every change to those values or can be synced over DATEX.
+The saved component state can also be stored (e.g. in the DATEX Pointer storage) and restored completely at any time (e.g. after a page reload).
+
+Since UIX components are normal DATEX JavaScript template classes, additional DATEX state properties can be declared using the `@property` decorator:
+
+```tsx
+import { template } from "uix/html/template.ts";
+import { Component } from "uix/components/Component.ts";
+
+@template() class CustomComponent extends Component {
+
+    // declare custom restorable properties
+    @property someText = 'default value'
+    @property someMap = new Map<number,Set<number>>()
+    @property textView!: HTMLDivElement
+
+    onConstruct() {
+        this.textView = <div>Hello World</div>; // the this.textView property is restored when the component is recreated
+    }
+
+    // called always after construction or recreation
+    onInit() {
+        this.logger.info(this.textView); // this.textView exists
+        this.logger.info(this.someMap); // this.someMap exists
+    }
+}
+
+```

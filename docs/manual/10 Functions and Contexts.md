@@ -215,15 +215,14 @@ Nevertheless, there are some constraints you should keep in mind:
  1) Variables that are accessed with `use()` are readonly - they cannot be reassigned. The values are immutable per default. This restriction does not apply to pointer values: if you need mutable values, use pointers.
  2) All values accessed with `use()` must be DATEX-compatible
  3) `use()` declarations for a context without a loaded DATEX runtime (this is the case when using `renderBackend`) must be called with the `"no-datex"` flag: `use("no-datex", ...)`.<br>
-  With this flag flag, more restrictions apply to `use()` declarations:
+  With this flag, additional restrictions apply to `use()` declarations:
     * Pointer values are also immutable
-    * With a few exceptions, only JSON values are supported as dependency values and as arguments/return values of functions
-      that were injected as dependencies.
+    * Only JSON-compatible values and functions are supported as dependency values and as arguments/return values of functions that were injected as dependencies.
 
 Furthermore, keep in mind:
  * `use` declarations must always be added at the beginning of a function body.
  * Multiple `use` statements in one function are not allowed.
- * Functions injected with `use()` are expected to always return a `Promise`` and must be awaited to get the result.
+ * Functions injected with `use()` are expected to always return a `Promise` and must be awaited to get the result.
 
 In single-line arrow functions, `use` statements can be combined with an `&&` operator or separated with commas:
 
@@ -303,4 +302,18 @@ export default renderBackend(
 > initial response times.
 
 
-## Security: Preventing arbitrary remote code execution
+## Security Considerations
+
+<sup>This section is not relevant for understanding how contexts work in UIX,
+but it talks about a relevant topic related to transferable functions: <i>Preventing arbitrary remote code execution</i></sup>
+
+Per design, DATEX code can be executed remotely, but it is always run in an isolated sandbox. Permissions for certain functionalities must be explicitly given to specific endpoints.
+
+In contrast to normal DATEX functions, transferable functions containing JavaScript source code pose
+a potentially higher threat, because they have access to the global (`window`) object and can do
+almost everything within the scope of a website.
+
+This is why per default, transferable functions can only be called when they were created by the same endpoint.
+Additionally, the DATEX runtime maintains a whitelist of all remote endpoints that are allowed to transfer executable JavaScript source code to the endpoint. 
+
+Within a UIX app, the only endpoint in this whitelist is the app backend endpoint, which is always considered trusthworty.

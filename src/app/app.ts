@@ -57,7 +57,10 @@ class App {
 		const appDataContent = getInjectedAppData()
 		if (appDataContent) {
 			const appdata: Record<string,any> = {...appDataContent}
-			if (appdata.backend) appdata.backend = f(appdata.backend);
+			if (appdata.backend) {
+				appdata.backend = f(appdata.backend)
+				Datex.Runtime.addPermissionForRemoteJSCode(appdata.backend)
+			};
 			if (appdata.host) appdata.host = f(appdata.host);
 			this.#setMetadata(appdata)
 		}

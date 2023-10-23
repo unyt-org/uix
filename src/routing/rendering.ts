@@ -354,7 +354,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 
 	// handle Error
 	else if (entrypointData.entrypoint instanceof Error) {
-		const [statusCode, html] = createErrorHTML('Routing failed', entrypointData.entrypoint);
+		const [statusCode, html] = createErrorHTML('Routing failed: ' + entrypointData.entrypoint.message, entrypointData.entrypoint);
 		resolved.content = html;
 		resolved.status_code = statusCode;
 	}

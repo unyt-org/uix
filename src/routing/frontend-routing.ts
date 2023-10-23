@@ -230,20 +230,21 @@ export namespace Routing {
 				if (!loadedInitial) await handleCurrentURLRoute();
 			} 
 
-			const refetched_route = await refetchRoute(route, entrypoint);// Path.Route(await (<RouteManager>current_content).getInternalRoute());
-			// check if accepted route matches new calculated current_route
-			if (route_should_equal && !Path.routesAreEqual(route_should_equal, refetched_route)) {
-				logger.warn `new route should be "${Path.Route(route_should_equal).routename}", but was changed to "${refetched_route.routename}". Make sure getInternalRoute() and onRoute() are consistent in all components.`;
-				// stop ongoing loading animation
-				window.stop()
-				// something is wrong, content was server side rendered, routes might not be resolved correctly, better reload to get server routing
-				if (usingInferredEntrypoint) window.location.href = Path.Route(route_should_equal).routename; 
-			}
+			// TODO: use route refetching?
+			// const refetched_route = await refetchRoute(route, entrypoint);// Path.Route(await (<RouteManager>current_content).getInternalRoute());
+			// // check if accepted route matches new calculated current_route
+			// if (route_should_equal && !Path.routesAreEqual(route_should_equal, refetched_route)) {
+			// 	logger.warn `new route should be "${Path.Route(route_should_equal).routename}", but was changed to "${refetched_route.routename}". Make sure getInternalRoute() and onRoute() are consistent in all components.`;
+			// 	// stop ongoing loading animation
+			// 	window.stop()
+			// 	// something is wrong, content was server side rendered, routes might not be resolved correctly, better reload to get server routing
+			// 	if (usingInferredEntrypoint) window.location.href = Path.Route(route_should_equal).routename; 
+			// }
 
-			// must be updated to new
-			if (!Path.routesAreEqual(current, refetched_route)) {
-				changed = setCurrentRoute(refetched_route, true); // update silently
-			}
+			// // must be updated to new
+			// if (!Path.routesAreEqual(current, refetched_route)) {
+			// 	changed = setCurrentRoute(refetched_route, true); // update silently
+			// }
 		}
 
 		if (changed) logger.success `new route: ${getCurrentRouteFromURL().routename??"/"}`;

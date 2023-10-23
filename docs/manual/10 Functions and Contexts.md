@@ -38,14 +38,14 @@ const button =
 ```
  * As component methods
 ```tsx
-@Component
+@template(...)
 class MyComponent extends Component {
     myMethod() {
         ...
     }
 }
 ```
- * Or as exported API functions from the backend#
+ * Or as exported functions from the backend
 ```tsx
 export function register() {
     // ...
@@ -54,7 +54,7 @@ export function register() {
 
 <br/>
 Per default, all of those functions behave as you would expect in any JavaScript code.
-But there is also some special UIX-specific behaviour, as you will see in the following examples.
+But UIX can extend this behaviour, as you will see in the following examples.
 
 
 ### Scenario 1: Stationary exported functions
@@ -65,7 +65,7 @@ in their origin context and cannot be transferred to another endpoint.
 However, they can still be *called* from other endpoints - the function execution just always
 happens in the origin context.
 
-As a simple example, let't call an exported backend function from the frontend:
+As a simple example, let's call an exported backend function from the client (frontend):
 ```ts
 /// file: backend/entrypoint.ts
 export function callMe() {
@@ -78,9 +78,9 @@ import {callMe} from "backend/entrypoint.ts";
 const result = await callMe() // "thanks"
 ```
 
-This is nearly identical (despite the required additional `await`) to the more trivial example of 
+This is nearly identical to the more trivial example of 
 importing a function from a frontend module inside another frontend module.
-
+The only difference is the additional `await` that is required for all functions called from an external context.
 
 ### Scenario 2: Stationary event handlers
 
@@ -106,8 +106,8 @@ export default
 In this example, `"button was clicked"` is logged on the backend when the button is clicked in the browser.
 
 > [!NOTE]
-> If the exact same entrypoint module was a frontend entrypoint, the logs would also be shown in the frontend,
-> since the origin context is the frontend (frontend) context.
+> If the exact same entrypoint module was a frontend module, the logs would be shown in the frontend,
+> since the origin context is also the frontend context.
 
 
 ### Scenario 3: Event handlers in the frontend context
@@ -115,16 +115,16 @@ In this example, `"button was clicked"` is logged on the backend when the button
 Now that we understand the default behaviour of functions, lets take a look at a
 different scenario: 
 
-> What if we *want* to execute the `onclick` handler from the last
+> What if we want to execute the `onclick` handler from the last
 > example in the browser, despite the button being created and rendered in the
 > backend?
 
 There are many reasons for such a behaviour: Maybe we want to show an alert to the user,
-or we want to download a file, or ...
+or we want to download a file, or update some DOM content on the frontend, etc.
 
 To achieve this, we only need to make one small change in our example code: replacing
-the `onclick` attribute with a labeled `onclick:frontend` attribute.
-This tells UIX that the event handler function must be transferred to the frontend context:
+the `onclick` attribute with a *labeled* `onclick:frontend` attribute.
+This tells UIX that the event handler function must be run in the frontend context:
 
 ```ts
 /// file: backend/entrypoint.ts
@@ -184,6 +184,23 @@ functions can be called.
 
 The only thing to keep in mind when using eternal modules is that functions must always include `use()`
 declarations to restore the original context.
+
+Example:
+```ts
+// file: backend/counter.eternal.ts
+
+// this is only ever called once:
+console.log("init eternal context"); 
+
+// 'counter' keeps its current value, even after a server restart / page reload
+export const counter = $$(0);
+
+export function incrementCounter() {
+    use (counter); // references the counter of the original context
+    counter.val++;
+}
+``
+
 
 > [!NOTE]
 > It is recommended to use eternal modules mostly to store data and functions.

@@ -199,8 +199,7 @@ export function incrementCounter() {
     use (counter); // references the counter of the original context
     counter.val++;
 }
-``
-
+```
 
 > [!NOTE]
 > It is recommended to use eternal modules mostly to store data and functions.

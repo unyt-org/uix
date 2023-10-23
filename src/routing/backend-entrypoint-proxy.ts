@@ -35,9 +35,9 @@ export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 		else ({ content, render_method } = await resolveEntrypointRoute({entrypoint, route: Path.Route(ctx.path)}));
 		
 		// partial hydration, only return live nodes
-		if (render_method == RenderMethod.HYBRID && content instanceof domContext.Element) {
-			return new PartialHydration(content as Element);
-		}
+		// if (render_method == RenderMethod.HYBRID && content instanceof domContext.Element) {
+		// 	return new PartialHydration(content as Element);
+		// }
 		
 		return content;
 	}

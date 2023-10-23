@@ -6,9 +6,10 @@
     --current_text_color_highlight: var(--text_highlight);
 } */
 
-light-root {
+light-root, transform-fragment {
     display: contents;
 }
+
 
 :root {
     --current_text_color: var(--text);

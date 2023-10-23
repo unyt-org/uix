@@ -11,7 +11,6 @@ import { logger } from "../utils/global-values.ts";
 import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
 import { HTMLProvider } from "../html/html-provider.ts";
 
-import { getGlobalStyleSheetLinks } from "../utils/css-style-compat.ts";
 import { provideValue } from "../html/entrypoint-providers.tsx";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
@@ -28,6 +27,7 @@ import { Element } from "../uix-dom/dom/mod.ts";
 import { getLiveNodes } from "../hydration/partial.ts";
 import { UIX } from "../../uix.ts";
 import { hydrationCache } from "../hydration/hydration-cache.ts";
+import { UIX_COOKIE, getCookie } from "../session/cookies.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -699,16 +699,17 @@ runner.enableHotReloading();
 		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData, headers];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [await getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, lang}), render_method, status_code, openGraphData, headers];
+		if (content instanceof Datex.Markdown) return [await getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:render_method==RenderMethod.HYBRID, lang}), render_method, status_code, openGraphData, headers];
 
+		console.log("hy?", render_method==RenderMethod.HYBRID)
 		// convert content to valid HTML string
-		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, lang}), render_method, status_code, openGraphData, headers, content];
+		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:render_method==RenderMethod.HYBRID, lang}), render_method, status_code, openGraphData, headers, content];
 		
 		// invalid content was created, should not happen
 		else if (content && typeof content == "object") {
 			console.log("invalid UIX content:", content)
 			const [status_code, html] = createErrorHTML(`Cannot render content type`, 500);
-			return [await getOuterHTML(html, {includeShadowRoots:true, injectStandaloneJS:true, lang}), RenderMethod.STATIC, status_code, undefined];
+			return [await getOuterHTML(html, {includeShadowRoots:true, lang}), RenderMethod.STATIC, status_code, undefined];
 		}
 		else return [domUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData, headers];
 	}
@@ -720,8 +721,6 @@ runner.enableHotReloading();
 		const lang = ContextBuilder.getRequestLanguage(requestEvent.request);
 		try {
 			this.updateCheckEntrypoint();
-			const entrypoint_css = [this.getEntrypointCSS(this.scope)];
-			if (this.#backend) entrypoint_css.push(this.getEntrypointCSS(this.#backend.scope))
 
 			// TODO:
 			// Datex.Runtime.ENV.LANG = lang;
@@ -736,11 +735,18 @@ runner.enableHotReloading();
 
 			// serve normal page
 			else {
+				const entrypoint_css = [this.getEntrypointCSS(this.scope)];
+				if (this.#backend) entrypoint_css.push(this.getEntrypointCSS(this.#backend.scope))
+	
 				const combinedHeaders = headers ?? new Headers();
 				combinedHeaders.set('content-language', lang)
 
+				const themeCookie = getCookie(UIX_COOKIE.theme, requestEvent.request.headers)!
+				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers) ?? "light";
+				const currentThemeCSS = UIX.Theme.getThemeCSS(themeCookie, true) ?? UIX.Theme.getThemeCSS(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme, true);
+
 				// get live pointer ids for sse observer
-				let liveNodePointers = null;
+				let liveNodePointers:string[]|undefined = undefined;
 				if (contentElement && render_method === RenderMethod.BACKEND) {
 					liveNodePointers = getLiveNodes(contentElement, false).map(e => Datex.Pointer.getByValue(e)?.id).filter(e=>!!e);
 				}
@@ -753,7 +759,23 @@ runner.enableHotReloading();
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
-					await generateHTMLPage(this, <string|[string,string]> prerendered_content, render_method, this.#client_scripts, this.#static_client_scripts, ['uix/style/document.css', ...entrypoint_css, ...getGlobalStyleSheetLinks()], ['uix/style/body.css', ...entrypoint_css], this.#entrypoint, this.#backend?.web_entrypoint, open_graph_meta_tags, compat, lang, liveNodePointers, contentElement),
+					await generateHTMLPage({
+						provider: this,
+						prerendered_content: prerendered_content as string,
+						render_method,
+						js_files: this.#client_scripts,
+						static_js_files: this.#static_client_scripts,
+						color_scheme: modeCookie,
+						css: currentThemeCSS,
+						global_css_files: ['uix/style/document.css', ...entrypoint_css],
+						body_css_files: ['uix/style/body.css', ...entrypoint_css],
+						frontend_entrypoint: this.#entrypoint,
+						backend_entrypoint: this.#backend?.web_entrypoint,
+						open_graph_meta_tags,
+						compat_import_map: compat,
+						livePointers: liveNodePointers,
+						contentElement,
+					}),
 					undefined, status_code, combinedHeaders
 				);
 			}
@@ -769,7 +791,16 @@ runner.enableHotReloading();
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
 		const compat = Server.isSafariClient(requestEvent.request);
-		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage(this, "", RenderMethod.DYNAMIC, [...this.#client_scripts, this.#BLANK_PAGE_URL], this.#static_client_scripts, ['uix/style/document.css', ...getGlobalStyleSheetLinks()], ['uix/style/body.css'], undefined, undefined, undefined, compat));
+		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage({
+			provider: this,
+			prerendered_content: "",
+			render_method: RenderMethod.DYNAMIC,
+			js_files: [...this.#client_scripts, this.#BLANK_PAGE_URL],
+			static_js_files: this.#static_client_scripts,
+			global_css_files: ['uix/style/document.css'],
+			body_css_files: ['uix/style/body.css'],
+			compat_import_map: compat
+		}));
 	}
 
 	private async handleServiceWorker(requestEvent: Deno.RequestEvent, _path:string) {

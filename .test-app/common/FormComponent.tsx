@@ -1,6 +1,6 @@
 import { bindToDisplayContext } from "uix/utils/datex-over-http.ts";
 import { Component } from "uix/components/Component.ts";
-import { template } from "uix/html/anonymous-components.ts";
+import { template } from "uix/html/template.ts";
 
 
 const count = $$(0);

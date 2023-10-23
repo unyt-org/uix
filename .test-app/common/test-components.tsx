@@ -1,7 +1,9 @@
 import { Api, test } from "../backend/public.ts";
 
-import { add, always, and, map, not, select } from "datex-core-legacy";
-import { blankTemplate, style, template } from "uix/html/anonymous-components.ts";
+import { add, always, and, map, not, select } from "datex-core-legacy/types/function.ts";
+import { blankTemplate, template } from "uix/html/template.ts";
+import { style } from "uix/html/style.ts";
+
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { bindToDisplayContext } from "uix/utils/datex-over-http.ts";

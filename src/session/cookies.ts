@@ -8,6 +8,8 @@ const { getCookies: getHeaderCookies, setCookie: setHeaderCookie, deleteCookie: 
 export const UIX_COOKIE = {
 	endpoint: "uix-endpoint",
 	language: "uix-language",
+	theme: "uix-theme",
+	colorMode: "uix-color-mode",
 	sharedData: "uix-shared-data"
 } as const;
 export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];

@@ -7,7 +7,6 @@ import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { bindToOrigin } from "../utils/datex-over-http.ts";
 import { RenderMethod } from "../base/render-methods.ts";
-import { Theme } from "../base/theme.ts";
 import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
@@ -15,6 +14,8 @@ import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 import { Element } from "../uix-dom/dom/mod.ts";
 import { blobToBase64 } from "../uix-dom/datex-bindings/blob-to-base64.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
+import { UIX } from "../../uix.ts";
+import { serializeJSValue } from "../utils/serialize-js.ts";
 
 let stage:string|undefined = '?'
 
@@ -24,7 +25,7 @@ if (client_type === "deno") {
 
 type injectScriptData = {declare:Record<string,string>, init:string[]};
 
-type _renderOptions = {includeShadowRoots?:boolean,  _injectedJsData?:injectScriptData, lang?:string}
+type _renderOptions = {includeShadowRoots?:boolean,  _injectedJsData?:injectScriptData, lang?:string, allowIgnoreDatexFunctions?: boolean}
 
 export const CACHED_CONTENT = Symbol("CACHED_CONTENT");
 
@@ -150,13 +151,22 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 			val = await blobToBase64(val);
 		}
 
-		attrs.push(`${attrib.name}="${val}"`) // TODO escape
+		attrs.push(`${attrib.name}="${domUtils.escapeHtml(val.toString())}"`) // TODO: better escape?
 	}
+
+
+	// special attributes (value, checked)
+	if ('value' in el && el.value) attrs.push(`value="${domUtils.escapeHtml(el.value?.toString()??"")}"`)
+	if ('checked' in el) {
+		if (el.checked === true) attrs.push(`checked`)
+		else if (el.checked !== false) attrs.push(`value="${domUtils.escapeHtml(el.checked?.toString()??"")}"`)
+	}
+
 	attrs.push("uix-static");
 
 
 	// inject event listeners
-	if (dataPtr && opts?._injectedJsData && (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS]) {
+	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithEventListeners>el)[DOMUtils.ATTR_BINDINGS])) {
 		let context: HTMLElement|undefined;
 		let parent: Element|null = el;
 		let hasScriptContent = false; // indicates whether the generated script actually contains relevant content, not just skeleton code
@@ -169,17 +179,17 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 		} while ((parent = parent?.parentElement));
 
 
- 		const contextPtr = context?.attributes.getNamedItem("uix-ptr")?.value;
-		let script = `  const el = querySelector('[uix-ptr="${dataPtr}"]');\n`
+		let script = `const el = querySelector('[uix-ptr="${dataPtr}"]');\n`
 		script += `el[EVENT_LISTENERS] ??= new Map();\n`
 
-		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS]) {
+		// inject listeners
+		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS] ?? []) {
 			
 			for (const listener of listeners) {
 
 				const listenerFn = getFunctionWithContext(listener, isStandaloneContext);
 
-				// special form "action" on submit
+				// special form "action" on submit (no js required)
 				if (event == "submit" && Datex.Pointer.getByValue(listenerFn)) {
 					attrs.push(`action="/@uix/form-action/${Datex.Pointer.getByValue(listenerFn)!.idString()}/"`);
 				} 
@@ -188,18 +198,32 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 				else {
 					hasScriptContent = true;
 					const eventName = String(event);
-					const fnSource = getFunctionSource(listener, isStandaloneContext)
-					script += `{\n`
-					script += fnSource.companionSource;
-					script += `const __f__ = ${fnSource.source};\n`;
-					script += `if (!el[EVENT_LISTENERS].has("${eventName}")) el[EVENT_LISTENERS].set("${eventName}", new Set());\n`;
-					script += `el[EVENT_LISTENERS].get("${eventName}").add(__f__);\n`;
-					script += `el.addEventListener("${eventName}", __f__);\n`
-					script += `}\n`
+					try {
+						const fnSource = getFunctionSource(listener, isStandaloneContext)
+						script += `{\n`
+						script += fnSource.companionSource;
+						script += `const __f__ = ${fnSource.source};\n`;
+						script += `if (!el[EVENT_LISTENERS].has("${eventName}")) el[EVENT_LISTENERS].set("${eventName}", new Set());\n`;
+						script += `el[EVENT_LISTENERS].get("${eventName}").add(__f__);\n`;
+						script += `el.addEventListener("${eventName}", __f__);\n`
+						script += `}\n`
+					}
+					catch (e) {
+						console.log("allowIgnoreDatexFunctions", opts?.allowIgnoreDatexFunctions)
+						// if skip datex functions enabled, this function is just ignored and later activated via DATEX
+						// (throws if "no-datex" is not set)
+						if (!opts?.allowIgnoreDatexFunctions) throw e;
+					}
 				}
 
 			}
 		}
+
+		// inject element update triggers
+		for (const [attr, ptr] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.ATTR_BINDINGS] ?? []) {
+			console.log("binding", attr, Datex.Runtime.valueToDatexStringExperimental(ptr))
+		}
+
 		if (hasScriptContent) opts._injectedJsData.init.push(script);
 	}
 
@@ -224,6 +248,10 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 
 	const dependencies = listenerFn instanceof JSTransferableFunction ? listenerFn.deps : {};
 
+	if (listenerFn instanceof JSTransferableFunction && !listenerFn.flags?.includes("no-datex")) {
+		throw new Error('use() declaration must have a "no-datex" flag because the context has no DATEX runtime: use("no-datex")')
+	}
+
 	let hasContext = false;
 	const ctxId = Datex.Pointer.getByValue(dependencies['this'])?.id;
 	if (ctxId && dependencies['this'] instanceof domContext.Element) {
@@ -241,7 +269,7 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 			const fnSource = getFunctionSource(value as (...args: unknown[]) => unknown, isStandaloneContext);
 			companionSource += fnSource.companionSource;
 			companionSource += `const ${varName} = ${fnSource.source};\n`
-		}
+		}		
 		// handle dom elements
 		else if (value instanceof domContext.Element) {
 			const ptrId = Datex.Pointer.getByValue(value)?.id;
@@ -252,10 +280,25 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 				throw new Error("Cannot bind variable '" + varName + "' to a frontend context with use() - DOM element has no pointer.");
 			}
 		}
-		// cannot yet handle other values
+		// json values
 		else {
-			throw new Error("Cannot bind variable '" + varName + "' to a frontend context with use() - this type not supported.");
+			try {
+				// with convertJSONInput
+				if (value && typeof value == "object") {
+					companionSource += `const {createStaticObject} = await import("uix/standalone/create-static-object.ts");\n`
+					companionSource += `const ${varName} = createStaticObject(${serializeJSValue(value)});\n`
+				}
+				else {
+					companionSource += `const ${varName} = ${serializeJSValue(value)};\n`
+				}
+			
+			}
+			catch (e){
+				console.log(e)
+				throw new Error("Cannot bind variable '" + varName + "' to a frontend context with use() - this value is not supported.");
+			}
 		}
+
 	}
 	
 	// else if (!context) {
@@ -299,14 +342,21 @@ const isNormalFunction = (fnSrc:string) => {
 
 
 
-export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, lang?:string}):Promise<[header_script:string, html_content:string]> {
+export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, allowIgnoreDatexFunctions?: boolean, lang?:string}):Promise<[header_script:string, html_content:string]> {
 
 	if ((el as any)[CACHED_CONTENT]) return (el as any)[CACHED_CONTENT];
 
 	const scriptData:injectScriptData = {declare:{}, init:[]};
 	if (opts?.injectStandaloneJS) (opts as any)._injectedJsData = scriptData;
 
-	const html = await _getOuterHTML(el, opts);
+	const collectedStylesheets:string[] = []
+
+	let html = await _getOuterHTML(el, opts, collectedStylesheets);
+
+	// add collected stylesheet urls from html components
+	let injectedStyles = ""
+	for (const url of collectedStylesheets) injectedStyles += `<link rel="stylesheet" href="${convertToWebPath(url)}">\n`;
+	html = injectedStyles + html;
 
 	let script = `<script type="module">\n`
 
@@ -378,9 +428,53 @@ if (!domContext.Element.prototype.getOuterHTML) {
 }
 
 
+export type HTMLPageOptions = {
+	provider:HTMLProvider, 
+	prerendered_content?:string|[header_scripts:string, html_content:string], 
+	render_method?:RenderMethod, 
+	color_scheme: "dark"|"light",
+	css?: string,
+	js_files:(URL|string|undefined)[], 
+	static_js_files:(URL|string|undefined)[],
+	global_css_files:(URL|string|undefined)[], 
+	body_css_files:(URL|string|undefined)[], 
+	frontend_entrypoint?:URL|string, 
+	backend_entrypoint?:URL|string, 
+	open_graph_meta_tags?:OpenGraphInformation, 
+	compat_import_map?: boolean, 
+	lang?: string, 
+	livePointers?: string[], 
+	contentElement?: Element
+}
 
 
-export async function generateHTMLPage(provider:HTMLProvider, prerendered_content?:string|[header_scripts:string, html_content:string], render_method:RenderMethod = RenderMethod.HYBRID, js_files:(URL|string|undefined)[] = [], static_js_files:(URL|string|undefined)[] = [], global_css_files:(URL|string|undefined)[] = [], body_css_files:(URL|string|undefined)[] = [], frontend_entrypoint?:URL|string, backend_entrypoint?:URL|string, open_graph_meta_tags?:OpenGraphInformation, compat_import_map = false, lang = "en", livePointers?: string[], contentElement?: Element){
+export async function generateHTMLPage({
+	provider, 
+	prerendered_content, 
+	render_method, 
+	color_scheme,
+	css,
+	js_files, 
+	static_js_files,
+	global_css_files, 
+	body_css_files, 
+	frontend_entrypoint, 
+	backend_entrypoint, 
+	open_graph_meta_tags, 
+	compat_import_map, 
+	lang, 
+	livePointers, 
+	contentElement
+}: HTMLPageOptions) {
+
+	compat_import_map ??= false;
+	lang ??= "en"
+	render_method ??= RenderMethod.HYBRID;
+	js_files ??= []
+	static_js_files ??= []
+	global_css_files ??= []
+	body_css_files ??= []
+
 	let files = '';
 	let metaScripts = ''
 
@@ -477,19 +571,14 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 		global_style += `<link rel="stylesheet" href="${provider.resolveImport(stylesheet, true)}">\n`;
 	}
 
-	// global variable stylesheet
-	global_style += "<style>"
-	global_style += Theme.getCurrentThemeCSS().replaceAll("\n","");
-	global_style += "</style>"
+	// custom inline css
+	if (css) {
+		global_style += `<style>${css}</style>`
+	}
 	
-	// dark themes
-	global_style += `<style class="uix-light-themes">`
-	global_style += Theme.getLightThemesCSS().replaceAll("\n","");
-	global_style += "</style>"
-
-	// light themes
-	global_style +=  `<style class="uix-dark-themes">`
-	global_style += Theme.getDarkThemesCSS().replaceAll("\n","");
+	// available global uix themes
+	global_style += `<style class="uix-themes">`
+	global_style += UIX.Theme.getThemesCSS().replaceAll("\n","");
 	global_style += "</style>"
 
 	let body_style = ''
@@ -511,8 +600,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 				<meta charset="UTF-8">
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 				<meta name="theme-color"/>	
-				${await open_graph_meta_tags?.getMetaTags()}
-				${provider.app_options.name ? `<title>${provider.app_options.name}</title>` : ''}
+				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
 				${favicon}
 				${provider.app_options.installable ? `<link rel="manifest" href="manifest.json">` : ''}
 				${metaScripts}
@@ -533,7 +621,7 @@ export async function generateHTMLPage(provider:HTMLProvider, prerendered_conten
 					<link rel="stylesheet" href="${provider.resolveImport("uix/style/noscript.css", true)}">
 				</noscript>
 			</head>
-			<body style="visibility:hidden; color-scheme:${Theme.mode}" data-color-scheme="${Theme.mode}">
+			<body style="visibility:hidden; color-scheme:${color_scheme}" data-color-scheme="${color_scheme}">
 				<template shadowrootmode=open>
 					<slot></slot>
 					${body_style}

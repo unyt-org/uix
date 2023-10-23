@@ -318,6 +318,9 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	// handle FsFile
 	else if (client_type === "deno" && entrypointData.entrypoint instanceof Deno.FsFile) {
 		resolved.content = new Response(entrypointData.entrypoint.readable)
+		// cors headers (TODO: more general way to define cors behaviour)
+		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
+		resolved.content.headers.set("Access-Control-Allow-Headers", "*");
 	}
 
 	// handle status code from HTTPStatus

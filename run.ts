@@ -108,8 +108,6 @@ async function loadPlugins() {
 	return plugins;
 }
 
-console.log("run")
-
 /**
  * Mock #public.uix
  */
@@ -129,6 +127,7 @@ const plugins = await loadPlugins();
 const runners = [new LocalDockerRunner()];
 const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(rootPath, plugins), rootPath);
 if (!options.import_map) throw new Error("Could not find importmap");
+
 options.import_map = await createProxyImports(options, new_base_url, params.deno_config_path!);
 
 // make sure UIX mock is not overridden

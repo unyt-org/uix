@@ -3,7 +3,6 @@
 
 import { logger } from "../utils/global-values.ts";
 
-import { Theme } from "./theme.ts";
 import { Datex } from "datex-core-legacy";
 
 import { client_type } from "datex-core-legacy/utils/constants.ts";
@@ -42,11 +41,11 @@ if (!UIX.isHeadless) {
 
 	// watch system theme change
 	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-		if (Theme.auto_mode) return;
+		if (UIX.Theme.auto_mode) return;
 		logger.debug("system color scheme change")
-		if (event.matches) Theme.setMode("dark")
-		else Theme.setMode("light");
-		Theme.auto_mode = true;
+		if (event.matches) UIX.Theme.setMode("dark")
+		else UIX.Theme.setMode("light");
+		UIX.Theme.auto_mode = true;
 	})
 
 	// load document + body style, if not yet added

@@ -1,3 +1,5 @@
+import { createStaticObject } from "./create-static-object.ts";
+
 /**
  * Call a remote function.
  * Falls back to DATEX over HTTP if DATEX Runtime not available,
@@ -17,7 +19,9 @@ export async function callCompat(ptrId: string, args: unknown[]) {
 		const res = await fetch("/@uix/datex/"+encodeURIComponent(dx));
 		const text = await res.text();
 		if (res.ok) {
-			try {return JSON.parse(text)}
+			try {
+				return createStaticObject(JSON.parse(text));
+			}
 			catch {return "Return value is not valid JSON"}
 		}
 		else throw new Error(text)

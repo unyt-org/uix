@@ -7,7 +7,6 @@ import { SCSS } from "./src/utils/css-template-strings.ts";
 /** make decorators global */
 import { bindToOrigin } from "./src/utils/datex-over-http.ts";
 import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, frontend as _frontend} from "./src/base/decorators.ts";
-import { Theme } from "./src/base/theme.ts";
 import { domUtils } from "./src/app/dom-context.ts";
 
 declare global {
@@ -35,10 +34,6 @@ globalThis.frontend = _frontend;
 // @ts-ignore global
 globalThis.bindOrigin = _bindOrigin;
 
-// get Theme Color
-export function C (name:TemplateStringsArray|string, ...params:string[]) {
-	return Theme.getColorReference(typeof name == "string" ? name : name?.raw[0])
-}
 
 export function unsafeHTML(html:string, content?: Datex.RefOrValue<HTMLElement>|(Datex.RefOrValue<HTMLElement>)[]) {
 	return domUtils.createHTMLElement(html, content)

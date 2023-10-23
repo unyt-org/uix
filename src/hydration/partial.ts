@@ -18,14 +18,12 @@ export function getLiveNodes(treeRoot: Element, includeEventListeners = true, _l
 	// if (treeRoot instanceof Component) isLive = true;
 
 	// iterate children
-	if (!isLive) {
-		for (const val of (serialized.content instanceof Array ? serialized.content : [serialized.content]) ?? []) {
-			if (val instanceof Element) getLiveNodes(val, includeEventListeners, _list);
-			else {
-				const ptr = Datex.Pointer.pointerifyValue(val);
-				if (ptr instanceof Datex.Pointer) {
-					isLive = true;
-				}
+	for (const val of (serialized.content instanceof Array ? serialized.content : [serialized.content]) ?? []) {
+		if (val instanceof Element) getLiveNodes(val, includeEventListeners, _list);
+		else {
+			const ptr = Datex.Pointer.pointerifyValue(val);
+			if (ptr instanceof Datex.Pointer) {
+				isLive = true;
 			}
 		}
 	}

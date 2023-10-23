@@ -16,11 +16,12 @@ import { serializeJSValue } from "../utils/serialize-js.ts";
 import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex-over-http.ts"
 import type { DynamicCSSStyleSheet } from "../utils/css-template-strings.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts"
-import { Theme } from "../base/theme.ts";
-import { jsxInputGenerator } from "../html/anonymous-components.ts";
+import { jsxInputGenerator } from "../html/template.ts";
 import { bindObserver, domContext, domUtils } from "../app/dom-context.ts";
 import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { app } from "../app/app.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -581,7 +582,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     }
 
     private initShadowRootStyle() {
-        this.addStyleSheet(Theme.stylesheet);
+        this.addStyleSheet(UIX.Theme.stylesheet);
         for (const url of (<typeof Component>this.constructor).shadow_stylesheets??[]) this.addStyleSheet(url);
         // this.disableShadowForDATEX();
     }
@@ -793,8 +794,8 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         if (this[OPEN_GRAPH]) return; // already overridden
         Object.defineProperty(this, OPEN_GRAPH, {
             get() {return new OpenGraphInformation({
-                title: this.title,
-                description: this.options.description
+                title: this.title ?? app.options?.name,
+                description: this.options.description ?? app.options?.description
             }, this.openGraphImageGenerator)}
         })
     }
@@ -1108,17 +1109,22 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     public addStyleSheet(url_or_style_sheet:string|CSSStyleSheet|URL, adopt = true):Promise<void>|void {
 
         if (typeof url_or_style_sheet == "string" || url_or_style_sheet instanceof URL) {
-            url_or_style_sheet = new URL(url_or_style_sheet, (<typeof Component>this.constructor)._module);
-            if (this.style_sheets_urls.includes(url_or_style_sheet.toString())) return; // stylesheet already added
+            let url = new URL(url_or_style_sheet, (<typeof Component>this.constructor)._module);
+            if (this.style_sheets_urls.includes(url.toString())) return; // stylesheet already added
 
-            this.style_sheets_urls.push(url_or_style_sheet.toString());
+            // scope url
+            if (!this.shadowRoot) {
+                url = new URL(url + '?scope=' + this.tagName.toLowerCase()); // add scope query parameter
+            }
+
+            this.style_sheets_urls.push(url.toString());
 
             // allow fail if only potential module stylesheet
-            const allow_fail = (<typeof Component>this.constructor).module_stylesheets.includes(url_or_style_sheet.toString());
+            const allow_fail = (<typeof Component>this.constructor).module_stylesheets.includes(url.toString());
             
             // adopt CSSStylesheet (works if css does not use @import and shadowRoot exists, otherwise use <link>)
             if (adopt && this.shadowRoot) {
-                const stylesheet = Component.getURLStyleSheet(url_or_style_sheet, allow_fail);
+                const stylesheet = Component.getURLStyleSheet(url, allow_fail);
 
                 // is sync
                 if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) this.adoptStyle(stylesheet)
@@ -1132,7 +1138,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             // insert <link>
             else return (async ()=>{
                 try {
-                    await this.insertStyleSheetLink(url_or_style_sheet);
+                    await this.insertStyleSheetLink(url);
                 } catch (e) {
                     //console.debug(e);
                     if (!allow_fail) throw e;
@@ -1145,11 +1151,9 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         }
     }
 
-
     protected async insertStyleSheetLink(url:URL) {
         if (this.shadowRoot) await addStyleSheetLink(this.shadowRoot, url);
-        const tagName = "uix-"  + String(this.constructor.name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // TODO: rename
-        return addGlobalStyleSheetLink(url, tagName);
+        else if (client_type == "browser") await addGlobalStyleSheetLink(url);
     }
 
     /** shadow dom specific methods */
@@ -1266,7 +1270,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         }
 
         // add theme classes
-        html += `<style>${Theme.getDarkThemesCSS().replaceAll("\n","")+'\n'+Theme.getLightThemesCSS().replaceAll("\n","")}</style>`
+        html += `<style>${UIX.Theme.getThemesCSS().replaceAll("\n","")}</style>`
 
         return html;
     }

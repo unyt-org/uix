@@ -5,6 +5,7 @@
 import { Datex , pointer, meta, expose, scope, datex } from "datex-core-legacy";
 import { Server } from "./server.ts";
 import { type datex_meta } from "datex-core-legacy/datex_all.ts";
+import { logger } from "../utils/global-values.ts";
 
 /** common class for all interfaces (WebSockets, TCP Sockets, GET Requests, ...)*/
 export abstract class ServerDatexInterface implements Datex.ComInterface {
@@ -520,7 +521,7 @@ class WebsocketComInterface extends ServerDatexInterface {
         // try to find an other endpoint over which the requested endpoint is connected
         if (!this.connected_endpoints.has(to)) {
             if (this.reachable_endpoints.has(to)) to = this.reachable_endpoints.get(to);
-            else {console.log(to + " not reachable via redirect");return;}
+            else {logger.debug(to + " not reachable via redirect");return;}
         }
 
         // send to a connected endpoint
@@ -604,7 +605,7 @@ export namespace DatexServer {
 // override interface manager methods
 
 Datex.InterfaceManager.handleNoRedirectFound = function(receiver){
-    console.log("cannot redirect to " + receiver);
+    logger.debug("cannot redirect to " + receiver);
 }
 
 
@@ -623,7 +624,7 @@ Datex.InterfaceManager.handleNoRedirectFound = function(receiver){
 
     /** get sign and encryption keys for an alias */
     @expose static async get_keys(endpoint:Datex.Person) {
-        console.log("GET keys for " +endpoint)
+        // console.log("GET keys for " +endpoint)
         let keys = await Datex.Crypto.getExportedKeysForEndpoint(endpoint);
         return keys;
     }

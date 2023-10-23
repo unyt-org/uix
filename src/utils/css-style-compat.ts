@@ -182,22 +182,11 @@ export function addStyleSheetLink(element:HTMLElement|ShadowRoot, url:string|URL
 
 const globalStyleSheets = new Set<string>();
 
-export async function addGlobalStyleSheetLink(url:URL, scope?:string) {
-    if (scope) url = new URL(url + '?scope=' + scope); // add scope query parameter
+export async function addGlobalStyleSheetLink(url:URL) {
     // removes origin, if current origin (to match style sheet hrefs from SSR)
     const normalizedUrl = url.origin === window.location.origin ? url.pathname + url.search : url.toString()
     if (document.head?.querySelector('link[href="'+normalizedUrl+'"]') || globalStyleSheets.has(url.toString())) return;
     const link = await addStyleSheetLink(document.head, url);
     link.classList.add("global-style");
     globalStyleSheets.add(url.toString())
-}
-
-export function getGlobalStyleSheetLinks() {
-	// global stylesheets
-    const urls = new Set<string>([...globalStyleSheets]);
-	if (document.head) document.head.querySelectorAll(".global-style").forEach(el=>{
-        if (el instanceof HTMLLinkElement) urls.add(el.href)
-    })
-
-    return urls;
 }

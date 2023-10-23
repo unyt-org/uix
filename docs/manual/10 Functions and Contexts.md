@@ -195,11 +195,15 @@ declarations to restore the original context.
 `use` declarations are a powerful tool for creating tranferable and restorable JavaScript functions.
 
 Nevertheless, there are some constraints you should keep in mind:
- 1) Variables that are accessed with `use()` are readonly - they cannot be reassigned. The values are immutable per default. This restriction does not apply to pointer values. If you need mutable values, use pointers.
+ 1) Variables that are accessed with `use()` are readonly - they cannot be reassigned. The values are immutable per default. This restriction does not apply to pointer values: if you need mutable values, use pointers.
  2) All values accessed with `use()` must be DATEX-compatible
- 3) When content is rendered on the backend with `renderBackend`, `use()` declarations are limited to functions
+ 3) `use()` declarations for a context without a loaded DATEX runtime (this is the case when using `renderBackend`), must be   called with the `"no-datex"` flag: `use("no-datex", ...)`.<br>
+  With this flag flag, more restrictions apply to `use()` declarations:
+    * Pointer values are also immutable
+    * With a few exceptions, only JSON values are supported as dependency values and as arguments/return values of functions
+      that were injected as dependencies.
 
-`use` declarations must always be added at the beginninf of a function body.
+`use` declarations must always be added at the beginning of a function body.
 Multiple `use` statements in one function are not allowed.
 
 In single-line arrow functions, `use` statements can be combined with an `&&` operator or separated with commas:
@@ -210,5 +214,74 @@ const x = $$(10);
 const fn1 = () => use(x) && x * 2;
 const fn2 = () => (use(x), x * 2);
 ```
+
+## use() examples
+
+### Calling a backend function
+
+In this example, we fetch some data from the backend by calling a function
+that is injected to the frontend context with `use()`.
+
+```tsx
+// file: backend/entrypoint.tsx
+
+function getData(name: string, count: bigint) {
+    return {
+        name,
+        count,
+        map: new Map(['data', 'xyz'])
+    };
+}
+
+export default (
+    <div>
+        <button onclick:frontend={async () => {
+            use (getData); // enable access to getData in the frontend context (browser client)
+            const data = await getData("alex", 99999999n); // call getData() on backend and get result
+            document.getElementById("data").innerText = data.map.get("data"); // update dom element content
+        }}>Load Data</button>
+        <p id="data"/>
+    </div>
+)
+```
+
+Since we provided no explicit render method, we used the default `renderHybrid`.
+In this case, we have a full DATEX runtime on the client and are not restricted by constraint 3 (see [Limitations of use() declarations](#limitations-of-use-declarations)).
+
+If we want to achieve the same thing using `renderBackend`, we need to modify or code to only use JSON-compatible values.
+To allow the event handler function to run in a context without a DATEX Runtime leading to the restrictions just mentioned,
+we need to add the `"no-datex"` flag to the `use()` declaration: 
+
+
+```tsx
+// file: backend/entrypoint.tsx
+import { renderBackend } from "uix/base/render-methods.ts";
+
+function getData(name: string, count: number) {
+    return {
+        name,
+        count,
+        map: {data: 'xyz'}
+    };
+}
+
+export default renderBackend(
+    <div>
+        <button onclick:frontend={async () => {
+            use ("no-datex", getData); // enable access to getData in the frontend context (browser client)
+            const data = await getData("alex", 99999999); // call getData() on backend and get result
+            document.getElementById("data").innerText = data.map["data"]; // update dom element content
+        }}>Load Data</button>
+        <p id="data"/>
+    </div>
+)
+```
+
+> [!NOTE]
+> The `"no-datex"` flag can also be set when rendering with `renderHybrid`. In this case, the
+> event handler function is already activated before the DATEX Runtime is fully initialized, 
+> leading to faster
+> initial response times.
+
 
 ## Security: Preventing arbitrary remote code execution

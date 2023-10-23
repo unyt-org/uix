@@ -198,14 +198,16 @@ declarations to restore the original context.
 Nevertheless, there are some constraints you should keep in mind:
  1) Variables that are accessed with `use()` are readonly - they cannot be reassigned. The values are immutable per default. This restriction does not apply to pointer values: if you need mutable values, use pointers.
  2) All values accessed with `use()` must be DATEX-compatible
- 3) `use()` declarations for a context without a loaded DATEX runtime (this is the case when using `renderBackend`), must be   called with the `"no-datex"` flag: `use("no-datex", ...)`.<br>
+ 3) `use()` declarations for a context without a loaded DATEX runtime (this is the case when using `renderBackend`) must be called with the `"no-datex"` flag: `use("no-datex", ...)`.<br>
   With this flag flag, more restrictions apply to `use()` declarations:
     * Pointer values are also immutable
     * With a few exceptions, only JSON values are supported as dependency values and as arguments/return values of functions
       that were injected as dependencies.
 
-`use` declarations must always be added at the beginning of a function body.
-Multiple `use` statements in one function are not allowed.
+Furthermore, keep in mind:
+ * `use` declarations must always be added at the beginning of a function body.
+ * Multiple `use` statements in one function are not allowed.
+ * Functions injected with `use()` are expected to always return a `Promise`` and must be awaited to get the result.
 
 In single-line arrow functions, `use` statements can be combined with an `&&` operator or separated with commas:
 

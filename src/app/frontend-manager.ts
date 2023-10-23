@@ -355,14 +355,20 @@ export class FrontendManager extends HTMLProvider {
 		});
 
 		
-		// handle datex-via-http
+		// handle datex-over-http
 		this.server.path(/^\/@uix\/datex\/.*$/, async (req, path)=>{
 			try {
 				const dx = decodeURIComponent(path.replace("/@uix/datex/", ""));
 				// TODO: rate limiting
 				// TODO: endpoint cookie verification
+				const endpoint = new ContextBuilder().getEndpoint(req.request)
+				if (!endpoint) {
+					logger.error("DATEX over HTTP: No endpoint session");
+					req.respondWith(this.server.getErrorResponse(400, "No endpoint session"));
+					return;
+				}
 
-				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:Datex.BROADCAST});
+				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:endpoint, __overrideMeta: {endpoint, signed: true, encrypted: true}});
 				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON}));
 			}
 			catch (e) {
@@ -699,17 +705,16 @@ runner.enableHotReloading();
 		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData, headers];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [await getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:render_method==RenderMethod.HYBRID, lang}), render_method, status_code, openGraphData, headers];
+		if (content instanceof Datex.Markdown) return [getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:render_method==RenderMethod.HYBRID, lang}), render_method, status_code, openGraphData, headers];
 
-		console.log("hy?", render_method==RenderMethod.HYBRID)
 		// convert content to valid HTML string
-		if (content instanceof Element || content instanceof DocumentFragment) return [await getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:render_method==RenderMethod.HYBRID, lang}), render_method, status_code, openGraphData, headers, content];
+		if (content instanceof Element || content instanceof DocumentFragment) return [getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:render_method==RenderMethod.HYBRID, lang}), render_method, status_code, openGraphData, headers, content];
 		
 		// invalid content was created, should not happen
 		else if (content && typeof content == "object") {
 			console.log("invalid UIX content:", content)
 			const [status_code, html] = createErrorHTML(`Cannot render content type`, 500);
-			return [await getOuterHTML(html, {includeShadowRoots:true, lang}), RenderMethod.STATIC, status_code, undefined];
+			return [getOuterHTML(html, {includeShadowRoots:true, lang}), RenderMethod.STATIC, status_code, undefined];
 		}
 		else return [domUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData, headers];
 	}

@@ -167,7 +167,7 @@ class ThemeManager  {
 		this.#current_mode = theme.mode; // only now trigger Theme.mode observers
 		// css global color scheme
 		if (client_type === "browser") {
-			document.body.style.colorScheme = theme.mode;
+			document.documentElement.style.colorScheme = theme.mode;
 			document.body.dataset.colorScheme = theme.mode;
 		}
 

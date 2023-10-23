@@ -77,7 +77,7 @@ function loadInitScript(component:(Element|ShadowRoot) & {getStandaloneInit?:()=
 	}
 }
 
-export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collectedStylsheets?:string[], standaloneContext = false) {
+export function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collectedStylsheets?:string[], standaloneContext = false) {
 	if (!opts?.includeShadowRoots) return el.innerHTML;
 
 	let html = "";
@@ -90,7 +90,7 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 		html += `<template shadowrootmode="${el.shadowRoot.mode}">`
 		// collect stylsheets that children require
 		const collectedStylesheets:string[] = []
-		html += await getInnerHTML(el.shadowRoot, opts, collectedStylesheets, standaloneContext);
+		html += getInnerHTML(el.shadowRoot, opts, collectedStylesheets, standaloneContext);
 		for (const link of collectedStylesheets) html += `<link rel="stylesheet" href="${convertToWebPath(link)}">\n`;
 		// @ts-ignore
 		if (el.getRenderedStyle) html += el.getRenderedStyle();
@@ -105,13 +105,13 @@ export async function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, 
 	}
 
 	for (const child of (el.childNodes as unknown as Node[])) {
-		html += await _getOuterHTML(child, opts, collectedStylsheets, standaloneContext);
+		html += _getOuterHTML(child, opts, collectedStylsheets, standaloneContext);
 	}
 
 	return html || domUtils.escapeHtml((el as HTMLElement).innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
-async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[], isStandaloneContext = false):Promise<string> {
+function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[], isStandaloneContext = false):string {
 	isStandaloneContext = isStandaloneContext || (<any>el)[STANDALONE];
 
 	if (el instanceof domContext.Text) return domUtils.escapeHtml(el.textContent ?? ""); // text node
@@ -119,7 +119,7 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 	if (el instanceof domContext.DocumentFragment) {
 		const content = [];
 		for (const child of (el.childNodes as unknown as Node[])) {
-			content.push(await _getOuterHTML(child, opts, collectedStylsheets, isStandaloneContext));
+			content.push(_getOuterHTML(child, opts, collectedStylsheets, isStandaloneContext));
 		}
 		return content.join("\n");
 	}
@@ -134,11 +134,14 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 		throw "invalid HTML node"
 	}
 
-	const inner = await getInnerHTML(el, opts, collectedStylsheets, isStandaloneContext);
+	const inner = getInnerHTML(el, opts, collectedStylsheets, isStandaloneContext);
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
 
 	const dataPtr = el.attributes.getNamedItem("uix-ptr")?.value;
+
+	// TODO: only workaround
+	if (opts?.lang) UIX.language = opts.lang;
 
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];
@@ -148,7 +151,8 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 		if (val.startsWith("file://")) val = convertToWebPath(val);
 		// blob -> data url
 		else if (val.startsWith("blob:")) {
-			val = await blobToBase64(val);
+			logger.warn("not implemented: ssr blob rendering support");
+			// val = await blobToBase64(val);
 		}
 
 		attrs.push(`${attrib.name}="${domUtils.escapeHtml(val.toString())}"`) // TODO: better escape?
@@ -209,7 +213,6 @@ async function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?
 						script += `}\n`
 					}
 					catch (e) {
-						console.log("allowIgnoreDatexFunctions", opts?.allowIgnoreDatexFunctions)
 						// if skip datex functions enabled, this function is just ignored and later activated via DATEX
 						// (throws if "no-datex" is not set)
 						if (!opts?.allowIgnoreDatexFunctions) throw e;
@@ -248,7 +251,7 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 
 	const dependencies = listenerFn instanceof JSTransferableFunction ? listenerFn.deps : {};
 
-	if (listenerFn instanceof JSTransferableFunction && !listenerFn.flags?.includes("no-datex")) {
+	if (listenerFn instanceof JSTransferableFunction && Object.keys(listenerFn.deps).length && !listenerFn.flags?.includes("no-datex")) {
 		throw new Error('use() declaration must have a "no-datex" flag because the context has no DATEX runtime: use("no-datex")')
 	}
 
@@ -338,11 +341,9 @@ const isObjectMethod = (fnSrc:string) => {
 const isNormalFunction = (fnSrc:string) => {
 	return !!fnSrc.match(/^(async\s+)?function(\(| |\*)/)
 }
- 
 
 
-
-export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, allowIgnoreDatexFunctions?: boolean, lang?:string}):Promise<[header_script:string, html_content:string]> {
+export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, allowIgnoreDatexFunctions?: boolean, lang?:string}):[header_script:string, html_content:string] {
 
 	if ((el as any)[CACHED_CONTENT]) return (el as any)[CACHED_CONTENT];
 
@@ -351,7 +352,10 @@ export async function getOuterHTML(el:Element|DocumentFragment, opts?:{includeSh
 
 	const collectedStylesheets:string[] = []
 
-	let html = await _getOuterHTML(el, opts, collectedStylesheets);
+	// TODO: only workaround
+	if (opts?.lang) UIX.language = opts.lang;
+
+	let html = _getOuterHTML(el, opts, collectedStylesheets);
 
 	// add collected stylesheet urls from html components
 	let injectedStyles = ""
@@ -595,7 +599,7 @@ export async function generateHTMLPage({
 	// TODO: fix open_graph_meta_tags?.getMetaTags()
 	return indent `
 		<!DOCTYPE html>
-		<html lang="${lang}">
+		<html lang="${lang}" style="color-scheme:${color_scheme}">
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
@@ -621,7 +625,7 @@ export async function generateHTMLPage({
 					<link rel="stylesheet" href="${provider.resolveImport("uix/style/noscript.css", true)}">
 				</noscript>
 			</head>
-			<body style="visibility:hidden; color-scheme:${color_scheme}" data-color-scheme="${color_scheme}">
+			<body style="visibility:hidden;" data-color-scheme="${color_scheme}">
 				<template shadowrootmode=open>
 					<slot></slot>
 					${body_style}

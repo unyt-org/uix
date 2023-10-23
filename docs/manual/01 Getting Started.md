@@ -59,7 +59,7 @@ $ deno install --import-map https://cdn.unyt.org/importmap.json -Ar -n uix https
 
 ## Initial Project Setup
 
-Get started by cloning a simple UIX example project from https://github.com/unyt-org/uix-base-project:
+Get started by cloning the simple UIX example project from https://github.com/unyt-org/uix-base-project:
 ```bash
 $ git clone https://github.com/unyt-org/uix-base-project.git
 ```

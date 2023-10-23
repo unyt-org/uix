@@ -1,20 +1,21 @@
 # Gettings Started - coming from React
 
-Welcome to UIX! If you have used React before, this article is for you.
+Welcome to UIX! If you have used [React](https://react.dev/) before, this article is for you.
+
 UIX has many concepts similar to React, but is based on a different approach.
 With this article, we will try to make it is for you to transition from React to UIX.
-This article is roughly based on the [React quick start guide](https://react.dev/learn).
+This article roughly follows the [React quick start guide](https://react.dev/learn).
 
 ## The fundamental difference between React and UIX
 
 While React and UIX components might look very similar on first glance, the
 underlying approach is fundamentally different:
 
-While the function of a React functional component is run again for each state change,
+While the function of a React functional component is executed again on each state change,
 UIX functions are only every run one time. To get dynamic updates for state changes,
 UIX relies on fine-grained reactivity instead: State changes are passed through the data itself.
 
-With this model, UIX still uses functional concepts, but gets rid of the often weird and non-javascript-like
+With this model, UIX still uses functional concepts, but gets rid of the often weird and "non-JavaScript-like"
 behaviour of `useState`, `useEffect`, etc.
 This also means that UIX does not need a virtual DOM, but works directly with the *actual* DOM instead.
 
@@ -23,11 +24,11 @@ Within your UIX app, you can still use non-reactive APIs like `document.createEl
 
 ## Let's start easy: JSX
 
-UIX also supports JSX for creating elements and components.
-For the most basic use case - defining static UI - there isn't much difference between React and
+Like React, UIX supports JSX for creating elements and components.
+For the most basic use case - defining static UI - there aren't many differences between React and
 UIX. 
 
-Because UIX tries to support JSX that is as compatible to HTML as possible, there are 
+Because UIX tries to support JSX that is as close to HTML as possible, there are 
 a view small differences:
  * UIX uses the `class` attribute instead of `className`,
  * event handler attributes like `onclick` are also written in lowercase like they are normally written
@@ -37,10 +38,11 @@ a view small differences:
 
 ## Creating components
 
-UIX components can be defined with functions, just like in React.
-In contrast to React, component classes are also still used in UIX.
+UIX components can be defined with functions, just like in React (In contrast to React, 
+component classes are also still used in UIX).
 
-The basic React example from the react quick start guide can be used in UIX without any modifications:
+The basic example from the React quick start guide can be used in UIX without any modifications:
+
 ```tsx
 // entrypoint.tsx
 
@@ -96,8 +98,8 @@ export default function Profile() {
 		  src={user.imageUrl}
 		  alt={'Photo of ' + user.name}
 		  style={{
-			width: user.imageSize,
-			height: user.imageSize
+			  width: user.imageSize,
+			  height: user.imageSize
 		  }}
 		/>
 	  </>
@@ -105,12 +107,11 @@ export default function Profile() {
 }
 ```
 
-UIX supports fragments and all element attributes.
-
+As you can see, UIX supports fragments and all default element attributes.
 
 ## Responding to events
 
-Event handlers can also be assigned to attributes, like in React (keep in mind that all attributes are written in lowercase, meaning `onClick` -> `onclick`):
+Event handlers can also be assigned to attributes like in React (keep in mind that all attributes are written in lowercase, meaning `onClick` becomes `onclick`):
 
 ```tsx
 function MyButton() {
@@ -175,7 +176,7 @@ function MyButton() {
 ```
 
 This is already less verbose than the React counterpart, while achieving the exact same outcome.
-There is also another signifcant difference: 
+There is also another significant difference: 
 
 In UIX, the `MyButton` function is only executed once. All following DOM updates happen by direct
 propagation of the `count` value.
@@ -269,8 +270,9 @@ The following React example also works correctly with UIX:
 
 ```tsx
 export function IsGreaterThan1({random}) {
-  if (random > 1) return <div>Is greater than 1</div>
-  else return <div>Is less than or equal 1</div>
+  return random > 1 ? 
+    <div>Is greater than 1</div> : 
+    <div>Is less than or equal 1</div>
 }
 
 export default function() {
@@ -294,15 +296,15 @@ one pointer state to another.
 The most versatile transform function is the `always` function, which allows you to write
 most reactive state computations with normal JavaScript syntax, like it is possible in react:
 
-
 ```tsx
 import { always } from "unyt_core/functions.ts";
 
 export function IsGreaterThan1({random}) {
-  return always(() => {
-	if (random > 1) return <div>Is greater than 1</div>
-  	else return <div>Is less than or equal 1</div>
-  })
+  return always(() =>
+	    random > 1 ? 
+        <div>Is greater than 1</div> : 
+        <div>Is less than or equal 1</div>
+  )
 }
 
 export default function() {
@@ -327,4 +329,13 @@ export function IsGreaterThan1({random}) {
 }
 ```
 
-...
+
+> [!NOTE]
+> The `always` function behaves as excpected in mose cases. There is just one limitation:
+> The returned value must always have the same type.
+> For DOM elements, this means that the value must be an HTML, SVG, MathML element, or a document fragment.
+> To return plain values, wrap them in a document fragment:
+>
+> ```tsx
+> always(() => loaded.val ? <div>User data...</div> : <>{"Loading..."}</>)
+> ```

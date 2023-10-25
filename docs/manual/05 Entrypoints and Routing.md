@@ -39,7 +39,8 @@ This configuration normally only makes senses in combination with [Entrypoint Ro
 HTML Elements are directly appended to the document body. The can be created with
 normal DOM APIs (`document.createElement()`) or with JSX syntax:
 ```tsx
-export default <div>Content</div> satisfies Entrypoint
+import { Entrypoint } from "uix/html/entrypoints.ts";
+export default <div>Content</div> satisfies Entrypoint;
 ```
 
 Like other entrypoint values, HTML Elements are DATEX compatible and their content can be synchronized.
@@ -161,6 +162,8 @@ In a deno environment, `Deno.FSFile` values can be returned as entrypoint values
 The `provideFile()` function can also be used to return files from the local file system.
 
 ```typescript
+import { provideFile } from "uix/html/entrypoint-providers.tsx";
+
 export default provideFile('./image.png') satisfies Entrypoint
 ```
 
@@ -170,6 +173,8 @@ export default provideFile('./image.png') satisfies Entrypoint
 This can also be achieved with `provideRedirect()`:
 
 ```typescript
+import { provideRedirect } from "uix/html/entrypoint-providers.tsx";
+
 export default provideRedirect('https://example.unyt.app') satisfies Entrypoint
 ```
 
@@ -179,6 +184,8 @@ export default provideRedirect('https://example.unyt.app') satisfies Entrypoint
 Virtual redirects are similar to normal redirects, but they directly return a response with the content of the redirect URL, not a redirect response (HTTP Status **304**).
 
 ```typescript
+import { provideVirtualRedirect } from "uix/html/entrypoint-providers.tsx";
+
 export default provideVirtualRedirect('/example/home') satisfies Entrypoint
 ```
 
@@ -202,7 +209,7 @@ When a Component is encountered in the route chain, the `onRoute` method is call
 
 
 ```typescript
-class CComponent {
+class Component {
     // return the child element to which the route is resolved
     // if the route contains more sections, onRoute is called on this child element with the next route
     // section as the identifier
@@ -246,6 +253,49 @@ export default {
          </Parent>
 }
     
+```
+
+## Error handling
+UIX supports a wide range of error handling inside the routing context. We differ between HTTPStatus code and UIX response.
+
+### Throwing runtime error
+You may always throw runtime errors using the `throw` keyword. The corresponding error will be rendered in the users browser (it is possible to throw JSX content or UIX components).
+
+```typescript
+export default {
+    '/:id': (_, { id }) => {
+         if (id !== "4269420")
+             throw "Invalid login";
+         return "The secret is 42!";
+     }
+} satisfies Entrypoint;
+```
+
+### HTTPStatus
+```
+import { HTTPStatus } from "uix/html/http-status.ts";
+export default {
+    '/:id': (_, { id }) => {
+         if (id !== "4269420")
+             throw HTTPStatus.BAD_REQUEST.with("MyCustomMessage");
+         return "The secret is 42!";
+     }
+} satisfies Entrypoint;
+
+```
+
+### Using the provideError handler
+```typescript
+import { provideError } from "uix/html/entrypoint-providers.tsx";
+import { HTTPStatus } from "uix/html/http-status.ts";
+
+export default {
+    '/:id': (_, { id }) => {
+         if (id !== "4269420")
+             return provideError("Invalid login", HTTPStatus.FORBIDDEN);
+         return "The secret is 42!";
+     }
+} satisfies Entrypoint;
 ```
 
 
@@ -294,9 +344,9 @@ The `RouteManager` interface is implemented by UIX Components.
 ```typescript
 interface RouteManager {
     // return part of route that could be resolved
-    resolveRoute(route:Path.Route, context:Context): Path.route_representation|Promise<Path.route_representation> 
+    resolveRoute(route: Path.Route, context: Context): Path.route_representation | Promise<Path.route_representation> 
     // return internal state of last resolved route
-    getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
+    getInternalRoute(): Path.route_representation | Promise<Path.route_representation> 
 }
 ```
 
@@ -318,7 +368,7 @@ abstract class EntrypointProxy implements RouteHandler {
      * @param context UIX context
      * @returns entrypoint override or null
      */
-    abstract intercept?(route:Path.Route, context: Context): void|Entrypoint|Promise<void|Entrypoint>
+    abstract intercept?(route: Path.Route, context: Context): void|Entrypoint|Promise<void|Entrypoint>
 
     /**
      * This method is called after a route was resolved by the entrypoint
@@ -332,7 +382,7 @@ abstract class EntrypointProxy implements RouteHandler {
      * @param context UIX context
      * @returns entrypoint override or null
      */
-    abstract transform?(content: Entrypoint, render_method: RenderMethod, route:Path.Route, context: Context): void|Entrypoint|Promise<void|Entrypoint>
+    abstract transform?(content: Entrypoint, render_method: RenderMethod, route: Path.Route, context: Context): void | Entrypoint | Promise<void | Entrypoint>
 }
 ```
 

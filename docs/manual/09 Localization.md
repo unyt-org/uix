@@ -13,9 +13,9 @@ The easiest way to create and load localizations is to define multiple languages
 use localtext from #std;
 
 export const plane = localtext {
-  en: "Plane",
-  de: "Flugzeug",
-  fr: "Avion"
+    en: "Plane",
+    de: "Flugzeug",
+    fr: "Avion"
 }
 ```
 
@@ -35,10 +35,10 @@ import { template } from "uix/html/template.ts";
 import { use } from "uix/base/decorators.ts";
 
 @template(function(this: MyApp) {
-  return <h1>{this.plane} ✈️</h1>;
+    return <h1>{this.plane} ✈️</h1>;
 })
 export class MyApp extends Component {
-  @use("./localized.dx") declare plane: string;
+    @use("./localized.dx") declare plane: string;
 }
 ```
 
@@ -48,21 +48,21 @@ Localization may also be defined using the `local_text` method.
 import { local_text } from "unyt_core/datex_short.ts";
 
 const strings = {
-  title: local_text({
-    de: 'Hallo Welt',
-    en: 'Hello world'
-  }),
-  subtitle: local_text({
-    de: 'Das ist meine App',
-    en: 'This is my app'
-  })
+    title: local_text({
+        de: 'Hallo Welt',
+        en: 'Hello world'
+    }),
+    subtitle: local_text({
+        de: 'Das ist meine App',
+        en: 'This is my app'
+    })
 }
 
 function myApp() {
-  return <>
-    <h1>{strings.title}</h1>
-    <span>{strings.subtitle}</span>
-  </>;
+    return <>
+        <h1>{strings.title}</h1>
+        <span>{strings.subtitle}</span>
+    </>;
 )
 ```
 

@@ -12,6 +12,7 @@ import { HTTPStatus } from "./http-status.ts";
 import { createErrorHTML } from "./errors.tsx";
 import { HTTPError } from "./http-error.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
+import { getJSONCompatibleSerializedValue } from "../utils/serialize-js.ts";
 
 const { setCookie } = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/http/cookie.ts")) : {setCookie:null};
 const fileServer = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
@@ -45,11 +46,12 @@ export const once = lazy
  *  formatted: boolean if true, the DX/JSON is formatted with newlines/spaces
  * @returns blob containing DATEX/JSON encoded value
  */
-export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FILE_TYPE, formatted?:boolean}) {
+export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FILE_TYPE, formatted?:boolean, mockPointers?:boolean}) {
 	if (options?.type == Datex.FILE_TYPE.DATEX_BINARY) {
 		return provideContent(await Datex.Compiler.compile("?", [value]) as ArrayBuffer, options.type[0])
 	}
 	else if (options?.type == Datex.FILE_TYPE.JSON) {
+		if (options?.mockPointers) value = getJSONCompatibleSerializedValue(value);
 		return provideContent(JSON.stringify(value??null, null, options?.formatted ? '    ' : undefined), options.type[0])
 	}
 	else {

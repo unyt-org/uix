@@ -1,6 +1,7 @@
 import { Datex } from "datex-core-legacy";
 import type { Element, Node } from "../uix-dom/dom/mod.ts";
 import { Component } from "../components/Component.ts";
+import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 
 /**
  * Returns a list of all nodes in a DOM tree that have live pointer binding
@@ -28,16 +29,8 @@ export function getLiveNodes(treeRoot: Element, includeEventListeners = true, _l
 		}
 	}
 	
-	
 	if (!isLive) {
-		for (const [_attr, val] of Object.entries(serialized.attr ?? {})) {
-			if (!includeEventListeners && typeof val == "function") continue; // ignore event listeners
-			const ptr = Datex.Pointer.getByValue(val);
-			if (ptr) {
-				isLive = true;
-				break;
-			}
-		}
+		if (treeRoot[DOMUtils.ATTR_BINDINGS]?.size) isLive = true
 	}
 
 	if (isLive) _list.push(treeRoot);

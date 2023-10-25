@@ -31,5 +31,7 @@ declare global {
 	const HTMLOptionElement: typeof api.HTMLOptionElement
 	type HTMLOptionElement = api.HTMLOptionElement
 
+	const MutationObserver: typeof api.MutationObserver
+	type MutationObserver = api.MutationObserver
 
 }

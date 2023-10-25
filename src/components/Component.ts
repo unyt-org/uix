@@ -13,7 +13,7 @@ import { DX_IGNORE, INIT_PROPS } from "datex-core-legacy/runtime/constants.ts"
 import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css-style-compat.ts";
 import { indent } from "datex-core-legacy/utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize-js.ts";
-import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../utils/datex-over-http.ts"
+import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../app/datex-over-http.ts"
 import type { DynamicCSSStyleSheet } from "../utils/css-template-strings.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts"
 import { jsxInputGenerator } from "../html/template.ts";

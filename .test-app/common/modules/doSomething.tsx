@@ -1,4 +1,4 @@
-import { bindToDisplayContext } from "uix/utils/datex-over-http.ts";
+import { bindToDisplayContext } from "uix/app/datex-over-http.ts";
 
 const doSomething = function(){
 	console.log("doing something...") // backend or frontend

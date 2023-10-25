@@ -1,4 +1,4 @@
-import { bindToDisplayContext } from "uix/utils/datex-over-http.ts";
+import { bindToDisplayContext } from "uix/app/datex-over-http.ts";
 import { Component } from "uix/components/Component.ts";
 import { template } from "uix/html/template.ts";
 

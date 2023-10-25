@@ -5,7 +5,7 @@ import type { HTMLProvider } from "./html-provider.ts";
 import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_properties.ts";
 import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { bindToOrigin } from "../utils/datex-over-http.ts";
+import { bindToOrigin, getValueUpdater } from "../app/datex-over-http.ts";
 import { RenderMethod } from "../base/render-methods.ts";
 import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
@@ -224,7 +224,20 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 
 		// inject element update triggers
 		for (const [attr, ptr] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.ATTR_BINDINGS] ?? []) {
-			console.log("binding", attr, Datex.Runtime.valueToDatexStringExperimental(ptr))
+			hasScriptContent = true;
+			const eventName = attr == "checked" ? "change" : "input";
+			const propName = attr == "checked" ? "checked" : "value";
+			const fn = getValueUpdater(ptr);
+			script += `{\n`
+			script += `const __f1__ = ${fn.toString()};`; 
+			script += `const __f__ = function() {
+				const val = this.${propName};
+				return __f1__(val);
+			};\n`;
+			script += `el.addEventListener("${eventName}", __f__);\n`
+			script += `}\n`
+
+			// console.log("binding", attr, Datex.Runtime.valueToDatexStringExperimental(ptr), fn.toString())
 		}
 
 		if (hasScriptContent) opts._injectedJsData.init.push(script);

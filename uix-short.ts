@@ -5,7 +5,7 @@ import { SCSS } from "./src/utils/css-template-strings.ts";
 
 
 /** make decorators global */
-import { bindToOrigin } from "./src/utils/datex-over-http.ts";
+import { bindToOrigin } from "./src/app/datex-over-http.ts";
 import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, frontend as _frontend} from "./src/base/decorators.ts";
 import { domUtils } from "./src/app/dom-context.ts";
 

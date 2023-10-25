@@ -495,7 +495,7 @@ export class Server {
         if (!url.searchParams.has("original") && url.hasFileExtension("eternal.tsx", "eternal.ts", "eternal.js", "eternal.jsx", "eternal.mts", "eternal.mjs")) {
             const urlString = url.toString();
             if (!this.#eternalModulesCache.has(urlString)) {
-                const specifier = url + '?original'
+                const specifier = url.pathname + '?original'
                 const eternalModuleSource = await getEternalModule(filepath, specifier);
                 this.#eternalModulesCache.set(urlString, eternalModuleSource)
             } 

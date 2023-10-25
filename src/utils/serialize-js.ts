@@ -1,4 +1,4 @@
-import { Pointer } from "datex-core-legacy/runtime/pointers.ts";
+import { Pointer, Ref, Value } from "datex-core-legacy/runtime/pointers.ts";
 
 export function serializeJSValue(val:any):string {
 	let serialized = JSON.stringify(val);
@@ -23,4 +23,24 @@ export function serializeJSValue(val:any):string {
 	}
 
 	return serialized;
+}
+
+export function getJSONCompatibleSerializedValue(value: any) {
+	if (typeof value == "object") {
+		if (value instanceof Ref) return {val: value.val}
+
+		const newValue:Record<string,any>|any[] = value instanceof Array ? [] : {};
+	
+		if (!(value instanceof Array) && Object.getPrototypeOf(value) !== Object.prototype) {
+			value.__proto__ = Object.getPrototypeOf(value);
+		}
+
+		for (const key of Object.keys(value)) {
+			newValue[key as keyof typeof newValue] = normalizeValue(value[key]);
+		}
+
+		return newValue;
+	}
+
+	return value;
 }

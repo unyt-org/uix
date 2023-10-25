@@ -28,6 +28,7 @@ import { getLiveNodes } from "../hydration/partial.ts";
 import { UIX } from "../../uix.ts";
 import { hydrationCache } from "../hydration/hydration-cache.ts";
 import { UIX_COOKIE, getCookie } from "../session/cookies.ts";
+import { observeElementforSSE } from "./sse-observer.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -233,15 +234,17 @@ export class FrontendManager extends HTMLProvider {
 
 	addSSEObserver(pointerId: string, sender: (cmd: string) => void) {
 		// TODO: handle element updates
-		const handler = (v:any, k:any) => {
-			logger.info("sse observer >>", k, v);
-		}
 		const ptr = Datex.Pointer.get(pointerId)!;
 
-		if (!this.#sse_observers.has(sender)) this.#sse_observers.set(sender, new Map())
-		this.#sse_observers.get(sender)!.set(ptr, handler);
+		if (!ptr.value_initialized || !(ptr.val instanceof Element)) {
+			logger.error("cannot observe sse value");
+			return;
+		}
 
-		Datex.Pointer.get(pointerId)!.observe(handler)
+		const {cancel} = observeElementforSSE(ptr.val as Element)
+
+		if (!this.#sse_observers.has(sender)) this.#sse_observers.set(sender, new Map())
+		this.#sse_observers.get(sender)!.set(ptr, cancel);
 	}
 
 	getTranspilerForPath(path: Path.File) {
@@ -327,12 +330,12 @@ export class FrontendManager extends HTMLProvider {
 			// pointer observer via sse
 			const observe = searchParams.get("observe");
 			if (observe) {
-				logger.debug("sse observe from " + endpoint, observe)
+				console.log("sse observe from " + endpoint, observe)
 				// TODO: enable, handle element updates
-				// const pointers = JSON.parse(observe);
-				// for (const ptrId of pointers) {
-				// 	this.addSSEObserver(ptrId, sendSSECommand)
-				// }
+				const pointers = JSON.parse(observe);
+				for (const ptrId of pointers) {
+					this.addSSEObserver(ptrId, sender)
+				}
 			}
 
 			// workaround: send PING to cancel non-active connections
@@ -356,9 +359,10 @@ export class FrontendManager extends HTMLProvider {
 
 		
 		// handle datex-over-http
-		this.server.path(/^\/@uix\/datex\/.*$/, async (req, path)=>{
+		this.server.path(/^\/@uix\/datex\/?$/, async (req, path)=>{
 			try {
-				const dx = decodeURIComponent(path.replace("/@uix/datex/", ""));
+				// TODO: fix mock requests
+				const dx = await req.request.text()
 				// TODO: rate limiting
 				// TODO: endpoint cookie verification
 				const endpoint = new ContextBuilder().getEndpoint(req.request)
@@ -369,7 +373,7 @@ export class FrontendManager extends HTMLProvider {
 				}
 
 				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:endpoint, __overrideMeta: {endpoint, signed: true, encrypted: true}});
-				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON}));
+				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON, mockPointers: true}));
 			}
 			catch (e) {
 				req.respondWith(await this.server.getErrorResponse(500, "DATEX Error: " + e));

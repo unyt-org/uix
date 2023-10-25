@@ -3,7 +3,7 @@ import { app } from "../app/app.ts";
 import { unsafeHTML } from "../../uix-short.ts";
 import { HTTPError } from "./http-error.ts";
 import { HTTPStatus } from "./http-status.ts";
-import { bindToOrigin } from "../utils/datex-over-http.ts";
+import { bindToOrigin } from "../app/datex-over-http.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { domUtils } from "../app/dom-context.ts";
 

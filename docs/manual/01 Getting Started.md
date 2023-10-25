@@ -7,7 +7,7 @@ The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) 
 In contrast to frameworks like React, UIX provides *direct wiring* to the DOM for reactivity and does not need a virtual DOM.
 
 **Our core principles**
- * Complete compatibility with web standards
+ * Full compatibility with web standards
  * Full compatibility with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org Supranet principles
  * Both backend and frontend code is written as ES6 TypeScript modules
  * No JavaScript bundlers

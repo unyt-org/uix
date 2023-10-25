@@ -247,7 +247,7 @@ function getData(name: string, count: bigint) {
     return {
         name,
         count,
-        map: new Map(['data', 'xyz'])
+        map: new Map([['data', 'xyz']])
     };
 }
 

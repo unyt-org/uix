@@ -16,7 +16,7 @@ export async function callCompat(ptrId: string, args: unknown[]) {
 	// use datex-over-http
 	else {
 		const dx = ptrId + "("+JSON.stringify(args).slice(1,-1)+")";
-		const res = await fetch("/@uix/datex/"+encodeURIComponent(dx));
+		const res = await fetch("/@uix/datex", {method: "POST", headers: {"Content-Type": "text/datex"}, body: dx});
 		const text = await res.text();
 		if (res.ok) {
 			try {

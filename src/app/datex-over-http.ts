@@ -1,4 +1,4 @@
-import type { Datex } from "datex-core-legacy"
+import { Datex } from "datex-core-legacy/mod.ts"
 
 import { DX_PTR } from "datex-core-legacy/runtime/constants.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
@@ -19,20 +19,20 @@ export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
  */
 export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, context?:any, name?:string, forceDatex = false): F extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<Promise<R>>> : never  {
 	
-	if (typeof fn !== "function") throw new Error("UIX.bindToOrigin: Must be a function");
+	if (typeof fn !== "function") throw new Error("bindToOrigin: Must be a function");
 	// @ts-ignore already bound
 	if (fn[BOUND_TO_ORIGIN]) return fn as any;
 	// @ts-ignore already bound
 	if (fn.uix_bound || fn.ntarget?.uix_bound) return <any>fn;
 
-	if (context && !fn.bind) throw new Error("UIX.bindToOrigin: Cannot bind arrow function to context");
+	if (context && !fn.bind) throw new Error("bindToOrigin: Cannot bind arrow function to context");
 
 	// @ts-ignore
 	fn = $$(Datex.Function.createFromJSFunction(fn, context));
 
 	// @ts-ignore
 	const ptr:Datex.Pointer = (globalThis.Datex ? Datex.Pointer.getByValue(fn) : fn[DX_PTR]) ?? fn.ntarget?.[DX_PTR];
-	if (!ptr) throw new Error("UIX.bindToOrigin: function must be bound to a DATEX pointer");
+	if (!ptr) throw new Error("bindToOrigin: function must be bound to a DATEX pointer");
 	// prevent garbage collection
 	ptr.is_persistant = true;
 	
@@ -73,7 +73,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 	value = $$(value);
 	// @ts-ignore
 	const ptr:Datex.Pointer = value.idString ? value : (globalThis.Datex ? Datex.Pointer.getByValue(value) : value[DX_PTR]);
-	if (!ptr) throw new Error("UIX.getValueInitializer: value must be bound to a DATEX pointer");
+	if (!ptr) throw new Error("getValueInitializer: value must be bound to a DATEX pointer");
 	// prevent garbage collection
 	ptr.is_persistant = true;
 	
@@ -94,7 +94,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 			}
 			// use datex-over-http
 			else {
-				const res = await fetch("/@uix/datex/"+encodeURIComponent("${ptr.idString()}"));
+				const res = await fetch("/@uix/datex", {method:"POST", headers: {"Content-Type": "text/datex"}, body:"${ptr.idString()}"});
 				const text = await res.text();
 				if (res.ok) {
 					try {return JSON.parse(text)}
@@ -106,6 +106,45 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 		`
 	}
 }
+
+
+/**
+ * Creates a function that can be called to update a remote pointer value
+ * 
+ * - uses datex-over-http when DATEX is not available
+ * @param fn
+ */
+export function getValueUpdater(ref:Datex.Ref, forceDatex = false): string {
+	
+	// prevent garbage collection
+	if (ref instanceof Datex.Pointer) ref.is_persistant = true;
+	
+	if (forceDatex) {
+		return `async (val) => {
+			await import("datex-core-legacy");
+			await Datex.Supranet.connect();
+			return datex('${Datex.Runtime.valueToDatexStringExperimental(ref)}=?', [val]);
+		}
+		`
+	}
+	else {
+		return `async (val) => {
+			// use datex
+			if (globalThis.datex && globalThis.Datex) {
+				await Datex.Supranet.connect();
+				return datex('${Datex.Runtime.valueToDatexStringExperimental(ref)}=?', [val]);
+			}
+			// use datex-over-http
+			else {
+				const res = await fetch("/@uix/datex", {method:"POST", headers: {"Content-Type": "text/datex"}, body:"${Datex.Runtime.valueToDatexStringExperimental(ref)}=" + JSON.stringify(val)});
+				if (res.ok) return true
+				else throw new Error(await res.text())
+			}
+		}
+		`
+	}
+}
+
 
 
 

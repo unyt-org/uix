@@ -276,6 +276,25 @@ export default
     </ParentComponent>
 ```
 
+### The `@id` decorator
+To access elements defined in the template layout cosider assigning an unique id attribute to the corresponding elements:
+
+```tsx
+@template(()=>{
+    <div id="parent">
+         <h1>Hello</h1>
+         <input id="myInput" value="Hello UIX" type="text"/>
+    </div>
+})
+class MyApp extends Component {
+    // declare id explicitly if property name does not match id
+    @id("parent") declare myParent: HTMLDivElement;
+
+    // declare myInput automaticially since myInput property matches id
+    @id declare myInput: HTMLInputElement;
+}
+```
+
 ### The `@child` decorator
 
 Children can also be directly bound to a component with the `@child` decorator:
@@ -293,25 +312,6 @@ const parent =
         <div>Child 3</div>
     </ParentComponent>
 ```
-
-
-### The `@content` decorator
-
-The `@content` decorator adds a child to the `slot#content` element and visually has the same effect as using the `@child` decorator.
-But in contrast to the `@child` decorator, the `@content` does not add the child to the saved component state - it is still regarded as an internal layout. 
-
-Also, it is not possible to use the `@content` decorator *and* append children to the component (e.g. by using `append()` or the `@child` decorator). In this case, all children defined with the `@content` decorator will no longer be displayed.
-
-```tsx
-@Component
-class ParentComponent extends UIX.ShadowDOMComponent {
-    @layout componentTitle = <div>Component Title</div>
-    @content customContent = <div>Content</div>
-}
-
-export default <ParentComponent/>
-```
-
 
 ## Component lifecycle
 

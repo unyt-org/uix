@@ -127,3 +127,15 @@ Per default all content in the `frontend` directory is only available to fronten
 
 Thanks to [Cross-Realm Imports](./02%20Imports.md#cross-realm-imports), UIX allows the import and usage of backend modules inside frontend modules and vice versa.
 Files in the `common` directory are accessible from both the `frontend` and `backend` scope.
+
+## The UIX namespace
+UIX exposes a global namespace that contains some important properties.
+```ts
+interface UIX {
+    Theme: Theme;        // UIX Theme (including mode and color scheme)
+    cacheDir: Path;      // URL to UIX cache directory
+    isHeadless: boolean; // flag indicating if UIX instance is running on headless mode
+    language: string;    // language ("de" | "en" | ...)
+    version: string;     // UIX version ("beta" | "1.0.0" | ...)
+}
+```

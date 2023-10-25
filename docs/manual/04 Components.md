@@ -1,6 +1,6 @@
 # Components
 
-## Anonymous components (templates)
+## Template components
 The easiest way to define components in UIX is using templates.
 With anonymous component templates, you can still get reactive behaviour and saved states, but you don't get any advanced component features like
 lifecycle handlers and utility methods.
@@ -39,52 +39,6 @@ const comp3 = <CustomComponent id='c1'>
 <div class='class1' id='c1'>
     <div>Child 1</div>
     Child 2
-</div>
-*/
-```
-
-### Using shadow roots
-
-To get more control over the location of child elements, shadow roots and slots can be used.
-To add a shadow root to the root element add a `<shadow-root>` element as the first child of the outer element.
-Alternativly, you can add a `shadow-root` attribute to the outer element. In this case, they child elements of the outer element are
-all appended to the shadow root.
-
-```tsx
-import { template } from "uix/html/template.ts";
-
-// define template:
-const CustomComponentWithSlots = template(<div shadow-root>
-    Before children
-    <slot/>
-    After children
-</div>)
-
-// alternative template definition:
-const CustomComponentWithSlots2 = template(<div>
-    <shadow-root>
-        Before children
-        <slot/>
-        After children
-    </shadow-root>
-    This child is appended to the slot element inside the shadow root
-</div>)
-
-// create element:
-const comp3 = <CustomComponentWithSlots id='c1'>
-    <div>Child 1</div>
-    {"Child 2"}
-</CustomComponentWithSlots>;
-
-/* returns:
-<div id='c1'>
-    #shadow-root
-        Before children
-        <slot>
-            <div>Child 1</div>
-            Child 2
-        </slot>
-        After children
 </div>
 */
 ```

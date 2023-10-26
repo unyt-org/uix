@@ -1,4 +1,7 @@
 <img alt="UIX - The Fullstack Framework" src="./src/logos/banner.svg" style="max-width:400px">
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [uix.unyt.org](https://uix.unyt.org) &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; a unyt.org project 
 
@@ -103,3 +106,25 @@ Please take a look at the [development guidelines](./DEVELOP.md) and the unyt.or
 ---
 
 <sub>&copy; unyt 2023 • [unyt.org](https://unyt.org)</sub>
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/benStre"><img src="https://avatars.githubusercontent.com/u/35869401?v=4?s=100" width="100px;" alt="Benedikt Strehle"/><br /><sub><b>Benedikt Strehle</b></sub></a><br /><a href="https://github.com/unyt-org/uix/issues?q=author%3AbenStre" title="Bug reports">🐛</a> <a href="#content-benStre" title="Content">🖋</a> <a href="https://github.com/unyt-org/uix/commits?author=benStre" title="Documentation">📖</a> <a href="#design-benStre" title="Design">🎨</a> <a href="#ideas-benStre" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-benStre" title="Maintenance">🚧</a> <a href="https://github.com/unyt-org/uix/commits?author=benStre" title="Tests">⚠️</a> <a href="#projectManagement-benStre" title="Project Management">📆</a> <a href="https://github.com/unyt-org/uix/commits?author=benStre" title="Code">💻</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!

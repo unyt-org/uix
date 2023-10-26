@@ -1,7 +1,4 @@
 <img alt="UIX - The Fullstack Framework" src="./src/logos/banner.svg" style="max-width:400px">
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [uix.unyt.org](https://uix.unyt.org) &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; a unyt.org project 
 
@@ -103,10 +100,6 @@ Please take a look at the [development guidelines](./DEVELOP.md) and the unyt.or
 
 **Check out our [Blog](https://unyt.blog)!**
 
----
-
-<sub>&copy; unyt 2023 • [unyt.org](https://unyt.org)</sub>
-
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -128,3 +121,8 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+
+
+---
+
+<sub>&copy; unyt 2023 • [unyt.org](https://unyt.org)</sub>

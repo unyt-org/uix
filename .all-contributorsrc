@@ -30,7 +30,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/27917349?v=4",
       "profile": "https://unyt.org",
       "contributions": [
-        "design"
+        "design",
+        "code",
+        "doc"
       ]
     }
   ],

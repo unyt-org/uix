@@ -3,12 +3,6 @@
 Modules in the `frontend` directory of a UIX app can use exported values from modules in the `backend` directory, as if they are running on the same device and within the same process. 
 This is accomplished with DATEX exchange between the frontend and backend endpoints.
 
-Modules from the common directory can be imported from both the backend and frontend.
-> [!NOTE]
-> Common modules allow the usage of the *same source code* for the backend and frontend, but they do not share a state between the backend and frontend endpoints: Every module is initialized individually on each endpoint.
->
-> A shared module state is only possible with *backend modules* imported from the backend and frontend.
-
 **Cross-Realm Import Example**:
 
 ```typescript
@@ -35,6 +29,18 @@ console.log(await getData()); // [1,2,3]
 > [!WARNING]
 > Because network requests are asynchronous, imported functions always return a `Promise` that must be awaited.
 > For the same reason, all value updates are propagated asynchronously between endpoints.
+
+## Common Modules
+
+Modules from the common directory can be imported from both the backend and frontend.
+
+This is useful for definining components that can be rendered by the backend or frontend, or for utility functions or libraries that are used on the backend and frontend.
+
+> [!NOTE]
+> Common modules allow the usage of the *same source code* for the backend and frontend, but they do not share a state between the backend and frontend endpoints: Every module is initialized individually on each endpoint.
+>
+> A shared module state is only possible with *backend modules* imported from the backend and frontend.
+
 
 ## Security
 

@@ -91,7 +91,6 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		}
 		const exitStatus = await process.status();
 		if (exitStatus.code == 42) {
-			console.log(".....");
 			await run();
 		}
 	}

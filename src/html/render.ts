@@ -87,7 +87,7 @@ export function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collec
 
 	// add shadow root
 	if (el instanceof domContext.Element && el.shadowRoot) {
-		html += `<template shadowrootmode="${el.shadowRoot.mode}">`
+		html += `<template shadowrootmode="${el.shadowRoot.mode??"open"}">`
 		// collect stylsheets that children require
 		const collectedStylesheets:string[] = []
 		html += getInnerHTML(el.shadowRoot, opts, collectedStylesheets, standaloneContext);
@@ -189,7 +189,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 		// inject listeners
 		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS] ?? []) {
 			
-			for (const listener of listeners) {
+			for (const [listener] of listeners) {
 
 				const listenerFn = getFunctionWithContext(listener, isStandaloneContext);
 
@@ -208,7 +208,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 						script += fnSource.companionSource;
 						script += `const __f__ = ${fnSource.source};\n`;
 						script += `if (!el[EVENT_LISTENERS].has("${eventName}")) el[EVENT_LISTENERS].set("${eventName}", new Set());\n`;
-						script += `el[EVENT_LISTENERS].get("${eventName}").add(__f__);\n`;
+						script += `el[EVENT_LISTENERS].get("${eventName}").add([__f__, true]);\n`;
 						script += `el.addEventListener("${eventName}", __f__);\n`
 						script += `}\n`
 					}
@@ -377,9 +377,10 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRo
 
 	let script = `<script type="module">\n`
 
+	script += `import {querySelector, querySelectorAll} from "uix/uix-dom/dom/shadow_dom_selector.ts";\n;`;
+
 	if (opts?.injectStandaloneJS) {
 		// global imports and definitions
-		script += `import {querySelector, querySelectorAll} from "uix/uix-dom/dom/shadow_dom_selector.ts";\n`
 		script += `import {bindPrototype} from "uix/standalone/get_prototype_properties.ts";\n`
 		script += `import {bindContentProperties} from "uix/standalone/bound_content_properties.ts";\n`
 		script += `globalThis.querySelector = querySelector;\nglobalThis.querySelectorAll = querySelectorAll;\n`
@@ -554,8 +555,11 @@ export async function generateHTMLPage({
 					stage: stage, 
 					backend: Datex.Runtime.endpoint.toString(),
 					host: Datex.Unyt.endpoint_info.app?.host ? Datex.Unyt.endpoint_info.app.host.toString() : null,
-					domains: Datex.Unyt.endpoint_info.app?.domains ?? [],
-					usid: app.uniqueStartId
+					dynamicData: {
+						domains: app.domains
+					},
+					usid: app.uniqueStartId,
+					hod: app.metadata.hod
 				}, null, "    ")}
 			</script>\n`
 
@@ -579,7 +583,8 @@ export async function generateHTMLPage({
 		metaScripts += indent(4) `<meta name="uix-hydration-root" content="${hydrationRootPtr.id}"></meta>\n`
 	}
 
-	if (add_importmap) metaScripts += `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;
+	// TODO: add condition if (add_importmap), when polyfill for declarative shadow root is no longer required
+	metaScripts += `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;
 	
 	let global_style = '';
 	// stylesheets

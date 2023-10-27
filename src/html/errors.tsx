@@ -9,7 +9,7 @@ import { domUtils } from "../app/dom-context.ts";
 
 function createErrorMessageHTML(title: string, message?: string|Element, attachment?: Element, statusCode?: number, displayLocation?: string) {
 
-	return <div style="width:100%; height:100%; background-color:#282828; display:flex; justify-content:center; align-items:center">
+	return <div style="width:100%; height:100vh; background-color:#282828; display:flex; justify-content:center; align-items:center">
 		
 		<div style="display:grid; padding:20px; margin: 15px; color: #ef7b7b; background-color:#4e3635; border-radius:10px; width: fit-content;max-width: 100%; max-height: 100%; overflow: scroll; ">
 			<div style="display:flex">

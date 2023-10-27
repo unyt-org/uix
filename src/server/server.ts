@@ -22,6 +22,7 @@ import { addCSSScopeSelector } from "../utils/css-scoping.ts";
 import { getEternalModule } from "../app/eternal-module-generator.ts";
 import { highlightText } from 'https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js'
 import {serveFile} from "https://deno.land/std@0.164.0/http/file_server.ts"
+import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -297,18 +298,35 @@ export class Server {
 
 
     private async listenWithFallbackPort() {
+        // first try actual requested port
         try {
-            return this.tryListen(this.port)
+            const conn = this.tryListen(this.port)
+            this.#port = (conn.addr as Deno.NetAddr).port;
+            return conn;
         }
         // port not accessible
         catch (e) {
             // only try a different port if default port 80 is used
             if (customPort) throw e;
-            const {getAvailablePort} = await import("https://deno.land/x/port@1.0.0/mod.ts");
-            const port = await getAvailablePort();
-            if (!port) throw "No available port found"
-            this.#port = port;
-            return this.tryListen(this.port)
+
+            const portCachePath = new Path("./uix-fallback-port", cache_path);
+
+            // try cached fallback port
+            const cachedFallbackPort = portCachePath.fs_exists && await Deno.readTextFile(portCachePath.normal_pathname);
+            try {
+                if (!cachedFallbackPort) throw "No cached fallback path";
+                const conn = this.tryListen(Number(cachedFallbackPort))
+                this.#port = Number(cachedFallbackPort);
+                return conn;
+            }
+            catch {
+                // get a new fallback port (using port 0)
+                const conn = this.tryListen(0)
+                this.#port = (conn.addr as Deno.NetAddr).port;
+
+                await Deno.writeTextFile(portCachePath.normal_pathname, this.#port.toString())
+                return conn;
+            }            
         }
     }
 
@@ -612,7 +630,7 @@ export class Server {
         try {
             // resolve ts and virtual files
             const resolve_ts = (url.ext==="ts"||url.ext==="tsx"||url.ext==="mts") && url.searchParams.get("type") !== "ts" && resolveTs;
-            const compat_mode = isSafari;
+            const compat_mode = false; //isSafari;
             
             for (const [tpath, transpiler] of this.transpilers) {
                 if (normalizedPath.startsWith(tpath)) {

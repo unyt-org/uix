@@ -42,7 +42,7 @@ function cloneWithListeners(element: Node) {
 	const clone = element.cloneNode(false);
 	if (clone instanceof domContext.Element) {
 		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>element)[DOMUtils.EVENT_LISTENERS]??[]) {
-			for (const listener of listeners) {
+			for (const [listener] of listeners) {
 				domUtils.setElementAttribute(clone, "on"+event, listener);
 			}
 		}	
@@ -124,7 +124,19 @@ export function template<Options extends Record<string, any> = {}, Children = JS
  */
 export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
 
-export function template(templateOrGenerator:Element|jsxInputGenerator<Element, any, any, any>) {
+/**
+ * Empty template for component
+ * ```ts
+ * @template()
+ * class MyComponent extends Component {
+ * }
+ * ```
+ * @param elementGenerator 
+ */
+export function template():jsxInputGenerator<Element, Record<string, never>, never>&((cl:typeof HTMLElement)=>any)
+
+
+export function template(templateOrGenerator?:Element|jsxInputGenerator<Element, any, any, any>) {
 	let generator:any;
 	const module = getCallerFile();
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
@@ -148,17 +160,30 @@ export function template(templateOrGenerator:Element|jsxInputGenerator<Element, 
 			else return templateOrGenerator(propsOrClass, collapsedPropsProxy);
 		}
 	}
+	else if (templateOrGenerator) {
+		generator = function(maybeClass:any) {
+			// decorator
+			if (Component.isPrototypeOf(maybeClass)) {
+				maybeClass._init_module = module;
+				const decoratedClass = defaultOptions(maybeClass)
+				decoratedClass.template = generator
+				return decoratedClass
+			}
+			// jsx
+			else {
+				return cloneWithShadowRoots(templateOrGenerator);
+			}
+		}
+	}
 	else generator = function(maybeClass:any) {
 		// decorator
 		if (Component.isPrototypeOf(maybeClass)) {
 			maybeClass._init_module = module;
-			const decoratedClass = defaultOptions(maybeClass)
-			decoratedClass.template = generator
-			return decoratedClass
+			return defaultOptions(maybeClass)
 		}
 		// jsx
 		else {
-			return cloneWithShadowRoots(templateOrGenerator);
+			throw new Error("invalid template definition")
 		}
 	};
 

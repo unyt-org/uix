@@ -2,7 +2,7 @@ import { Datex } from "datex-core-legacy";
 import { Server } from "../server/server.ts";
 
 const logger = new Datex.Logger("HTTP-over-DATEX");
-logger.success("enabled");
+logger.debug("enabled");
 
 @endpoint export class HTTP {
 

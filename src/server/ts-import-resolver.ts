@@ -56,66 +56,18 @@ export class TypescriptImportResolver {
         else return specifier;
     }
 
-	resolveImportSpecifier(specifier:string, path:Path): string {
+	resolveImportSpecifier(specifier:string): string {
 
-        // TODO: (wrong import mapping for /@uix/src web paths)
-        // let resolved = import.meta.resolve(specifier);
-        
-        // is in datex_cache/eternal -> keep original specifier, eternal values on frontend are resolved by server, not import map
-
-        if (!this.import_map) {
-            logger.warn("cannot resolve imports, no import map")
-            return specifier; // no import map, cannot resolve
-        }
-
-
-        // already resolved
-        if (specifier.startsWith("../") || specifier.startsWith("./")) return specifier; // already a relative path
-        else if (specifier.startsWith("/")) return specifier; // already an absolute path
-        else if (specifier.startsWith("https://") || specifier.startsWith("http://")) return specifier; // already an absolute url path
-
-        // TODO:?
-
-        let resolved: string|undefined
-        const imports = this.import_map.imports;
-
-        // direct import identifier
-        if (!specifier.includes("/") && imports[specifier] && !this.import_map.isEntryTemporary(specifier)) {
-            resolved = imports[specifier];
-        }
-       
-        // import identifier path
-        else if (specifier.includes("/")) {
-
-            // direct match
-            if (imports[specifier] && !this.import_map.isEntryTemporary(specifier)) {
-               resolved = imports[specifier];
-            }
-            // resolve path
-            else {
-                const parts = specifier.split("/");
-                let prefix = "";
-                for (let i = 0; i<parts.length-1; i++) {
-                    prefix += parts[i] + "/";
-                    if (imports[prefix]) {
-                        resolved = imports[prefix] + parts.slice(i+1).join("/");
-                    }
-                }
-            }
-        }
-        
-        if (!resolved) {
-            resolved = specifier;
-            // ignored entry in import map, can be ignored?
-            if (imports[specifier] && this.import_map.isEntryTemporary(specifier)) {}
-            else logger.warn("Cannot resolve import '"+specifier+"'") // should not happen, but can ignore for now in workaround impl, because imports are resolved for all ts files in the source directory, even those without correct import map imports
-        }
+        // keep relative paths, else resolve specifier
+        let resolved = (specifier.startsWith("./") || specifier.startsWith("../")) ?
+            specifier :
+            import.meta.resolve(specifier);
 
         // keep original specifier for eternal.ts
         if (resolved.endsWith(".eternal.ts") || resolved.endsWith(".eternal.tsx") || resolved.endsWith(".eternal.js") || resolved.endsWith(".eternal.jsx") || resolved.endsWith(".eternal.mts") || resolved.endsWith(".eternal.mjs")) 
             resolved = specifier
 
-        return this.resolveRelativeImportMapImport(resolved, path);
+        return resolved
 	}
 
     /**
@@ -144,7 +96,7 @@ export class TypescriptImportResolver {
 		const content = await Deno.readTextFile(path.normal_pathname);
 
 		const resolved_content = content.replace(TypescriptImportResolver.import_specifier_regex!, (_match: string, p1:string, import_specifier:string)=>{
-            const resolved = this.resolveImportSpecifier(import_specifier, reference_path);
+            const resolved = this.resolveImportSpecifier(import_specifier);
             return `${p1}"${resolved}"`
         });
 
@@ -196,9 +148,10 @@ export class TypescriptImportResolver {
                 }
             }
 
-            const rel_import_path = is_prefix ? null : this.resolveImportSpecifier(specifier, reference_path)
+            const rel_import_path = is_prefix ? null : this.resolveImportSpecifier(specifier)
             const abs_import_path = is_prefix ? null : new Path(rel_import_path!, reference_path);
         
+
             // workaround: ignore 'node:x' paths
             if (abs_import_path?.toString().startsWith("node:")) return match;
 
@@ -208,6 +161,7 @@ export class TypescriptImportResolver {
             const is_oos = !abs_import_path?.isChildOf(this.scope!);
             let is_ext = false;
             const imports_list = new Set<string>();
+
 
             for (const ext of this.custom_extensions) {
                 if (abs_import_path?.filename.endsWith(ext)) {

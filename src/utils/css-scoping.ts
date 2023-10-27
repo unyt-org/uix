@@ -6,7 +6,10 @@ export function addCSSScopeSelector(css: string, scope: string) {
 			return part.replace(/^[^@\n]+(?={)/, (s) => {
 				const selectors = s.split(/, */g).map(selector => 
 					(selector.includes(":host") || selector.includes(":root")) ? 
-						selector.trimEnd().replaceAll(":host", scope).replaceAll(":root", scope) : 
+						selector
+							.trimEnd()
+							.replace(/\:(host|root)\s*\:host-context/g, ':host-context')
+							.replace(/\:(host|root)(?![-\w])/g, scope) : 
 						scope + ' ' + selector.trimEnd()
 					);
 				return selectors.join(", ") + ' '

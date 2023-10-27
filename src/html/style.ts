@@ -1,3 +1,5 @@
+import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
+import { Component } from "../components/Component.ts";
 
 /**
  * \@style decorator

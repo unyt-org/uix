@@ -12,6 +12,10 @@ import { UIX } from "../../uix.ts";
 
 import { initSession } from "../session/frontend.ts";
 
+// custom dom elements
+import "../html/light-root.ts"
+
+
 if (client_type == "browser") {
 	await initSession();
 }
@@ -19,7 +23,7 @@ if (client_type == "browser") {
 // enable DATEX CLI
 if (client_type === "deno") Datex.enableCLI();
 
-if (!UIX.isHeadless) {
+if (UIX.context == "frontend") {
     // keyboard overlay content (on chrome)
     if ('virtualKeyboard' in navigator) {
         // @ts-ignore
@@ -53,8 +57,8 @@ if (!UIX.isHeadless) {
 	const body_style_url = new URL("../style/body.css", import.meta.url).toString();
 	const document_style_url = new URL("../style/document.css", import.meta.url).toString();
 
-	if (!UIX.isHeadless && !document.head.querySelector("link[href='"+document_style_url+"']")) addStyleSheetLink(document.head, document_style_url);
-	if (!UIX.isHeadless && document.body.shadowRoot && !document.body.shadowRoot.querySelector("link[href='"+body_style_url+"']")) addStyleSheetLink(document.body.shadowRoot, body_style_url);
+	if (UIX.context == "frontend" && !document.head.querySelector("link[href='"+document_style_url+"']")) addStyleSheetLink(document.head, document_style_url);
+	if (UIX.context == "frontend" && document.body.shadowRoot && !document.body.shadowRoot.querySelector("link[href='"+body_style_url+"']")) addStyleSheetLink(document.body.shadowRoot, body_style_url);
 }
 
 

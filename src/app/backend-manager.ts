@@ -23,7 +23,7 @@ export class BackendManager {
 	#web_entrypoint?: Path
 	#pagesDir?: Path.File
 	virtualEntrypointContent?: string;
-	#watch: boolean
+	#watch: boolean|"info"
 
 	get watch() {return this.#watch}
 
@@ -50,7 +50,7 @@ export class BackendManager {
 		return this.#entrypointProxy;
 	}
 
-	constructor(appOptions:normalizedAppOptions, scope:Path.File, basePath:URL, watch = false){
+	constructor(appOptions:normalizedAppOptions, scope:Path.File, basePath:URL, watch:boolean|"info" = false){
 		this.#scope = scope;
 		this.#basePath = Path.File(basePath);
 		this.#watch = watch;
@@ -81,13 +81,28 @@ export class BackendManager {
 	}
 
 	async watchFiles(){
-		for await (const event of Deno.watchFs(this.#scope.normal_pathname, {recursive: true})) {
-			this.restart()
+		let handling = false;
+		for await (const _event of Deno.watchFs(this.#scope.normal_pathname, {recursive: true})) {
+			if (handling) continue;
+
+			handling = true;
+			this.handleUpdate();
+			setTimeout(() => handling = false, 500)
 		}
 	}
 
-	restart() {
-		logger.info("restarting backend...");
+	public handleUpdate() {
+		// watch disabled
+		if (!this.#watch) return;
+
+		// only log info for developer
+		if (this.#watch == "info") logger.warn("Backend files changed, restart might be required. Start uix with -b to automatically restart the backend.")
+		// restart backend
+		else this.restart()
+	}
+
+	private restart() {
+		logger.info("reloading backend...");
 		Deno.exit(42)
 	}
 

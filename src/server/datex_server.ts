@@ -137,7 +137,7 @@ class WebPushInterface extends ServerDatexInterface  {
     private saved_push_connections = new Map<Datex.Target, push_data>();
 
     init() {
-        this.logger.success("init")
+        this.logger.debug("init")
         // webpush.setVapidDetails('mailto:admin@unyt.org', WebPushInterface.publicKey, WebPushInterface.privateKey);
     }
 
@@ -212,7 +212,7 @@ class TCPCLI extends ServerDatexInterface  {
     }
 
     init() {
-        this.logger.success("init")
+        this.logger.debug("init")
 
         this.tcp_server = TCP.createServer((conn) => {
 
@@ -272,7 +272,7 @@ class TCPComInterface extends ServerDatexInterface  {
     private endpoint_connection_map: Map<Datex.Endpoint, TCPSocket> = new Map()
 
     init() {
-        this.logger.success("init")
+        this.logger.debug("init")
 
         this.tcp_server = TCP.createServer((conn) => {
         
@@ -351,7 +351,7 @@ class WebsocketStreamComInterface extends ServerDatexInterface {
     private connected_endpoint_streams = new Map<Datex.Target, any>();
 
     init() {
-        this.logger.success("init")
+        this.logger.debug("init")
 
 
         this.wss = new WebSocket.Server({
@@ -452,7 +452,7 @@ class WebsocketComInterface extends ServerDatexInterface {
     }
 
     init() {
-        this.logger.success("init");
+        this.logger.debug("init");
 
         // http interface required
         DatexServer.http_com_interface.init();

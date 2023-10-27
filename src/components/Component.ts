@@ -582,7 +582,8 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     }
 
     private initShadowRootStyle() {
-        this.addStyleSheet(UIX.Theme.stylesheet);
+        // TODO: still required?
+        // this.addStyleSheet(UIX.Theme.stylesheet);
         for (const url of (<typeof Component>this.constructor).shadow_stylesheets??[]) this.addStyleSheet(url);
         // this.disableShadowForDATEX();
     }
@@ -771,7 +772,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         this.handleIdProps(constructed);
    
         // @standlone props only relevant for backend
-        if (UIX.isHeadless) this.loadStandaloneProps();
+        if (UIX.context == "backend") this.loadStandaloneProps();
 
         if (constructed) await this.onConstruct?.();
         // this.bindOriginMethods();
@@ -1016,7 +1017,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         await new Promise((r) => setTimeout(r, 0)); // dom changes
 
         await new Promise((r) => setTimeout(r, 0)); // dom changes
-        if (!UIX.isHeadless) await this.onDisplay?.();
+        if (UIX.context == "frontend") await this.onDisplay?.();
         await new Promise((r) => setTimeout(r, 0)); // dom changes
 
         this.#create_lifecycle_ready_resolve?.();

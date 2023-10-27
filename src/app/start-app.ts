@@ -1,7 +1,7 @@
 import { Datex, f } from "datex-core-legacy";
 import type { appOptions } from "./options.ts";
 import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
-import { http_over_datex, live_frontend, stage, watch, watch_backend } from "./args.ts";
+import { http_over_datex, live, stage, watch, watch_backend } from "./args.ts";
 import { BackendManager } from "./backend-manager.ts";
 import { Server } from "../server/server.ts";
 import { FrontendManager } from "./frontend-manager.ts";
@@ -9,7 +9,7 @@ import { Path } from "../utils/path.ts";
 
 const logger = new Datex.Logger("UIX App");
 
-export async function startApp(options:appOptions = {}, original_base_url?:string|URL) {
+export async function startApp(app: {domains:string[]}, options:appOptions = {}, original_base_url?:string|URL) {
 
 	const frontends = new Map<string, FrontendManager>()
 
@@ -19,7 +19,7 @@ export async function startApp(options:appOptions = {}, original_base_url?:strin
 	const [nOptions, baseURL] = await normalizeAppOptions(options, original_base_url);
 
 	// for unyt log
-	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") && Deno.env.get("UIX_HOST_ENDPOINT")!.startsWith("@") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, domains: Deno.env.get("UIX_HOST_DOMAINS")?.split(",")})
+	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") && Deno.env.get("UIX_HOST_ENDPOINT")!.startsWith("@") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, dynamicData: app})
 
 	// set .dx path to backend
 	if (nOptions.backend.length) {
@@ -35,7 +35,7 @@ export async function startApp(options:appOptions = {}, original_base_url?:strin
 
 	// load backend
 	for (const backend of nOptions.backend) {
-		const backend_manager = new BackendManager!(nOptions, backend, baseURL, watch_backend);
+		const backend_manager = new BackendManager!(nOptions, backend, baseURL, (live||watch_backend) ? true : (watch ? "info" : false));
 		await backend_manager.run()
 		if (backend_manager.content_provider!=undefined) {
 			if (backend_with_default_export!=undefined) logger.warn("multiple backend entrypoint export a default content");
@@ -53,7 +53,7 @@ export async function startApp(options:appOptions = {}, original_base_url?:strin
 	let server:Server|undefined
 	// load frontend
 	for (const frontend of nOptions.frontend) {
-		const frontend_manager = new FrontendManager(nOptions, frontend, baseURL, backend_with_default_export, watch, live_frontend)
+		const frontend_manager = new FrontendManager(nOptions, frontend, baseURL, backend_with_default_export, watch, live)
 		await frontend_manager.run();
 		server = frontend_manager.server;
 		frontends.set(frontend.toString(), frontend_manager);
@@ -62,7 +62,7 @@ export async function startApp(options:appOptions = {}, original_base_url?:strin
 	if (!nOptions.frontend.length && backend_with_default_export) {
 		// TODO: remove tmp dir on exit
 		const dir = new Path(Deno.makeTempDirSync()).asDir();
-		const frontend_manager = new FrontendManager(nOptions, dir, baseURL, backend_with_default_export, watch, live_frontend)
+		const frontend_manager = new FrontendManager(nOptions, dir, baseURL, backend_with_default_export, watch, live)
 		await frontend_manager.run();
 		server = frontend_manager.server;
 		frontends.set(dir.toString(), frontend_manager);

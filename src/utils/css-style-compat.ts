@@ -158,7 +158,7 @@ export function addStyleSheetLink(element:HTMLElement|ShadowRoot, url:string|URL
         element.appendChild(link);
 
         // onload not working with JSDom
-        if (UIX.isHeadless) {
+        if (UIX.context == "backend") {
 
             // handle non existing css file -> try to fetch corresponding scss file
             const path = new Path(url);

@@ -19,7 +19,6 @@ import "../base/init.ts"
 import { bindingOptions } from "./dom-context.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
 
-
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
 
 type version_change_handler = (version:string, prev_version:string)=>void|Promise<void>;
@@ -27,8 +26,9 @@ type version_change_handler = (version:string, prev_version:string)=>void|Promis
 
 // options passed in via command line arguments
 let stage: string|undefined
+let http_over_datex: boolean|undefined
 if (client_type === "deno") {
-	({ stage } = (await import("./args.ts")))
+	({ stage, http_over_datex } = (await import("./args.ts")))
 }
 
 const version = eternal ?? $$("unknown");
@@ -41,6 +41,7 @@ export type appMetadata = {
 	stage?: string,
 	backend?: Datex.Endpoint,
 	usid?: string
+	hod?: boolean // is http-over-datex enabled?
 }
 
 class App {
@@ -53,17 +54,29 @@ class App {
 			this.options = {import_map: new ImportMap(importMapContent)}
 		}
 
-		// get injected uix app metadata
-		const appDataContent = getInjectedAppData()
-		if (appDataContent) {
-			const appdata: Record<string,any> = {...appDataContent}
-			if (appdata.backend) {
-				appdata.backend = f(appdata.backend)
-				Datex.Runtime.addPermissionForRemoteJSCode(appdata.backend)
-			};
-			if (appdata.host) appdata.host = f(appdata.host);
-			this.#setMetadata(appdata)
+		// set app meta data
+		if (client_type == "deno") {
+			// todo set default metadata on backend
+			this.#setMetadata({
+				hod: http_over_datex
+			})
 		}
+
+		// get injected uix app metadata
+		else {
+			const appDataContent = getInjectedAppData()
+			if (appDataContent) {
+				const appdata: Record<string,any> = {...appDataContent}
+				if (appdata.backend) {
+					appdata.backend = f(appdata.backend)
+					// add backend as trusted endpoints with full permissions
+					Datex.Runtime.addTrustedEndpoint(appdata.backend)
+				};
+				if (appdata.host) appdata.host = f(appdata.host);
+				this.#setMetadata(appdata)
+			}
+		}
+		
 	}
 
 	base_url?:URL
@@ -94,6 +107,10 @@ class App {
 
 	get metadata() {
 		return this.#metadata
+	}
+
+	get backend() {
+		return this.#metadata.backend
 	}
 
 	#setMetadata(metadata:appMetadata) {
@@ -189,7 +206,7 @@ class App {
 
 			// TODO: use this in the unyt core status logger, currently implemented twice
 			// app domains inferred from current endpoint
-			const urlEndpoint = Datex.Runtime.endpoint;
+			const urlEndpoint = this.metadata.hod === false ? null : Datex.Runtime.endpoint;
 			const endpointURLs = urlEndpoint ? [this.formatEndpointURL(urlEndpoint)].filter(v=>!!v) as string[] : [];
 
 			this.#domains = [...new Set([...domains, ...endpointURLs])];
@@ -207,7 +224,7 @@ class App {
 
 	public async start(options:appOptions = {}, originalBaseURL?:string|URL) {
 		const { startApp } = await import("./start-app.ts");
-		const {nOptions, baseURL, defaultServer} = await startApp(options, originalBaseURL)
+		const {nOptions, baseURL, defaultServer} = await startApp(this, options, originalBaseURL)
 		this.options = nOptions;
 		this.defaultServer = defaultServer;
 		this.base_url = baseURL;

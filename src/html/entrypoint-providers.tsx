@@ -174,11 +174,13 @@ export function provideFile(path:string|URL) {
  * @returns resolved URL
  */
 export function provideRedirect(path:string|URL) {
-	return path instanceof URL ? path : new Path(path, getCallerFile());
+	if (path instanceof URL) return path;
+	else if (path.startsWith("/")) return Path.Route(path);
+	else return new Path(path, getCallerFile());
 }
 
 /**
- * Similar to UIX.provideRedirect/returning a URL, but no redirect on the client - the
+ * Similar to provideRedirect/returning a URL, but no redirect on the client - the
  * content is just served for the current URL
  * uses the internal UIX server to resolve a url to a response
  * @param path local file path or URL

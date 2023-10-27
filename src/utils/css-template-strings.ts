@@ -69,6 +69,7 @@ export function SCSS(template:TemplateStringsArray|string, ...params:cssParam[])
 		}
 
 		styleSheet.activate = (document: Document|ShadowRoot) => {
+			console.warn(">>!activate")
 			logger.debug("activating stylesheet for", document)
 			
 			// enable stylesheet for document

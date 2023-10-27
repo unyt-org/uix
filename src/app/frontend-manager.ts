@@ -112,8 +112,8 @@ export class FrontendManager extends HTMLProvider {
 					handle_out_of_scope_path: (path: Path.File|string, from:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects, compat)
 				}),
 				on_file_update: this.#watch ? (path)=>{
-					if (this.#backend?.watch && !this.isTransparentFile(path)) {
-						this.#backend.restart();
+					if (!this.isTransparentFile(path)) {
+						this.#backend.handleUpdate();
 					}
 					this.handleFrontendReload();
 				} : undefined
@@ -330,7 +330,7 @@ export class FrontendManager extends HTMLProvider {
 			// pointer observer via sse
 			const observe = searchParams.get("observe");
 			if (observe) {
-				console.log("sse observe from " + endpoint, observe)
+				// console.log("sse observe from " + endpoint, observe)
 				// TODO: enable, handle element updates
 				const pointers = JSON.parse(observe);
 				for (const ptrId of pointers) {
@@ -406,7 +406,7 @@ export class FrontendManager extends HTMLProvider {
 	// + resolve .dx/.dxb imports
 	// if no_side_effects is true, don't update any files
 	private async handleOutOfScopePath(import_path:Path.File|string, module_path:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean){
-		
+
 		if (typeof import_path == "string") return this.handleEndpointImport(import_path, module_path, imports, no_side_effects, compat);
 
 		// map .dx -> .dx.ts
@@ -418,6 +418,14 @@ export class FrontendManager extends HTMLProvider {
 		if (import_path.fs_exists && !import_path.fs_is_dir) {
 			const import_type = getDirType(this.app_options, import_path);
 			const module_type = getDirType(this.app_options, module_path);
+
+			/**
+			 * Don't allow frontend imports in common directories, because they are not accessible from
+			 * the backend. Backend imports in common repos are still allowed.
+			 */
+			if (module_type == "common" && import_type == "frontend") {
+				throw new Error(`Cannot import modules from a ${import_type} directory in a ${module_type} module (${module_path})`);
+			}
 
 			if (import_type == "backend") {
 				const web_path = this.srcPrefix + mapped_import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./

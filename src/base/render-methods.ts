@@ -12,7 +12,7 @@ import { DX_IGNORE } from "datex-core-legacy/runtime/constants.ts";
  * @param content HTML element or text content
  */
 export function renderHybrid<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYBRID, T> {
-	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderHybrid)")
+	if (UIX.context == "frontend") logger.warn("render methods have no effect for components created on the client side (renderHybrid)")
 	return new RenderPreset(RenderMethod.HYBRID, content)
 }
 
@@ -21,7 +21,7 @@ export function renderHybrid<T extends html_content_or_generator>(content:T): Re
  * @param content HTML element or text content
  */
 export function renderPreview<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYBRID, T> {
-	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderPreview)")
+	if (UIX.context == "frontend") logger.warn("render methods have no effect for components created on the client side (renderPreview)")
 	const preset = new RenderPreset(RenderMethod.HYBRID, content)
 	// @ts-ignore
 	preset[DX_IGNORE] = true;
@@ -37,7 +37,7 @@ export function renderPreview<T extends html_content_or_generator>(content:T): R
  * @param content HTML element or text content
  */
 export function renderBackend<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.BACKEND, T> {
-	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderBackend)")
+	if (UIX.context == "frontend") logger.warn("render methods have no effect for components created on the client side (renderBackend)")
 	return new RenderPreset(RenderMethod.BACKEND, content)
 }
 
@@ -47,7 +47,7 @@ export function renderBackend<T extends html_content_or_generator>(content:T): R
  * @param content HTML element or text content
  */
 export function renderStatic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.STATIC, T> {
-	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderStatic)")
+	if (UIX.context == "frontend") logger.warn("render methods have no effect for components created on the client side (renderStatic)")
 	return new RenderPreset(RenderMethod.STATIC, content)
 }
 
@@ -58,7 +58,7 @@ export function renderStatic<T extends html_content_or_generator>(content:T): Re
  * @param content HTML element or text content
  */
 export function renderDynamic<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.DYNAMIC, T> {
-	if (!UIX.isHeadless) logger.warn("render methods have no effect for components created on the client side (renderDynamic)")
+	if (UIX.context == "frontend") logger.warn("render methods have no effect for components created on the client side (renderDynamic)")
 	return new RenderPreset(RenderMethod.DYNAMIC, content)
 }
 

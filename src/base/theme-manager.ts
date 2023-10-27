@@ -24,10 +24,9 @@ class ThemeManager  {
 	#default_dark_theme = defaultThemes.dark
 
 	readonly #current_theme_style_sheet = new CSSStyleSheet();
-	#current_theme_style_sheet_added = false;
+	#document_stylesheets_added = false;
 
 	#global_style_sheet = new CSSStyleSheet();
-	#global_style_sheet_added = false;
 
 	#themesCSS = new Map<string, string>()
 
@@ -206,9 +205,9 @@ class ThemeManager  {
 		this.#current_theme_style_sheet.replaceSync?.(this.#current_theme_css_text);
 
 		// add to document
-		if (!this.#current_theme_style_sheet_added) {
+		if (!this.#document_stylesheets_added) {
 			if (client_type === "browser") document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
-			this.#current_theme_style_sheet_added = true;
+			this.#document_stylesheets_added = true;
 		}
 	}
 
@@ -221,9 +220,9 @@ class ThemeManager  {
 		this.#global_style_sheet.replaceSync?.(global_style);
 
 		// add to document
-		if (!this.#global_style_sheet_added) {
+		if (!this.#document_stylesheets_added) {
 			if (client_type === "browser") document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.#current_theme_style_sheet, this.#global_style_sheet];
-			this.#global_style_sheet_added = true;
+			this.#document_stylesheets_added = true;
 		}
 	}
 
@@ -251,7 +250,7 @@ class ThemeManager  {
 	}
 
 	// create new theme based on another theme
-	extend(theme:Theme, override:Partial<Theme> & {name: string}) {
+	extend(theme:Theme, override:Partial<Theme> & {name: string}): Theme {
 		if (!("mode" in override)) override.mode = theme.mode;
 		if (!("name" in override)) throw new Error("Name required");
 
@@ -260,7 +259,7 @@ class ThemeManager  {
 		for (const [key, value] of Object.entries(overrideValues)) {
 			override.values![key] = value;
 		}
-		return override;
+		return override as Theme;
 	}
 
 	private mode_change_observers = new Set<Function>();

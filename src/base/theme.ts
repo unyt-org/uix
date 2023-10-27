@@ -13,7 +13,7 @@ export const defaultThemes: Record<string, Theme> = {
 			text_light: "#333333aa",
 			text_highlight: "#171616",
 	
-			bg_default: "#f2efef",
+			bg_default: "#f5f5f5",
 			bg_dark: "#ffffff",
 			bg_loading: "#eeeeee",
 			bg_button: "#dddddd",
@@ -57,7 +57,7 @@ export const defaultThemes: Record<string, Theme> = {
 			text_light: "#ababab80",
 			text_highlight: "#efefef",
 	
-			bg_default: "#1a1e2a", // #1a1e2a94
+			bg_default: "#1c1c1f", // #1a1e2a94
 			bg_dark: "#0e131f",
 			bg_loading: "#111111",
 			bg_button: "#292d39",

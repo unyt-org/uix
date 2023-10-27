@@ -385,7 +385,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	// only load once in recursive calls when deepest level reached
 	if (!resolved.loaded) {
 		// preload in deno, TODO: better solution?
-		if (UIX.isHeadless && (entrypointData.entrypoint instanceof domContext.Element || entrypointData.entrypoint instanceof domContext.DocumentFragment)) {
+		if (UIX.context == "backend" && (entrypointData.entrypoint instanceof domContext.Element || entrypointData.entrypoint instanceof domContext.DocumentFragment)) {
 			await preloadElementOnBackend(entrypointData.entrypoint)
 		}
 
@@ -418,7 +418,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 
 export async function preloadElementOnBackend(element:Element|DocumentFragment, parent?:Element|DocumentFragment) {
 	// preload in deno, TODO: better solution?
-	if (UIX.isHeadless) {
+	if (UIX.context == "backend") {
 
 		const promises = [];
 

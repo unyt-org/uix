@@ -11,7 +11,15 @@ const section =
     <div id="section-1">
         <h1 style="font-weight:bold">Title</h1>
         <p>First Paragraph</p>
-    </div> as HTMLDivElement
+    </div>
+```
+
+In contrast to frameworky like React, the value returned by this JSX expression is an actual instance of an HTML div element.
+
+You can directly append it to another element:
+
+```tsx
+document.body.append(section);
 ```
 
 ## Supported attributes
@@ -19,14 +27,6 @@ const section =
 For native DOM elements, all attributes that are natively supported by the element can be used.
 Components support the common attributes for DOM element (e.g. `id`, `class`, `style` or event handlers) per default, and 
 can accept additional custom attributes defined in the component class or function.
-
-Additionally, there are special attributes for uix-specific functionality:
- * `uix-module`: specify the module path which is used as a reference for relative paths, e.g.:
-     ```tsx
-    <img uix-module={import.meta.url} src="./relative/path/from/current/module/image.png"/>
-     ```
-    This is only required for compatibility with Safari. In other runtime environments (e.g. Deno), the `import.meta.url` is always automatically inferred and does not have to be explicitly set.
- * `datex-pointer`: boolean (set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. Per default, only class components are automatically bound to a pointer.
 
 
 ### Special attributes values
@@ -97,6 +97,16 @@ export default {
     '/some/other-path': "Hello there"
 }
 ```
+
+#### Other UIX-specific attributes 
+
+There are a few special attributes for uix-specific functionality:
+ * `uix-module`: specify the module path which is used as a reference for relative paths, e.g.:
+     ```tsx
+    <img uix-module={import.meta.url} src="./relative/path/from/current/module/image.png"/>
+     ```
+    This is only required for compatibility with Safari. In other runtime environments (e.g. Deno), the `import.meta.url` is always automatically inferred and does not have to be explicitly set.
+ * `datex-pointer`: boolean (set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. Per default, only class components are automatically bound to a pointer.
 
 ## Creating components
 

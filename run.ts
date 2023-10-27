@@ -91,7 +91,14 @@ async function loadPlugins() {
 		if (pluginData instanceof Datex.Tuple) pluginData = pluginData.toArray();
 	
 		for (const pluginUrl of pluginData??[]) {
-			const pluginClass = (await import(pluginUrl.toString())).default;
+			let pluginClass: any;
+			try {
+				pluginClass = (await import(pluginUrl.toString())).default;
+			}
+			catch {
+				logger.error(`Could not load plugin from ${pluginUrl}`);
+				continue;
+			}
 			const plugin = new pluginClass();
 			logger.debug(`Loaded plugin "${plugin.name}" (${pluginUrl})`);
 	

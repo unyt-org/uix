@@ -23,7 +23,9 @@ catch {/*ignore*/}
 
 export const UIX = {
 	version,
-	isHeadless: client_type === "deno",
+	get context() {
+		return client_type === "deno" ? "backend" : "frontend";
+	},
 	cacheDir,
 	get Theme() {
 		return getThemeManager()
@@ -44,16 +46,10 @@ if (client_type == "browser") {
 
 	// make sure UIX theme manager is activated
 	getThemeManager();
-
-	// polyfills TODO: still required (saFarI?)
-	try {
-        await import("https://unpkg.com/construct-style-sheets-polyfill@3.1.0/dist/adoptedStyleSheets.js");
-    }
-    catch {}
 }
 
 // create cache dir if not exists
-if (UIX.isHeadless && !UIX.cacheDir.fs_exists) Deno.mkdirSync(cacheDir, {recursive:true})
+if (UIX.context == "backend" && !UIX.cacheDir.fs_exists) Deno.mkdirSync(cacheDir, {recursive:true})
 
 // @ts-ignore
 globalThis.UIX = UIX;

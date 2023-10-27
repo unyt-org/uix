@@ -4,7 +4,10 @@ Modules in the `frontend` directory of a UIX app can use exported values from mo
 This is accomplished with DATEX exchange between the frontend and backend endpoints.
 
 Modules from the common directory can be imported from both the backend and frontend.
-*The exports from common modules don't share a state between the backend and frontend endpoints, every module is initialized individually on each endpoint.*
+> [!NOTE]
+> Common modules allow the usage of the *same source code* for the backend and frontend, but they do not share a state between the backend and frontend endpoints: Every module is initialized individually on each endpoint.
+>
+> A shared module state is only possible with *backend modules* imported from the backend and frontend.
 
 **Cross-Realm Import Example**:
 

@@ -37,7 +37,7 @@ This is why UIX ships with integrated features such as:
 *Note: To install the latest UIX version, please use the install command from the section Windows/other systems.*
 
 ```bash
-$ curl -s https://dev.cdn.unyt.org/uix/install.sh | sh
+$ curl -s https://cdn.unyt.org/uix/install.sh | sh
 ```
 If the `uix` command is not available afterwards, you might have to run `source ~/.bash_profile`.
 
@@ -55,7 +55,7 @@ $ brew install uix
 Installation via `deno install`:
 
 ```bash
-$ deno install --import-map https://dev.cdn.unyt.org/uix1/importmap.json -Aqr -n uix https://dev.cdn.unyt.org/uix1/run.ts
+$ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aqr -n uix https://cdn.unyt.org/uix/run.ts
 ```
 
 

@@ -2,8 +2,8 @@
 
 Welcome to UIX! If you have used [React](https://react.dev/) before, this article is for you.
 
-UIX has many concepts similar to React, but is based on a different approach.
-With this article, we will try to make it is for you to transition from React to UIX.
+UIX has many concepts similar to React, but it is based on a different approach.
+With this article, we will try to make it easy for you to transition from React to UIX.
 This article roughly follows the [React quick start guide](https://react.dev/learn).
 
 ## The fundamental difference between React and UIX
@@ -11,8 +11,8 @@ This article roughly follows the [React quick start guide](https://react.dev/lea
 While React and UIX components might look very similar on first glance, the
 underlying approach is fundamentally different:
 
-While the function of a React functional component is executed again on each state change,
-UIX functions are only every run one time. To get dynamic updates for state changes,
+While a React component function is executed again on each state change,
+UIX component functions are only every executed once. To get dynamic updates for state changes,
 UIX relies on fine-grained reactivity instead: State changes are passed through the data itself.
 
 With this model, UIX still uses functional concepts, but gets rid of the often weird and "non-JavaScript-like"

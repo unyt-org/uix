@@ -34,13 +34,15 @@ This is why UIX ships with integrated features such as:
 ### CLI Installation
 
 #### Linux / MacOS
+*Note: To install the latest UIX version, please use the install command from the section Windows/other systems.*
 
 ```bash
-$ curl -s https://dev.cdn.unyt.org/uix/install.sh | sh
+$ curl -s https://cdn.unyt.org/uix/install.sh | sh
 ```
 If the `uix` command is not available afterwards, you might have to run `source ~/.bash_profile`.
 
 #### MacOS (Homebrew)
+*Note: To install the latest UIX version, please use the install command from the section Windows/other systems.*
 
 On MacOS, UIX can also be installed with homebrew:
 ```bash
@@ -53,7 +55,7 @@ $ brew install uix
 Installation via `deno install`:
 
 ```bash
-$ deno install --import-map https://cdn.unyt.org/importmap.json -Ar -n uix https://cdn.unyt.org/uix/run.ts
+$ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aqr -n uix https://cdn.unyt.org/uix/run.ts
 ```
 
 
@@ -81,7 +83,7 @@ $ uix
 
 You can pass the following args to the UIX command line utility:
 * `-p {PORT}`, `--port {PORT}`                - Specify the port
-* `-b`, `--watch-backend`       - Restart the backend deno process when backend files are modified
+* `-b`, `--watch-backend`       - Automaticall reload the backend deno process when backend files are modified
 * `-l`, `--live`                - Automatically reload connected browsers tabs when files are modified
 * `-w`, `--watch`               - Recompile frontend scripts when files are modified
 * `-d`, `--detach`              - Keep the app running in background
@@ -123,18 +125,25 @@ With UIX, frontend and backend source code and other resources can be combined i
     └── deno.json               // Deno config file
 ```
 
-Per default all content in the `frontend` directory is only available to frontend endpoints (browser clients), while content in the `backend` directory is available to backend endpoints (Deno runtime). 
+Per default, all files in the `frontend` directory are only available in browser clients (frontend endpoints), while files in the `backend` directory are only available for backend endpoints (Deno runtime).
 
-Thanks to [Cross-Realm Imports](./02%20Imports.md#cross-realm-imports), UIX allows the import and usage of backend modules inside frontend modules and vice versa.
-Files in the `common` directory are accessible from both the `frontend` and `backend` scope.
+With UIX [Cross-Realm Imports](./02%20Imports.md#cross-realm-imports), TypeScript/JavaScript/DATEX modules from the backend can be imported and used inside frontend modules.
+
+Files in the `common` directory can be accessed from both the `frontend` and `backend` scope.
 
 ## The UIX namespace
-UIX exposes a global namespace that contains some important properties.
+The `UIX` namespace can be imported
+with
+```ts
+import { UIX } from "uix"
+```
+
+This namespace contains some important global properties:
 ```ts
 interface UIX {
-    Theme: Theme;        // UIX Theme (including mode and color scheme)
-    cacheDir: Path;      // URL to UIX cache directory
-    isHeadless: boolean; // flag indicating if UIX instance is running on headless mode
+    Theme: ThemeManager;        // UIX Theme manager to register and activate themes and dark/light mode
+    cacheDir: Path;      // URL pointing to the local UIX cache directory (only for backend)
+    context: "backend"|"frontend"; // current context in which the process is running
     language: string;    // language ("de" | "en" | ...)
     version: string;     // UIX version ("beta" | "1.0.0" | ...)
 }

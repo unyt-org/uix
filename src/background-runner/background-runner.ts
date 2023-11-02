@@ -1,6 +1,7 @@
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getInjectedAppData } from "../app/app-data.ts";
 import { SSEListener } from "./sse-listener.ts";
+import { querySelector } from "../uix-dom/dom/shadow_dom_selector.ts";
 // import { getServiceWorkerThread, ThreadModule } from "datex-core-legacy/threads/threads.ts";
 
 const logger = new Logger("background-runner")
@@ -55,8 +56,18 @@ export class BackgroundRunner {
 		listener.handleSSECommand("UPDATE_HTML", () => {
 
 		})
-		listener.handleSSECommand("UPDATE_ATTR", () => {
-			
+		listener.handleSSECommand("ATTR", (cmd) => {
+			const [ptrId, attr, value] = cmd!.split(" ")
+			const el = querySelector(`[uix-ptr="${ptrId}"]`);
+			console.debug("attr", el, ptrId, attr, value);
+			if (el) {
+				// TODO: better
+				if (value == "null") el.removeAttribute(attr);
+				else el.setAttribute(attr, value);
+			}
+			else {
+				logger.error("Element " + ptrId + " not found");
+			}
 		})
 	}
 

@@ -16,12 +16,12 @@ export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];
 
 
 
-export function deleteCookie(name: UIX_COOKIE, headers?: Headers) {
+export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers) {
 	if (headers) deleteHeaderCookie!(headers, name)
     else document.cookie = name+'=; Max-Age=-99999999;';  
 }
 
-export function setCookie(name: UIX_COOKIE, value:string, expDays?:number, headers?: Headers) {
+export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:number, headers?: Headers) {
 
 	value = encodeURIComponent(value)
 
@@ -47,7 +47,7 @@ export function setCookie(name: UIX_COOKIE, value:string, expDays?:number, heade
 	
 }
 
-export function getCookie(name: UIX_COOKIE, headers?: Headers) {
+export function getCookie(name: UIX_COOKIE | string, headers?: Headers) {
 
 	if (headers) {
 		const cookie = getHeaderCookies!(headers)?.[name];

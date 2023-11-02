@@ -192,7 +192,6 @@ export class Server {
             // logger.info("using transpiler for path " + path );
             this.transpilers.set(path, transpiler);
         }
-
     }
 
     /** special request handlers */

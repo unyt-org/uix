@@ -241,7 +241,12 @@ export class FrontendManager extends HTMLProvider {
 			return;
 		}
 
-		const {cancel} = observeElementforSSE(ptr.val as Element)
+		const {cancel, eventTarget} = observeElementforSSE(ptr.val as Element)
+
+		eventTarget.addEventListener("update", e => {
+			console.log("update", e.detail)
+			sender(e.detail);
+		})
 
 		if (!this.#sse_observers.has(sender)) this.#sse_observers.set(sender, new Map())
 		this.#sse_observers.get(sender)!.set(ptr, cancel);
@@ -297,7 +302,12 @@ export class FrontendManager extends HTMLProvider {
 
 			let controller:ReadableStreamDefaultController|undefined;
 			const sender = (cmd: string) => {
-				controller?.enqueue(new TextEncoder().encode(`data: ${cmd}\r\n\r\n`));
+				try {
+					controller?.enqueue(new TextEncoder().encode(`data: ${cmd}\r\n\r\n`));
+				}
+				catch {
+					this.removeSSESender(sender)
+				}
 			}
 
 			const body = new ReadableStream({

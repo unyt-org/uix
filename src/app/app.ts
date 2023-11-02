@@ -69,8 +69,12 @@ class App {
 				const appdata: Record<string,any> = {...appDataContent}
 				if (appdata.backend) {
 					appdata.backend = f(appdata.backend)
+
 					// add backend as trusted endpoints with full permissions
-					Datex.Runtime.addTrustedEndpoint(appdata.backend)
+					Datex.Runtime.addTrustedEndpoint(appdata.backend, [
+						"protected-pointer-access", 
+						"remote-js-execution"
+					])
 				};
 				if (appdata.host) appdata.host = f(appdata.host);
 				this.#setMetadata(appdata)

@@ -34,4 +34,6 @@ declare global {
 	const MutationObserver: typeof api.MutationObserver
 	type MutationObserver = api.MutationObserver
 
+	type MutationRecord = api.MutationRecord
+
 }

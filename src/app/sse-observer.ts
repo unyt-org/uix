@@ -1,4 +1,6 @@
-const elementObservers = new WeakMap<Element, {disconnect:()=>void, eventStream:ReadableStream}>()
+import { DX_PTR } from "datex-core-legacy/runtime/constants.ts";
+
+const elementObservers = new WeakMap<Element, {cancel:()=>void, eventTarget:EventTarget}>()
 
 export function observeElementforSSE(element: Element) {
 
@@ -14,15 +16,18 @@ export function observeElementforSSE(element: Element) {
 	// Options for the observer (which mutations to observe)
 	const config = { attributes: true, childList: true, subtree: false };
 
-	const eventStream = new ReadableStream()
+	const eventTarget = new EventTarget()
 
 	// Callback function to execute when mutations are observed
-	const callback = (mutationList, observer) => {
+	const callback = (mutationList:MutationRecord[], observer:MutationObserver) => {
 		for (const mutation of mutationList) {
+			console.log("mut", mutation.type, mutation.oldValue)
 			if (mutation.type === "childList") {
 				console.log("A child node has been added or removed.");
 			} else if (mutation.type === "attributes") {
-				console.log(`The ${mutation.attributeName} attribute was modified.`);
+				const val = (mutation.target as Element).getAttribute(mutation.attributeName!);
+				// console.log(`The ${mutation.attributeName} attribute was modified.`, val);
+				eventTarget.dispatchEvent(new CustomEvent("update", {detail:`ATTR ${mutation.target[DX_PTR].id} ${mutation.attributeName} ${val}`}))
 			}
 		}
 	};
@@ -32,8 +37,8 @@ export function observeElementforSSE(element: Element) {
 	observer.observe(element, config);
 
 	const data = {
-		eventStream,
-		disconnect: () => observer.disconnect()
+		eventTarget,
+		cancel: () => observer.disconnect()
 	};
 
 	elementObservers.set(element, data)

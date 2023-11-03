@@ -22,6 +22,7 @@ import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { app } from "../app/app.ts";
+import { fileExists } from "../utils/files.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -35,7 +36,7 @@ export namespace Component {
     }
 }
 
-@template("uix:component") 
+// @template("uix:component") 
 export abstract class Component<O = Component.Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
@@ -95,7 +96,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 }
                 // web path
                 else {
-                    if ((await fetch(path)).ok) await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
+                    if (await fileExists(path)) await this.loadDatexModuleContents(path, valid_dx_files, dx_file_values)
                 }
             }
             catch (e) {
@@ -437,6 +438,14 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
      */
      private static async loadURLStyleSheet(url:string, allow_fail = false){
 
+        if (!await fileExists(url)) {
+            this.style_sheets_by_url.set(url, false) // save invalid stylesheet
+            if (!allow_fail) {
+                logger.error("could not load css stylesheet: " + url);
+            }
+            return false;
+        }
+
         let res:Response;
         try {
             res = await fetch(url);
@@ -543,14 +552,16 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
 
-        // @ts-ignore [INIT_PROPS]
-        if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
         // pre-init options before other DATEX state is initialized 
         // (this should not happen when reconstructing, because options are undefined or have [INIT_PROPS])
-        else if (options) this.initOptions(options);
+        if (options && !options[INIT_PROPS]) this.initOptions(options);
+
 
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
+            // @ts-ignore preemptive [INIT_PROPS], because construct is called - normally handled by js interface (TODO: better solution?)
+            if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
+
             if (!(<typeof Component>this.constructor)[Datex.DX_TYPE]) {
                 logger.error("cannot construct UIX element from DOM because DATEX type could not be found")
                 return;
@@ -1113,6 +1124,9 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             let url = new URL(url_or_style_sheet, (<typeof Component>this.constructor)._module);
             if (this.style_sheets_urls.includes(url.toString())) return; // stylesheet already added
 
+            // allow fail if only potential module stylesheet
+            const allow_fail = (<typeof Component>this.constructor).module_stylesheets.includes(url.toString());    
+
             // scope url
             if (!this.shadowRoot) {
                 url = new URL(url + '?scope=' + this.tagName.toLowerCase()); // add scope query parameter
@@ -1120,9 +1134,6 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
 
             this.style_sheets_urls.push(url.toString());
 
-            // allow fail if only potential module stylesheet
-            const allow_fail = (<typeof Component>this.constructor).module_stylesheets.includes(url.toString());
-            
             // adopt CSSStylesheet (works if css does not use @import and shadowRoot exists, otherwise use <link>)
             if (adopt && this.shadowRoot) {
                 const stylesheet = Component.getURLStyleSheet(url, allow_fail);
@@ -1139,7 +1150,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             // insert <link>
             else return (async ()=>{
                 try {
-                    await this.insertStyleSheetLink(url);
+                    await this.insertStyleSheetLink(url, allow_fail);
                 } catch (e) {
                     //console.debug(e);
                     if (!allow_fail) throw e;
@@ -1152,7 +1163,8 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         }
     }
 
-    protected async insertStyleSheetLink(url:URL) {
+    protected async insertStyleSheetLink(url:URL, allow_fail = false) {
+        if (allow_fail && !await fileExists(url)) return; // style sheet file does not exist
         if (this.shadowRoot) await addStyleSheetLink(this.shadowRoot, url);
         else if (client_type == "browser") await addGlobalStyleSheetLink(url);
     }

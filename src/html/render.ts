@@ -624,7 +624,7 @@ export async function generateHTMLPage({
 				<meta name="theme-color"/>	
 				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
 				${favicon}
-				${provider.app_options.installable ? `<link rel="manifest" href="manifest.json">` : ''}
+				${provider.app_options.installable ? `<link rel="manifest" href="/@uix/manifest.json">` : ''}
 				${metaScripts}
 				${global_style}
 				${files}

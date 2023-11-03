@@ -3,7 +3,7 @@ import { enableDatexBindings } from "../uix-dom/datex-bindings/mod.ts";
 import { DOMContext } from "../uix-dom/dom/DOMContext.ts";
 import type { BindingOptions } from "../uix-dom/datex-bindings/type-definitions.ts";
 
-import "./dom-global.ts"
+import type {} from "./dom-global.ts"
 
 // mapFileURL can later be set
 export const bindingOptions:BindingOptions = {}

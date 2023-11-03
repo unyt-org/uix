@@ -551,7 +551,7 @@ export class Server {
             
             const content = await Deno.readTextFile(filepath.normal_pathname);
             const highlighted = await highlightText!(content.replace(/\/\/\# sourceMappingURL=.*$/, ""), langsByExtension[filepath.ext as keyof typeof langsByExtension]);
-            const html = `<html>
+            const html = `<!DOCTYPE html><html>
                 <head>
                     <title>${filepath.name}</title>
                     <meta charset="UTF-8">

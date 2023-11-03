@@ -57,13 +57,25 @@ export class BackgroundRunner {
 
 		})
 		listener.handleSSECommand("ATTR", (cmd) => {
-			const [ptrId, attr, value] = cmd!.split(" ")
+			const [ptrId, attr] = cmd!.split(" ")
+			const value = JSON.parse(cmd?.replace(/\S* \S* /, "")??"");
 			const el = querySelector(`[uix-ptr="${ptrId}"]`);
 			console.debug("attr", el, ptrId, attr, value);
 			if (el) {
-				// TODO: better
-				if (value == "null") el.removeAttribute(attr);
+				if (value == null) el.removeAttribute(attr);
 				else el.setAttribute(attr, value);
+			}
+			else {
+				logger.error("Element " + ptrId + " not found");
+			}
+		})
+		listener.handleSSECommand("PROP", (cmd) => {
+			const [ptrId, attr] = cmd!.split(" ")
+			const value = JSON.parse(cmd?.replace(/\S* \S* /, "")??"");
+			const el = querySelector(`[uix-ptr="${ptrId}"]`);
+			console.debug("prop", el, ptrId, attr, value);
+			if (el) {
+				el[attr] = value;
 			}
 			else {
 				logger.error("Element " + ptrId + " not found");

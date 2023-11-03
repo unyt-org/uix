@@ -36,6 +36,10 @@ export class SSEListener {
 			this.#listeningToSSE = false;
 			setTimeout(()=>this.#listenToSSE(), 500)
 		}
+
+		globalThis.addEventListener('beforeunload', () => {
+			evtSource.close();
+		});
 	}
 
 	handleSSECommand(cmd: string, callback: (data?:string)=>void) {

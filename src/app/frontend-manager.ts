@@ -288,7 +288,7 @@ export class FrontendManager extends HTMLProvider {
 		});
 
 		this.server.path("/@uix/window", (req, path)=>this.handleNewHTML(req, path));
-		if (this.app_options.installable) this.server.path("/manifest.json", (req, path)=>this.handleManifest(req, path));
+		if (this.app_options.installable) this.server.path("/@uix/manifest.json", (req, path)=>this.handleManifest(req, path));
 		this.server.path("/@uix/sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/@uix/sw.ts", (req, path)=>this.handleServiceWorker(req, path));
 
@@ -351,7 +351,7 @@ export class FrontendManager extends HTMLProvider {
 			// workaround: send PING to cancel non-active connections
 			const interval = setInterval(()=>{
 				this.sendSSECommand(sender, "PING");
-			}, 1000)
+			}, 5000)
 
 			try {
 				await req.respondWith(new Response(body, {

@@ -150,7 +150,7 @@ export function template(templateOrGenerator?:Element|jsxInputGenerator<Element,
 		// jsx
 		else {
 
-			const collapsedPropsProxy = new Proxy(propsOrClass, {
+			const collapsedPropsProxy = new Proxy(propsOrClass??{}, {
 				get(target,p) {
 					return val(target[p])
 				},
@@ -218,7 +218,7 @@ export function template(templateOrGenerator?:Element|jsxInputGenerator<Element,
  */
 export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<Element, Options, Children, true, true>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any) {
 	return function(props:any) {
-		const collapsedPropsProxy = new Proxy(props, {
+		const collapsedPropsProxy = new Proxy(props??{}, {
 			get(target,p) {
 				return val(target[p])
 			},

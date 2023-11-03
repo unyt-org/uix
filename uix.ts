@@ -6,7 +6,6 @@ import { Path } from "./src/utils/path.ts";
 import { Datex } from "datex-core-legacy";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 
-
 /**
  * get UIX cache path
  */
@@ -17,7 +16,7 @@ const cacheDir = new Path<Path.Protocol.File, true>('./uix/', cache_path);
  */
 let version = "beta";
 try {
-	version = (await new Path("../version", import.meta.url).getTextContent()).replaceAll("\n","");
+	version = (await new Path("./version", import.meta.url).getTextContent()).replaceAll("\n","");
 }
 catch {/*ignore*/}
 

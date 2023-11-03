@@ -14,7 +14,7 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
 
 **Main features**
  * [Cross-network reactivity](02%20Imports%20and%20Synchronization.md#Reactivity)
- * [Server side rendering with partial hydration](07%20Rendering%20Modes.md)
+ * [Server side rendering with partial hydration](07%20Rendering%20Methods.md)
  * [Hybrid backend/frontend routing](05%20Entrypoints%20and%20Routing.md)
  * [Cross-realm imports](./02%20Imports%20and%20Synchronization.md#cross-realm-imports)
  * [Shared memory](02%20Imports%20and%20Synchronization.md#Synchronization)

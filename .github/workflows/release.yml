@@ -7,18 +7,7 @@ env:
 
 permissions:
   actions: write
-  checks: write
   contents: write
-  deployments: write
-  id-token: write
-  issues: write
-  discussions: write
-  packages: write
-  pages: write
-  pull-requests: write
-  repository-projects: write
-  security-events: write
-  statuses: write
 
 jobs:
 
@@ -32,8 +21,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.release.id }}
-          body: $GITHUB_SHA
-
+          replacebody: false
+          body: "Commit Hash: ${{ github.sha }}"
 
       - name: Make CDN Update Request
         run: |

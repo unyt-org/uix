@@ -4,7 +4,7 @@ body, html {
     /* height: 100dvh;
     width: 100dvw;
     position: relative; */
-    height: -webkit-fill-available;
+    /* height: -webkit-fill-available; */
     -webkit-touch-callout: none;
 }
 

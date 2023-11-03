@@ -20,6 +20,7 @@ export async function initBaseProject() {
 
 	const clone = Deno.run({
 	  cmd: ["git", "clone", gitRepo, rootPath.normal_pathname],
+	  stdout: "null"
 	});
 	const cloneResult = await clone.status();
   
@@ -27,7 +28,8 @@ export async function initBaseProject() {
 	  throw new Error("Failed to clone.");
 	}
 	
-	if (move)  await Deno.rename(tempDir.normal_pathname, rootPath.getChildPath(".datex-cache"));
+	if (move) await Deno.rename(tempDir.normal_pathname, rootPath.getChildPath(".datex-cache"));
+	await Deno.remove(rootPath.getChildPath(".git"), {recursive: true});
 
 	updateRootPath();
 }

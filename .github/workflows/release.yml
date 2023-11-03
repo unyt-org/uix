@@ -5,6 +5,9 @@ on:
 env:
   CDN_TOKEN: ${{secrets.CDN_TOKEN}}
 
+permissions:
+  metadata: write
+
 jobs:
 
   trigger-cdn-update:

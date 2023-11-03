@@ -20,7 +20,7 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
  * [Shared memory](02%20Imports%20and%20Synchronization.md#Synchronization)
  * [JSX support](./03%20JSX.md)
  * [Reusable web components](./04%20Components.md)
- * [SCSS support](./11%20Style%20and%20Themes.md#SCSS)
+ * [SCSS support](./14%20Style%20and%20Themes.md#SCSS)
  * [And many more](https://uix.unyt.org)...
 
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 

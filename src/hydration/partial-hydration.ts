@@ -7,7 +7,7 @@ import { getLiveNodes } from "./partial.ts";
 
 	constructor(root:Element){}
 	@constructor construct(root: Element) {
-		this.nodes = getLiveNodes(root);
+		// this.nodes = getLiveNodes(root);
 	} 
 
 }

@@ -65,8 +65,6 @@ export class Context
 
 	private _responseHeaders?: Headers
 
-	private _hydrationPtr?: string
-
 	#disposeCallbacks = new Set<()=>void>()
 
 	async getPostParams() {

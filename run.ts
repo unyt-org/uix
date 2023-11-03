@@ -7,13 +7,14 @@ import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppC
 
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
-import { clear, command_line_options, enableTLS, login, rootPath, stage } from "./src/app/args.ts";
+import { clear, command_line_options, enableTLS, login, init, rootPath, stage } from "./src/app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
 import GitDeployPlugin from "./src/plugins/git-deploy.ts";
 import LocalDockerRunner from "./src/runners/run-local-docker.ts";
 import { triggerLogin } from "./src/utils/login.ts";
+import { initBaseProject } from "./src/utils/init-base-project.ts";
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
 import { createProxyImports } from "./src/app/module-mapping.ts";
 import { ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
@@ -23,6 +24,15 @@ const logger = new Datex.Logger("UIX Runner");
 
 // login flow
 if (login) await triggerLogin();
+// init
+if (init) {
+	if (rootPath) {
+		logger.error("A UIX Project already exists in this location");
+		Deno.exit(1);
+	}
+	else await initBaseProject();
+}
+
 
 
 if (clear) {

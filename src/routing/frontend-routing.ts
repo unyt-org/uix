@@ -47,7 +47,7 @@ export namespace Routing {
 	}
 
 
-	export async function setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint) {
+	export async function setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint, isHydrating = false) {
 		frontend_entrypoint = frontend;
 		backend_entrypoint = backend;
 		// entrypoints available - enable frontend routing
@@ -55,9 +55,9 @@ export namespace Routing {
 			enableFrontendRouting();
 		}
 
-		const hydrationPtr = (document.querySelector("meta[name='uix-hydration-root']"))?.content
+		if (isHydrating) return; // no init required when hydrating
 
-		const backend_available = backend_entrypoint ? await initEndpointContent(backend_entrypoint, hydrationPtr) : false;
+		const backend_available = backend_entrypoint ? await initEndpointContent(backend_entrypoint) : false;
 		const frontend_available = (!backend_available &&  frontend_entrypoint) ? await initEndpointContent(frontend_entrypoint) : false;
 
 		// no content for path found after initial loading
@@ -66,21 +66,14 @@ export namespace Routing {
 		}
 	}
 
-	async function initEndpointContent(entrypoint:Entrypoint, hydrationPtr?: string) {
-		const content = await getContentFromEntrypoint(entrypoint, undefined, hydrationPtr)
+	async function initEndpointContent(entrypoint:Entrypoint) {
+		const content = await getContentFromEntrypoint(entrypoint, undefined)
 		if (content != null && content !== KEEP_CONTENT) await setContent(content, entrypoint)
 		return content != null
 	}
 
-	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL(), hydrationPtr?: string) {
-		let context = undefined;
-		if (hydrationPtr) {
-			context = new Context()
-			if (route) context.path = route.routename
-			// @ts-ignore
-			context._hydrationPtr = hydrationPtr
-		}
-		const { content } = await resolveEntrypointRoute({entrypoint, route, context});
+	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL()) {
+		const { content } = await resolveEntrypointRoute({entrypoint, route});
 		return content;
 	}
 

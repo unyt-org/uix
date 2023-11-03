@@ -563,11 +563,11 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
 
             if (!(<typeof Component>this.constructor)[Datex.DX_TYPE]) {
-                logger.error("cannot construct UIX element from DOM because DATEX type could not be found")
+                logger.error("cannot construct UIX element from DOM because DATEX type could not be found ("+this.constructor.name+")")
                 return;
             }
             // ignore if currently hydrating static element
-            if (this.hasAttribute("uix-static")) {
+            if (this.hasAttribute("uix-static") || this.hasAttribute("uix-dry")) {
                 this.is_skeleton = true;
                 logger.debug("hydrating component " + (<typeof Component>this.constructor)[Datex.DX_TYPE]);
             }
@@ -924,6 +924,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
 
         this.is_skeleton = false;
         this.removeAttribute("uix-static");
+        this.removeAttribute("uix-dry");
 
         // continue component lifecycle
         const type = Datex.Type.ofValue(this);

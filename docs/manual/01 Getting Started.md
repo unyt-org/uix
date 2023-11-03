@@ -58,13 +58,15 @@ Installation via `deno install`:
 $ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aqr -n uix https://cdn.unyt.org/uix/run.ts
 ```
 
+## Creating a new UIX project
 
-## Initial Project Setup
-
-Get started by cloning the simple UIX example project from https://github.com/unyt-org/uix-base-project:
+You can create a new UIX project by running
 ```bash
-$ git clone https://github.com/unyt-org/uix-base-project.git
+$ uix --init
 ```
+
+This creates a new base project (https://github.com/unyt-org/uix-base-project.git) in the current directory
+and starts the app locally.
 
 > [!NOTE]
 > We recommend using [Visual Studio Code](https://code.visualstudio.com/download) for developing UIX apps.
@@ -72,9 +74,8 @@ $ git clone https://github.com/unyt-org/uix-base-project.git
 > for UIX and DATEX language support.
 
 
-
 ## Running your UIX app
-To run your UIX project, make sure the [app.dx]() configuration file exists.
+To run your UIX app, make sure the [app.dx]() configuration file exists.
 Execute the `uix` command in the root directory of your application (where the `app.dx` is located) to initialize and run the project.
 
 ```bash
@@ -97,6 +98,7 @@ You can pass the following args to the UIX command line utility:
 * `--env {NAME=VAL}`            - Exposed environment variables (for remote deployment)
 * `--clear`                     - Clear all eternal states on the backend
 * `--version`                   - Get the version of your UIX installation
+* `--init`                      - Inititialize a new UIX project
 * `--import-map {PATH}`         - Import map path
 * `--enable-tls`                - Run the web server with TLS
 * `--inspect`                   - Enable debugging for the deno process

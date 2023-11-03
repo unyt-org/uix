@@ -26,7 +26,6 @@ import { domUtils } from "./dom-context.ts";
 import { Element } from "../uix-dom/dom/mod.ts";
 import { getLiveNodes } from "../hydration/partial.ts";
 import { UIX } from "../../uix.ts";
-import { hydrationCache } from "../hydration/hydration-cache.ts";
 import { UIX_COOKIE, getCookie } from "../session/cookies.ts";
 import { observeElementforSSE } from "./sse-observer.ts";
 
@@ -778,11 +777,6 @@ runner.enableHotReloading();
 					liveNodePointers = getLiveNodes(contentElement, false).map(e => Datex.Pointer.getByValue(e)?.id).filter(e=>!!e);
 				}
 
-				// cache hydration pointer
-				if (contentElement && render_method == RenderMethod.HYBRID) {
-					hydrationCache.add(contentElement)
-				}
-
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
@@ -800,8 +794,7 @@ runner.enableHotReloading();
 						backend_entrypoint: this.#backend?.web_entrypoint,
 						open_graph_meta_tags,
 						compat_import_map: compat,
-						livePointers: liveNodePointers,
-						contentElement,
+						livePointers: liveNodePointers
 					}),
 					undefined, status_code, combinedHeaders
 				);

@@ -166,8 +166,10 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 		else if (el.checked !== false) attrs.push(`value="${domUtils.escapeHtml(el.checked?.toString()??"")}"`)
 	}
 
-	attrs.push("uix-static");
-
+	// hydratable
+	if (isLiveNode(el)) attrs.push("uix-dry");
+	// just static
+	else attrs.push("uix-static");
 
 	// inject event listeners
 	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithEventListeners>el)[DOMUtils.ATTR_BINDINGS])) {
@@ -355,6 +357,10 @@ const isNormalFunction = (fnSrc:string) => {
 	return !!fnSrc.match(/^(async\s+)?function(\(| |\*)/)
 }
 
+function isLiveNode(node: Node) {
+	if (node[DOMUtils.ATTR_BINDINGS]?.size) return true;
+	if (node[DOMUtils.EVENT_LISTENERS]?.size) return true;
+}
 
 export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, allowIgnoreDatexFunctions?: boolean, lang?:string}):[header_script:string, html_content:string] {
 
@@ -461,8 +467,7 @@ export type HTMLPageOptions = {
 	open_graph_meta_tags?:OpenGraphInformation, 
 	compat_import_map?: boolean, 
 	lang?: string, 
-	livePointers?: string[], 
-	contentElement?: Element
+	livePointers?: string[]
 }
 
 
@@ -481,8 +486,7 @@ export async function generateHTMLPage({
 	open_graph_meta_tags, 
 	compat_import_map, 
 	lang, 
-	livePointers, 
-	contentElement
+	livePointers
 }: HTMLPageOptions) {
 
 	compat_import_map ??= false;
@@ -519,6 +523,12 @@ export async function generateHTMLPage({
 			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file, compat_import_map).toString()}");`
 		}
 
+		// hydrate
+		if (prerendered_content && render_method == RenderMethod.HYBRID) {
+			files += indent(4) `\nimport {hydrate} from "uix/hydration/hydrate.ts"; hydrate();`
+		}
+
+
 		// load frontend entrypoint first
 		if (frontend_entrypoint) {
 			files += indent(4) `\n\nconst _frontend_entrypoint = await datex.get("${provider.resolveImport(frontend_entrypoint, compat_import_map).toString()}");`
@@ -536,11 +546,11 @@ export async function generateHTMLPage({
 		}
 
 		if (backend_entrypoint && frontend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint)`
+			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${prerendered_content && render_method == RenderMethod.HYBRID?'true':'false'})`
 		else if (backend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(undefined, backend_entrypoint)`
+			files += `\n\nawait Routing.setEntrypoints(undefined, backend_entrypoint, ${prerendered_content && render_method == RenderMethod.HYBRID?'true':'false'})`
 		else if (frontend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined)`
+			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined, ${prerendered_content && render_method == RenderMethod.HYBRID?'true':'false'})`
 
 		files += '\n</script>\n'
 	}
@@ -575,12 +585,6 @@ export async function generateHTMLPage({
 		for (const file of static_js_files) {
 			if (file) files += indent(4) `<script type="module" src="${provider.resolveImport(file, compat_import_map).toString()}"></script>`
 		}
-	}
-
-	const hydrationRootPtr = contentElement && Datex.Pointer.getByValue(contentElement)
-
-	if (render_method == RenderMethod.HYBRID && hydrationRootPtr) {
-		metaScripts += indent(4) `<meta name="uix-hydration-root" content="${hydrationRootPtr.id}"></meta>\n`
 	}
 
 	// TODO: add condition if (add_importmap), when polyfill for declarative shadow root is no longer required

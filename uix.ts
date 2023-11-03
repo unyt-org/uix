@@ -41,6 +41,7 @@ if (client_type == "browser") {
 	// update uix-language cookie (only works if runtime initialized!)
 	Datex.Ref.observe(Datex.Runtime.ENV.$.LANG, lang => {
 		setCookie(UIX_COOKIE.language, lang)
+		document.documentElement?.setAttribute("lang", lang)
 	})
 
 	// make sure UIX theme manager is activated

@@ -785,6 +785,7 @@ runner.enableHotReloading();
 						prerendered_content: prerendered_content as string,
 						render_method,
 						js_files: this.#client_scripts,
+						lang,
 						static_js_files: this.#static_client_scripts,
 						color_scheme: modeCookie,
 						css: currentThemeCSS,

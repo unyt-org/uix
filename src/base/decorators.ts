@@ -196,16 +196,21 @@ function _child(element_class:typeof HTMLElement, name:context_name, kind:contex
 
 
 /** @UIX.use to bind static properties */
-export function use(resource?:string, export_name?:string):any
-export function use(target: any, name?: string, method?:any):any
-export function use(...args:any[]) {
-	return handleDecoratorArgs(args, _use);
+export function include(resource?:string, export_name?:string):any
+export function include(target: any, name?: string, method?:any):any
+export function include(...args:any[]) {
+	return handleDecoratorArgs(args, _include);
 }
 
-function _use(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?, string?] = []) {
+/**
+ * @depreacted use @include
+ */
+export const use = include;
+
+function _include(element_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[string?, string?] = []) {
 
 	if (kind != "field" && kind != "method") {
-		logger.error("@use has to be used on a field or method");
+		logger.error("@include has to be used on a field or method");
 		return;
 	}
 

@@ -33,12 +33,13 @@ This is why UIX ships with integrated features such as:
 
 ### CLI Installation
 
+To install uix, you need to install [deno](https://docs.deno.com/runtime/manual/getting_started/installation) first.
+
 #### Linux / MacOS
 
 ```bash
 $ curl -s https://cdn.unyt.org/uix/install.sh | sh
 ```
-If the `uix` command is not available afterwards, you might have to run `source ~/.bash_profile`.
 
 #### MacOS (Homebrew)
 
@@ -148,3 +149,8 @@ interface UIX {
     version: string;     // UIX version ("beta" | "1.0.0" | ...)
 }
 ```
+
+
+## Helpful articles
+
+* [UIX introduction for React developers](https://unyt.blog/article/2023-11-03-gettings-started-with-uix-coming-from-react)

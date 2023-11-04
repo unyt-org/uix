@@ -112,7 +112,7 @@ export class FrontendManager extends HTMLProvider {
 				}),
 				on_file_update: this.#watch ? (path)=>{
 					if (!this.isTransparentFile(path)) {
-						this.#backend?.handleUpdate();
+						this.#backend?.handleUpdate("common");
 					}
 					this.handleFrontendReload();
 				} : undefined
@@ -443,7 +443,7 @@ export class FrontendManager extends HTMLProvider {
 
 				if (!no_side_effects) await this.updateBackendInterfaceFile(web_path, import_pseudo_path, import_path, module_path, imports);
 
-				return this.normalizeImportFilExt(web_path);
+				return this.normalizeImportFileExt(web_path);
 			}
 	
 			else if (import_type == "common") {
@@ -475,7 +475,7 @@ export class FrontendManager extends HTMLProvider {
 						this.app_options.import_map.addEntry(import_path,actual_path);
 					}
 					
-					return this.normalizeImportFilExt(rel_path);
+					return this.normalizeImportFileExt(rel_path);
 				}
 				else if (module_type == "backend") {
 					return "[ERROR: TODO resolve frontend paths from backend dir]"
@@ -493,7 +493,7 @@ export class FrontendManager extends HTMLProvider {
 						this.app_options.import_map.addEntry(import_path,actual_path);
 					}
 
-					return this.normalizeImportFilExt(web_path);
+					return this.normalizeImportFileExt(web_path);
 				}
 
 			}
@@ -516,7 +516,7 @@ export class FrontendManager extends HTMLProvider {
 	/**
 	 * Removes the '.ts' extension from placeholder .dx.ts / .dxb.ts files 
 	 */
-	private normalizeImportFilExt(web_path: string) {
+	private normalizeImportFileExt(web_path: string) {
 		return web_path.replace(/\.dx.ts$/, '.dx').replace(/\.dxb.ts$/, '.dxb')
 	}
 

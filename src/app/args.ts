@@ -12,6 +12,7 @@ export const watch_backend = command_line_options.option("watch-backend", {alias
 export const live = command_line_options.option("live", {aliases:["l"],  type:"boolean", default: false, description: "Automatically reload connected browsers tabs when files are modified and enable automatic backend restarts"});
 export const watch = command_line_options.option("watch", {aliases:["w"],  type:"boolean", default: false, description: "Recompile frontend scripts when files are modified"}) || live;
 export const http_over_datex = command_line_options.option("http-over-datex", {aliases:["hod"], type:"boolean", default: true, description: "Enable HTTP-over-DATEX"});
+export const enable_datex_cli = command_line_options.option("datex-cli", {type:"boolean", default: false, description: "Enable DATEX CLI"});
 
 export const stage = command_line_options.option("stage", {type:"string", default: "dev", description: "Current deployment stage"})!;
 export const env = command_line_options.option("env", {type:"string", multiple: true, description: "Exposed environment variables (for remote deployment)"});

@@ -17,8 +17,14 @@ export class ImportMap {
 	 */
 	get imports(){return this.#json.imports}
 
+		
+	/**
+	 * scopes property of the import map
+	 */
+	get scopes(){return this.#json.scopes}
+
 	toString(onlyImports = false) {
-		return JSON.stringify(onlyImports ? {imports:this.imports} : this.#json, null, '    ')
+		return JSON.stringify(onlyImports ? {imports:this.imports, scopes: this.scopes} : this.#json, null, '    ')
 	}
 
 	/**
@@ -38,7 +44,7 @@ export class ImportMap {
 
 
 	#readonly = true;
-	#json: {imports:Record<string,string>};
+	#json: {imports:Record<string,string>, scopes?:Record<string,Record<string,string>>};
 	#path?: Path;
 
 
@@ -66,26 +72,49 @@ export class ImportMap {
 		Object.defineProperty(this, "imports", modified_descriptor);
 	}
 
-	public addEntry(name:string|Path, value:string|Path, temporary = true){
+	public addEntry(name:string|URL, value:string|URL, temporary = true, scope?: string|URL){
 		if (this.readonly) {
 			logger.warn("cannot dynamically update the current import map - no read access");
 			return;
 		}
-		if (name instanceof URL) name = new Path(name);
-		if (value instanceof URL) value = new Path(value);
-
-		const val_string = (value instanceof Path && !value.isWeb()) ? value.getAsRelativeFrom(this.#path!) : value.toString();
-		const name_string = (name instanceof Path && !name.isWeb()) ? name.getAsRelativeFrom(this.#path!) : name.toString();
-
+		const val_string = this.getNormalizedURL(value);
+		const name_string = this.getNormalizedURL(name);
+		const scope_string = scope && this.getNormalizedURL(scope);
+		
 		// also add entries for aliases, e.g. for ./backend/x.dx -> backend/x.dx
-		if (name instanceof Path && !name.isWeb()) {
-			for (const alias of this.getPathAliases(name)) {
-				this.#addEntry(alias, val_string, temporary);
+		const namePath = name instanceof URL ? new Path(name) : null;
+		if (namePath && !namePath.isWeb()) {
+			for (const alias of this.getPathAliases(namePath)) {
+				this.#addEntry(alias, val_string, temporary, scope_string);
 			}
 		}
-		this.#addEntry(name_string, val_string, temporary);
+		this.#addEntry(name_string, val_string, temporary, scope_string);
 
 		this.#writeToFile();
+	}
+
+	public removeEntry(name: string|Path, temporary = true, scope?:string|"*"|URL) {
+		if (this.readonly) {
+			logger.warn("cannot dynamically update the current import map - no read access");
+			return;
+		}
+		const name_string = this.getNormalizedURL(name);
+		const scope_string = scope && this.getNormalizedURL(scope);
+
+		// also remove entries for aliases, e.g. for ./backend/x.dx -> backend/x.dx
+		const namePath = name instanceof URL ? new Path(name) : null;
+		if (namePath instanceof Path && !namePath.isWeb()) {
+			for (const alias of this.getPathAliases(namePath)) {
+				this.#removeEntry(alias, temporary, scope_string);
+			}
+		}
+		this.#removeEntry(name_string, temporary, scope_string);
+		this.#writeToFile();
+	}
+
+	private getNormalizedURL(urlOrSpecifier:string|URL) {
+		if (urlOrSpecifier instanceof URL) urlOrSpecifier = new Path(urlOrSpecifier);
+		return (urlOrSpecifier instanceof Path && !urlOrSpecifier.isWeb()) ? urlOrSpecifier.getAsRelativeFrom(this.#path!) : urlOrSpecifier.toString();
 	}
 
 	public isEntryTemporary(name:string) {
@@ -98,7 +127,7 @@ export class ImportMap {
 		if (!this.#path) throw new Error("cannot resolve relative imports - no import map path")
 		for (const [specifier, mapped] of Object.entries(this.imports)) {
 			const mapped_path = new Path(mapped, this.#path);
-			if (path.isChildOf(mapped_path)) {
+			if (Path.equals(path, mapped_path) || path.isChildOf(mapped_path)) {
 				aliases.push(path.toString().replace(mapped_path.toString(), specifier))
 			}
 		}
@@ -126,10 +155,30 @@ export class ImportMap {
 	}
 
 
-	#addEntry(name:string, value:string, temporary = true) {
-		this.imports[name] = value;
+	#addEntry(name:string, value:string, temporary = true, scope?: string) {
+		if (scope) {
+			if (!this.scopes) this.#json.scopes = {};
+			if (!(scope in this.scopes!)) this.scopes![scope] = {};
+			this.scopes![scope][name] = value;
+		}
+		else this.imports[name] = value;
 		if (temporary) this.#temporary_imports.add(name)
 		logger.debug(`added${temporary?' temporary' : ''} entry: ${name}`)
+	}
+
+	#removeEntry(name:string, temporary = true, scope?: string) {
+		if (scope == "*") {
+			for (const scope of Object.values(this.scopes??{})) {
+				delete scope[name]
+			}
+		}
+		else if (scope) {
+			delete this.scopes?.[scope]?.[name];
+		}
+		else delete this.imports[name];
+
+		if (temporary) this.#temporary_imports.add(name)
+		logger.debug(`removed${temporary?' temporary' : ''} entry: ${name}`)
 	}
 
 	#writeToFile(){

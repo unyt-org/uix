@@ -3,41 +3,48 @@ import { normalizedAppOptions } from "./options.ts";
 import { Path } from "../utils/path.ts";
 import { walk } from "https://deno.land/std@0.177.0/fs/walk.ts";
 import { getEternalModule } from "./eternal-module-generator.ts";
+import type { ImportMap } from "../utils/importmap.ts";
 
-const eternalExts = [
+export const eternalExts = [
 	'ts',
 	'tsx',
 	'js',
 	'jsx',
 	'mts',
 	'mjs',
-]
+].map(x => 'eternal.'+x);
+
+const cachePath = new Path(cache_path);
 
 export async function createProxyImports(options: normalizedAppOptions, baseURL: URL, denoConfigPath: URL) {
 	const proxyImportMapPath = new Path("./importmap.lock.json", cache_path)
 	const proxyImportMap = options.import_map.getMoved(proxyImportMapPath, false);
 
 	// add backend, frontend etc
-	for (const frontend of options.frontend) {
-		proxyImportMap.addEntry(frontend.name+'/', frontend);
-	}
-	for (const backend of options.backend) {
-		proxyImportMap.addEntry(backend.name+'/', backend);
-	}
-	for (const common of options.common) {
-		proxyImportMap.addEntry(common.name+'/', common);
+	const dirs = [...options.frontend, ...options.backend, ...options.common]
+
+	for (const dir of dirs) {
+		proxyImportMap.addEntry(dir.name+'/', dir);
 	}
 
-	// add .eternal.ts proxy modules
-	const promises = []
-	const cachePath = new Path(cache_path);
-	for await (const e of walk!(new Path(baseURL).normal_pathname, {includeDirs: false, exts: eternalExts.map(x => '.eternal.'+x)})) {
-		const path = new Path(e.path);
-		if (path.isChildOf(cachePath)) continue;
-		promises.push(createEternalProxyFile(new Path(e.path), baseURL));
+	// block frontend paths from common + backend modules
+	for (const frontendDir of options.frontend) {
+		for (const dir of options.backend)	{
+			proxyImportMap.addEntry(frontendDir, "", true, dir);
+		}
+		for (const dir of options.common)	{
+			proxyImportMap.addEntry(frontendDir, "", true, dir);
+		}
 	}
-	for (const [key, val] of (await Promise.all(promises)).flat()) {
-		proxyImportMap.addEntry(key, val);
+	
+	// add .eternal.ts proxy modules
+	
+	for await (const e of walk!(new Path(baseURL).normal_pathname, {includeDirs: false, exts: eternalExts.map(e => "."+e)})) {
+		const path = new Path(e.path);
+
+		if (path.isChildOf(cachePath)) continue;
+		const proxyPath = await createEternalProxyFile(path, baseURL);
+		addEternalFileImportMapScope(path, proxyPath, proxyImportMap, options);
 	}
 
 	await proxyImportMap.save();
@@ -46,6 +53,7 @@ export async function createProxyImports(options: normalizedAppOptions, baseURL:
 
 	return proxyImportMap;
 }
+
 
 async function updateDenoConfigImportMap(denoConfigPath:URL, proxyImportMapPath:Path) {
 	// update import map path in deno.json
@@ -70,17 +78,81 @@ async function updateDenoConfigImportMap(denoConfigPath:URL, proxyImportMapPath:
 	}
 }
 
-async function createEternalProxyFile(path: Path, baseURL: URL): Promise<[Path|string, Path|string][]>{
+/**
+ * Updates the importmap.lock entries and the proxy files for an eternal module
+ * @param src_path 
+ * @param baseURL 
+ * @param importMap 
+ */
+export async function updateEternalFile(path: Path, baseURL: URL, importMap: ImportMap, options: normalizedAppOptions) {
+	if (path.fs_exists) {
+		const proxyPath = await createEternalProxyFile(path, baseURL);
+		addEternalFileImportMapScope(path, proxyPath, importMap, options);
+	}
+	else {
+		await deleteEternalProxyFile(path, baseURL);
+		importMap.removeEntry(path, true, "*");
+	}
+}
 
-	const specifier = '_originalEternalModule/' + path.getAsRelativeFrom(baseURL).replace(/^\.\//, '').replaceAll("\\", "/");
-	const proxyPath = new Path('./eternal/'+ path.filename, cache_path);
+function addEternalFileImportMapScope(path:Path, proxyPath: Path, importMap: ImportMap, options: normalizedAppOptions) {
+	
+	let isFrontendPath = false;
+	for (const dir of options.frontend) {
+		if (path.isChildOf(dir)) isFrontendPath = true;
+	}
+
+	// add to frontend imports
+	for (const dir of options.frontend)	{
+		importMap.addEntry(path, proxyPath, true, dir);
+	}
+	// add to common/backend only if not frontend
+	if (!isFrontendPath) {
+		for (const dir of options.backend)	{
+			importMap.addEntry(path, proxyPath, true, dir);
+		}
+		for (const dir of options.common)	{
+			importMap.addEntry(path, proxyPath, true, dir);
+		}
+	}
+}
+
+/**
+ * Creates a new eternal module proxy file and returns the import map specifiers
+ * @param path 
+ * @param baseURL 
+ * @returns 
+ */
+async function createEternalProxyFile(path: Path, baseURL: URL): Promise<Path>{
+	const { relPath, proxyPath } = getEternalMapPaths(path, baseURL)
+
 	await Deno.mkdir(proxyPath.parent_dir.normal_pathname, {recursive: true});
 
-	const eternalModule = await getEternalModule(path, specifier);
+	const eternalModule = await getEternalModule(path, relPath);
 	await Deno.writeTextFile(proxyPath, eternalModule)
 
-	return [
-		[specifier, path],
-		[path, proxyPath]
-	];
+	return proxyPath
+}
+
+/**
+ * Deletes an eternal module proxy file and returns the import map specifiers
+ * @param path 
+ * @param baseURL 
+ * @returns 
+ */
+async function deleteEternalProxyFile(path: Path, baseURL: URL) {
+	const { relPath, proxyPath } = getEternalMapPaths(path, baseURL)
+	
+	await Deno.remove(proxyPath, {recursive: true});
+	return relPath;
+}
+
+
+function getEternalMapPaths(path: Path, baseURL: URL) {
+	const relPath = path.getAsRelativeFrom(baseURL).replace(/^\.\//, '').replaceAll("\\", "/");
+	const proxyPath = new Path('./eternal/'+ relPath, cache_path);
+	return {
+		relPath,
+		proxyPath
+	}
 }

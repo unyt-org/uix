@@ -1,4 +1,4 @@
-import { ALLOWED_ENTRYPOINT_FILE_NAMES } from "./app.ts";
+import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "./app.ts";
 import { Path } from "../utils/path.ts";
 import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
@@ -8,6 +8,7 @@ import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
 import { Entrypoint } from "../html/entrypoints.ts";
 import type { normalizedAppOptions } from "./options.ts";
 import { createBackendEntrypointProxy } from "../routing/backend-entrypoint-proxy.ts";
+import { eternalExts, updateEternalFile } from "./module-mapping.ts";
 
 /**
  * Manages a backend endpoint deno instance
@@ -82,21 +83,33 @@ export class BackendManager {
 
 	async watchFiles(){
 		let handling = false;
-		for await (const _event of Deno.watchFs(this.#scope.normal_pathname, {recursive: true})) {
+		for await (const event of Deno.watchFs(this.#scope.normal_pathname, {recursive: true})) {
 			if (handling) continue;
 
 			handling = true;
+			for (const path of event.paths) {
+				this.handleFileUpdate(Path.File(path));
+			} 
 			this.handleUpdate();
 			setTimeout(() => handling = false, 500)
 		}
 	}
 
-	public handleUpdate() {
-		// watch disabled
+	private async handleFileUpdate(path: Path.File) {
+		logger.info("#color(grey)file update: " + path.getAsRelativeFrom(this.scope.parent_dir).replace(/^\.\//, ''));
+
+		// is eternal file, update
+		if (path.hasFileExtension(...eternalExts)) {
+			await updateEternalFile(path, app.base_url, app.options!.import_map, app.options!);
+		}
+	}
+
+	public handleUpdate(type: "backend"|"common" = "backend") {
+		// backend watch disabled
 		if (!this.#watch) return;
 
 		// only log info for developer
-		if (this.#watch == "info") logger.warn("Backend files changed, restart might be required. Start uix with -b to automatically restart the backend.")
+		if (this.#watch == "info") logger.warn("A "+type+" file was updated, "+(type=="backend"?"":"backend ")+"restart might be required. Start uix with -b to automatically restart the backend.")
 		// restart backend
 		else this.restart()
 	}

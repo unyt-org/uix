@@ -2,6 +2,8 @@ import { Path } from "../utils/path.ts";
 import { Datex } from "datex-core-legacy";
 import { TypescriptImportResolver } from "./ts-import-resolver.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
+import { eternalExts, updateEternalFile } from "../app/module-mapping.ts";
+import { app } from "../app/app.ts";
 
 const copy = Datex.client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = Datex.client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
@@ -233,6 +235,11 @@ export class Transpiler {
             const src_path = new Path<Path.Protocol.File>(path);
 
             logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
+
+            // is eternal file, update
+            if (src_path.hasFileExtension(...eternalExts)) {
+                await updateEternalFile(src_path, app.base_url, app.options!.import_map, app.options!);
+            }
     
             // ignore file if using file from original src directory
             if (!this.#options.copy_all && !src_path.hasFileExtension(...this.#transpile_exts)) {

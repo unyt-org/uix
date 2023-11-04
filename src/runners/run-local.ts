@@ -3,6 +3,15 @@ import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "../utils/path.ts";
 import { runParams } from "./runner.ts";
 
+
+export const CSI = '\u001b['
+export const CTRLSEQ = {
+	CLEAR_SCREEN:						CSI + '2J',
+	HOME:								CSI + 'H'
+} as const;
+
+
+
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions) {
 
 	const run_script_url = "app/start.ts"
@@ -73,6 +82,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	await run();
 
 	async function run() {
+		Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
+		Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
 
 		process = Deno.run({
 			cmd: [
@@ -91,6 +102,14 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		}
 		const exitStatus = await process.status();
 		if (exitStatus.code == 42) {
+			await run();
+		}
+		else {
+			console.log("waiting until files are updated...");
+			// error - wait until a file was modified before restart
+			for await (const _event of Deno.watchFs(new Path(root_path).normal_pathname, {recursive: true})) {
+				break;
+			}
 			await run();
 		}
 	}

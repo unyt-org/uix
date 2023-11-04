@@ -23,6 +23,9 @@ import { getEternalModule } from "../app/eternal-module-generator.ts";
 import { highlightText } from 'https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js'
 import {serveFile} from "https://deno.land/std@0.164.0/http/file_server.ts"
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
+import { eternalExts } from "../app/module-mapping.ts";
+import { getDirType } from "../app/utils.ts";
+import { app } from "../app/app.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -509,8 +512,9 @@ export class Server {
             }
         }
 
-        if (!url.searchParams.has("original") && url.hasFileExtension("eternal.tsx", "eternal.ts", "eternal.js", "eternal.jsx", "eternal.mts", "eternal.mjs")) {
+        if (!url.searchParams.has("original") && url.hasFileExtension(...eternalExts) && getDirType(app.options!, this.#dir.getChildPath(normalizedPath)) !== "backend") {
             const urlString = url.toString();
+           
             if (!this.#eternalModulesCache.has(urlString)) {
                 const specifier = url.pathname + '?original'
                 const eternalModuleSource = await getEternalModule(filepath, specifier);

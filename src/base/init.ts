@@ -15,13 +15,10 @@ import { initSession } from "../session/frontend.ts";
 // custom dom elements
 import "../html/light-root.ts"
 
-
 if (client_type == "browser") {
 	await initSession();
 }
 
-// enable DATEX CLI
-if (client_type === "deno") Datex.enableCLI();
 
 if (UIX.context == "frontend") {
     // keyboard overlay content (on chrome)

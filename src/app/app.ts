@@ -27,9 +27,13 @@ type version_change_handler = (version:string, prev_version:string)=>void|Promis
 // options passed in via command line arguments
 let stage: string|undefined
 let http_over_datex: boolean|undefined
+let enable_datex_cli: boolean|undefined;
 if (client_type === "deno") {
-	({ stage, http_over_datex } = (await import("./args.ts")))
+	({ stage, http_over_datex, enable_datex_cli } = (await import("./args.ts")))
 }
+
+// enable DATEX CLI
+if (enable_datex_cli && client_type === "deno") Datex.enableCLI();
 
 const version = eternal ?? $$("unknown");
 
@@ -83,7 +87,7 @@ class App {
 		
 	}
 
-	base_url?:URL
+	base_url!:URL
 
 	options?:normalizedAppOptions
 

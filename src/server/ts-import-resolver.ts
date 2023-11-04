@@ -21,8 +21,7 @@ type import_resolver_options = {
 
 export class TypescriptImportResolver {
 
-	private static import_specifier_regex = client_type === "deno" ? new RegExp(String.raw`(?<=^(?:\*\/ *)?)((?:import|export)\s+(?:[A-Za-z0-9_$,{} ])*\s+from\s+|import\s+)["'](((?!\w+:\/\/)[^."'][^"']*)|[0-9A-Za-z_\-@:.]+)["']`, 'gm') : null // /(?<=^(?:\*\/ *)?)((?:import|export)\s+(?:[A-Za-z0-9_$,{} ])*\s+from\s+|import\s+)["'](((?!\w+:\/\/)[^."'][^"']*)|[0-9A-Za-z_\-@:.]+)["']/gm;
-    private static general_import_regex   = client_type === "deno" ? new RegExp(String.raw`(?<=^(?:\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']`, 'gm') : null // /(?<=^(?:\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["']([^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']/gm
+    private static general_import_regex = client_type === "deno" ? new RegExp(String.raw`(?<=^(?: *\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']`, 'gm') : null // /(?<=^(?: *\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']/gm
 
 	readonly scope?: Path // root path for source files, locations outside have to be resolved with out of scope resolution
     readonly import_map_base_path?: Path // import map location
@@ -58,14 +57,15 @@ export class TypescriptImportResolver {
 
 	resolveImportSpecifier(specifier:string): string {
 
+        // TODO: how does deno handle scope mapping? for eternal.ts modules (seems to work like we want it - scopes are ignored)
         // keep relative paths, else resolve specifier
-        let resolved = (specifier.startsWith("./") || specifier.startsWith("../")) ?
+        const resolved = (specifier.startsWith("./") || specifier.startsWith("../")) ?
             specifier :
             import.meta.resolve(specifier);
 
         // keep original specifier for eternal.ts
-        if (resolved.endsWith(".eternal.ts") || resolved.endsWith(".eternal.tsx") || resolved.endsWith(".eternal.js") || resolved.endsWith(".eternal.jsx") || resolved.endsWith(".eternal.mts") || resolved.endsWith(".eternal.mjs")) 
-            resolved = specifier
+        // if (resolved.endsWith(".eternal.ts") || resolved.endsWith(".eternal.tsx") || resolved.endsWith(".eternal.js") || resolved.endsWith(".eternal.jsx") || resolved.endsWith(".eternal.mts") || resolved.endsWith(".eternal.mjs")) 
+        //     resolved = specifier
 
         return resolved
 	}
@@ -82,24 +82,6 @@ export class TypescriptImportResolver {
         
 		await this.resolveOutOfScopeAndInterfaceImports(path, reference_path, no_side_effects)
     }
-
-	/**
-	 * overrides the import statements in a js/ts file, mapping non-absolute or relative import specifiers (e.g. "uix") to absolute urls, according to the import map
-	 */
-	public async resolveImportSpecifiers(path:Path, reference_path = path) {
-        if (!path.fs_exists) {
-            logger.warn("file does not exist: " + path);
-            return;
-        }
-		const content = await Deno.readTextFile(path.normal_pathname);
-
-		const resolved_content = content.replace(TypescriptImportResolver.import_specifier_regex!, (_match: string, p1:string, import_specifier:string)=>{
-            const resolved = this.resolveImportSpecifier(import_specifier);
-            return `${p1}"${resolved}"`
-        });
-
-		await Deno.writeTextFile(path.normal_pathname, resolved_content);
-	}
 
     private currently_resolving = new Set<string>();
     private last_imported_for_path = new Map<string, Set<string>>().setAutoDefault(Set); // remember which module imported which module paths at last compilation time
@@ -148,7 +130,7 @@ export class TypescriptImportResolver {
 
             const rel_import_path = is_prefix ? null : this.resolveImportSpecifier(specifier)
             const abs_import_path = is_prefix ? null : new Path(rel_import_path!, reference_path);
-        
+            
 
             // workaround: ignore 'node:x' paths
             if (abs_import_path?.toString().startsWith("node:")) return match;
@@ -159,7 +141,6 @@ export class TypescriptImportResolver {
             const is_oos = !abs_import_path?.isChildOf(this.scope!);
             let is_ext = false;
             const imports_list = new Set<string>();
-
 
             for (const ext of this.custom_extensions) {
                 if (abs_import_path?.filename.endsWith(ext)) {

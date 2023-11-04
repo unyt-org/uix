@@ -32,11 +32,12 @@ export async function startApp(app: {domains:string[]}, options:appOptions = {},
 
 	// TODO: map multiple backends to multiple frontends?
 	let backend_with_default_export:BackendManager|undefined;
-
+	const backendManagers = [];
 	// load backend
 	for (const backend of nOptions.backend) {
 		const backend_manager = new BackendManager!(nOptions, backend, baseURL, (live||watch_backend) ? true : (watch ? "info" : false));
 		await backend_manager.run()
+		backendManagers.push(backend_manager);
 		if (backend_manager.content_provider!=undefined) {
 			if (backend_with_default_export!=undefined) logger.warn("multiple backend entrypoint export a default content");
 			backend_with_default_export = backend_manager; 
@@ -49,11 +50,10 @@ export async function startApp(app: {domains:string[]}, options:appOptions = {},
 		backend_with_default_export.content_provider[Datex.DX_SOURCE] = Datex.Runtime.endpoint.toString(); // use @@local::#entrypoint as dx source
 	}
 
-
 	let server:Server|undefined
 	// load frontend
 	for (const frontend of nOptions.frontend) {
-		const frontend_manager = new FrontendManager(nOptions, frontend, baseURL, backend_with_default_export, watch, live)
+		const frontend_manager = new FrontendManager(nOptions, frontend, baseURL, backend_with_default_export??backendManagers[0], watch, live)
 		await frontend_manager.run();
 		server = frontend_manager.server;
 		frontends.set(frontend.toString(), frontend_manager);

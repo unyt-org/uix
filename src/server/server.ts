@@ -368,7 +368,7 @@ export class Server {
                 <noscript>Please activate JavaScript in your browser!</noscript>
                 <script type="module" src="${uixURL}"></script>
             `
-			await this.serveContent(requestEvent, "text/html", html);
+			await this.serveContent(requestEvent, "text/html", html, undefined, undefined, undefined, false);
             return;
         }
 
@@ -629,7 +629,6 @@ export class Server {
         try {
             // resolve ts and virtual files
             const resolve_ts = (url.ext==="ts"||url.ext==="tsx"||url.ext==="mts") && url.searchParams.get("type") !== "ts" && resolveTs;
-            const compat_mode = false; //isSafari;
             
             for (const [tpath, transpiler] of this.transpilers) {
                 if (normalizedPath.startsWith(tpath)) {
@@ -637,7 +636,7 @@ export class Server {
                     filepath = transpiler.src_dir.getChildPath(normalizedPath.replace(tpath,'/'));
 
                     // check if transpiler has custom dist path, else use default filepath
-                    const dist_path = transpiler.getDistPath(filepath, compat_mode, resolve_ts);
+                    const dist_path = transpiler.getDistPath(filepath, resolve_ts);
 
                     if (dist_path) filepath = dist_path;
 
@@ -645,12 +644,12 @@ export class Server {
                     // TODO: try all extension (also tsx, ...)
                     else if (!filepath.fs_exists) {
                         if (filepath.hasFileExtension('js', 'mjs')) {
-                            const dist_path = transpiler.getDistPath(filepath.getWithFileExtension('ts'), compat_mode, true);
+                            const dist_path = transpiler.getDistPath(filepath.getWithFileExtension('ts'), true);
                             if (dist_path) filepath = dist_path;
                         } 
                         // css file does not exists - try scss
                         else if (filepath.hasFileExtension('css')) {
-                            const dist_path = transpiler.getDistPath(filepath.getWithFileExtension('scss'), compat_mode, true);
+                            const dist_path = transpiler.getDistPath(filepath.getWithFileExtension('scss'), true);
                             if (dist_path) filepath = dist_path;
                         }
                     }
@@ -683,22 +682,22 @@ export class Server {
     }
 
 
-    public async serveContent(requestEvent: Deno.RequestEvent, type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}) {
-        const res = this.getContentResponse(type, content, cookies, status, headers)
+    public async serveContent(requestEvent: Deno.RequestEvent, type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}, useDefaultHeaders = true) {
+        const res = this.getContentResponse(type, content, cookies, status, headers, useDefaultHeaders)
         try {
             await requestEvent.respondWith(res)
         } catch {}
 	}
 
 
-    public getContentResponse(type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}) {
+    public getContentResponse(type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}, useDefaultHeaders = true) {
         const normalHeaders = headers instanceof Headers ? headers : new Headers(headers);
         if (this.#options.cors) {
             normalHeaders.set("Access-Control-Allow-Origin", "*")
             normalHeaders.set("Access-Control-Allow-Headers", "*")
         }
         normalHeaders.set("Content-Type", type);
-        if (this.#options.default_headers) {
+        if (useDefaultHeaders && this.#options.default_headers) {
             for (const [name, value] of Object.entries(this.#options.default_headers))
             normalHeaders.set(name, value);
         }
@@ -712,10 +711,10 @@ export class Server {
 
 
     public sendError(requestEvent: Deno.RequestEvent, status = 500, text = "Server Error") {
-        return this.serveContent(requestEvent, 'text/plain', text, [], status)
+        return this.serveContent(requestEvent, 'text/plain', text, [], status, undefined, false)
     }
 
     public getErrorResponse(status = 500, text = "Server Error") {
-        return this.getContentResponse('text/plain', text, [], status)
+        return this.getContentResponse('text/plain', text, [], status, undefined, false)
     }
 }

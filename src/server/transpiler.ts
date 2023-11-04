@@ -19,11 +19,6 @@ const logger = new Datex.Logger("transpiler");
  *          file.js
  *          virtualfile.ts
  *          virtualfile.js
- *      frontend.compat.transpiled.web
- *          file.ts
- *          file.js
- *          virtualfile.ts
- *          virtualfile.js
  */
 
 export type transpiler_options = {
@@ -34,7 +29,6 @@ export type transpiler_options = {
     import_resolver?: TypescriptImportResolver,
     dist_parent_dir?: Path.File, // parent dir for dist dirs
     dist_dir?: Path.File, // use different path for dist (default: generated tmp dir)
-    dist_dir_compat?: Path.File // use different path for compat dist (default: generated tmp dir)
     sourceMap?: boolean // generate inline source maps when transpiling ts
 }
 
@@ -49,14 +43,12 @@ export class Transpiler {
 
     private TMP_DIR_PREFIX = "transpiler_cache_";
     private TRANSPILED_DIR_EXT = "transpiled.web";
-    private TRANSPILED_DIR_EXT_COMPAT = "compat.transpiled.web";
 
     #options!: transpiler_options_all
     #transpile_exts!: string[]
 
 	#src_dir:Path.File
 	#dist_dir?:Path.File
-	#dist_dir_compat?:Path.File
     #tmp_dir?: Path.File
 
     #main_fs_watcher?: Deno.FsWatcher
@@ -88,15 +80,6 @@ export class Transpiler {
         return this.#dist_dir;
     }
 
-    // /tmp/compile_cache_xy/x.compat.transpiled.web
-    get dist_dir_compat(){
-        if (this.#options.dist_dir_compat) return this.#options.dist_dir_compat; // custom dist dir
-        if (!this.#dist_dir_compat) {
-            this.#dist_dir_compat = Path.dir(this.src_dir.name, this.tmp_dir).getWithFileExtension(this.TRANSPILED_DIR_EXT_COMPAT);
-            this.#dist_dir_compat.fsCreateIfNotExists();
-        }
-        return this.#dist_dir_compat;
-    }
 
     // returns true if the file has to be transpiled 
     isTranspiledFile(path:Path) {
@@ -129,12 +112,11 @@ export class Transpiler {
     /**
      * Get the dist path for a src file (e.g. the js file created from the src ts file or a virtual file)
      * @param src_path path of original source file
-     * @param compat use compat js import resolution for import maps
      * @param resolve_transpiled if true, return path for corresponding compiled js/css file
      */
-    public getDistPath(src_path:Path.File, compat = false, resolve_transpiled = true) {
+    public getDistPath(src_path:Path.File, resolve_transpiled = true) {
         if (this.isClonedFile(src_path) || src_path.fs_is_dir) {
-            let dist_path = src_path.getWithChangedParent(this.src_dir, compat ? this.dist_dir_compat : this.dist_dir);
+            let dist_path = src_path.getWithChangedParent(this.src_dir, this.dist_dir);
             if (resolve_transpiled && dist_path.hasFileExtension(...this.#transpile_exts)) {
                 dist_path = this.getFileWithMappedExtension(dist_path);
             }
@@ -161,7 +143,6 @@ export class Transpiler {
 
         if (this.#options.copy_all) {
             await copy!.copy(this.src_dir, this.dist_dir);
-            await copy!.copy(this.src_dir, this.dist_dir_compat);
         }
 
         await this.initDistDir()
@@ -287,16 +268,13 @@ export class Transpiler {
         if (!p) return;
         src_path = p;
 
-        await Promise.all([
-            this.updateFileToDist(src_path, this.dist_dir, false, _transpile_only_if_not_exists),
-            this.updateFileToDist(src_path, this.dist_dir_compat, true, _transpile_only_if_not_exists),
-        ])
+        await this.updateFileToDist(src_path, this.dist_dir, _transpile_only_if_not_exists);
         if (!silent_update) {
             for (const handler of this.#file_update_listeners) handler(src_path);
         }
     }
 
-    private async updateFileToDist(src_path:Path.File, dist_dir:Path.File, compat = false, _transpile_only_if_not_exists = false) {
+    private async updateFileToDist(src_path:Path.File, dist_dir:Path.File, _transpile_only_if_not_exists = false) {
         if (!this.isClonedFile(src_path)) return; // ignore, no copy required
         if (src_path.fs_is_dir) throw new Error("src path is directory")
 
@@ -310,7 +288,7 @@ export class Transpiler {
             const mapped_dist_path = this.getFileWithMappedExtension(dist_path);
             const transpileExtEqualsSrcExt = this.transpiledNameEqualsSourceName(src_path) // e.g. css -> scc, should always recompile, cannot rely on mapped_dist_path.fs_exists
             if (this.isTranspiledFile(dist_path) && (!_transpile_only_if_not_exists || !mapped_dist_path.fs_exists || transpileExtEqualsSrcExt)) {
-                await this.transpile(dist_path, src_path, compat);
+                await this.transpile(dist_path, src_path);
             }
         }
         // delete in dist if deleted
@@ -323,21 +301,20 @@ export class Transpiler {
      * entrypoint for transpiling files
      * @param dist_path path for the current file
      * @param src_path virtual src path
-     * @param compat 
      */
-    protected async transpile(dist_path:Path.File, src_path:Path.File, compat = false){
+    protected async transpile(dist_path:Path.File, src_path:Path.File){
         const mapped_dist_path = this.getFileWithMappedExtension(dist_path);
 
         // transpile ts to js
-        if (mapped_dist_path.ext == "js") await this.transpileTS(dist_path, src_path, compat)
+        if (mapped_dist_path.ext == "js") await this.transpileTS(dist_path, src_path)
         else if (mapped_dist_path.ext == "css") await this.transpileSCSS(dist_path, src_path)
     }
 
-    protected async transpileTS(dist_path:Path.File, src_path:Path.File, compat = false) {
+    protected async transpileTS(dist_path:Path.File, src_path:Path.File) {
         const js_dist_path = await this.transpileToJS(dist_path)
         if (this.import_resolver) {
-            await this.import_resolver.resolveImports(dist_path, src_path, compat, true); // resolve imports in ts, no side effects (don't update referenced module files)
-            await this.import_resolver.resolveImports(js_dist_path, src_path, compat)
+            await this.import_resolver.resolveImports(dist_path, src_path, true); // resolve imports in ts, no side effects (don't update referenced module files)
+            await this.import_resolver.resolveImports(js_dist_path, src_path)
         }
     }
 
@@ -443,33 +420,29 @@ export class Transpiler {
         }
     }
 
-    public async updateVirtualFile(virtual_path:Path.File|string, content:string|Uint8Array) {
+    public updateVirtualFile(virtual_path:Path.File|string, content:string|Uint8Array) {
         const p = this.resolveRelativeSrcPath(virtual_path);
         if (!p) return;
         virtual_path = p;
 
         if (!this.#virtual_files.has(virtual_path.toString())) throw new Error("cannot update virtual file " + virtual_path + " - does not exist")
         
-        const res = await Promise.all([
-            this._updateVirtualFile(virtual_path, content, false),
-            this._updateVirtualFile(virtual_path, content, true)
-        ]);
-        return res[0];
+        return this._updateVirtualFile(virtual_path, content);
     }
 
-    private async _updateVirtualFile(path:Path.File|string, content:string|Uint8Array, compat = false) {
+    private async _updateVirtualFile(path:Path.File|string, content:string|Uint8Array) {
         const p = this.resolveRelativeSrcPath(path);
         if (!p) return;
         path = p;
 
-        const dist_path = this.getDistPath(path, compat, false);
+        const dist_path = this.getDistPath(path, false);
         if (!dist_path) throw new Error("could not create virtual file")
         dist_path.parent_dir.fsCreateIfNotExists();
         if (typeof content == "string") await Deno.writeTextFile(dist_path.normal_pathname, content);
         else await Deno.writeFile(dist_path.normal_pathname, content);
         // transpile?
         if (this.isTranspiledFile(dist_path)) {
-            await this.transpile(dist_path, path, compat);
+            await this.transpile(dist_path, path);
         }
         return dist_path;
     }
@@ -483,17 +456,14 @@ export class Transpiler {
         this.#fs_watchers.get(virtual_path.toString())?.close()
         this.#fs_watchers.delete(virtual_path.toString());
 
-        return Promise.all([
-            this._deleteVirtualFile(virtual_path, false),
-            this._deleteVirtualFile(virtual_path, true)
-        ])
+        return this._deleteVirtualFile(virtual_path);
     }
 
-    private async _deleteVirtualFile(path:Path.File,  compat = false) {
-        const dist_path_ts = this.getDistPath(path, compat);
+    private async _deleteVirtualFile(path:Path.File) {
+        const dist_path_ts = this.getDistPath(path, false);
         if (dist_path_ts?.fs_exists) await Deno.remove(dist_path_ts)
 
-        const dist_path_js = this.getDistPath(path, compat, false);
+        const dist_path_js = this.getDistPath(path, false);
         if (dist_path_js?.fs_exists) await Deno.remove(dist_path_js)
     }
 

@@ -55,7 +55,7 @@ export class FrontendManager extends HTMLProvider {
 			import_map_base_path: basePath,
 			interface_extensions: ['.dx', '.dxb'],
 			interface_prefixes: ['@'],
-			handle_out_of_scope_path: (path: Path.File|string, from:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects, compat)
+			handle_out_of_scope_path: (path: Path.File|string, from:Path, imports:Set<string>, no_side_effects:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects)
 		});
 
 		super(scopePath, app_options, import_resolver, live, basePath)
@@ -75,7 +75,7 @@ export class FrontendManager extends HTMLProvider {
 		this.updateCheckEntrypoint();
 
 		// generate entrypoint.ts interface for backend
-		if (this.#backend?.web_entrypoint && this.#backend.entrypoint) this.handleOutOfScopePath(this.#backend.entrypoint, this.scope, new Set(["*"]), false, true);
+		if (this.#backend?.web_entrypoint && this.#backend.entrypoint) this.handleOutOfScopePath(this.#backend.entrypoint, this.scope, new Set(["*"]), false);
 		// bind virtual backend entrypoint
 		if (this.#backend?.web_entrypoint && this.#backend?.virtualEntrypointContent) {
 			const path = this.resolveImport(this.#backend?.web_entrypoint);
@@ -108,11 +108,11 @@ export class FrontendManager extends HTMLProvider {
 				import_resolver:  new TypescriptImportResolver(new Path(common_dir), {
 					import_map: this.app_options.import_map,
 					import_map_base_path: this.#base_path,
-					handle_out_of_scope_path: (path: Path.File|string, from:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects, compat)
+					handle_out_of_scope_path: (path: Path.File|string, from:Path, imports:Set<string>, no_side_effects:boolean) => this.handleOutOfScopePath(path, from, imports, no_side_effects)
 				}),
 				on_file_update: this.#watch ? (path)=>{
 					if (!this.isTransparentFile(path)) {
-						this.#backend.handleUpdate();
+						this.#backend?.handleUpdate();
 					}
 					this.handleFrontendReload();
 				} : undefined
@@ -414,9 +414,9 @@ export class FrontendManager extends HTMLProvider {
 	// resolve oos paths from local (client side) imports - resolve to web (https) paths
 	// + resolve .dx/.dxb imports
 	// if no_side_effects is true, don't update any files
-	private async handleOutOfScopePath(import_path:Path.File|string, module_path:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean){
+	private async handleOutOfScopePath(import_path:Path.File|string, module_path:Path, imports:Set<string>, no_side_effects:boolean){
 
-		if (typeof import_path == "string") return this.handleEndpointImport(import_path, module_path, imports, no_side_effects, compat);
+		if (typeof import_path == "string") return this.handleEndpointImport(import_path, module_path, imports, no_side_effects);
 
 		// map .dx -> .dx.ts
 		let mapped_import_path = import_path;
@@ -520,7 +520,7 @@ export class FrontendManager extends HTMLProvider {
 		return web_path.replace(/\.dx.ts$/, '.dx').replace(/\.dxb.ts$/, '.dxb')
 	}
 
-	private handleEndpointImport(specifier:string, module_path:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean) {
+	private handleEndpointImport(specifier:string, module_path:Path, imports:Set<string>, no_side_effects:boolean) {
 
 		const module_type = getDirType(this.app_options, module_path);
 
@@ -577,7 +577,7 @@ export class FrontendManager extends HTMLProvider {
 		// check if imports changed:
 	
 		let changed = false;
-		const removed = new Set();
+		const removed = new Set<string>();
 
 		for (const import_before of combined_imports_before) {
 			if (!new_combined_imports.has(import_before)) {changed = true; removed.add(import_before);} // removed import
@@ -597,12 +597,29 @@ export class FrontendManager extends HTMLProvider {
 
 		// imports changed, update file
 		if (changed) {
-			this.#logger.info(`exposed exports of ${this.getShortPathName(import_path)}: ${new_combined_imports.size ? `\n#color(green)  + ${[...new_combined_imports].join(", ")}` :' '}${removed.size ? `\n#color(red)  - ${[...removed].join(", ")}` : ''}`)
-			await this.createTypescriptInterfaceFiles(web_path, import_path, import_pseudo_path, module_path, new_combined_imports)
+			this.createExposeExportsFile(web_path, import_pseudo_path, import_path, module_path, new_combined_imports, removed)
 		}
 
 		resolve_done?.();
 	}
+
+	#exposingFunctions = new Map<string, ()=>void>()
+
+	private createExposeExportsFile(web_path:string, import_pseudo_path:Path.File, import_path:Path, module_path:Path, newImports:Set<string>, removedImports:Set<string>) {
+		// task to run after 500ms to create backend exports file, gets canceled if new backend expors are available
+		const expose = async () => {
+			// still the latests exposing function, otherwise cancel
+			if (this.#exposingFunctions.get(web_path.toString()) !== expose) {
+				return;
+			}
+			this.#logger.info(`exposed exports from ${this.getShortPathName(import_path)}: ${newImports.size ? `\n#color(green)  + ${[...newImports].join(", ")}` :' '}${removedImports.size ? `\n#color(red)  - ${[...removedImports].join(", ")}` : ''}`)
+			await this.createTypescriptInterfaceFiles(web_path, import_path, import_pseudo_path, module_path, newImports)
+			this.#exposingFunctions.delete(web_path.toString());
+		}
+		this.#exposingFunctions.set(web_path.toString(), expose)
+		setTimeout(expose, 500);
+	}
+
 
 	// create ts + d.ts interface file for ts/dx/dxb file and try to update import map
 	private async createTypescriptInterfaceFiles(web_path:string, import_path_or_specifier:Path|string, import_pseudo_path:Path.File, module_path:Path, imports:Set<string>){
@@ -743,7 +760,6 @@ runner.enableHotReloading();
 	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider, recursiveError = true) {
 		const url = new Path(requestEvent.request.url);
 		const pathAndQueryParameters = url.normal_pathname + url.search;
-		const compat = Server.isSafariClient(requestEvent.request);
 		const lang = ContextBuilder.getRequestLanguage(requestEvent.request);
 		try {
 			this.updateCheckEntrypoint();
@@ -794,7 +810,6 @@ runner.enableHotReloading();
 						frontend_entrypoint: this.#entrypoint,
 						backend_entrypoint: this.#backend?.web_entrypoint,
 						open_graph_meta_tags,
-						compat_import_map: compat,
 						livePointers: liveNodePointers
 					}),
 					undefined, status_code, combinedHeaders
@@ -811,7 +826,6 @@ runner.enableHotReloading();
 
 	// html page for new empty pages (includes blank.ts)
 	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
-		const compat = Server.isSafariClient(requestEvent.request);
 		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage({
 			provider: this,
 			prerendered_content: "",
@@ -819,8 +833,7 @@ runner.enableHotReloading();
 			js_files: [...this.#client_scripts, this.#BLANK_PAGE_URL],
 			static_js_files: this.#static_client_scripts,
 			global_css_files: ['uix/style/document.css'],
-			body_css_files: ['uix/style/body.css'],
-			compat_import_map: compat
+			body_css_files: ['uix/style/body.css']
 		}));
 	}
 

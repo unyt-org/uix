@@ -465,7 +465,6 @@ export type HTMLPageOptions = {
 	frontend_entrypoint?:URL|string, 
 	backend_entrypoint?:URL|string, 
 	open_graph_meta_tags?:OpenGraphInformation, 
-	compat_import_map?: boolean, 
 	lang?: string, 
 	livePointers?: string[]
 }
@@ -484,12 +483,10 @@ export async function generateHTMLPage({
 	frontend_entrypoint, 
 	backend_entrypoint, 
 	open_graph_meta_tags, 
-	compat_import_map, 
 	lang, 
 	livePointers
 }: HTMLPageOptions) {
 
-	compat_import_map ??= false;
 	lang ??= "en"
 	render_method ??= RenderMethod.HYBRID;
 	js_files ??= []
@@ -510,9 +507,9 @@ export async function generateHTMLPage({
 
 		// js imports
 		files += indent(4) `
-			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("datex-core-legacy/runtime/display.ts", compat_import_map).toString()}";\ndisableInitScreen();\n` : ''}
-			const {f} = (await import("${provider.resolveImport("datex-core-legacy", compat_import_map).toString()}"));
-			const {Routing} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts", compat_import_map).toString()}"));` 
+			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("datex-core-legacy/runtime/display.ts").toString()}";\ndisableInitScreen();\n` : ''}
+			const {f} = (await import("${provider.resolveImport("datex-core-legacy").toString()}"));
+			const {Routing} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts").toString()}"));` 
 			// await new Promise(resolve=>setTimeout(resolve,5000))
 
 		// files += `\nDatex.MessageLogger.enable();`
@@ -520,7 +517,7 @@ export async function generateHTMLPage({
 		// set app info
 
 		for (const file of js_files) {
-			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file, compat_import_map).toString()}");`
+			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file).toString()}");`
 		}
 
 		// hydrate
@@ -531,13 +528,13 @@ export async function generateHTMLPage({
 
 		// load frontend entrypoint first
 		if (frontend_entrypoint) {
-			files += indent(4) `\n\nconst _frontend_entrypoint = await datex.get("${provider.resolveImport(frontend_entrypoint, compat_import_map).toString()}");`
+			files += indent(4) `\n\nconst _frontend_entrypoint = await datex.get("${provider.resolveImport(frontend_entrypoint).toString()}");`
 		}
 
 		// hydration with backend content after ssr
 		if (backend_entrypoint) {
 			// load default export of ts module or dx export
-			files += indent(4) `\n\nconst _backend_entrypoint = await datex.get("${provider.resolveImport(backend_entrypoint, compat_import_map).toString()}");let backend_entrypoint;\nif (_backend_entrypoint.default) backend_entrypoint = _backend_entrypoint.default\nelse if (_backend_entrypoint && Object.getPrototypeOf(_backend_entrypoint) != null) backend_entrypoint = _backend_entrypoint;`
+			files += indent(4) `\n\nconst _backend_entrypoint = await datex.get("${provider.resolveImport(backend_entrypoint).toString()}");let backend_entrypoint;\nif (_backend_entrypoint.default) backend_entrypoint = _backend_entrypoint.default\nelse if (_backend_entrypoint && Object.getPrototypeOf(_backend_entrypoint) != null) backend_entrypoint = _backend_entrypoint;`
 		}
 		// alternative: frontend rendering
 		if (frontend_entrypoint) {
@@ -576,14 +573,14 @@ export async function generateHTMLPage({
 		// add pointer sse observers
 		if (livePointers) {
 			files += indent `<script type="module">
-				const {BackgroundRunner} = (await import("${provider.resolveImport("uix/background-runner/background-runner.ts", compat_import_map).toString()}"));
+				const {BackgroundRunner} = (await import("${provider.resolveImport("uix/background-runner/background-runner.ts").toString()}"));
 				const backgroundRunner = BackgroundRunner.get();
 				backgroundRunner.observePointers(${JSON.stringify(livePointers)});
 			</script>`	
 		}
 
 		for (const file of static_js_files) {
-			if (file) files += indent(4) `<script type="module" src="${provider.resolveImport(file, compat_import_map).toString()}"></script>`
+			if (file) files += indent(4) `<script type="module" src="${provider.resolveImport(file).toString()}"></script>`
 		}
 	}
 
@@ -616,7 +613,7 @@ export async function generateHTMLPage({
 
 	let favicon = "";
 	// TODO: remove icon_path, use icon instead
-	if (provider.app_options.icon || provider.app_options.icon) favicon = `<link rel="icon" href="${provider.resolveImport(provider.app_options.icon??provider.app_options.icon, compat_import_map)}">`
+	if (provider.app_options.icon || provider.app_options.icon) favicon = `<link rel="icon" href="${provider.resolveImport(provider.app_options.icon??provider.app_options.icon)}">`
 
 	// TODO: fix open_graph_meta_tags?.getMetaTags()
 	return indent `

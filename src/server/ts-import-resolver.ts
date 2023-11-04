@@ -7,7 +7,7 @@ import { client_type } from "datex-core-legacy/utils/constants.ts";
 
 const logger = new Logger("ts import resolver");
 
-type oos_handler = (path_or_custom_specifier: Path.File|string, from:Path, imports:Set<string>, no_side_effects:boolean, compat:boolean)=>string|null|Promise<string|null>;
+type oos_handler = (path_or_custom_specifier: Path.File|string, from:Path, imports:Set<string>, no_side_effects:boolean)=>string|null|Promise<string|null>;
 
 type importmap = {imports:Record<string,string>};
 
@@ -73,16 +73,14 @@ export class TypescriptImportResolver {
     /**
      * 
      * @param path ts/js file path
-     * @param compat if true, resolve import specifiers via import map in file
      */
-	public async resolveImports(path:Path, reference_path = path, compat = false, no_side_effects = false) {
+	public async resolveImports(path:Path, reference_path = path, no_side_effects = false) {
         if (!path.fs_exists) {
             logger.warn("file does not exist: " + path);
             return;
         }
         
-		await this.resolveOutOfScopeAndInterfaceImports(path, reference_path, no_side_effects, compat)
-        if (compat) await this.resolveImportSpecifiers(path, reference_path); // resolve import specifiers if import map not supported
+		await this.resolveOutOfScopeAndInterfaceImports(path, reference_path, no_side_effects)
     }
 
 	/**
@@ -114,7 +112,7 @@ export class TypescriptImportResolver {
      * This might be the case for TypeScript modules, if the corresponding JavaScript module is also resolved separately
      * @returns 
      */
-	private async resolveOutOfScopeAndInterfaceImports(path:Path, reference_path = path, no_side_effects = false, compat = false) {
+	private async resolveOutOfScopeAndInterfaceImports(path:Path, reference_path = path, no_side_effects = false) {
     	if (!this.scope) throw "no root scope specified for import resolver";
       
         // prevent multiple resolution side-by-side
@@ -220,7 +218,7 @@ export class TypescriptImportResolver {
         if (this.oos_handler) {
             for (const [abs_import_path_or_prefix, data] of replacers) {
                 const combined_imports_list = <Set<string>> new Set([...data.values()].reduce((a, c) => a.concat( <any>[...c] ), []))
-                const rep_path = await this.oos_handler(abs_import_path_or_prefix.startsWith('#prefix:') ? abs_import_path_or_prefix.replace('#prefix:', '') : new Path(abs_import_path_or_prefix), reference_path, combined_imports_list, no_side_effects, compat);
+                const rep_path = await this.oos_handler(abs_import_path_or_prefix.startsWith('#prefix:') ? abs_import_path_or_prefix.replace('#prefix:', '') : new Path(abs_import_path_or_prefix), reference_path, combined_imports_list, no_side_effects);
                 for (const key of data.keys()) {
                     new_content = new_content.replace(key, rep_path ?? originalImportSpecifiers.get(abs_import_path_or_prefix)!);
                 }
@@ -229,7 +227,7 @@ export class TypescriptImportResolver {
             // inform if import paths where completely removed
             const last_imported = this.last_imported_for_path.getAuto(path.toString())
             for (const last_imported_path of last_imported) {
-                if (!new_imported.has(last_imported_path)) await this.oos_handler(last_imported_path.startsWith('#prefix:') ? last_imported_path.replace('#prefix:', '') : new Path(last_imported_path), reference_path, new Set(), no_side_effects, compat); // empty imports
+                if (!new_imported.has(last_imported_path)) await this.oos_handler(last_imported_path.startsWith('#prefix:') ? last_imported_path.replace('#prefix:', '') : new Path(last_imported_path), reference_path, new Set(), no_side_effects); // empty imports
             }
             this.last_imported_for_path.set(path.toString(), new_imported);
         }

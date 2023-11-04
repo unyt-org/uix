@@ -42,9 +42,9 @@ Backend routes are always prioritized over frontend routes.
 In this example, the route `/support/technical` follows the *frontend* entrypoint route and resolves to `Tech Support`.
 The route `/home/about` is resolved on the *backend* to `About us`.
 
-# Entrypoint Values
+# Entrypoint values
 
-## HTML Elements
+## HTML elements
 HTML Elements are directly appended to the document body. The can be created with
 normal DOM APIs (`document.createElement()`) or with JSX syntax:
 ```tsx
@@ -265,48 +265,51 @@ export default {
 ```
 
 ## Error handling
-UIX supports a wide range of error handling inside the routing context. We differ between HTTPStatus code and UIX response.
 
-### Throwing runtime error
-You may always throw runtime errors using the `throw` keyword. The corresponding error will be rendered in the users browser (it is possible to throw JSX content or UIX components).
+### Throwing values
+Values that are thrown with `throw` from an entrypoint function are treated similarly to returned values - the value is still rendered in the browser. There is only one difference: The response has an error status code instead of the default status code 200.
 
 ```typescript
 export default {
     '/:id': (_, { id }) => {
          if (id !== "4269420")
-             throw "Invalid login";
+             throw "Invalid login"; // displays "Invalid login" with status code 500
+         return "The secret is 42!"; // displays "The secret is 42!" with status code 200
+     }
+} satisfies Entrypoint;
+```
+
+### Throwing errors
+
+Instances of `Error` that are thrown or returned from an entrypoint function are rendered in the browser as
+an error info box (including a stack trace when running in `dev` stage).
+
+```typescript
+export default {
+    '/:id': (_, { id }) => {
+         if (id !== "4269420")
+             throw new Error("Invalid login"); // displays an error info box (with stack trace)
          return "The secret is 42!";
      }
 } satisfies Entrypoint;
 ```
 
 ### HTTPStatus
-```
+
+`HTTPStatus` values can be returned or thrown to create a response with a specific status code.
+Additionally, custom content can be returned using the `with` method:
+
+```ts
 import { HTTPStatus } from "uix/html/http-status.ts";
 export default {
     '/:id': (_, { id }) => {
          if (id !== "4269420")
-             throw HTTPStatus.BAD_REQUEST.with("MyCustomMessage");
+             throw HTTPStatus.BAD_REQUEST.with("MyCustomMessage"); // displays "MyCustomMessage" with status code 400 (Bad Request)
          return "The secret is 42!";
      }
 } satisfies Entrypoint;
 
 ```
-
-### Using the provideError handler
-```typescript
-import { provideError } from "uix/html/entrypoint-providers.tsx";
-import { HTTPStatus } from "uix/html/http-status.ts";
-
-export default {
-    '/:id': (_, { id }) => {
-         if (id !== "4269420")
-             return provideError("Invalid login", HTTPStatus.FORBIDDEN);
-         return "The secret is 42!";
-     }
-} satisfies Entrypoint;
-```
-
 
 ## UIX Providers
 

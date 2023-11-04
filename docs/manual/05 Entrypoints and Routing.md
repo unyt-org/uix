@@ -29,9 +29,18 @@ should not be available on the backend.
 UI generated on the backend entrypoint is "moved" to the frontend client.
 UIX supports [multiple methods](./07%20Rendering%20Methods.md) for backend rendering.
 
-## 3. Backend and Frontend Entrypoints
+## 3. Backend and Frontend Entrypoints (Route Merging)
 When entrypoint exports for both the frontend and the backend are available, they are automatically merged.
 This configuration normally only makes senses in combination with [Entrypoint Routes](#route-maps).
+
+
+The following diagrams visualizes the concept of route merging in UIX:
+![d](./res/entrypoints.svg)
+
+Backend routes are always prioritized over frontend routes.
+
+In this example, the route `/support/technical` follows the *frontend* entrypoint route and resolves to `Tech Support`.
+The route `/home/about` is resolved on the *backend* to `About us`.
 
 # Entrypoint Values
 

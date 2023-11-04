@@ -19,22 +19,22 @@ export default
     </section>
 ```
 
-# Entrypoint Configurations
-## 1. Just a Frontend Entrypoint
+# Entrypoint configurations
+## 1. Just a frontend entrypoint
 If there are no backend entrypoint exports, the UI is generated directly on each frontend client from the frontend entrypoint.
 This configuration is useful for complex web applications with user-specific UI and also when the UI content
 should not be available on the backend.
 
-## 2. Just a Backend Entrypoint
+## 2. Just a backend entrypoint
 UI generated on the backend entrypoint is "moved" to the frontend client.
 UIX supports [multiple methods](./07%20Rendering%20Methods.md) for backend rendering.
 
-## 3. Backend and Frontend Entrypoints (Route Merging)
+## 3. Backend and frontend entrypoints (route merging)
 When entrypoint exports for both the frontend and the backend are available, they are automatically merged.
 This configuration normally only makes senses in combination with [Entrypoint Routes](#route-maps).
 
 
-The following diagrams visualizes the concept of route merging in UIX:
+The following diagram visualizes the concept of route merging in UIX:
 ![d](./res/entrypoints.svg)
 
 Backend routes are always prioritized over frontend routes.
@@ -77,9 +77,9 @@ content.val = "new content"
 (If you only want to display plain text without a parent HTML document and CSS styles, you can use `provideContent("text content")`)
 
 
-## Route Maps
+## Route maps
 
-Route Maps are simple JavaScript objects with route patterns as keys and entrypoint values as values.
+Route maps are simple JavaScript objects with route patterns as keys and entrypoint values as values.
 
 When a URL is requested from the backend or loaded on the frontend, the most specific (longest) matching route entry is resolved to an entrypoint
 value. 
@@ -118,7 +118,7 @@ export default {
 } satisfies Entrypoint
 ```
 
-## Route Map Filters
+## Route map filters
 
 Route Maps also accept special symbols, called *filters* as keys.
 They can be used to follow a specific route only if a certain condition is met.
@@ -165,7 +165,7 @@ Example:
 export default datex.get('./image.png') satisfies Entrypoint
 ```
 
-## Filesystem Files
+## Filesystem files
 In a deno environment, `Deno.FSFile` values can be returned as entrypoint values. They create a file response with the correct mime type.
 
 The `provideFile()` function can also be used to return files from the local file system.
@@ -188,7 +188,7 @@ export default provideRedirect('https://example.unyt.app') satisfies Entrypoint
 ```
 
 
-## Virtual Redirects
+## Virtual redirects
 
 Virtual redirects are similar to normal redirects, but they directly return a response with the content of the redirect URL, not a redirect response (HTTP Status **304**).
 
@@ -198,7 +198,7 @@ import { provideVirtualRedirect } from "uix/html/entrypoint-providers.tsx";
 export default provideVirtualRedirect('/example/home') satisfies Entrypoint
 ```
 
-## Dynamic Entrypoint Functions
+## Dynamic entrypoint functions
 In the example above, a Dynamic Entrypoint Function is used to return custom content based on the context of a route.
 Dynamic Entrypoint Functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>` 
 
@@ -211,10 +211,10 @@ export default (ctx: Context) => {
 
 When an entrypoint function throws an error, the error value is returned like a normal return value, but with an HTTP Status Code **500**.
 
-## UIX Components
+## UIX components
 
-UIX Components implement the [Route Manager](#route-managers) interface and can handle routes internally.
-When a Component is encountered in the route chain, the `onRoute` method is called on the Component.
+UIX components implement the [Route Manager](#route-managers) interface and can handle routes internally.
+When a component is encountered in the route chain, the `onRoute` method is called on the component.
 
 
 ```typescript
@@ -229,7 +229,7 @@ class Component {
 ```
 
 ### Example
-Component Routing can be used to display or focus on different child components depending on the route.
+Component routing can be used to display or focus on different child components depending on the route.
 ```tsx
 @template()
 class Parent extends Component {
@@ -311,11 +311,11 @@ export default {
 
 ```
 
-## UIX Providers
+## UIX providers
 
-UIX Provider utility functions allow backend entrypoint to directly return HTTP Responses from an entrypoint.
+UIX provider utility functions allow backend entrypoint to directly return HTTP Responses from an entrypoint.
 
-### List of UIX Providers:
+### List of UIX providers:
  * ```typescript
    function provideValue(value:unknown, options?:{type?:Datex.DATEX_FILE_TYPE, formatted?:boolean})
    ```
@@ -328,9 +328,9 @@ UIX Provider utility functions allow backend entrypoint to directly return HTTP 
 
 
 
-## Route Handlers
+## Route handlers
 
-Route Handlers are similar to [Dynamic Entrypoint Functions](#dynamic-entrypoint-functions), but they are represented with an interface. 
+Route handlers are similar to [Dynamic Entrypoint Functions](#dynamic-entrypoint-functions), but they are represented with an interface. 
 In contrast to a Dynamic Entrypoint Function, which only take a UIX Context as a parameter, the `getRoute` method of a Route Handlers additionally takes the remaining route as an argument.
 
 ```typescript
@@ -341,7 +341,7 @@ export interface RouteHandler {
 ```
 
 
-## Route Managers
+## Route managers
 The `RouteManager` interface represents an entity with an internal route state.
 In contrast to other entrypoints, it can modify the request route.
 
@@ -362,7 +362,7 @@ interface RouteManager {
 }
 ```
 
-## Entrypoint Proxies
+## Entrypoint proxies
 
 An Entrypoint Proxy can be wrapped around any Entrypoint value to intercept routing and add custom functionality.
 The abstract `EntrypointProxy` class has two methods that can be implemented:

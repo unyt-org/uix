@@ -786,7 +786,7 @@ runner.enableHotReloading();
 				const themeCookie = getCookie(UIX_COOKIE.theme, requestEvent.request.headers)!
 				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers) ?? "light";
 				const currentThemeCSS = UIX.Theme.getThemeCSS(themeCookie, true) ?? UIX.Theme.getThemeCSS(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme, true);
-
+				const currentThemeStylesSheets = UIX.Theme.getThemeStylesheets(themeCookie) ?? UIX.Theme.getThemeStylesheets(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme) ?? [];
 				// get live pointer ids for sse observer
 				let liveNodePointers:string[]|undefined = undefined;
 				if (contentElement && render_method === RenderMethod.BACKEND) {
@@ -805,7 +805,7 @@ runner.enableHotReloading();
 						static_js_files: this.#static_client_scripts,
 						color_scheme: modeCookie,
 						css: currentThemeCSS,
-						global_css_files: ['uix/style/document.css', ...entrypoint_css],
+						global_css_files: ['uix/style/document.css', ...entrypoint_css, ...currentThemeStylesSheets.map(s=>({href:s, class:"custom-theme"}))],
 						body_css_files: ['uix/style/body.css', ...entrypoint_css],
 						frontend_entrypoint: this.#entrypoint,
 						backend_entrypoint: this.#backend?.web_entrypoint,

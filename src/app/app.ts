@@ -14,6 +14,7 @@ import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
 import { getInjectedAppData, getInjectedImportmap } from "./app-data.ts";
 
 import "../base/uix-datex-module.ts"
+import "../../uix-short.ts"
 
 import "../base/init.ts"
 import { bindingOptions } from "./dom-context.ts";

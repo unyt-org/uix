@@ -4,6 +4,7 @@ import { domContext, domUtils } from "../app/dom-context.ts";
 import { logger } from "./global-values.ts";
 import { always } from "datex-core-legacy";
 import type { CSSStyleDeclaration, CSSStyleRule, CSSStyleSheet, Document, Element, HTMLElement, Node, ShadowRoot } from "../uix-dom/dom/mod.ts";
+import { doc } from "https://deno.land/x/deno_doc@0.68.0/mod.ts";
 
 
 const LOCAL_VAR_PREFIX = '--uix-local-value-'
@@ -68,9 +69,12 @@ export function SCSS(template:TemplateStringsArray|string, ...params:cssParam[])
 			cssVarsBySelector.set(styleRule.selectorText, getLocalVars(styleRule.style))
 		}
 
+		const activatedFor = new Set<Document|ShadowRoot>();
+
 		styleSheet.activate = (document: Document|ShadowRoot) => {
-			console.warn(">>!activate")
-			logger.debug("activating stylesheet for", document)
+			if (activatedFor.has(document)) return;
+			activatedFor.add(document);
+			logger.debug("activating stylesheet")
 			
 			// enable stylesheet for document
 			document.adoptedStyleSheets = [...(document.adoptedStyleSheets??[]), styleSheet];

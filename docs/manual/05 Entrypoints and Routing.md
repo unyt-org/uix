@@ -198,9 +198,9 @@ import { provideVirtualRedirect } from "uix/html/entrypoint-providers.tsx";
 export default provideVirtualRedirect('/example/home') satisfies Entrypoint
 ```
 
-## Dynamic entrypoint functions
-In the example above, a Dynamic Entrypoint Function is used to return custom content based on the context of a route.
-Dynamic Entrypoint Functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>` 
+## Entrypoint functions
+In the example above, an Entrypoint Function is used to return custom content based on the context of a route.
+Entrypoint Functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>` 
 
 Example:
 ```tsx

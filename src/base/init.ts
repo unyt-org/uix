@@ -1,8 +1,6 @@
 
 // global event listeners
 
-import { logger } from "../utils/global-values.ts";
-
 import { Datex } from "datex-core-legacy";
 
 import { client_type } from "datex-core-legacy/utils/constants.ts";
@@ -40,14 +38,6 @@ if (UIX.context == "frontend") {
 	
 	// handle invalid images (TODO) ....
 
-	// watch system theme change
-	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-		if (UIX.Theme.auto_mode) return;
-		logger.debug("system color scheme change")
-		if (event.matches) UIX.Theme.setMode("dark")
-		else UIX.Theme.setMode("light");
-		UIX.Theme.auto_mode = true;
-	})
 
 	// load document + body style, if not yet added
 

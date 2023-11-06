@@ -378,7 +378,10 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRo
 
 	// add collected stylesheet urls from html components
 	let injectedStyles = ""
-	for (const url of collectedStylesheets) injectedStyles += `<link rel="stylesheet" href="${convertToWebPath(url)}">\n`;
+	for (const url of collectedStylesheets) {
+		const link = `<link rel="stylesheet" href="${convertToWebPath(url)}">`;
+		if (!injectedStyles.includes(link)) injectedStyles += `${link}\n`;
+	}
 	html = injectedStyles + html;
 
 	let script = `<script type="module">\n`
@@ -460,7 +463,7 @@ export type HTMLPageOptions = {
 	css?: string,
 	js_files:(URL|string|undefined)[], 
 	static_js_files:(URL|string|undefined)[],
-	global_css_files:(URL|string|undefined)[], 
+	global_css_files:(URL|string|undefined|Record<string,string>)[], 
 	body_css_files:(URL|string|undefined)[], 
 	frontend_entrypoint?:URL|string, 
 	backend_entrypoint?:URL|string, 
@@ -499,7 +502,6 @@ export async function generateHTMLPage({
 
 	// use frontendRuntime if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content and standalone js
 	const useFrontendRuntime = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYBRID) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
-	const add_importmap = render_method != RenderMethod.STATIC;
 
 	// js files
 	if (useFrontendRuntime) {
@@ -591,7 +593,10 @@ export async function generateHTMLPage({
 	// stylesheets
 	for (const stylesheet of global_css_files) {
 		if (!stylesheet) continue;
-		global_style += `<link rel="stylesheet" href="${provider.resolveImport(stylesheet, true)}">\n`;
+		if (!(typeof stylesheet == "string" || stylesheet instanceof URL)) {
+			global_style += `<link rel="stylesheet" ${Object.entries(stylesheet).map(([k,v]) => `${k}="${v}"`).join(" ")}>\n`;
+		}
+		else global_style += `<link rel="stylesheet" href="${provider.resolveImport(stylesheet, true)}">\n`;
 	}
 
 	// custom inline css

@@ -718,11 +718,14 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
             const options = Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options
             const stylesheet = templateFn(options, this)
+            // invalid scoped stylesheet
+            if (stylesheet.scope && stylesheet.scope !== this.tagName) throw new Error(`Stylesheet uses multiple component scopes (<${stylesheet.scope.toLowerCase()}>, <${this.tagName.toLowerCase()}>). Make sure you don't use the same stylesheet for multiple components.`)
             // inject css scoping if component has no shadow root
-            if (stylesheet instanceof CSSStyleSheet && !this.shadowRoot) {
+            if (stylesheet instanceof CSSStyleSheet && !this.shadowRoot && !stylesheet.scope) {
                 const css = [...(stylesheet.cssRules as any)].map(r=>r.cssText).join("\n");
                 const scopedCSS = addCSSScopeSelector(css, this.tagName)
                 stylesheet.replaceSync(scopedCSS)
+                stylesheet.scope = this.tagName;
             }
             if (stylesheet instanceof CSSStyleSheet && stylesheet.activate) {
                 stylesheet.activate(this.shadowRoot??document);

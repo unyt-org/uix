@@ -29,6 +29,74 @@ Components support the common attributes for DOM element (e.g. `id`, `class`, `s
 can accept additional custom attributes defined in the component class or function.
 
 
+
+## Reactivity
+
+Thanks to DATEX, elements created with JSX are inherently reactive, even if they
+are not declared inside a component function.
+JSX elements accept plain JavaScript values *or* DATEX Refs as attribute values and element contents.
+When passing plain JavaScript values, the component is not updated dynamically:
+
+```tsx
+let myClass = "xyz";
+const myDiv = <div class={myClass}></div>
+myClass = "abc"; // myDiv class is still "xyz"
+```
+
+To achieve reactive behaviour, you need to pass in a `Ref` value:
+```tsx
+let myClass = $$("xyz");
+const myDiv = <div class={myClass}></div>
+myClass.val = "abc"; // myDiv class is now "abc"
+```
+
+### Conditional rendering
+
+With conditional rendering, specific elements are only rendered if a certain condition is met.
+There are multiple ways to achieve conditional rendering with UIX.
+
+#### Using `always`
+
+The `always` transform function autmatically recalculates the
+result value when one of the dependency refs inside the function changes.
+In this case, it is recalculated each time the value of `showDialog` is updated.
+
+```tsx
+const showDialog = $$(false);
+const myDiv = <div>
+    My Div
+    {always (() => showDialog.val ? <div id="dialog">My Dialog</div> : <div/>)}
+</div>
+```
+
+#### Using `toggle`
+
+With the `toggle` function, you can achieve the same effect as with the `always`
+function, but it is more efficient, because the return values are only every created once.
+The `toggle` function switches between to values, depending on another value (in this case, `showDialog`): 
+
+```tsx
+const showDialog = $$(false);
+const myDiv = <div>
+    My Div
+    {toggle (showDialog, <div id="dialog">My Dialog</div>, <div/>)}
+</div>
+```
+
+#### Using the `display` style property
+
+A different approach for conditional rendering is setting the `display` style property
+to a ref: When `showDialog` is false, `display` is `none` and the div is not rendered.
+Otherwise, `display` is `block` and the div is visible.
+
+```tsx
+const showDialog = $$(false);
+const myDiv = <div>
+    My Div
+    <div id="dialog" style={{display:showDialog}}>My Dialog</div>
+</div>
+```
+
 ### Special attributes values
 
 
@@ -58,6 +126,40 @@ get dynamically updated.
 ```tsx
 export default <div style={{color:'blue', padding:'10px'}}></div>
 ```
+
+```tsx
+// increase border width every 1s
+const borderWidth = $$(0);
+setInterval(()=>borderWidth.val++, 1000)
+
+export default <div style={{borderStyle:'solid', borderWidth}}>content</div>
+```
+##### Special style values
+
+Most style properties are assigned to strings. The following style properties also
+accept other values:
+ * `display`: The display property accepts a `boolean` value. If the value is `true`, `display` is set to the default display value (e.g. `display: block` for a div). If the value is `false`, `display` is set to `none`.
+
+
+#### Class
+Similar to the `style` attribute, the `class` accepts a string or an object.
+The object must contain the potential class names as properties and booleans as the corresponding properties,
+indicating whether this class should be activated.
+
+Simple class string:
+```tsx
+export default <div class="main big"></div>
+```
+
+Class object:
+```tsx
+const enableBig = $$(false);
+export default <div class={{main: true, big: enableBig}}></div> // results in class="main"
+
+// ...
+enableBig.val = true; // div class gets updated to class="main big"
+```
+
 
 ```tsx
 // increase border width every 1s
@@ -96,6 +198,44 @@ export default {
     '/some/path' : <a href:route="./other-path"/>, // resolves to "/some/other-path"
     '/some/other-path': "Hello there"
 }
+```
+
+Instead of strings, `URL` values can also be set as path attributes.
+
+### Checkbox `checked` attribute
+
+The special `checked` attribute of a checkbox element can be use to set or get the `checked` state of the checkbox:
+```ts
+// create new isChecked pointer bound to the "checked" state of the checkbox
+const isChecked = $$(false);
+export default <input type="checkbox" checked={isChecked}/>
+
+// observe isChecked pointer
+isChecked.observe((checked) => console.log("checkbox is checked: " + checked))
+```
+
+#### Form actions
+
+The `action` attribute of a `<form>` element can be an URL / string containing the URL of the form request, or a [callback function](./05%20Entrypoints%20and%20Routing.md#entrypoint-functions) that is triggered on submit.
+
+The return value of that function is rendered on the page and must be a valid [`Entrypoint` value](./05%20Entrypoints%20and%20Routing.md#entrypoint-values) (e.g. an HTML element, a string or a `Response` object).
+
+```tsx
+// backend/entrypoint.ts
+
+// this function gets called when the form is submitted
+function handleForm(ctx: Entrypoint) {
+    // ...
+    return "Form submitted"
+}
+
+// form
+export default 
+    <form action={handleForm}>
+        <input type="text" name="username"/>
+        <input type="password" name="password">
+        <button type="submit">Login</button>
+    </form>
 ```
 
 #### Other UIX-specific attributes 

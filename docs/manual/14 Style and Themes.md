@@ -53,27 +53,70 @@ In this example, the `font-size` property is bound to a pointer, and the color i
 ## Themes
 
 Via the `UIX.Theme` namespace, global themes can be registered and activated.
+Themes can be defined as dark or light mode themes.
+
+Per default, UIX automatically decides which mode (dark or light) to use, depending
+on the preferred OS mode.
+
 The default themes provided by UIX are `uix-light` and `uix-dark`.
+
+### Registering custom themes
+
+Before a custom theme can be used, it has to be registered:
 
 ```ts
 // register a new theme
 UIX.Theme.registerTheme({
-	name: 'my-custom-theme',
-	mode: 'light', // light or dark mode
-	// values are available to css variables (e.g. var(--border-color-1))
+	name: 'my-custom-light-theme',
+  // light or dark mode
+	mode: 'light', 
+	// custom css variables (e.g. var(--border-color-1))
 	values: {
 		'text:' '#eeffee',
 		'border-color-1': '#ffaa00'
-	}
+	},
+  // custom globally applied stylesheets
+  stylesheets: [
+    'https://example.com/style.css'
+  ],
+  onActivate() {
+    // called when theme is activated
+  },
+  onDeactivate() {
+    // called when theme is deactivted
+  }
 })
+```
+### Enabling themes
 
-// activate a theme
+Registered themes can be set as the default theme for
+dark or light mode.
+
+```ts 
+// set themes as a the default dark/light mode theme
+UIX.Theme.setDefaultDarkTheme("my-custom-dark-theme")
+UIX.Theme.setDefaultLightTheme("uix-light-plain")
+```
+
+### Manually overriding the theme and mode
+
+It is recommended to let UIX select the theme automatically,
+but you can also override the current theme:
+
+```ts
 UIX.Theme.setTheme('my-custom-theme');
+```
 
-// activate a mode (light or dark) - uses last registered theme
-// that supports the requested mode
+The mode can also be overridden manually:
+
+```ts
 UIX.Theme.setMode('dark');
+```
 
-// observe light/dark mode change
+### Observing mode changes
+
+Changes between dark and light mode can be handled with `UIX.Theme.onModeChange`:
+
+```ts
 UIX.Theme.onModeChange(mode => console.log("mode changed to", mode);)
 ```

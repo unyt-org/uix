@@ -9,19 +9,19 @@ export function observeElementforSSE(element: Element) {
 
 	// return existing
 	if (elementObservers.has(element)) {
-		console.log("existing observer", element.tagName)
+		// console.log("existing observer", element.tagName)
 		return elementObservers.get(element)!;
 	}
 
-	console.log("observe",element.tagName)
+	// console.log("observe",element.tagName)
 
 	const eventTarget = new EventTarget()
 
-	Datex.Ref.observe(element, (...args)=>{
-		console.log(">>OB", ...args);
-	}, undefined, undefined, {
-		recursive: true
-	})
+	// Datex.Ref.observe(element, (...args)=>{
+	// 	console.log(">>OB", ...args);
+	// }, undefined, undefined, {
+	// 	recursive: true
+	// })
 
 
 	// // Options for the observer (which mutations to observe)

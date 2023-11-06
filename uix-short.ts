@@ -8,6 +8,9 @@ import { SCSS } from "./src/utils/css-template-strings.ts";
 import { bindToOrigin } from "./src/app/datex-over-http.ts";
 import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, frontend as _frontend} from "./src/base/decorators.ts";
 import { domUtils } from "./src/app/dom-context.ts";
+import { template as _template, blankTemplate as _blankTemplate } from "./src/html/template.ts";
+import { style as _style } from "./src/html/style.ts";
+
 
 declare global {
 	const content: typeof _content;
@@ -17,6 +20,9 @@ declare global {
 	const NoResources: typeof _NoResources;
 	const frontend: typeof _frontend;
 	const bindOrigin: typeof _bindOrigin;
+	const template: typeof _template;
+	const blankTemplate: typeof _blankTemplate;
+	const style: typeof _style;
 }
 
 // @ts-ignore global
@@ -33,7 +39,12 @@ globalThis.NoResources = _NoResources;
 globalThis.frontend = _frontend;
 // @ts-ignore global
 globalThis.bindOrigin = _bindOrigin;
-
+// @ts-ignore global
+globalThis.template = _template;
+// @ts-ignore global
+globalThis.blankTemplate = _blankTemplate;
+// @ts-ignore global
+globalThis.style = _style;
 
 export function unsafeHTML(html:string, content?: Datex.RefOrValue<HTMLElement>|(Datex.RefOrValue<HTMLElement>)[]) {
 	return domUtils.createHTMLElement(html, content)

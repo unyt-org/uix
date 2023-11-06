@@ -1,10 +1,20 @@
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { Theme, defaultThemes } from "./theme.ts";
+import { defaultThemes } from "./themes.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
 import type { CSSStyleSheet } from "../uix-dom/dom/deno-dom/src/css/CSSStylesheet.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 
 const logger = new Logger("uix theme");
+
+export interface Theme {
+	name: string,
+	mode: "light" | "dark",
+	values?: Record<string, string>,
+	stylesheets?: Readonly<(URL|string)[]>,
+	scripts?: Readonly<(URL|string)[]>,
+	onActivate?: () => void|Promise<void>,
+	onDeactivate?: () => void|Promise<void>
+}
 
 class ThemeManager  {
 
@@ -13,18 +23,17 @@ class ThemeManager  {
 	#values:{[key:string]:string} = {}
 
 	#auto_mode = true
-	#current_theme = client_type == "browser" ? (getCookie(UIX_COOKIE.theme) ?? "uix-light") : "uix-light";
-	#current_mode: "dark"|"light" = client_type == "browser" ?  
-		(["dark", "light"].includes(getCookie(UIX_COOKIE.colorMode) as any) ? getCookie(UIX_COOKIE.colorMode) as "dark"|"light" : "light") :
-		"light";
-
+	#current_mode!: "dark"|"light"
+	#current_theme!: string
 	#waiting_theme?: string;
 
-	#default_light_theme = defaultThemes.light;
-	#default_dark_theme = defaultThemes.dark
+	#default_light_theme:Theme = defaultThemes.light;
+	#default_dark_theme:Theme = defaultThemes.dark
 
 	readonly #current_theme_style_sheet = new CSSStyleSheet();
 	#document_stylesheets_added = false;
+
+	#themeCustomStylesheets = new Map<string, string[]>()
 
 	#global_style_sheet = new CSSStyleSheet();
 
@@ -45,8 +54,11 @@ class ThemeManager  {
 	get auto_mode() {return this.#auto_mode}
 	set auto_mode(auto_mode:boolean) {this.#auto_mode = auto_mode}
 
+	customStyleSheets = new Set<string>()
+
 
 	constructor() {
+
 		// load themes from embedded style
 		for (const sheet of document.styleSheets??[]) {
 			// themes
@@ -54,17 +66,43 @@ class ThemeManager  {
 				this.addThemeFromParsedStylesheet(sheet)
 			}
 		}
-
+		
 		// add default themes if not already loaded from html
-		if (!this.getTheme(defaultThemes.dark.name)) this.registerTheme(defaultThemes.dark);
-		if (!this.getTheme(defaultThemes.light.name)) this.registerTheme(defaultThemes.light);
+		if (!this.getTheme(defaultThemes.lightPlain.name, true)) this.registerTheme(defaultThemes.lightPlain, false);
+		if (!this.getTheme(defaultThemes.darkPlain.name, true)) this.registerTheme(defaultThemes.darkPlain, false);
+		if (!this.getTheme(defaultThemes.dark.name, true)) this.registerTheme(defaultThemes.dark, false);
+		if (!this.getTheme(defaultThemes.light.name, true)) this.registerTheme(defaultThemes.light, false);
+
+
+		const currentMode: "dark"|"light" = client_type == "browser" ?  
+			(["dark", "light"].includes(getCookie(UIX_COOKIE.colorMode) as any) ? getCookie(UIX_COOKIE.colorMode) as "dark"|"light" : window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") :
+			"light";
+		const currentTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.theme) ?? "uix-"+currentMode) : "uix-"+currentMode;
+
 
 		// set current theme
-		this.setTheme(this.theme, true)
+		this.setTheme(currentTheme, true);
+
+		// make sure theme and mode are set
+		this.#current_mode = currentMode;
+		this.#current_theme = currentTheme;
+
+		// watch system theme change
+		if (client_type == "browser") {
+			(window as any).matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+				if (!this.auto_mode) return;
+				logger.debug("system color scheme change")
+				if (event.matches) this.setMode("dark")
+				else this.setMode("light");
+				this.auto_mode = true;
+			})
+		}
 	}
 
-	public getTheme(name: string) {
-		return this.#loadedThemes.get(name);
+	public getTheme(name: string, ignoreParsed = false) {
+		const theme = this.#loadedThemes.get(name)
+		if (ignoreParsed && theme?.parsed) return;
+		return theme;
 	}
 
 	/**
@@ -75,6 +113,7 @@ class ThemeManager  {
 	public registerTheme(theme: Theme, useAsDefault = true) {
 		this.#loadedThemes.set(theme.name, theme);
 		this.addGlobalThemeClass(theme);
+		this.#themeCustomStylesheets.set(theme.name, [...this.#normalizeThemeStylesheets(theme)])
 		if (useAsDefault) {
 			if (theme.mode == "dark") this.#default_dark_theme = theme
 			else if (theme.mode == "light") this.#default_light_theme = theme;
@@ -103,7 +142,7 @@ class ThemeManager  {
 	/**
 	 * Activate a new theme (must be registered with registerTheem)
 	 */
-	public setTheme(name: string, allowLazyLoad = false) {
+	public setTheme(name: typeof defaultThemes[keyof typeof defaultThemes]["name"] | (string&{}), allowLazyLoad = false) {
 		const theme = this.getTheme(name)
 		if (!theme) {
 			if (allowLazyLoad) {
@@ -113,6 +152,32 @@ class ThemeManager  {
 			else throw new Error(`Cannot set them "${name}", not registered`);
 		}
 		this.#activateTheme(theme);
+	}
+
+	/**
+	 * Sets a theme as the preferred dark theme
+	 */
+	public setDefaultDarkTheme(name: "uix-dark" | "uix-dark-plain" | (string&{})) {
+		const theme = this.getTheme(name);
+		if (!theme) throw new Error(`Theme "${name} is not a registered theme"`)
+		if (theme.mode !== "dark") throw new Error(`Theme "${name} is not a dark mode theme"`)
+
+		this.#default_dark_theme = theme;
+		// theme matches current mode, immediately apply
+		if (theme.mode == this.#current_mode) this.#activateTheme(theme);
+	}
+
+	/**
+	 * Sets a theme as the preferred light theme
+	 */
+	public setDefaultLightTheme(name: "uix-light" | "uix-light-plain" | (string&{})) {
+		const theme = this.getTheme(name);
+		if (!theme) throw new Error(`Theme "${name} is not a registered theme"`)
+		if (theme.mode !== "light") throw new Error(`Theme "${name} is not a light mode theme"`)
+
+		this.#default_light_theme = theme;
+		// theme matches current mode, immediately apply
+		if (theme.mode == this.#current_mode) this.#activateTheme(theme);
 	}
 
 	#current_theme_css_text = ""
@@ -137,8 +202,30 @@ class ThemeManager  {
 		else return css;
 	}
 
+	/**
+	 * returns a list of stylesheets for a given theme
+	 * @param name
+	 */
+	getThemeStylesheets(name: string) {
+		return this.#themeCustomStylesheets.get(name);
+	}
+
 	// update the current theme (changes immediately)
 	#activateTheme(theme:Theme) {
+
+		if (this.#current_theme == theme.name) return;
+
+		// deactivate previous theme
+		const currentTheme = this.getTheme(this.#current_theme) 
+		if (currentTheme?.onDeactivate) {
+			try {
+				currentTheme.onDeactivate()
+			}
+			catch (e) {
+				console.error(e)
+			}
+		}
+
 		this.#current_theme = theme.name;
 		logger.debug(`using theme "${theme.name}"`)
 
@@ -149,7 +236,7 @@ class ThemeManager  {
 		// iterate over all properties (also from inherited prototypes)
 		// TODO only iterate over allowed properties?
 		const added_properties = new Set();
-		for (let o = theme.values; o && o != Object.prototype; o = Object.getPrototypeOf(o)) {
+		for (let o = theme.values??{}; o && o != Object.prototype; o = Object.getPrototypeOf(o)) {
 			for (const [key, value] of Object.entries(o)) {
 				if (added_properties.has(key)) continue;
 				added_properties.add(key);
@@ -170,8 +257,57 @@ class ThemeManager  {
 			document.body.dataset.colorScheme = theme.mode;
 		}
 
+		// stylesheets
+		if (theme.stylesheets) {			
+			this.#updateCustomStylesheets(this.#normalizeThemeStylesheets(theme))
+		}
+		else this.#clearCustomStyleSheets();
+
+		if (theme.onActivate) {
+			try {
+				theme.onActivate()
+			}
+			catch (e) {
+				console.error(e)
+			}
+		}
+
 		// call them change listeners
 		for (const observer of this.mode_change_observers) observer(theme.mode);
+	}
+
+	#normalizeThemeStylesheets(theme: Theme) {
+		const customStylesheets = new Set<string>()
+		for (const url of theme.stylesheets??[]) {
+			customStylesheets.add(new URL(url).toString())
+		}
+		return customStylesheets;
+	}
+
+	#clearCustomStyleSheets(exclude?: Set<string>) {
+		if (client_type == "browser") {
+			for (const link of document.head.querySelectorAll('link.custom-theme')) {
+				if (exclude?.has(link.href)) continue;
+				link.remove();
+			}
+		}
+		
+		this.customStyleSheets.clear();
+	}
+
+	#updateCustomStylesheets(customStyleSheets: Set<string>) {
+		if (client_type == "browser") {
+			this.#clearCustomStyleSheets(customStyleSheets);
+			for (const url of customStyleSheets) {
+				if (document.head.querySelector('link.custom-theme[href="'+url+'"]')) continue;
+				const stylesheet = document.createElement("link");
+				stylesheet.classList.add("custom-theme");
+				stylesheet.rel = "stylesheet"
+				stylesheet.href = url.toString()
+				document.head.append(stylesheet)
+			}
+		}
+		this.customStyleSheets = customStyleSheets;
 	}
 
 	addGlobalThemeClass(theme: Theme) {
@@ -179,7 +315,7 @@ class ThemeManager  {
 		// iterate over all properties (also from inherited prototypes)
 		// TODO only iterate over allowed properties?
 		const added_properties = new Set();
-		for (let o = theme.values; o && o != Object.prototype; o = Object.getPrototypeOf(o)) {
+		for (let o = theme.values??{}; o && o != Object.prototype; o = Object.getPrototypeOf(o)) {
 			for (const [key, value] of Object.entries(o)) {
 				if (added_properties.has(key)) continue;
 				added_properties.add(key);
@@ -244,8 +380,9 @@ class ThemeManager  {
 			this.registerTheme({
 				name,
 				mode,
-				values
-			});
+				values,
+				parsed: true
+			}, false);
 		}
 	}
 

@@ -1,4 +1,6 @@
 import type { HTMLElement, HTMLDivElement } from "../uix-dom/dom/mod.ts";
+import { querySelectorAll } from "../uix-dom/dom/shadow_dom_selector.ts";
+
 
 /**
  * Enables overlay scrollbars with custom style on an HTML element (element must support shadow roots)
@@ -34,6 +36,25 @@ export function enableOverlayScrollbars(element: HTMLDivElement) {
 	element.style.scrollbarWidth = "none";
 
 	return element;
+}
+
+
+let globalEnabled = false;
+
+/**
+ * Enables overlay scrollbars globally for all elements, also when added later
+ */
+export function enableOverlayScrollbarsGlobal() {
+	// TODO
+	if (globalEnabled) return;
+	querySelectorAll("*").forEach(el => {
+		if (window.getComputedStyle(el)["overflow"] == "scroll")
+			console.log("ek",el)
+	})
+}
+
+export function disableOverlayScrollbarsGlobal() {
+	globalEnabled = false;	
 }
 
 

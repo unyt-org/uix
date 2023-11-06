@@ -38,7 +38,6 @@ This is useful for definining components that can be rendered by the backend or 
 
 > [!NOTE]
 > Common modules allow the usage of the *same source code* for the backend and frontend, but they do not share a state between the backend and frontend endpoints: Every module is initialized individually on each endpoint.
->
 > A shared module state is only possible with *backend modules* imported from the backend and frontend.
 
 

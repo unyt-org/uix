@@ -14,7 +14,7 @@ const section =
     </div>
 ```
 
-In contrast to frameworky like React, the value returned by this JSX expression is an actual instance of an HTML div element.
+In contrast to frameworks like React, the value returned by this JSX expression is an actual instance of an HTML div element.
 
 You can directly append it to another element:
 
@@ -24,7 +24,7 @@ document.body.append(section);
 
 ## Supported attributes
 
-For native DOM elements, all attributes that are natively supported by the element can be used.
+For default DOM elements, all attributes that are natively supported by the element can be used.
 Components support the common attributes for DOM element (e.g. `id`, `class`, `style` or event handlers) per default, and 
 can accept additional custom attributes defined in the component class or function.
 
@@ -202,7 +202,7 @@ export default {
 
 Instead of strings, `URL` values can also be set as path attributes.
 
-### Checkbox `checked` attribute
+#### Checkbox `checked` attribute
 
 The special `checked` attribute of a checkbox element can be use to set or get the `checked` state of the checkbox:
 ```ts

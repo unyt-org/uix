@@ -1,5 +1,5 @@
 # Localization
-UIX allows for simple text content adaption depending on the users selected language.
+UIX allows for simple text content adaption depending on the user's selected language.
 
 Localized text content can be realized with the help of dynamic [text pointers](https://docs.unyt.org/manual/datex/pointers#pointers-for-primitive-values) that change their value depending on the user language.
 

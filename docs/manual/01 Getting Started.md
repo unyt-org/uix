@@ -13,11 +13,11 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
  * No JavaScript bundlers
 
 **Main features**
- * [Cross-network reactivity](02%20Imports%20and%20Synchronization.md#Reactivity)
+ * [Cross-network reactivity](02%20Cross-Realm%20Imports.md#Reactivity)
  * [Server side rendering with partial hydration](07%20Rendering%20Methods.md)
  * [Hybrid backend/frontend routing](05%20Entrypoints%20and%20Routing.md)
- * [Cross-realm imports](./02%20Imports%20and%20Synchronization.md#cross-realm-imports)
- * [Shared memory](02%20Imports%20and%20Synchronization.md#Synchronization)
+ * [Cross-realm imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports)
+ * [Shared memory](02%20Cross-Realm%20Imports.md#Synchronization)
  * [JSX support](./03%20JSX.md)
  * [Reusable web components](./04%20Components.md)
  * [SCSS support](./11%20Style%20and%20Themes.md#SCSS)
@@ -129,7 +129,7 @@ With UIX, frontend and backend source code and other resources can be combined i
 
 Per default, all files in the `frontend` directory are only available in browser clients (frontend endpoints), while files in the `backend` directory are only available for backend endpoints (Deno runtime).
 
-With UIX [Cross-Realm Imports](./02%20Imports%20and%20Synchronization.md#cross-realm-imports), TypeScript/JavaScript/DATEX modules from the backend can be imported and used inside frontend modules.
+With UIX [Cross-Realm Imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports), TypeScript/JavaScript/DATEX modules from the backend can be imported and used inside frontend modules.
 
 Files in the `common` directory can be accessed from both the `frontend` and `backend` scope.
 

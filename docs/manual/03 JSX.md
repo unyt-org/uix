@@ -173,7 +173,7 @@ export default <div style={{borderStyle:'solid', borderWidth}}>content</div>
 
 All attributes that accept a path as a value (e.g. `src`, `href`) can be set to paths relative to the current module (For additional information check out `uix-module` in [Supported Attributes](#supported-attributes)).
 
-Relative paths in element attributes are always correctly resolved on the backend and on the frontend.
+Relative paths in element attributes are always resolved correctly on the backend and on the frontend.
 
 ```tsx
 // backend/entrypoint.ts
@@ -260,7 +260,7 @@ const comp = <MyComponent style="color:green" text="text content"/>
 
 ## Using the `HTML` utility function instead of JSX
 
-As an alternative to JSX, you can also use the `HTML` function which provides the exact same functionality as JSX with JavaScript template strings.
+As an alternative to JSX, you can also use the `HTML` function which provides exactly the same functionality as JSX with JavaScript template strings.
 
 JSX:
 ```tsx

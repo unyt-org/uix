@@ -70,7 +70,7 @@ export default
 
 ### Using blankTemplate / function components
 
-For some use cases, it might make be useful to access all attributes and the children set in JSX when creating an anonymous component.
+For some use cases, it may be useful to access all attributes and the children set in JSX when creating an anonymous component.
 
 The `blankTemplate` function allows you to create an element with complete control over attributes and children.
 In contrast to `template`, children defined in JSX are not automatically appended to the root element of the template,
@@ -231,7 +231,7 @@ export default
 ```
 
 ### The `@id` decorator
-To access elements defined in the template layout cosider assigning an unique id attribute to the corresponding elements:
+To access elements defined in the template layout consider assigning an unique id attribute to the corresponding elements:
 
 ```tsx
 @template(()=>{

@@ -45,7 +45,7 @@ The route `/home/about` is resolved on the *backend* to `About us`.
 # Entrypoint values
 
 ## HTML elements
-HTML Elements are directly appended to the document body. The can be created with
+HTML Elements are directly appended to the document body. They can be created with
 normal DOM APIs (`document.createElement()`) or with JSX syntax:
 ```tsx
 import { Entrypoint } from "uix/html/entrypoints.ts";
@@ -93,7 +93,7 @@ export default {
 ```
 
 Since Route Maps are valid `Entrypoint` values, multiple Route Maps can be nested. Because a route part must exactly match the route pattern key,
-the parent route key must end with `*` so that the route is followed.
+the parent route key must end with `*` for the route to be followed.
 ```tsx
 export default {
     '/articles/*': {

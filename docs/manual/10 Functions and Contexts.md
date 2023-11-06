@@ -165,7 +165,7 @@ Now everything works as expected.
 
 > [!NOTE]
 > use() declarations don't have an effect if they are used in normal functions. 
-> It doesn't hurt to add them to a stationary function that might be transferred
+> There is no harm in adding them to a stationary function that might be transferred
 > at some point.
 
 ### Restorable contexts (eternal modules)

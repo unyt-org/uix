@@ -12,7 +12,7 @@ UIX app with `--http-over-datex=false`.
 > [!WARNING]
 > The current implementation of HTTP-over-DATEX does not support HTTPS
 > between the local web server and the public relay 
-> (e.g. a public unyt.app endpoint), meaning that all HTTP traefik 
+> (e.g. a public unyt.app endpoint), meaning that all HTTP traffic 
 > is transmitted without encryption.
 > There is still DATEX encryption between your backend endpoint and
 > the HTTP relay endpoint, aswell as HTTPS encryption between the
@@ -32,7 +32,7 @@ when using DATEX-over-HTTP.
 
 ## Verified Endpoint Session
 
-A browser sesssion that is associated with an endpoint and a signated validation token.
+A browser session that is associated with an endpoint and a signated validation token.
 This allows the backend to reliably associate HTTP requests with endpoints.
 
 Whenever a UIX page is opened, a new endpoint session is created if there is no active session.

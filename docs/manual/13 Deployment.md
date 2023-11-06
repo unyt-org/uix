@@ -93,7 +93,7 @@ Now, you can start your app like always with the `uix` command.
 
 ## GitHub deployment
 
-The `git_deploy` [plugin](./13%20Plugins.md) can be used in a `app.dx` file to automate app deployment:
+The `git_deploy` [plugin](./15%20Plugins.md) can be used in a `app.dx` file to automate app deployment:
 
 ```datex
 plugin git_deploy (

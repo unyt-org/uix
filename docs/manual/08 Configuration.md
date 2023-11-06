@@ -78,7 +78,7 @@ const stage = app.stage // "production"
 ```
 
 In `app.dx` files, the `#public.uix.stage` helper function can be used to access the stage,
-enabling custom [deployment configurations](./11%20Deployment.md).
+enabling custom [deployment configurations](./13%20Deployment.md).
 
 ## The .dx files
 

@@ -294,4 +294,4 @@ const parent =
 
 ## Styling
 
-See [Styles and Themes](./14%20Style%20and%20Themes.md)
+See [Styles and Themes](./11%20Style%20and%20Themes.md)

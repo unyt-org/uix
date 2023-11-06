@@ -13,7 +13,7 @@ Plugins can be used in an `app.dx` file with the `plugin` keyword.
 The content of the plugin body depends on the plugin.
 
 Example (`git_deploy` plugin):
-```dx
+```datex
 plugin git_deploy (
   prod: (
     on: 'push',
@@ -23,7 +23,7 @@ plugin git_deploy (
 ```
 
 A plugin initialization may also not contain any content at all:
-```dx
+```datex
 plugin my_plugin ();
 ```
 
@@ -34,7 +34,7 @@ next to the `app.dx` file.
 
 Example `plugins.dx` file:
 
-```dx
+```datex
 https://cdn.unyt.org/uix/plugins/git-deploy.ts,
 https://example.com/my-plugin.ts,
 ../plugins/my-plugin.ts
@@ -68,12 +68,12 @@ export default class MyPlugin implements AppPlugin<{text: string}> {
 **Usage:**
 
 * Activate in `plugins.dx`:
-  ```dx
+  ```datex
   ./my-plugin.ts 
   ```
 
 * Use in `app.dx`:
-  ```dx
+  ```datex
   plugin my_plugin ({
     text: "Hello Plugin"
   });

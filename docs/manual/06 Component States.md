@@ -6,7 +6,7 @@ Every change to those values or can be synced over DATEX.
 The saved component state can also be stored (e.g. in the DATEX Pointer storage) and restored completely at any time (e.g. after a page reload).
 
 ## The @property decorator
-Since UIX components are normal DATEX JavaScript template classes, additional DATEX state properties can be declared using the `@property` decorator.
+Since UIX components are [DATEX-compatible classes](https://docs.unyt.org/manual/datex/classes), additional DATEX state properties can be declared using the `@property` decorator.
 
 In the following example a property `myVal` is declared that gets assigned to the value attribute of an input element (`HTMLInputElement`).
 Modifing the inputs value will modify the value of the `myVal` property and vice versa.

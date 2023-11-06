@@ -67,14 +67,14 @@ Before a custom theme can be used, it has to be registered:
 ```ts
 // register a new theme
 UIX.Theme.registerTheme({
-	name: 'my-custom-light-theme',
+  name: 'my-custom-light-theme',
   // light or dark mode
-	mode: 'light', 
-	// custom css variables (e.g. var(--border-color-1))
-	values: {
-		'text:' '#eeffee',
-		'border-color-1': '#ffaa00'
-	},
+  mode: 'light', 
+  // custom css variables (e.g. var(--border-color-1))
+  values: {
+    'text:' '#eeffee',
+    'border-color-1': '#ffaa00'
+  },
   // custom globally applied stylesheets
   stylesheets: [
     'https://example.com/style.css'

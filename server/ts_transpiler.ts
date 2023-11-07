@@ -365,11 +365,18 @@ export class TypescriptTranspiler {
             // await this.transpileScopedCss(path, src_path)
         }
         catch (e) {
-            logger.error("SCSS error: " + e)
+            if (e.message?.endsWith("memory access out of bounds")) logger.error("SCSS error ("+src_path.normal_pathname+"): memory access out of bounds (possible circular imports)");
+            else logger.error("SCSS error ("+src_path.normal_pathname+"): " + e)
         }
     }
 
+    #loadedSCSSFiles = new Set<string>()
+
     protected async loadSCSSDependencies(src_path:Path.File) {
+        const srcPathString = src_path.toString();
+        if (this.#loadedSCSSFiles.has(srcPathString)) return; // already loading / loaded
+        this.#loadedSCSSFiles.add(srcPathString);
+
         const content = await Deno.readTextFile(src_path.normal_pathname);
         for (const dep of content.matchAll(/^\s*@use\s*"([^"]*)"/gm)) {
             let import_path = new Path<Path.Protocol.File>(dep[1], src_path);

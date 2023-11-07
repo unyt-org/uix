@@ -40,7 +40,7 @@ export function setCookie(name: UIX_COOKIE, value:string, expDays?:number, heade
 
 	else {
 		const expires = "expires=" + expiryDate.toUTCString() + ";";
-		document.cookie = name + "=" + value + "; " + expires + " path=/";
+		document.cookie = name + "=" + value + "; " + expires + " path=/; SameSite=None; Secure;";
 	}
 	
 }

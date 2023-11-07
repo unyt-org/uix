@@ -357,11 +357,11 @@ export class Server {
 			let uixURL = import.meta.resolve('uix/session/init.ts');
             // local uix, use dev.cdn init as fallback - TODO: fix!;
             if (uixURL.startsWith("file://")) uixURL = "https://dev.cdn.unyt.org/uix/session/init.ts";
-            const html = `<html>
+            const html = `<!DOCTYPE html><html>
                 <noscript>Please activate JavaScript in your browser!</noscript>
                 <script type="module" src="${uixURL}"></script>
             `
-			await this.serveContent(requestEvent, "text/html", html);
+			await this.serveContent(requestEvent, "text/html", html, undefined, undefined, undefined, false);
             return;
         }
 
@@ -502,7 +502,11 @@ export class Server {
         }
 
         if (this.#options.directory_indices && filepath.fs_is_dir) {
-            return this.getContentResponse("application/directory+json", JSON.stringify(await this.generateDirectoryIndex(filepath), null, '    '));
+            const srcDir = this.#dir.getChildPath(normalizedPath);
+            return this.getContentResponse("application/directory+json", JSON.stringify(
+                await this.generateDirectoryIndex(srcDir), 
+                null, '    ')
+            );
         }
 
         // is .dx/.dxb file as js module import
@@ -613,7 +617,7 @@ export class Server {
         try {
             // resolve ts and virtual files
             const resolve_ts = (url.ext==="ts"||url.ext==="tsx"||url.ext==="mts") && url.searchParams.get("type") !== "ts" && resolveTs;
-            const compat_mode = isSafari;
+            const compat_mode = false; //isSafari;
             
             for (const [tpath, transpiler] of this.transpilers) {
                 if (normalizedPath.startsWith(tpath)) {
@@ -657,6 +661,8 @@ export class Server {
 
         for await(const f of Deno.readDir(path.normal_pathname)) {
             if (f.isDirectory) {
+                // TODO: fix workaround, add ignore list to options
+                if (f.name == "wpt") continue;
                 dirs.push({name: f.name, children: await this.generateDirectoryIndex(path.asDir().getChildPath(f.name))})
             }
             else {
@@ -667,22 +673,22 @@ export class Server {
     }
 
 
-    public async serveContent(requestEvent: Deno.RequestEvent, type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}) {
-        const res = this.getContentResponse(type, content, cookies, status, headers)
+    public async serveContent(requestEvent: Deno.RequestEvent, type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}, useDefaultHeaders = true) {
+        const res = this.getContentResponse(type, content, cookies, status, headers, useDefaultHeaders)
         try {
             await requestEvent.respondWith(res)
         } catch {}
 	}
 
 
-    public getContentResponse(type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}) {
+    public getContentResponse(type:mime_type, content:ReadableStream | XMLHttpRequestBodyInit, cookies?:Cookie[], status = 200, headers:Record<string, string>|Headers = {}, useDefaultHeaders = true) {
         const normalHeaders = headers instanceof Headers ? headers : new Headers(headers);
         if (this.#options.cors) {
             normalHeaders.set("Access-Control-Allow-Origin", "*")
             normalHeaders.set("Access-Control-Allow-Headers", "*")
         }
         normalHeaders.set("Content-Type", type);
-        if (this.#options.default_headers) {
+        if (useDefaultHeaders && this.#options.default_headers) {
             for (const [name, value] of Object.entries(this.#options.default_headers))
             normalHeaders.set(name, value);
         }
@@ -696,10 +702,10 @@ export class Server {
 
 
     public sendError(requestEvent: Deno.RequestEvent, status = 500, text = "Server Error") {
-        return this.serveContent(requestEvent, 'text/plain', text, [], status)
+        return this.serveContent(requestEvent, 'text/plain', text, [], status, undefined, false)
     }
 
     public getErrorResponse(status = 500, text = "Server Error") {
-        return this.getContentResponse('text/plain', text, [], status)
+        return this.getContentResponse('text/plain', text, [], status, undefined, false)
     }
 }

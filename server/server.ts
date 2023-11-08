@@ -502,7 +502,12 @@ export class Server {
         }
 
         if (this.#options.directory_indices && filepath.fs_is_dir) {
+            // TODO: fix workaround for /@uix/src paths
+            if (normalizedPath.startsWith("/@uix/src/")) {
+                normalizedPath = normalizedPath.replace("/@uix/src/", "../");
+            }
             const srcDir = this.#dir.getChildPath(normalizedPath);
+
             return this.getContentResponse("application/directory+json", JSON.stringify(
                 await this.generateDirectoryIndex(srcDir), 
                 null, '    ')

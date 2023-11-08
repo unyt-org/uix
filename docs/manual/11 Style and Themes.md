@@ -68,11 +68,11 @@ Before a custom theme can be used, it has to be registered:
 // register a new theme
 UIX.Theme.registerTheme({
   name: 'my-custom-light-theme',
-  // light or dark mode
+  // light or dark mode (can be undefined if the theme doesn't respect dark/light mode preferences)
   mode: 'light', 
   // custom css variables (e.g. var(--border-color-1))
   values: {
-    'text:' '#eeffee',
+    'text': '#eeffee',
     'border-color-1': '#ffaa00'
   },
   // custom globally applied stylesheets
@@ -87,27 +87,30 @@ UIX.Theme.registerTheme({
   }
 })
 ```
-### Enabling themes
+### Activating themes
 
-Registered themes can be set as the default theme for
-dark or light mode.
+Themes can be activated with `UIX.Theme.useThemes`.
+The first available (registered) dark-mode theme from the list is used
+as the new dark-mode theme, the first light-mode theme from the list is used
+as the new light-mode theme.
+
+When `UIX.Theme.useThemes` is called, all previously activated themes are removed.
 
 ```ts 
-// set themes as a the default dark/light mode theme
-UIX.Theme.setDefaultDarkTheme("my-custom-dark-theme")
-UIX.Theme.setDefaultLightTheme("uix-light-plain")
+// activate themes - the current theme is selected depending on the dark/light mode preference
+UIX.Theme.useThemes("my-custom-dark-theme", "uix-light-plain")
 ```
 
-### Manually overriding the theme and mode
+> [!NOTE]
+> Themes should always be activated both on the frontend and backend. 
+> To prevent duplicate code, put the theme activation in a common module and import it
+> from both the backend and frontend. Make sure that custom themes are also registered
+> in a common module. 
 
-It is recommended to let UIX select the theme automatically,
-but you can also override the current theme:
+### Manually overriding the mode
 
-```ts
-UIX.Theme.setTheme('my-custom-theme');
-```
-
-The mode can also be overridden manually:
+It is recommended to let UIX switch between the dark and light theme automatically,
+but you can override the current mode:
 
 ```ts
 UIX.Theme.setMode('dark');

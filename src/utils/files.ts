@@ -8,7 +8,6 @@ import { Path } from "./path.ts";
 
 const directoryIndexFiles = new Map<string, object>();
 
-
 export async function fileExists(url: URL|string, {cached, fallbackRequest}: {cached?: boolean, fallbackRequest?: boolean} = {cached: true, fallbackRequest: true}) {
 	const urlPath = url instanceof Path ? url : new Path(url);
 
@@ -38,7 +37,7 @@ export async function fileExists(url: URL|string, {cached, fallbackRequest}: {ca
 		let name;
 		let subTree = fileTree;
 
-		while ((name = treeNames.shift())) {
+		while ((name = treeNames.pop())) {
 			// find subdirectory
 			for (const entry of subTree) {
 				if (treeNames.length == 0 && typeof entry == "string" && entry === name && treeNames) {

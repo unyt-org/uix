@@ -26,7 +26,7 @@ import { domUtils } from "./dom-context.ts";
 import { Element } from "../uix-dom/dom/mod.ts";
 import { getLiveNodes } from "../hydration/partial.ts";
 import { UIX } from "../../uix.ts";
-import { UIX_COOKIE, getCookie } from "../session/cookies.ts";
+import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
 import { observeElementforSSE } from "./sse-observer.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
@@ -233,7 +233,8 @@ export class FrontendManager extends HTMLProvider {
 
 	addSSEObserver(pointerId: string, sender: (cmd: string) => void) {
 		// TODO: handle element updates
-		const ptr = Datex.Pointer.get(pointerId)!;
+		const ptr = Datex.Pointer.get(pointerId);
+		if (!ptr) return;
 
 		if (!ptr.value_initialized || !(ptr.val instanceof Element)) {
 			logger.error("cannot observe sse value");
@@ -340,10 +341,14 @@ export class FrontendManager extends HTMLProvider {
 			const observe = searchParams.get("observe");
 			if (observe) {
 				// console.log("sse observe from " + endpoint, observe)
-				// TODO: enable, handle element updates
-				const pointers = JSON.parse(observe);
-				for (const ptrId of pointers) {
-					this.addSSEObserver(ptrId, sender)
+				try {
+					const pointers = JSON.parse(observe);
+					for (const ptrId of pointers) {
+						this.addSSEObserver(ptrId, sender)
+					}
+				}
+				catch (e) {
+					console.log(e)
 				}
 			}
 
@@ -783,10 +788,22 @@ runner.enableHotReloading();
 				const combinedHeaders = headers ?? new Headers();
 				combinedHeaders.set('content-language', lang)
 
-				const themeCookie = getCookie(UIX_COOKIE.theme, requestEvent.request.headers)!
+				let themeName = getCookie(UIX_COOKIE.theme, requestEvent.request.headers)!
 				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers) ?? "light";
-				const currentThemeCSS = UIX.Theme.getThemeCSS(themeCookie, true) ?? UIX.Theme.getThemeCSS(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme, true);
-				const currentThemeStylesSheets = UIX.Theme.getThemeStylesheets(themeCookie) ?? UIX.Theme.getThemeStylesheets(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme) ?? [];
+				
+				let currentThemeCSS = UIX.Theme.getThemeCSS(themeName, true);
+				// theme not found on the backend
+				if (!currentThemeCSS) {
+					const newThemeName = modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme
+					if (themeName) logger.warn(`Theme "${themeName}" is not registered on the backend, using "${newThemeName}" as a fallback`);
+					themeName = newThemeName;
+					currentThemeCSS = UIX.Theme.getThemeCSS(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme, true);
+					setCookie(UIX_COOKIE.theme, themeName, undefined, combinedHeaders)!
+				}
+				
+				// get stylesheets for theme
+				const currentThemeStylesSheets = UIX.Theme.getThemeStylesheets(themeName) ?? UIX.Theme.getThemeStylesheets(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme) ?? [];
+				
 				// get live pointer ids for sse observer
 				let liveNodePointers:string[]|undefined = undefined;
 				if (contentElement && render_method === RenderMethod.BACKEND) {
@@ -805,7 +822,7 @@ runner.enableHotReloading();
 						static_js_files: this.#static_client_scripts,
 						color_scheme: modeCookie,
 						css: currentThemeCSS,
-						global_css_files: ['uix/style/document.css', ...entrypoint_css, ...currentThemeStylesSheets.map(s=>({href:s, class:"custom-theme"}))],
+						global_css_files: ['uix/style/document.css', ...currentThemeStylesSheets.map(s=>({href:s, class:"custom-theme"})), ...entrypoint_css],
 						body_css_files: ['uix/style/body.css', ...entrypoint_css],
 						frontend_entrypoint: this.#entrypoint,
 						backend_entrypoint: this.#backend?.web_entrypoint,

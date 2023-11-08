@@ -594,7 +594,7 @@ export async function generateHTMLPage({
 	for (const stylesheet of global_css_files) {
 		if (!stylesheet) continue;
 		if (!(typeof stylesheet == "string" || stylesheet instanceof URL)) {
-			global_style += `<link rel="stylesheet" ${Object.entries(stylesheet).map(([k,v]) => `${k}="${v}"`).join(" ")}>\n`;
+			global_style += `<link rel="stylesheet" ${Object.entries(stylesheet).map(([k,v]) => `${k}="${k == "href" ? provider.resolveImport(v, true) : v}"`).join(" ")}>\n`;
 		}
 		else global_style += `<link rel="stylesheet" href="${provider.resolveImport(stylesheet, true)}">\n`;
 	}

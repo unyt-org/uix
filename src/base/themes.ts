@@ -14,8 +14,9 @@ const lightPlain = {
 		...commonValues,
 		'text': "#212121",
 		'text-light': "#585858",
-		'text-dim': "#333333aa",
+		'text-highlight': "#111111",
 		'bg': '#fff',
+		'bg-content': '#f3f3f3',
 		'accent-bg': '#f5f7ff',
 		'accent': '#2a8ed4',
 		'code': '#d81b60',
@@ -41,8 +42,9 @@ const darkPlain = {
 		...commonValues,
 		'text': "#dcdcdc",
 		'text-light': "#ababab",
-		'text-dim': "#ababab88",
+		'text-highlight': "#ffffff",
 		'bg': '#212121',
+		'bg-content': '#292929',
 		'accent-bg': '#2b2b2b',
 		'accent': '#4FA9E8',
 		'code': '#f06292',
@@ -86,14 +88,14 @@ export const defaultThemes = {
 	light: {
 		...lightPlain,
 		name: "uix-light",
-		stylesheets: [new URL("./themes/uix.css",import.meta.url)],
+		stylesheets: [new URL("./themes/uix.css",import.meta.url), "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"],
 		...listeners
 	},
 
 	dark: {
 		...darkPlain,
 		name: "uix-dark",
-		stylesheets: [new URL("./themes/uix.css",import.meta.url)],
+		stylesheets: [new URL("./themes/uix.css",import.meta.url), "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"],
 		...listeners
 	} 
 } as const satisfies Record<string, Theme> 

@@ -162,6 +162,14 @@ export class Server {
     setDefaultHeaders(headers: Record<string,string>) {
         this.#options.default_headers = headers;
     } 
+
+    /**
+     * //  TODO: remove, workaround for cdn
+     * @param generate
+     */
+    generateDirectoryIndices(generate: boolean) {
+        this.#options.directory_indices = generate;
+    }
     
     transpilers = new Map<string, Transpiler>()
 
@@ -524,7 +532,11 @@ export class Server {
         }
 
         if (this.#options.directory_indices && filepath.fs_is_dir) {
-            return this.getContentResponse("application/directory+json", JSON.stringify(await this.generateDirectoryIndex(filepath), null, '    '));
+            const srcDir = this.#dir.getChildPath(normalizedPath);
+            return this.getContentResponse("application/directory+json", JSON.stringify(
+                await this.generateDirectoryIndex(srcDir), 
+                null, '    ')
+            );
         }
 
         // is .dx/.dxb file as js module import
@@ -625,14 +637,14 @@ export class Server {
     }
 
 
-    protected findFilePath(url: Path, normalizedPath: string, resolveTs: boolean, isSafari: boolean) {
+    protected findFilePath(url: Path, normalizedPath: string, transpile: boolean, isSafari: boolean) {
         if (!this.#dir) return;
 
         let filepath = this.#dir.getChildPath(normalizedPath);
           
         try {
             // resolve ts and virtual files
-            const resolve_ts = (url.ext==="ts"||url.ext==="tsx"||url.ext==="mts") && url.searchParams.get("type") !== "ts" && resolveTs;
+            const resolve_ts = (url.ext==="ts"||url.ext==="tsx"||url.ext==="mts"||url.ext==="scss") && url.searchParams.get("type") !== "ts" && transpile;
             
             for (const [tpath, transpiler] of this.transpilers) {
                 if (normalizedPath.startsWith(tpath)) {
@@ -674,8 +686,10 @@ export class Server {
         const dirs:directoryIndex = []
         const files:directoryIndex = []
 
-        for await(const f of Deno.readDir(path.normal_pathname)) {
+        for await (const f of Deno.readDir(path.normal_pathname)) {
             if (f.isDirectory) {
+                // TODO: fix workaround, add ignore list to options
+                if (f.name == "wpt") continue;
                 dirs.push({name: f.name, children: await this.generateDirectoryIndex(path.asDir().getChildPath(f.name))})
             }
             else {

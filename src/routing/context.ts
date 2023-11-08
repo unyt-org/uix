@@ -9,7 +9,7 @@ import { getSharedDataPointer } from "../session/shared-data.ts";
 export type RequestData = {address:string|null}
 
 
-// persistant data
+// persistent data
 // TODO: fix and use StorageMap
 const privateData = await lazyEternalVar("privateData") ?? $$(new Map<Endpoint, Record<string, unknown>>)
 

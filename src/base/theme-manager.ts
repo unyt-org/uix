@@ -3,18 +3,24 @@ import { defaultThemes } from "./themes.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
 import type { CSSStyleSheet } from "../uix-dom/dom/deno-dom/src/css/CSSStylesheet.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
+import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
+import { Path } from "../utils/path.ts";
 
 const logger = new Logger("uix theme");
 
 export interface Theme {
 	name: string,
-	mode: "light" | "dark",
+	mode?: "light" | "dark",
 	values?: Record<string, string>,
 	stylesheets?: Readonly<(URL|string)[]>,
 	scripts?: Readonly<(URL|string)[]>,
 	onActivate?: () => void|Promise<void>,
 	onDeactivate?: () => void|Promise<void>
 }
+
+type themeName = typeof defaultThemes[keyof typeof defaultThemes]["name"] | (string&{})
+type darkThemeName = "uix-dark" | "uix-dark-plain" | (string&{});
+type lightThemeName = "uix-light" | "uix-light-plain" | (string&{});
 
 class ThemeManager  {
 
@@ -23,7 +29,7 @@ class ThemeManager  {
 	#values:{[key:string]:string} = {}
 
 	#auto_mode = true
-	#current_mode!: "dark"|"light"
+	#current_mode: "dark"|"light"
 	#current_theme!: string
 	#waiting_theme?: string;
 
@@ -68,10 +74,10 @@ class ThemeManager  {
 		}
 		
 		// add default themes if not already loaded from html
-		if (!this.getTheme(defaultThemes.lightPlain.name, true)) this.registerTheme(defaultThemes.lightPlain, false);
-		if (!this.getTheme(defaultThemes.darkPlain.name, true)) this.registerTheme(defaultThemes.darkPlain, false);
-		if (!this.getTheme(defaultThemes.dark.name, true)) this.registerTheme(defaultThemes.dark, false);
-		if (!this.getTheme(defaultThemes.light.name, true)) this.registerTheme(defaultThemes.light, false);
+		if (!this.getTheme(defaultThemes.lightPlain.name, true)) this.registerTheme(defaultThemes.lightPlain);
+		if (!this.getTheme(defaultThemes.darkPlain.name, true)) this.registerTheme(defaultThemes.darkPlain);
+		if (!this.getTheme(defaultThemes.dark.name, true)) this.registerTheme(defaultThemes.dark);
+		if (!this.getTheme(defaultThemes.light.name, true)) this.registerTheme(defaultThemes.light);
 
 
 		const currentMode: "dark"|"light" = client_type == "browser" ?  
@@ -110,20 +116,14 @@ class ThemeManager  {
 	 * @param theme 
 	 * @param useAsDefault use as default theme for dark/light mode
 	 */
-	public registerTheme(theme: Theme, useAsDefault = true) {
+	public registerTheme(theme: Theme) {
+		if (theme.stylesheets) {
+			const dir = getCallerDir();
+			theme.stylesheets = theme.stylesheets.map(s => new Path(s, dir))
+		}
 		this.#loadedThemes.set(theme.name, theme);
 		this.addGlobalThemeClass(theme);
 		this.#themeCustomStylesheets.set(theme.name, [...this.#normalizeThemeStylesheets(theme)])
-		if (useAsDefault) {
-			if (theme.mode == "dark") this.#default_dark_theme = theme
-			else if (theme.mode == "light") this.#default_light_theme = theme;
-
-			// theme matches current mode, immediately apply
-			if (theme.mode == this.#current_mode) this.#activateTheme(theme);
-			// waited for this theme to register, use
-			if (this.#waiting_theme == theme.name) this.#activateTheme(theme)
-		}
-
 	}
 
 	/**
@@ -140,9 +140,9 @@ class ThemeManager  {
 	}
 
 	/**
-	 * Activate a new theme (must be registered with registerTheem)
+	 * Sets a new theme (must be registered with registerTheem)
 	 */
-	public setTheme(name: typeof defaultThemes[keyof typeof defaultThemes]["name"] | (string&{}), allowLazyLoad = false) {
+	private setTheme(name: themeName, allowLazyLoad = false) {
 		const theme = this.getTheme(name)
 		if (!theme) {
 			if (allowLazyLoad) {
@@ -154,30 +154,57 @@ class ThemeManager  {
 		this.#activateTheme(theme);
 	}
 
+	
+	/**
+	 * Activate themes.
+	 * The current theme is automatically selected
+	 * from the provided themes, depending on the current dark/light mode
+	 * @param themes 
+	 */
+	public useThemes(...themes: themeName[]) {
+		let hasDarkTheme = false;
+		let hasLightTheme = false;
+		for (const name of themes) {
+			const theme = this.getTheme(name);
+			if (!theme) logger.warn(`Theme ${name} is not a registered theme`);
+			else {
+				if (!hasDarkTheme && (!theme.mode || theme.mode == "dark")) {
+					hasDarkTheme = true 
+					this.setDefaultDarkTheme(theme);
+				}
+				if (!hasLightTheme && (!theme.mode || theme.mode == "light")) {
+					hasLightTheme = true;
+					this.setDefaultLightTheme(theme);
+				}
+			}
+			
+		}
+
+		// no custom themes found, activate default themes
+		if (!hasDarkTheme) this.setDefaultDarkTheme(defaultThemes.dark)
+		if (!hasLightTheme) this.setDefaultLightTheme(defaultThemes.light)
+	}
+
 	/**
 	 * Sets a theme as the preferred dark theme
 	 */
-	public setDefaultDarkTheme(name: "uix-dark" | "uix-dark-plain" | (string&{})) {
-		const theme = this.getTheme(name);
-		if (!theme) throw new Error(`Theme "${name} is not a registered theme"`)
-		if (theme.mode !== "dark") throw new Error(`Theme "${name} is not a dark mode theme"`)
+	private setDefaultDarkTheme(theme: Theme) {
+		if (theme.mode && theme.mode !== "dark") throw new Error(`Theme "${theme.name} is not a dark mode theme"`)
 
 		this.#default_dark_theme = theme;
 		// theme matches current mode, immediately apply
-		if (theme.mode == this.#current_mode) this.#activateTheme(theme);
+		if (!theme.mode || theme.mode == this.#current_mode) this.#activateTheme(theme);
 	}
 
 	/**
 	 * Sets a theme as the preferred light theme
 	 */
-	public setDefaultLightTheme(name: "uix-light" | "uix-light-plain" | (string&{})) {
-		const theme = this.getTheme(name);
-		if (!theme) throw new Error(`Theme "${name} is not a registered theme"`)
-		if (theme.mode !== "light") throw new Error(`Theme "${name} is not a light mode theme"`)
+	private setDefaultLightTheme(theme: Theme) {
+		if (theme.mode && theme.mode !== "light") throw new Error(`Theme "${theme.name} is not a light mode theme"`)
 
 		this.#default_light_theme = theme;
 		// theme matches current mode, immediately apply
-		if (theme.mode == this.#current_mode) this.#activateTheme(theme);
+		if (!theme.mode || theme.mode == this.#current_mode) this.#activateTheme(theme);
 	}
 
 	#current_theme_css_text = ""
@@ -230,7 +257,7 @@ class ThemeManager  {
 		logger.debug(`using theme "${theme.name}"`)
 
 		setCookie(UIX_COOKIE.theme, theme.name);
-		setCookie(UIX_COOKIE.colorMode, theme.mode);
+		if (theme.mode) setCookie(UIX_COOKIE.colorMode, theme.mode);
 
 		let text = ":root{";
 		// iterate over all properties (also from inherited prototypes)
@@ -250,11 +277,11 @@ class ThemeManager  {
 
 		this.updateCurrentThemeStyle()
 
-		this.#current_mode = theme.mode; // only now trigger Theme.mode observers
+		this.#current_mode = theme.mode ?? "light"; // only now trigger Theme.mode observers
 		// css global color scheme
 		if (client_type === "browser") {
-			document.documentElement.style.colorScheme = theme.mode;
-			document.body.dataset.colorScheme = theme.mode;
+			document.documentElement.style.colorScheme = theme.mode ?? "light";
+			document.body.dataset.colorScheme = theme.mode ?? "light";
 		}
 
 		// stylesheets
@@ -328,7 +355,7 @@ class ThemeManager  {
 		text += `--current_text_color_highlight: var(--text_highlight);`
 		text += `color: var(--current_text_color);`
 		// set color scheme
-		text += `color-scheme: ${theme.mode}`
+		if (theme.mode) text += `color-scheme: ${theme.mode}`
 
 		text += "}";
 
@@ -382,12 +409,13 @@ class ThemeManager  {
 				mode,
 				values,
 				parsed: true
-			}, false);
+			});
 		}
 	}
 
 	// create new theme based on another theme
 	extend(theme:Theme, override:Partial<Theme> & {name: string}): Theme {
+		const dir = getCallerDir();
 		if (!("mode" in override)) override.mode = theme.mode;
 		if (!("name" in override)) throw new Error("Name required");
 
@@ -396,6 +424,8 @@ class ThemeManager  {
 		for (const [key, value] of Object.entries(overrideValues)) {
 			override.values![key] = value;
 		}
+		override.stylesheets = [...(theme.stylesheets??[]), ...(override.stylesheets?.map(s => new Path(s, dir))??[])]
+		
 		return override as Theme;
 	}
 

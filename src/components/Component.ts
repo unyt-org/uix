@@ -141,9 +141,9 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 let found = false;
 
                 if (!valid_dx_files.length) {
-                    if (!this._use_resources) throw new Error(`Could not load export '${exprt}' for component class '${this.name}' - external resources are disabled. Either remove the @NoResources decorator and create a corresponding DATEX file next to the TypeScript module file, or specifiy a different resource location in the @use decorator.`)
+                    if (!this._use_resources) throw new Error(`Could not load export '${exprt}' for component class '${this.name}' - external resources are disabled. Either remove the @NoResources decorator and create a corresponding DATEX file next to the TypeScript module file, or specifiy a different resource location in the @include decorator.`)
                     else if (!this._module) throw new Error(`Could not load export '${exprt}' for component class '${this.name}'. The component module could not be initialized correctly (missing @defaultOptions decorator?)`);  // this.module could not be set for whatever reason
-                    else throw new Error(`No corresponding DATEX module file found for export '${exprt}' in component class '${this.name}'. Please create a DATEX file '${this._module.replace(/\.m?(ts|js)x?$/, '.dx')} or specifiy a resource location in the @use decorator.`)
+                    else throw new Error(`No corresponding DATEX module file found for export '${exprt}' in component class '${this.name}'. Please create a DATEX file '${this._module.replace(/\.m?(ts|js)x?$/, '.dx')} or specifiy a resource location in the @include decorator.`)
                 }
 
                 for (const file_data of dx_file_values.values()) {

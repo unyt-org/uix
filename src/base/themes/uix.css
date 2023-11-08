@@ -32,23 +32,22 @@
   body {
 	color: var(--text);
 	background-color: var(--bg);
-	font-size: 1.15rem;
 	line-height: 1.5;
 	margin: 30px;
   }
   
   /* Format headers */
   h1 {
-	font-size: 3rem;
+	font-size: 2.4rem;
   }
   
   h2 {
-	font-size: 2.6rem;
+	font-size: 2rem;
 	margin-top: 3rem;
   }
   
   h3 {
-	font-size: 2rem;
+	font-size: 1.7rem;
 	margin-top: 3rem;
   }
   
@@ -71,6 +70,10 @@
   /* Prevent long strings from overflowing container */
   p, h1, h2, h3, h4, h5, h6 {
 	overflow-wrap: break-word;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+	color: var(--text-highlight);
   }
   
   /* Fix line height when title wraps */

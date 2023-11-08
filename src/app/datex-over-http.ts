@@ -34,7 +34,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 	const ptr:Datex.Pointer = (globalThis.Datex ? Datex.Pointer.getByValue(fn) : fn[DX_PTR]) ?? fn.ntarget?.[DX_PTR];
 	if (!ptr) throw new Error("bindToOrigin: function must be bound to a DATEX pointer");
 	// prevent garbage collection
-	ptr.is_persistant = true;
+	ptr.is_persistent = true;
 	
 	if (forceDatex) {
 		fn.toString = ()=>{
@@ -75,7 +75,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 	const ptr:Datex.Pointer = value.idString ? value : (globalThis.Datex ? Datex.Pointer.getByValue(value) : value[DX_PTR]);
 	if (!ptr) throw new Error("getValueInitializer: value must be bound to a DATEX pointer");
 	// prevent garbage collection
-	ptr.is_persistant = true;
+	ptr.is_persistent = true;
 	
 	if (forceDatex) {
 		return `await (async () => {
@@ -117,7 +117,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 export function getValueUpdater(ref:Datex.Ref, forceDatex = false): string {
 	
 	// prevent garbage collection
-	if (ref instanceof Datex.Pointer) ref.is_persistant = true;
+	if (ref instanceof Datex.Pointer) ref.is_persistent = true;
 	
 	if (forceDatex) {
 		return `async (val) => {

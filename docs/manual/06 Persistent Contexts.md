@@ -21,7 +21,7 @@ export const counter = $$(0);
 import {counter} from "./counter.eternal.ts";
 
 counter.val++; // increments the counter value each time the backend is restarted
-console.log(counter); // logs 0,1,2,3.. on each backend restart
+console.log(counter); // logs 1,2,3,4... on each backend restart
 ```
 
 You can read more about (eternal) contexts in the chapter [Functions and Contexts](./10%20Functions%20and%20Contexts.md).

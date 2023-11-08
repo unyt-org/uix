@@ -662,7 +662,7 @@ export class Server {
         for await(const f of Deno.readDir(path.normal_pathname)) {
             if (f.isDirectory) {
                 // TODO: fix workaround, add ignore list to options
-                if (f.name == "wpt") continue;
+                if (f.name == "wpt" || f.name == ".git" || f.name == ".vscode" || f.name == ".datex-cache") continue;
                 dirs.push({name: f.name, children: await this.generateDirectoryIndex(path.asDir().getChildPath(f.name))})
             }
             else {

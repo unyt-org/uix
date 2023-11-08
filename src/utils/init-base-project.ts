@@ -16,7 +16,14 @@ export async function initBaseProject() {
 
 	const move = rootPath.getChildPath(".datex-cache").fs_exists;
 	const tempDir = new Path('file://' + await Deno.makeTempDir() + '/');
-	if (move) await Deno.rename(rootPath.getChildPath(".datex-cache"), tempDir.normal_pathname);
+	if (move) {
+		try {
+			await Deno.rename(rootPath.getChildPath(".datex-cache"), tempDir.normal_pathname);
+		}
+		catch {
+			await Deno.remove(rootPath.getChildPath(".datex-cache"), {recursive: true});
+		}
+	}
 
 	const clone = Deno.run({
 	  cmd: ["git", "clone", gitRepo, rootPath.normal_pathname],
@@ -28,7 +35,12 @@ export async function initBaseProject() {
 	  throw new Error("Failed to clone.");
 	}
 	
-	if (move) await Deno.rename(tempDir.normal_pathname, rootPath.getChildPath(".datex-cache"));
+	if (move) {
+		try {
+			await Deno.rename(tempDir.normal_pathname, rootPath.getChildPath(".datex-cache"));
+		}
+		catch {}
+	}
 	await Deno.remove(rootPath.getChildPath(".git"), {recursive: true});
 
 	updateRootPath();

@@ -795,10 +795,12 @@ runner.enableHotReloading();
 				// theme not found on the backend
 				if (!currentThemeCSS) {
 					const newThemeName = modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme
-					if (themeName) logger.warn(`Theme "${themeName}" is not registered on the backend, using "${newThemeName}" as a fallback`);
+					if (themeName) {
+						logger.warn(`Theme "${themeName}" is not registered on the backend, using "${newThemeName}" as a fallback`);
+						setCookie(UIX_COOKIE.theme, themeName, undefined, combinedHeaders)!
+					}
 					themeName = newThemeName;
 					currentThemeCSS = UIX.Theme.getThemeCSS(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme, true);
-					setCookie(UIX_COOKIE.theme, themeName, undefined, combinedHeaders)!
 				}
 				
 				// get stylesheets for theme

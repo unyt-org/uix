@@ -1136,17 +1136,17 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 url = new URL(url + '?scope=' + this.tagName.toLowerCase()); // add scope query parameter
             }
 
-            this.style_sheets_urls.push(url.toString());
-
             // adopt CSSStylesheet (works if css does not use @import and shadowRoot exists, otherwise use <link>)
             if (adopt && this.shadowRoot) {
                 const stylesheet = Component.getURLStyleSheet(url, allow_fail);
 
                 // is sync
-                if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) this.adoptStyle(stylesheet)
+                if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) {
+                    this.adoptStyle(stylesheet, false, url);
+                }
                 else if (stylesheet) return new Promise<void>(async resolve=>{
                     const s = await stylesheet;
-                    if (s) this.adoptStyle(s);
+                    if (s) this.adoptStyle(s, false, url);
                     resolve();
                 })
                 // stylesheet might be false, no stylesheet, ignore (error is logged)
@@ -1171,6 +1171,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         if (allow_fail && !await fileExists(url)) return; // style sheet file does not exist
         if (this.shadowRoot) await addStyleSheetLink(this.shadowRoot, url);
         else if (client_type == "browser") await addGlobalStyleSheetLink(url);
+        this.style_sheets_urls.push(url.toString());
     }
 
     /** shadow dom specific methods */
@@ -1236,13 +1237,16 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
      * Add a style to the shadow root adoptedStyleSheets
      * @param style style text or CSSStyleSheet
      */
-    protected adoptStyle(style:string|CSSStyleSheet, __pass_through = false) {
+    protected adoptStyle(style:string|CSSStyleSheet, __pass_through = false, url?: URL) {
         if (!this.shadowRoot) throw new Error("Cannot adopt style on Component - no shadow root");
 
         // first add base style (this.style)
         if (!__pass_through && !this.#style_sheets.length) this.addBaseStyle();
         
         let stylesheet:CSSStyleSheet;
+
+        // add to component style sheets list
+        if (url) this.style_sheets_urls.push(url.toString());
 
         if (style instanceof window.CSSStyleSheet) stylesheet = style;
         else {

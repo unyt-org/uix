@@ -1,10 +1,13 @@
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { defaultThemes } from "./themes.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
 import type { CSSStyleSheet } from "../uix-dom/dom/deno-dom/src/css/CSSStylesheet.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { Path } from "../utils/path.ts";
+import { uixLight } from "../themes/uix-light.ts";
+import { uixDark } from "../themes/uix-dark.ts";
+import { uixLightPlain } from "../themes/uix-light-plain.ts";
+import { uixDarkPlain } from "../themes/uix-dark-plain.ts";
 
 const logger = new Logger("uix theme");
 
@@ -18,7 +21,7 @@ export interface Theme {
 	onDeactivate?: () => void|Promise<void>
 }
 
-type themeName = typeof defaultThemes[keyof typeof defaultThemes]["name"] | (string&{})
+type themeName = "uix-dark" | "uix-dark-plain" | "uix-light" | "uix-light-plain"
 type darkThemeName = "uix-dark" | "uix-dark-plain" | (string&{});
 type lightThemeName = "uix-light" | "uix-light-plain" | (string&{});
 
@@ -33,8 +36,8 @@ class ThemeManager  {
 	#current_theme!: string
 	#waiting_theme?: string;
 
-	#default_light_theme:Theme = defaultThemes.light;
-	#default_dark_theme:Theme = defaultThemes.dark
+	#default_light_theme:Theme = uixLight;
+	#default_dark_theme:Theme = uixDark;
 
 	readonly #current_theme_style_sheet = new CSSStyleSheet();
 	#document_stylesheets_added = false;
@@ -74,10 +77,10 @@ class ThemeManager  {
 		}
 		
 		// add default themes if not already loaded from html
-		if (!this.getTheme(defaultThemes.lightPlain.name, true)) this.registerTheme(defaultThemes.lightPlain);
-		if (!this.getTheme(defaultThemes.darkPlain.name, true)) this.registerTheme(defaultThemes.darkPlain);
-		if (!this.getTheme(defaultThemes.dark.name, true)) this.registerTheme(defaultThemes.dark);
-		if (!this.getTheme(defaultThemes.light.name, true)) this.registerTheme(defaultThemes.light);
+		if (!this.getTheme(uixLightPlain.name, true)) this.registerTheme(uixLightPlain);
+		if (!this.getTheme(uixDarkPlain.name, true)) this.registerTheme(uixDarkPlain);
+		if (!this.getTheme(uixDark.name, true)) this.registerTheme(uixDark);
+		if (!this.getTheme(uixLight.name, true)) this.registerTheme(uixLight);
 
 
 		const currentMode: "dark"|"light" = client_type == "browser" ?  
@@ -181,8 +184,8 @@ class ThemeManager  {
 		}
 
 		// no custom themes found, activate default themes
-		if (!hasDarkTheme) this.setDefaultDarkTheme(defaultThemes.dark)
-		if (!hasLightTheme) this.setDefaultLightTheme(defaultThemes.light)
+		if (!hasDarkTheme) this.setDefaultDarkTheme(uixDark)
+		if (!hasLightTheme) this.setDefaultLightTheme(uixLight)
 	}
 
 	/**

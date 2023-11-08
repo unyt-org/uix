@@ -509,7 +509,7 @@ export class Server {
 
         // UIX special query parameters (TODO: move)
         // special scoped css
-        if (url.searchParams.has("scope") && (url.ext === "scss" || url.ext === "css")) {
+        if (url.searchParams.has("scope") && (url.ext === "scss" || url.ext === "css") && filepath.fs_exists) {
             const scopedCSS = addCSSScopeSelector(await Deno.readTextFile(filepath.normal_pathname), url.searchParams.get("scope")!);
             return this.getContentResponse("text/css", scopedCSS);
         }
@@ -531,8 +531,13 @@ export class Server {
             return this.getContentResponse("text/javascript", this.#eternalModulesCache.get(urlString));
         }
 
-        if (this.#options.directory_indices && filepath.fs_is_dir) {
+        if (this.#options.directory_indices && filepath.fs_exists && filepath.fs_is_dir) {
+            // TODO: fix workaround for /@uix/src paths
+            if (normalizedPath.startsWith("/@uix/src/")) {
+                normalizedPath = normalizedPath.replace("/@uix/src/", "../");
+            }
             const srcDir = this.#dir.getChildPath(normalizedPath);
+
             return this.getContentResponse("application/directory+json", JSON.stringify(
                 await this.generateDirectoryIndex(srcDir), 
                 null, '    ')
@@ -689,7 +694,7 @@ export class Server {
         for await (const f of Deno.readDir(path.normal_pathname)) {
             if (f.isDirectory) {
                 // TODO: fix workaround, add ignore list to options
-                if (f.name == "wpt") continue;
+                if (f.name == "wpt" || f.name == ".git" || f.name == ".vscode" || f.name == ".datex-cache") continue;
                 dirs.push({name: f.name, children: await this.generateDirectoryIndex(path.asDir().getChildPath(f.name))})
             }
             else {

@@ -11,7 +11,16 @@ const directoryIndexFiles = new Map<string, object>();
 export async function fileExists(url: URL|string, {cached, fallbackRequest}: {cached?: boolean, fallbackRequest?: boolean} = {cached: true, fallbackRequest: true}) {
 	const urlPath = url instanceof Path ? url : new Path(url);
 
-	if (!urlPath.is_web) return urlPath.fs_exists;
+	if (!urlPath.is_web) {
+		const existsDefault = urlPath.fs_exists;
+		// normal file exists
+		if (existsDefault) return true;
+		// original (untranspiled) file exists
+		else {
+			if (urlPath.ext == "css") return urlPath.getWithFileExtension("scss").fs_exists
+			if (urlPath.ext == "js" || urlPath.ext == "jsx") return urlPath.getWithFileExtension("ts").fs_exists || urlPath.getWithFileExtension("tsx").fs_exists
+		}
+	}
 
 	let parent = urlPath.parent_dir;
 	const treeNames = [urlPath.name];
@@ -40,8 +49,13 @@ export async function fileExists(url: URL|string, {cached, fallbackRequest}: {ca
 		while ((name = treeNames.pop())) {
 			// find subdirectory
 			for (const entry of subTree) {
-				if (treeNames.length == 0 && typeof entry == "string" && entry === name && treeNames) {
-					return true; // cannot go deeper, but matches
+				if (treeNames.length == 0 && typeof entry == "string") {
+					if (entry === name) return true; // cannot go deeper, but matches
+					else {
+						if (entry === name.replace(/\.css$/, '.scss')) return true;
+						if (entry === name.replace(/\.jsx?$/, '.ts')) return true;
+						if (entry === name.replace(/\.jsx?$/, '.tsx')) return true;
+					}
 				}
 				if (entry.name == name) {
 					if (treeNames.length == 0) return true; // cannot go deeper, but matches

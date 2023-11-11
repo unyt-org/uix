@@ -2,9 +2,12 @@
  * DATEX ComInterface with web server (TCP / HTTP / Websockets)
  */
 
+
 import { Datex , pointer, meta, expose, scope, datex } from "unyt_core";
 import { Server } from "./server.ts";
-import { type datex_meta } from "unyt_core/datex_all.ts";
+import { type datex_meta } from "datex-core-legacy/datex_all.ts";
+
+const logger = new Datex.Logger("Datex Server")
 
 /** common class for all interfaces (WebSockets, TCP Sockets, GET Requests, ...)*/
 export abstract class ServerDatexInterface implements Datex.ComInterface {
@@ -14,12 +17,14 @@ export abstract class ServerDatexInterface implements Datex.ComInterface {
     in = true
     out = true
 
+    is_bidirectional_hub = true
+
     endpoints: Set<Datex.Endpoint> = pointer(new Set<Datex.Endpoint>());
     reachable_endpoints: Map<Datex.Endpoint, Datex.Endpoint> = pointer(new Map()); // <requested_endpoint, reachable_via_endpoint connection>
 
     private static instance: ServerDatexInterface;
     protected logger:Datex.Logger;
-    protected datex_in_handler:(dxb: ArrayBuffer|ReadableStreamDefaultReader<Uint8Array> | {dxb: ArrayBuffer|ReadableStreamDefaultReader<Uint8Array>; variables?: any; header_callback?: (header: Datex.dxb_header) => void}, last_endpoint: Datex.Endpoint) => Promise<Datex.dxb_header|void>;
+    protected datex_in_handler:(dxb: ArrayBuffer|ReadableStreamDefaultReader<Uint8Array> | {dxb: ArrayBuffer|ReadableStreamDefaultReader<Uint8Array>; variables?: any; header_callback?: (header: Datex.dxb_header) => void}, last_endpoint: Datex.Endpoint, source?:ComInterface) => Promise<Datex.dxb_header|void>;
 
     public static getInstance() {
         // @ts-ignore
@@ -43,8 +48,8 @@ export abstract class ServerDatexInterface implements Datex.ComInterface {
     abstract init(): void
 
     protected handleBlock(dxb:ArrayBuffer, last_endpoint: Datex.Endpoint, header_callback?:(header:Datex.dxb_header)=>void):Promise<Datex.dxb_header> {
-        if (header_callback) return <Promise<Datex.dxb_header>>this.datex_in_handler({dxb, header_callback}, last_endpoint);
-        else return <Promise<Datex.dxb_header>>this.datex_in_handler(dxb, last_endpoint);
+        if (header_callback) return <Promise<Datex.dxb_header>>this.datex_in_handler({dxb, header_callback}, last_endpoint, this);
+        else return <Promise<Datex.dxb_header>>this.datex_in_handler(dxb, last_endpoint, this);
     }
 
     /** implement how to send a message to a connected node*/
@@ -85,7 +90,7 @@ class HttpComInterface extends ServerDatexInterface {
         }
         // use an existing server (might also be used as a normal HTTP server)
         else {
-            this.server.addRequestHandler(r=>this.handleRequest(r, false), true);
+            this.server.addRequestHandler(r=>this.handleRequest(r), true);
         }
 
     }
@@ -96,19 +101,18 @@ class HttpComInterface extends ServerDatexInterface {
         this.upgrade_handlers.set(type, handler);
     }
 
-    protected async handleRequest(requestEvent:Deno.RequestEvent, html_response = true){
+    protected async handleRequest(requestEvent:Deno.RequestEvent){
         const upgrade = requestEvent.request.headers.get("upgrade")
 
         // custom upgrade handler (for websockets)
         if (upgrade && this.upgrade_handlers.has(upgrade)) {
             this.upgrade_handlers.get(upgrade)?.(requestEvent);
         }
-        else if (html_response) {
-            const content = `<div style='font-family:"Courier New", Courier, monospace;width:100%;height:100%;display:flex;justify-content:center;align-items:center'><div style='text-align:center'><h3 style='margin-bottom: 0'>DATEX Node <span style='color:#0774de'>${Datex.Runtime.endpoint}</span></h3><br>© 2022 <a style='color: black;text-decoration: none;' href="https://unyt.org">unyt.org</a></div></div>`;
-            try {
-                await requestEvent.respondWith(new Response(content, {headers:{"Content-Type": "text/html; charset=utf-8"}, status: 200}))
-            } catch {}
-        }      
+        else if (requestEvent.request.method == "POST" && new URL(requestEvent.request.url).pathname == "/datex-http") {
+            const dxb = await requestEvent.request.arrayBuffer()
+            await Datex.InterfaceManager.datex_in_handler(dxb, Datex.BROADCAST, this);
+            requestEvent.respondWith(new Response("Ok"));
+        }   
         else return false;
     }
 
@@ -136,7 +140,7 @@ class WebPushInterface extends ServerDatexInterface  {
     private saved_push_connections = new Map<Datex.Target, push_data>();
 
     init() {
-        this.logger.success("init")
+        this.logger.debug("init")
         // webpush.setVapidDetails('mailto:admin@unyt.org', WebPushInterface.publicKey, WebPushInterface.privateKey);
     }
 
@@ -211,7 +215,7 @@ class TCPCLI extends ServerDatexInterface  {
     }
 
     init() {
-        this.logger.success("init")
+        this.logger.debug("init")
 
         this.tcp_server = TCP.createServer((conn) => {
 
@@ -271,7 +275,7 @@ class TCPComInterface extends ServerDatexInterface  {
     private endpoint_connection_map: Map<Datex.Endpoint, TCPSocket> = new Map()
 
     init() {
-        this.logger.success("init")
+        this.logger.debug("init")
 
         this.tcp_server = TCP.createServer((conn) => {
         
@@ -350,7 +354,7 @@ class WebsocketStreamComInterface extends ServerDatexInterface {
     private connected_endpoint_streams = new Map<Datex.Target, any>();
 
     init() {
-        this.logger.success("init")
+        this.logger.debug("init")
 
 
         this.wss = new WebSocket.Server({
@@ -451,13 +455,14 @@ class WebsocketComInterface extends ServerDatexInterface {
     }
 
     init() {
-        this.logger.success("init");
+        this.logger.debug("init");
 
         // http interface required
         DatexServer.http_com_interface.init();
         DatexServer.http_com_interface.addUpgradeHandler("websocket", (r)=>this.handleRequest(r));        
     }
 
+    description?: string
 
     private handleRequest(requestEvent:Deno.RequestEvent){
         try {
@@ -468,6 +473,13 @@ class WebsocketComInterface extends ServerDatexInterface {
 
             const { socket, response } = Deno.upgradeWebSocket(req);
             requestEvent.respondWith(response);
+
+            // infer ws url
+            this.description = requestEvent.request.url
+                .replace("http://localhost", "ws://localhost")
+                .replace("http://", "wss://")
+                .replace("https://", "wss://");
+            if (this.description.endsWith("/")) this.description = this.description.slice(0, -1);
 
             const dispose = () => {
                 const endpoint = this.socket_endpoints.get(socket)!;
@@ -516,20 +528,39 @@ class WebsocketComInterface extends ServerDatexInterface {
 
     }
 
+    protected getReachableEndpointRedirectEndpoint(endpoint:Datex.Endpoint) {
+        if (this.reachable_endpoints.has(endpoint)) return this.reachable_endpoints.get(endpoint)
+        else {
+            for (const [reachableEndpoint, redirect] of this.reachable_endpoints) {
+                if (reachableEndpoint.main === endpoint) return redirect
+            }
+        }
+    }
+    protected getConnectedEndpointSocket(endpoint:Datex.Endpoint) {
+        if (this.connected_endpoints.has(endpoint)) return this.connected_endpoints.get(endpoint)
+        else {
+            for (const [connectedEndpoint, socket] of this.connected_endpoints) {
+                if (connectedEndpoint instanceof Datex.Endpoint && connectedEndpoint.main === endpoint) return socket
+            }
+        }
+    }
+
     protected sendRequest(dx:ArrayBuffer, to:Datex.Endpoint) {
         // try to find an other endpoint over which the requested endpoint is connected
-        if (!this.connected_endpoints.has(to)) {
-            if (this.reachable_endpoints.has(to)) to = this.reachable_endpoints.get(to);
-            else {console.log(to + " not reachable via redirect");return;}
+        let connectedEndpointSocket = this.getConnectedEndpointSocket(to);
+        if (!connectedEndpointSocket) {
+            to = this.getReachableEndpointRedirectEndpoint(to)!;
+            if (to) connectedEndpointSocket = this.getConnectedEndpointSocket(to);
+            else {logger.debug(to + " not reachable via redirect");return;}
         }
 
         // send to a connected endpoint
-        if (this.connected_endpoints.has(to)) {
+        if (connectedEndpointSocket) {
             try {
-                this.connected_endpoints.get(to).send(dx)
+                connectedEndpointSocket.send(dx)
             }
             catch (e) {
-                this.socket_connection.delete(this.connected_endpoints.get(to));
+                this.socket_connection.delete(connectedEndpointSocket);
                 this.connected_endpoints.delete(to);
                 console.log("Socket Error sending to " + to, e);
             }
@@ -550,6 +581,8 @@ export namespace DatexServer {
     export const web_push_interface = <WebPushInterface> WebPushInterface.getInstance();
     
     export async function init(interfaces=["http", "tcp", "tcp_cli", "websocket", "websocketstream", "webpush"], parent_node?:Datex.Endpoint, server?:Server) {
+
+
         
         if (parent_node) {
             console.log("Connecting to parent node: " + parent_node);
@@ -602,7 +635,7 @@ export namespace DatexServer {
 // override interface manager methods
 
 Datex.InterfaceManager.handleNoRedirectFound = function(receiver){
-    console.log("cannot redirect to " + receiver);
+    logger.debug("cannot redirect to " + receiver);
 }
 
 
@@ -621,8 +654,8 @@ Datex.InterfaceManager.handleNoRedirectFound = function(receiver){
 
     /** get sign and encryption keys for an alias */
     @expose static async get_keys(endpoint:Datex.Person) {
-        console.log("GET keys for " +endpoint)
-        let keys = await Datex.Crypto.getExportedKeysForEndpoint(endpoint);
+        // console.log("GET keys for " +endpoint)
+        const keys = await Datex.Crypto.getExportedKeysForEndpoint(endpoint);
         return keys;
     }
 }

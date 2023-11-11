@@ -101,7 +101,7 @@ class UIXApp {
 
 			// TODO: use this in the unyt core status logger, currently implemented twice
 			// app domains inferred from current endpoint
-			const urlEndpoint = Datex.Runtime.endpoint;
+			const urlEndpoint = Datex.Runtime.endpoint.main;
 			const endpointURLs = urlEndpoint ? [this.formatEndpointURL(urlEndpoint)].filter(v=>!!v) as string[] : [];
 
 			this.#domains = [...new Set([...domains, ...endpointURLs])];

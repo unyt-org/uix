@@ -76,9 +76,10 @@ class App {
 					appdata.backend = f(appdata.backend)
 
 					// add backend as trusted endpoints with full permissions
-					Datex.Runtime.addTrustedEndpoint(appdata.backend, [
+					Datex.Runtime.addTrustedEndpoint(appdata.backend.main, [
 						"protected-pointer-access", 
-						"remote-js-execution"
+						"remote-js-execution",
+						"fallback-pointer-source"
 					])
 				};
 				if (appdata.host) appdata.host = f(appdata.host);
@@ -215,7 +216,7 @@ class App {
 
 			// TODO: use this in the unyt core status logger, currently implemented twice
 			// app domains inferred from current endpoint
-			const urlEndpoint = this.metadata.hod === false ? null : Datex.Runtime.endpoint;
+			const urlEndpoint = this.metadata.hod === false ? null : Datex.Runtime.endpoint.main;
 			const endpointURLs = urlEndpoint ? [this.formatEndpointURL(urlEndpoint)].filter(v=>!!v) as string[] : [];
 
 			this.#domains = [...new Set([...domains, ...endpointURLs])];

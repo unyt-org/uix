@@ -28,6 +28,8 @@ import { getLiveNodes } from "../hydration/partial.ts";
 import { UIX } from "../../uix.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
 import { observeElementforSSE } from "./sse-observer.ts";
+import { eternalExts, getEternalModuleProxyPath } from "./module-mapping.ts";
+import { rootPath } from "./args.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -442,6 +444,10 @@ export class FrontendManager extends HTMLProvider {
 			}
 
 			if (import_type == "backend") {
+				// map eternal.ts modules to proxy paths
+				if (import_path.hasFileExtension(...eternalExts)) {
+					import_path = getEternalModuleProxyPath(import_path, rootPath) as Path<Path.Protocol.File>;
+				}
 				const web_path = this.srcPrefix + mapped_import_path.getAsRelativeFrom(this.#base_path).slice(2) // remove ./
 				const import_pseudo_path = this.scope.getChildPath(web_path);
 				// const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
@@ -682,8 +688,10 @@ export class FrontendManager extends HTMLProvider {
 		this.#logger.success("hot reloading enabled");
 		const script = `
 ${"import"} {BackgroundRunner} from "uix/background-runner/background-runner.ts";
-const runner = BackgroundRunner.get();
-runner.enableHotReloading();
+if (!window.location.origin.endsWith(".unyt.app")) {
+	const runner = BackgroundRunner.get();
+	runner.enableHotReloading();
+}
 `
 		await this.transpiler.addVirtualFile(this.debugPrefix.slice(1)+"hot-reload.ts", script);
 		this.#static_client_scripts.push(this.debugPrefix+"hot-reload.ts")

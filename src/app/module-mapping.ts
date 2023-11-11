@@ -40,7 +40,7 @@ export async function createProxyImports(options: normalizedAppOptions, baseURL:
 	// add .eternal.ts proxy modules
 	
 	for await (const e of walk!(new Path(baseURL).normal_pathname, {includeDirs: false, exts: eternalExts.map(e => "."+e)})) {
-		const path = new Path(e.path);
+		const path = Path.File(e.path);
 
 		if (path.isChildOf(cachePath)) continue;
 		const proxyPath = await createEternalProxyFile(path, baseURL);
@@ -84,7 +84,7 @@ async function updateDenoConfigImportMap(denoConfigPath:URL, proxyImportMapPath:
  * @param baseURL 
  * @param importMap 
  */
-export async function updateEternalFile(path: Path, baseURL: URL, importMap: ImportMap, options: normalizedAppOptions) {
+export async function updateEternalFile(path: Path.File, baseURL: URL, importMap: ImportMap, options: normalizedAppOptions) {
 	if (path.fs_exists) {
 		const proxyPath = await createEternalProxyFile(path, baseURL);
 		addEternalFileImportMapScope(path, proxyPath, importMap, options);
@@ -123,7 +123,7 @@ function addEternalFileImportMapScope(path:Path, proxyPath: Path, importMap: Imp
  * @param baseURL 
  * @returns 
  */
-async function createEternalProxyFile(path: Path, baseURL: URL): Promise<Path>{
+async function createEternalProxyFile(path: Path.File, baseURL: URL): Promise<Path>{
 	const { relPath, proxyPath } = getEternalMapPaths(path, baseURL)
 
 	await Deno.mkdir(proxyPath.parent_dir.normal_pathname, {recursive: true});
@@ -140,7 +140,7 @@ async function createEternalProxyFile(path: Path, baseURL: URL): Promise<Path>{
  * @param baseURL 
  * @returns 
  */
-async function deleteEternalProxyFile(path: Path, baseURL: URL) {
+async function deleteEternalProxyFile(path: Path.File, baseURL: URL) {
 	const { relPath, proxyPath } = getEternalMapPaths(path, baseURL)
 	
 	await Deno.remove(proxyPath, {recursive: true});
@@ -148,11 +148,23 @@ async function deleteEternalProxyFile(path: Path, baseURL: URL) {
 }
 
 
-function getEternalMapPaths(path: Path, baseURL: URL) {
+function getEternalMapPaths(path: Path.File, baseURL: URL) {
 	const relPath = path.getAsRelativeFrom(baseURL).replace(/^\.\//, '').replaceAll("\\", "/");
-	const proxyPath = new Path('./eternal/'+ relPath, cache_path);
+	const proxyPath = new Path('./eternal/'+ relPath, cache_path) as Path<Path.Protocol.File>;
 	return {
 		relPath,
 		proxyPath
 	}
+}
+
+
+/**
+ * Returns the proxy path for a given eternal module path
+ * (this path is used when deno is running)
+ * @param path eternal module path
+ * @param baseURL app base url
+ * @returns 
+ */
+export function getEternalModuleProxyPath(path: Path.File, baseURL: Path.File) {
+	return getEternalMapPaths(path, baseURL).proxyPath
 }

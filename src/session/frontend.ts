@@ -24,9 +24,9 @@ export function initSession() {
 
 let sharedData:Record<string, unknown> & {[Symbol.dispose]?:()=>void}|undefined;
 
-export async function getSharedData() {
+export async function getSharedData<T extends Record<string, unknown> = Record<string, unknown>>(): Promise<T & {[Symbol.dispose]?:()=>void}> {
 	if (!sharedData) {
 		sharedData = await getSharedDataPointer();
 	}
-	return sharedData;
+	return sharedData as T;
 }

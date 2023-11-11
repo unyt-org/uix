@@ -493,7 +493,12 @@ export class Server {
         if (displayWithSyntaxHighlighting && contentType == "source" && this._app?.stage === "dev" && normalizedPath.startsWith("/@uix/src/")) {
             filepath = (this._base_path as Path.File).getChildPath(normalizedPath.replace("/@uix/src/", ""))
         }
-               
+        
+        // TODO: fix workaround for /@uix/src paths  
+        if (normalizedPath.startsWith("/@uix/src/")) {
+            normalizedPath = normalizedPath.replace("/@uix/src/", "../");
+        }
+        const srcDir = this.#dir.getChildPath(normalizedPath);
 
         if (!filepath) {
             return this.getErrorResponse(500);
@@ -520,7 +525,7 @@ export class Server {
             }
         }
 
-        if (!url.searchParams.has("original") && url.hasFileExtension(...eternalExts) && getDirType(app.options!, this.#dir.getChildPath(normalizedPath)) !== "backend") {
+        if (!url.searchParams.has("original") && url.hasFileExtension(...eternalExts) && getDirType(app.options!, srcDir) !== "backend") {
             const urlString = url.toString();
            
             if (!this.#eternalModulesCache.has(urlString)) {
@@ -532,12 +537,6 @@ export class Server {
         }
 
         if (this.#options.directory_indices && filepath.fs_exists && filepath.fs_is_dir) {
-            // TODO: fix workaround for /@uix/src paths
-            if (normalizedPath.startsWith("/@uix/src/")) {
-                normalizedPath = normalizedPath.replace("/@uix/src/", "../");
-            }
-            const srcDir = this.#dir.getChildPath(normalizedPath);
-
             return this.getContentResponse("application/directory+json", JSON.stringify(
                 await this.generateDirectoryIndex(srcDir), 
                 null, '    ')

@@ -6,15 +6,16 @@ import { Path } from "../utils/path.ts";
 import { normalizedAppOptions } from "../app/options.ts";
 
 async function readDXConfigData(path: URL) {
-	const dx = await Datex.Runtime.getURLContent(path, false, false) as Record<string,any>;
+	const dx = (await Datex.Runtime.getURLContent(path, false, false) ?? {}) as Record<string,any>;
 	const requiredLocation: DatexType.Endpoint = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
 	const stageEndpoint: DatexType.Endpoint = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
-	const port: number = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'port'), true, true);
+	const port: number = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'port'), true, true);
+	const instances: number = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'instances'), true, true) ?? 1;
 	let volumes: URL[]|undefined = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'volumes'), true, true);
 	if (!volumes) volumes = []
 	else if (!(volumes instanceof Array)) volumes = [volumes];
 
-	let domains:string[] = Datex.Value.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
+	let domains:string[] = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
 	// make sure customDomains is a string array
 	if (domains instanceof Datex.Tuple) domains = domains.toArray();
 	else if (typeof domains == "string") domains = [domains];
@@ -27,7 +28,8 @@ async function readDXConfigData(path: URL) {
 		requiredLocation,
 		stageEndpoint,
 		domains,
-		volumes
+		volumes,
+		instances
 	}
 }
 
@@ -39,16 +41,18 @@ export async function getDXConfigData(backend: Path, options:normalizedAppOption
 	let requiredLocation: DatexType.Endpoint|undefined;
 	let stageEndpoint: DatexType.Endpoint|undefined;
 	let volumes: URL[]|undefined
+	let instances = 1;
 	const domains:Record<string, number|null> = {}; // domain name -> internal port
 	
 	if (backendDxFile.fs_exists) {
 		let backendDomains: string[]|undefined;
-		({requiredLocation, stageEndpoint, domains: backendDomains, volumes} = await readDXConfigData(backendDxFile))
+		({requiredLocation, stageEndpoint, domains: backendDomains, volumes, instances} = await readDXConfigData(backendDxFile))
 		for (const domain of backendDomains) {
 			domains[domain] = null; // no port mapping specified per default
 		}
 	}
 
+	// map frontend ports
 	let autoPort = 80;
 	for (const frontend of options.frontend) {
 		const frontendDxFile = frontend.getChildPath(".dx");
@@ -68,6 +72,7 @@ export async function getDXConfigData(backend: Path, options:normalizedAppOption
 		requiredLocation,
 		stageEndpoint,
 		volumes,
-		domains
+		domains,
+		instances
 	}
 }

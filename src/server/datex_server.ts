@@ -86,7 +86,7 @@ class HttpComInterface extends ServerDatexInterface {
         }
         // use an existing server (might also be used as a normal HTTP server)
         else {
-            this.server.addRequestHandler(r=>this.handleRequest(r, false), true);
+            this.server.addRequestHandler(r=>this.handleRequest(r), true);
         }
 
     }
@@ -97,19 +97,18 @@ class HttpComInterface extends ServerDatexInterface {
         this.upgrade_handlers.set(type, handler);
     }
 
-    protected async handleRequest(requestEvent:Deno.RequestEvent, html_response = true){
+    protected async handleRequest(requestEvent:Deno.RequestEvent){
         const upgrade = requestEvent.request.headers.get("upgrade")
 
         // custom upgrade handler (for websockets)
         if (upgrade && this.upgrade_handlers.has(upgrade)) {
             this.upgrade_handlers.get(upgrade)?.(requestEvent);
         }
-        else if (html_response) {
-            const content = `<div style='font-family:"Courier New", Courier, monospace;width:100%;height:100%;display:flex;justify-content:center;align-items:center'><div style='text-align:center'><h3 style='margin-bottom: 0'>DATEX Node <span style='color:#0774de'>${Datex.Runtime.endpoint}</span></h3><br>© 2022 <a style='color: black;text-decoration: none;' href="https://unyt.org">unyt.org</a></div></div>`;
-            try {
-                await requestEvent.respondWith(new Response(content, {headers:{"Content-Type": "text/html; charset=utf-8"}, status: 200}))
-            } catch {}
-        }      
+        else if (requestEvent.request.method == "POST" && new URL(requestEvent.request.url).pathname == "/datex-http") {
+            const dxb = await requestEvent.request.arrayBuffer()
+            await Datex.InterfaceManager.datex_in_handler(dxb, Datex.BROADCAST);
+            requestEvent.respondWith(new Response("Ok"));
+        }   
         else return false;
     }
 
@@ -517,20 +516,39 @@ class WebsocketComInterface extends ServerDatexInterface {
 
     }
 
+    protected getReachableEndpointRedirectEndpoint(endpoint:Datex.Endpoint) {
+        if (this.reachable_endpoints.has(endpoint)) return this.reachable_endpoints.get(endpoint)
+        else {
+            for (const [reachableEndpoint, redirect] of this.reachable_endpoints) {
+                if (reachableEndpoint.main === endpoint) return redirect
+            }
+        }
+    }
+    protected getConnectedEndpointSocket(endpoint:Datex.Endpoint) {
+        if (this.connected_endpoints.has(endpoint)) return this.connected_endpoints.get(endpoint)
+        else {
+            for (const [connectedEndpoint, socket] of this.connected_endpoints) {
+                if (connectedEndpoint instanceof Datex.Endpoint && connectedEndpoint.main === endpoint) return socket
+            }
+        }
+    }
+
     protected sendRequest(dx:ArrayBuffer, to:Datex.Endpoint) {
         // try to find an other endpoint over which the requested endpoint is connected
-        if (!this.connected_endpoints.has(to)) {
-            if (this.reachable_endpoints.has(to)) to = this.reachable_endpoints.get(to);
+        let connectedEndpointSocket = this.getConnectedEndpointSocket(to);
+        if (!connectedEndpointSocket) {
+            to = this.getReachableEndpointRedirectEndpoint(to)!;
+            if (to) connectedEndpointSocket = this.getConnectedEndpointSocket(to);
             else {logger.debug(to + " not reachable via redirect");return;}
         }
 
         // send to a connected endpoint
-        if (this.connected_endpoints.has(to)) {
+        if (connectedEndpointSocket) {
             try {
-                this.connected_endpoints.get(to).send(dx)
+                connectedEndpointSocket.send(dx)
             }
             catch (e) {
-                this.socket_connection.delete(this.connected_endpoints.get(to));
+                this.socket_connection.delete(connectedEndpointSocket);
                 this.connected_endpoints.delete(to);
                 console.log("Socket Error sending to " + to, e);
             }
@@ -625,7 +643,7 @@ Datex.InterfaceManager.handleNoRedirectFound = function(receiver){
     /** get sign and encryption keys for an alias */
     @expose static async get_keys(endpoint:Datex.Person) {
         // console.log("GET keys for " +endpoint)
-        let keys = await Datex.Crypto.getExportedKeysForEndpoint(endpoint);
+        const keys = await Datex.Crypto.getExportedKeysForEndpoint(endpoint);
         return keys;
     }
 }

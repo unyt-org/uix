@@ -7,6 +7,8 @@ import { UIXRunner, runOptions } from "./runner.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
 import { OutputMode, exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
 
+import { verboseArg } from "datex-core-legacy/utils/logger.ts"
+
 const logger = new Datex.Logger("Docker Runner");
 
 export default class LocalDockerRunner implements UIXRunner {
@@ -88,6 +90,7 @@ export default class LocalDockerRunner implements UIXRunner {
 		// TODO: inject args dynamically? not in docker compose file
 		const args = [];
 		if (watch) args.push("--watch");
+		if (verboseArg) args.push("-v")
 
 		const dockerCompose = {
 			version: "3",

@@ -164,9 +164,13 @@ async function runBackends(options: normalizedAppOptions) {
 	for (const backend of options.backend) {
 		
 		try {
-			const {requiredLocation, stageEndpoint, domains, volumes} = await getDXConfigData(backend, options);
+			const {requiredLocation, stageEndpoint, domains, volumes, instances} = await getDXConfigData(backend, options);
 
-			if (requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation?.toString() !== Deno.env.get("UIX_HOST_ENDPOINT")) {
+			const isRemote = requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation?.toString() !== Deno.env.get("UIX_HOST_ENDPOINT");
+
+			// TODO: handle multiple instances
+
+			if (isRemote) {
 				// custom runner
 				if (typeof requiredLocation == "string") {
 					let found = false;
@@ -182,6 +186,7 @@ async function runBackends(options: normalizedAppOptions) {
 								volumes
 							})
 							found = true;
+							break;
 						}
 					}
 					if (!found) {

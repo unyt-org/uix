@@ -15,12 +15,14 @@ export abstract class ServerDatexInterface implements Datex.ComInterface {
     in = true
     out = true
 
+    is_bidirectional_hub = true
+
     endpoints: Set<Datex.Endpoint> = pointer(new Set<Datex.Endpoint>());
     reachable_endpoints: Map<Datex.Endpoint, Datex.Endpoint> = pointer(new Map()); // <requested_endpoint, reachable_via_endpoint connection>
 
     private static instance: ServerDatexInterface;
     protected logger:Datex.Logger;
-    protected datex_in_handler:(dxb: ArrayBuffer|ReadableStreamDefaultReader<Uint8Array> | {dxb: ArrayBuffer|ReadableStreamDefaultReader<Uint8Array>; variables?: any; header_callback?: (header: Datex.dxb_header) => void}, last_endpoint: Datex.Endpoint) => Promise<Datex.dxb_header|void>;
+    protected datex_in_handler:(dxb: ArrayBuffer|ReadableStreamDefaultReader<Uint8Array> | {dxb: ArrayBuffer|ReadableStreamDefaultReader<Uint8Array>; variables?: any; header_callback?: (header: Datex.dxb_header) => void}, last_endpoint: Datex.Endpoint, source?:ComInterface) => Promise<Datex.dxb_header|void>;
 
     public static getInstance() {
         // @ts-ignore
@@ -44,8 +46,8 @@ export abstract class ServerDatexInterface implements Datex.ComInterface {
     abstract init(): void
 
     protected handleBlock(dxb:ArrayBuffer, last_endpoint: Datex.Endpoint, header_callback?:(header:Datex.dxb_header)=>void):Promise<Datex.dxb_header> {
-        if (header_callback) return <Promise<Datex.dxb_header>>this.datex_in_handler({dxb, header_callback}, last_endpoint);
-        else return <Promise<Datex.dxb_header>>this.datex_in_handler(dxb, last_endpoint);
+        if (header_callback) return <Promise<Datex.dxb_header>>this.datex_in_handler({dxb, header_callback}, last_endpoint, this);
+        else return <Promise<Datex.dxb_header>>this.datex_in_handler(dxb, last_endpoint, this);
     }
 
     /** implement how to send a message to a connected node*/
@@ -106,7 +108,7 @@ class HttpComInterface extends ServerDatexInterface {
         }
         else if (requestEvent.request.method == "POST" && new URL(requestEvent.request.url).pathname == "/datex-http") {
             const dxb = await requestEvent.request.arrayBuffer()
-            await Datex.InterfaceManager.datex_in_handler(dxb, Datex.BROADCAST);
+            await Datex.InterfaceManager.datex_in_handler(dxb, Datex.BROADCAST, this);
             requestEvent.respondWith(new Response("Ok"));
         }   
         else return false;
@@ -458,6 +460,7 @@ class WebsocketComInterface extends ServerDatexInterface {
         DatexServer.http_com_interface.addUpgradeHandler("websocket", (r)=>this.handleRequest(r));        
     }
 
+    description?: string
 
     private handleRequest(requestEvent:Deno.RequestEvent){
         try {
@@ -468,6 +471,13 @@ class WebsocketComInterface extends ServerDatexInterface {
 
             const { socket, response } = Deno.upgradeWebSocket(req);
             requestEvent.respondWith(response);
+
+            // infer ws url
+            this.description = requestEvent.request.url
+                .replace("http://localhost", "ws://localhost")
+                .replace("http://", "wss://")
+                .replace("https://", "wss://");
+            if (this.description.endsWith("/")) this.description = this.description.slice(0, -1);
 
             const dispose = () => {
                 const endpoint = this.socket_endpoints.get(socket)!;

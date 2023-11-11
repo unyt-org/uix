@@ -34,9 +34,9 @@ export class LightRoot extends domContext.HTMLElement {
 		}
 	}
 	
-	disconnectedCallback() {
-		throw new Error("Cannot remove light root from parent element")
-	}
+	// disconnectedCallback() {
+	// 	throw new Error("Cannot remove light root from parent element")
+	// }
 
 }
 

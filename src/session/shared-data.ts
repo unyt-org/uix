@@ -1,6 +1,9 @@
 import { Datex } from "datex-core-legacy";
 import { UIX_COOKIE, deleteCookie, getCookie, setCookie } from "./cookies.ts";
 
+// @ts-ignore
+Symbol.dispose ??= Symbol.for("Symbol.dispose")
+
 export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:Headers) {
 	let cookieSharedData: Record<string, unknown> & {[Symbol.dispose]?:()=>void}
 
@@ -8,26 +11,27 @@ export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:H
 	if (cookie) {
 
 		try {
+			// {__proto__:{}}
 			console.debug("shared data cookie: \n" + await Datex.MessageLogger.decompile(Datex.base64ToArrayBuffer(cookie), false));
-			cookieSharedData = $$(await Datex.Runtime.decodeValueBase64<Record<string, unknown>>(cookie))
+			cookieSharedData = $$({__proto__:{}, ...await Datex.Runtime.decodeValueBase64<Record<string, unknown>>(cookie)})
 		}
 		catch (e) {
-			cookieSharedData = $$({})
+			cookieSharedData = $$({__proto__:{}})
 			console.log(e)
 			console.error("Failed to reconstruct shared data");
 			deleteCookie(UIX_COOKIE.sharedData, writeHeaders)
 		}
 	}
 	else {
-		cookieSharedData = $$({})
+		cookieSharedData = $$({__proto__:{}})
 	}
 
-	const update = () => {
-		setCookie(UIX_COOKIE.sharedData, Datex.Compiler.encodeValueBase64({...cookieSharedData}, undefined, undefined, false, true), undefined, writeHeaders)
+	cookieSharedData[Symbol.dispose] = () => Datex.Ref.unobserve(cookieSharedData, update)
+	const update = async () => {
+		console.debug("updating shared data cookie: \n" + Datex.Runtime.valueToDatexStringExperimental({...cookieSharedData}, true, true));
+		setCookie(UIX_COOKIE.sharedData, await Datex.Compiler.encodeValueBase64Async({...cookieSharedData}, undefined, undefined, false, true), undefined, writeHeaders)
 	};
 	Datex.Ref.observe(cookieSharedData, update)
 
-	cookieSharedData[Symbol.dispose] = () => Datex.Ref.unobserve(cookieSharedData, update)
-
-	return cookieSharedData;
+	return {sharedData:cookieSharedData, update};
 }

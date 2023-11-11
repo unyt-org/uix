@@ -4,7 +4,7 @@
 
 import { Datex , pointer, meta, expose, scope, datex } from "datex-core-legacy";
 import { Server } from "./server.ts";
-import { type datex_meta } from "datex-core-legacy/datex_all.ts";
+import type { ComInterface, datex_meta } from "datex-core-legacy/datex_all.ts";
 import { logger } from "../utils/global-values.ts";
 
 /** common class for all interfaces (WebSockets, TCP Sockets, GET Requests, ...)*/
@@ -15,7 +15,7 @@ export abstract class ServerDatexInterface implements Datex.ComInterface {
     in = true
     out = true
 
-    is_bidirectional_hub = true
+    // is_bidirectional_hub = true
 
     endpoints: Set<Datex.Endpoint> = pointer(new Set<Datex.Endpoint>());
     reachable_endpoints: Map<Datex.Endpoint, Datex.Endpoint> = pointer(new Map()); // <requested_endpoint, reachable_via_endpoint connection>
@@ -45,9 +45,9 @@ export abstract class ServerDatexInterface implements Datex.ComInterface {
 
     abstract init(): void
 
-    protected handleBlock(dxb:ArrayBuffer, last_endpoint: Datex.Endpoint, header_callback?:(header:Datex.dxb_header)=>void):Promise<Datex.dxb_header> {
-        if (header_callback) return <Promise<Datex.dxb_header>>this.datex_in_handler({dxb, header_callback}, last_endpoint, this);
-        else return <Promise<Datex.dxb_header>>this.datex_in_handler(dxb, last_endpoint, this);
+    protected handleBlock(dxb:ArrayBuffer, last_endpoint: Datex.Endpoint, header_callback?:(header:Datex.dxb_header)=>void, source?:any):Promise<Datex.dxb_header> {
+        if (header_callback) return <Promise<Datex.dxb_header>>this.datex_in_handler({dxb, header_callback}, last_endpoint, source??this);
+        else return <Promise<Datex.dxb_header>>this.datex_in_handler(dxb, last_endpoint, source??this);
     }
 
     /** implement how to send a message to a connected node*/
@@ -441,6 +441,7 @@ class WebsocketStreamComInterface extends ServerDatexInterface {
 class WebsocketComInterface extends ServerDatexInterface {
 
     override type = "websocket";
+    description?: string
 
     override in = true
     override out = true
@@ -460,7 +461,10 @@ class WebsocketComInterface extends ServerDatexInterface {
         DatexServer.http_com_interface.addUpgradeHandler("websocket", (r)=>this.handleRequest(r));        
     }
 
-    description?: string
+    isEqualSource(source: ComInterface, to: Datex.Endpoint) {
+        const socketEndpoint = this.getReachableEndpointRedirectEndpoint(to);
+        return socketEndpoint && (source.endpoint?.equals(socketEndpoint) || source.endpoint?.main?.equals(socketEndpoint));
+    }
 
     private handleRequest(requestEvent:Deno.RequestEvent){
         try {
@@ -488,6 +492,8 @@ class WebsocketComInterface extends ServerDatexInterface {
             socket.onclose = dispose
             socket.onerror = dispose
 
+            const proxySource:{type:string, description: string, endpoint?:Datex.Endpoint} = {type: this.type, description: this.description};
+
             socket.onmessage = async (e:MessageEvent<ArrayBuffer>) => {
 
                 const dmx_block = e.data;
@@ -502,14 +508,16 @@ class WebsocketComInterface extends ServerDatexInterface {
                         this.connected_endpoints.set(header.sender, socket);
                         this.endpoints.add(header.sender)
 
+                        proxySource.endpoint = header.sender;
+
                         // assign interface officially to this endpoint
                         Datex.CommonInterface.addInterfaceForEndpoint(header.sender, this);
 
                         this.socket_endpoints.set(socket, header.sender)
-                    })
+                    }, proxySource)
                 }
                 else {
-                    header = await this.handleBlock(new Uint8Array(dmx_block).buffer, this.socket_endpoints.get(socket), null)
+                    header = await this.handleBlock(new Uint8Array(dmx_block).buffer, this.socket_endpoints.get(socket), null, proxySource)
                 }
 
                 /* an other endpoint is reachable over this interface*/

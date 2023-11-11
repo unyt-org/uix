@@ -83,7 +83,7 @@ export class Context
 		}
 		else {
 			if (!this.request) throw new Error("Cannot get shared data from UIX Context with request object");
-			const sharedData = await getSharedDataPointer(this.request.headers, this.responseHeaders);
+			const {sharedData} = await getSharedDataPointer(this.request.headers, this.responseHeaders);
 			if (sharedData[Symbol.dispose]) this.#disposeCallbacks.add(sharedData[Symbol.dispose]!)
 			return sharedData as SharedData;
 		}

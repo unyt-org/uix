@@ -10,17 +10,17 @@ In UIX, you can create a `<form>` element with JSX and just bind the input value
 ```tsx
 // reactive 'User' class
 @sync class User {
-	@property name: string
-	@property age: number
+    @property name: string
+    @property age: number
 }
 
 // <UpdateUserData/> form template
 const UpdateUserData = template<{user:User}>((_, {user}) => 
-	<form>
-		Update User Data:
-		<input type="text"   value={user.$.name}/>
-		<input type="number" value={user.$.age}/>
-	</form>
+    <form>
+        Update User Data:
+        <input type="text"   value={user.$.name}/>
+        <input type="number" value={user.$.age}/>
+    </form>
 )
 
 export default <UpdateUserData user={...}/>
@@ -42,12 +42,12 @@ event was triggered, you can set `datex-update` to `"onsubmit"`:
 ```tsx
 // <UpdateUserData/> form template with submit button
 const UpdateUserData = template<{user:User}>((_, {user}) => 
-	<form datex-update="onsubmit">
-		Update User Data:
-		<input type="text" value={user.$.name}/>
-		<input type="number" value={user.$.age}/>
-		<button type="submit">Save</button>
-	</form>
+    <form datex-update="onsubmit">
+        Update User Data:
+        <input type="text" value={user.$.name}/>
+        <input type="number" value={user.$.age}/>
+        <button type="submit">Save</button>
+    </form>
 )
 ```
 

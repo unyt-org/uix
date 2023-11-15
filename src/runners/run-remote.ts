@@ -32,6 +32,11 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 
 	const repo = await GitRepo.get();
 
+	if (!repo) {
+		logger.error(`Cannot run remote, no git repository found`)
+		Deno.exit(1)
+	}
+
 	// Git: All changes have to be added
 	const unaddedFiles = await repo.getUnaddedFiles();
 	if (unaddedFiles && !onlyDenoFileChanges(unaddedFiles)) {

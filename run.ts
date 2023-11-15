@@ -166,7 +166,8 @@ async function runBackends(options: normalizedAppOptions) {
 		try {
 			const {requiredLocation, stageEndpoint, domains, volumes, instances} = await getDXConfigData(backend, options);
 
-			const isRemote = requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation?.toString() !== Deno.env.get("UIX_HOST_ENDPOINT");
+			// TODO better comparison between UIX_HOST_ENDPOINT (with possible instance) and requiredLocation
+			const isRemote = requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && !Deno.env.get("UIX_HOST_ENDPOINT")?.startsWith(requiredLocation?.toString());
 
 			// TODO: handle multiple instances
 

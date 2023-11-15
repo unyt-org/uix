@@ -11,7 +11,7 @@ import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
-import { Element } from "../uix-dom/dom/mod.ts";
+import { Element, HTMLFormElement } from "../uix-dom/dom/mod.ts";
 import { blobToBase64 } from "../uix-dom/datex-bindings/blob-to-base64.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { UIX } from "../../uix.ts";
@@ -25,7 +25,7 @@ if (client_type === "deno") {
 
 type injectScriptData = {declare:Record<string,string>, init:string[]};
 
-type _renderOptions = {includeShadowRoots?:boolean,  _injectedJsData?:injectScriptData, lang?:string, allowIgnoreDatexFunctions?: boolean}
+type _renderOptions = {includeShadowRoots?:boolean, forms?:string[], datex_update_type?:string[], _injectedJsData?:injectScriptData, lang?:string, allowIgnoreDatexFunctions?: boolean}
 
 export const CACHED_CONTENT = Symbol("CACHED_CONTENT");
 
@@ -134,11 +134,34 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 		throw "invalid HTML node"
 	}
 
+	const dataPtr:string = el.attributes.getNamedItem("uix-ptr")?.value;
+
+	// add datex-update type to stack
+	const datexUpdateType = (el as any)[DOMUtils.DATEX_UPDATE_TYPE];
+	if (opts && datexUpdateType) {
+		if (!opts.datex_update_type) opts.datex_update_type = []
+		opts.datex_update_type.push(datexUpdateType)
+	}
+
+	// remember last form
+	if (el instanceof domContext.HTMLFormElement) {
+		if (!opts.forms) opts.forms = []
+		opts.forms.push(dataPtr)
+	}
+
 	const inner = getInnerHTML(el, opts, collectedStylsheets, isStandaloneContext);
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
+	
+	// pop datex-update type from stack
+	if (opts && datexUpdateType) {
+		opts.datex_update_type?.pop()
+	}
+	// pop last form
+	if (el instanceof domContext.HTMLFormElement) {
+		opts.forms?.pop()
+	}
 
-	const dataPtr = el.attributes.getNamedItem("uix-ptr")?.value;
 
 	// TODO: only workaround
 	if (opts?.lang) UIX.language = opts.lang;
@@ -225,18 +248,37 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 		}
 
 		// inject element update triggers
+		const datexUpdateType:"onsubmit"|"onchange" = (el as any)[DOMUtils.DATEX_UPDATE_TYPE] ?? opts?.datex_update_type?.at(-1) ?? "onchange";
+		const form = opts?.forms?.at(-1);
+
+		if (datexUpdateType == "onsubmit" && !form) {
+			throw new Error(`Invalid datex-update="onsubmit", no form found`)
+		}
+
 		for (const [attr, ptr] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.ATTR_BINDINGS] ?? []) {
 			hasScriptContent = true;
-			const eventName = attr == "checked" ? "change" : "input";
 			const propName = attr == "checked" ? "checked" : "value";
-			const fn = getValueUpdater(ptr);
+			const keepAlive = datexUpdateType == "onsubmit"
+			const fn = getValueUpdater(ptr, false, keepAlive);
 			script += `{\n`
 			script += `const __f1__ = ${fn.toString()};`; 
-			script += `const __f__ = function() {
-				const val = this.${propName};
+			script += `const __original__ = el.${propName};`;
+			script += `const __f__ = function(diff) {
+				const val = el.${propName};
+				if (diff && val == __original__) return;
 				return __f1__(val);
 			};\n`;
-			script += `el.addEventListener("${eventName}", __f__);\n`
+
+			// onsubmit
+			if (datexUpdateType == "onsubmit") {
+				script += `const form = querySelector('[uix-ptr="${form}"]');\n`
+				script += `form.addEventListener("submit", () => __f__(true));\n`
+			}
+			// onchange
+			else {
+				const eventName = attr == "checked" ? "change" : "input";
+				script += `el.addEventListener("${eventName}", __f__);\n`
+			}
 			script += `}\n`
 
 			// console.log("binding", attr, Datex.Runtime.valueToDatexStringExperimental(ptr), fn.toString())
@@ -627,6 +669,7 @@ export async function generateHTMLPage({
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+				<meta name="view-transition" content="same-origin" />
 				<meta name="theme-color"/>	
 				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
 				${favicon}

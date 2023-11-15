@@ -21,7 +21,7 @@ export interface Theme {
 	onDeactivate?: () => void|Promise<void>
 }
 
-type themeName = "uix-dark" | "uix-dark-plain" | "uix-light" | "uix-light-plain"
+type themeName = "uix-dark" | "uix-dark-plain" | "uix-light" | "uix-light-plain" | (string&{});
 type darkThemeName = "uix-dark" | "uix-dark-plain" | (string&{});
 type lightThemeName = "uix-light" | "uix-light-plain" | (string&{});
 
@@ -89,8 +89,8 @@ class ThemeManager  {
 		const currentTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.theme) ?? "uix-"+currentMode) : "uix-"+currentMode;
 
 
-		// set current theme
-		this.setTheme(currentTheme, true);
+		// set current theme if not a parsed theme
+		if (this.getTheme(currentTheme, true)) this.setTheme(currentTheme, true);
 
 		// make sure theme and mode are set
 		this.#current_mode = currentMode;

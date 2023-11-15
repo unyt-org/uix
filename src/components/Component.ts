@@ -994,7 +994,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         // handle child on parent
         if (this.parentElement instanceof Component) {
             Component.deferConstructed([this, this.parentElement], ()=>{
-                (this.parentElement as Component).onChildAdded(this)
+                if (this.parentElement instanceof Component) (this.parentElement as Component).onChildAdded(this)
             })
         }
         

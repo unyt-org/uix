@@ -10,9 +10,7 @@ export type RequestData = {address:string|null}
 
 
 // persistent data
-// TODO: fix and use StorageMap
-const privateData = await lazyEternalVar("privateData") ?? $$(new Map<Endpoint, Record<string, unknown>>)
-
+const privateData = await Datex.Storage.loadOrCreate("UIX.privateData", () => $$(new StorageMap<Endpoint, Record<string, unknown>>()))
 const emptyMatch = Object.freeze({});
 
 
@@ -40,8 +38,8 @@ Symbol.dispose ??= Symbol.for("Symbol.dispose")
 // @template("uix:Context")
 export class Context
 	<
-		SharedData extends Record<string, unknown> = Record<string, unknown>,
-		PrivateData extends Record<string, unknown> = Record<string, unknown>
+		CustomSharedData extends Record<string, unknown>|SharedData = SharedData,
+		CustomPrivateData extends Record<any, unknown>|PrivateData = PrivateData
 	> 
 {
 
@@ -76,16 +74,16 @@ export class Context
 	 * Returns a shared data record, containing arbitrary key-value pairs.
 	 * This data is separated for each endpoint session and is accessible from the client and the backend 
 	 */
-	async getSharedData(): Promise<SharedData> {
+	async getSharedData(): Promise<CustomSharedData> {
 		if (client_type === "browser") {
 			const { getSharedData } = await import("../session/frontend.ts");
-			return getSharedData() as Promise<SharedData>;
+			return getSharedData() as Promise<CustomSharedData>;
 		}
 		else {
 			if (!this.request) throw new Error("Cannot get shared data from UIX Context with request object");
 			const {sharedData} = await getSharedDataPointer(this.request.headers, this.responseHeaders);
 			if (sharedData[Symbol.dispose]) this.#disposeCallbacks.add(sharedData[Symbol.dispose]!)
-			return sharedData as SharedData;
+			return sharedData as CustomSharedData;
 		}
 	}
 
@@ -93,12 +91,11 @@ export class Context
 	 * Returns a private data record, containing arbitrary key-value pairs.
 	 * This data is separated for each endpoint session and is only accessible from the backend 
 	 */
-	async getPrivateData(): Promise<PrivateData> {
+	async getPrivateData(): Promise<CustomPrivateData> {
 		if (client_type == "browser") throw new Error("Private data is only accessible from the backend");
 		if (this.endpoint == BROADCAST) throw new Error("Cannot get private data for UIX context, no session found");
-		console.log("get private data for " + this.endpoint);
-		if (!privateData.has(this.endpoint)) await privateData.set(this.endpoint, {});
-		return (await privateData.get(this.endpoint))! as PrivateData;
+		if (!await privateData.has(this.endpoint)) await privateData.set(this.endpoint, {});
+		return (await privateData.get(this.endpoint))! as CustomPrivateData;
 	}
 
 	[Symbol.dispose]() {

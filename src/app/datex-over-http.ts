@@ -94,7 +94,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 			}
 			// use datex-over-http
 			else {
-				const res = await fetch("/@uix/datex", {method:"POST", headers: {"Content-Type": "text/datex"}, body:"${ptr.idString()}"});
+				const res = await fetch("/@uix/datex", {method:"POST", keepalive: true, headers: {"Content-Type": "text/datex"}, body:"${ptr.idString()}"});
 				const text = await res.text();
 				if (res.ok) {
 					try {return JSON.parse(text)}
@@ -114,29 +114,34 @@ export function getValueInitializer(value:any, forceDatex = false): string {
  * - uses datex-over-http when DATEX is not available
  * @param fn
  */
-export function getValueUpdater(ref:Datex.Ref, forceDatex = false): string {
+export function getValueUpdater(ref:Datex.Ref, forceDatex = false, keepAlive = false): string {
 	
 	// prevent garbage collection
 	if (ref instanceof Datex.Pointer) ref.is_persistent = true;
+
+	const ptrString = Datex.Runtime.valueToDatexString(ref);
 	
 	if (forceDatex) {
+		if (keepAlive) throw new Error("Cannot use keepAlive=true with forceDatex=true")
 		return `async (val) => {
 			await import("datex-core-legacy");
 			await Datex.Supranet.connect();
-			return datex('${Datex.Runtime.valueToDatexStringExperimental(ref)}=?', [val]);
+			return datex('${ptrString}=?', [val]);
 		}
 		`
 	}
 	else {
+		// TODO: remove sendBeacon as fallback for firefox if keepAlive needed
 		return `async (val) => {
 			// use datex
 			if (globalThis.datex && globalThis.Datex) {
 				await Datex.Supranet.connect();
-				return datex('${Datex.Runtime.valueToDatexStringExperimental(ref)}=?', [val]);
+				return datex('${ptrString}=?', [val]);
 			}
 			// use datex-over-http
 			else {
-				const res = await fetch("/@uix/datex", {method:"POST", headers: {"Content-Type": "text/datex"}, body:"${Datex.Runtime.valueToDatexStringExperimental(ref)}=" + JSON.stringify(val)});
+				${keepAlive ? `if (navigator.userAgent.includes("Firefox/")) {navigator.sendBeacon("/@uix/datex", "${ptrString}=" + JSON.stringify(val)); return};`: ""}
+				const res = await fetch("/@uix/datex", {method:"POST", keepalive: true, headers: {"Content-Type": "text/datex"}, body:"${ptrString}=" + JSON.stringify(val)});
 				if (res.ok) return true
 				else throw new Error(await res.text())
 			}

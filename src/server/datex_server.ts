@@ -521,10 +521,27 @@ class WebsocketComInterface extends ServerDatexInterface {
                 }
 
                 /* an other endpoint is reachable over this interface*/
-                if (header && header.sender!=this.socket_endpoints.get(socket) && !this.reachable_endpoints.has(header.sender)) {
-                    this.logger.debug("reachable endpoint registered: " + header.sender);
-                    this.reachable_endpoints.set(header.sender, this.socket_endpoints.get(socket))
-                    Datex.CommonInterface.addIndirectInterfaceForEndpoint(header.sender, this)
+                if (header && header.sender && header.sender!=this.socket_endpoints.get(socket) && !this.reachable_endpoints.has(header.sender)) {
+
+                    // special case: first hello was general endpoint, second is actual endpoint instance
+                    // TODO: handle general, not just for WebsocketComInterface
+                    if (header.sender.main!=header.sender && this.connected_endpoints.get(header.sender.main) == socket) {
+                        this.logger.debug("late instance endpoint registered: " + header.sender);
+                        this.connected_endpoints.set(header.sender, socket);
+                        this.endpoints.add(header.sender)
+                        proxySource.endpoint = header.sender;
+                        // assign interface officially to this endpoint
+                        Datex.CommonInterface.addInterfaceForEndpoint(header.sender, this);
+
+                        this.socket_endpoints.set(socket, header.sender)
+                    }
+
+                    else {
+                        this.logger.debug("reachable endpoint registered: " + header.sender);
+                        this.reachable_endpoints.set(header.sender, this.socket_endpoints.get(socket))
+                        Datex.CommonInterface.addIndirectInterfaceForEndpoint(header.sender, this)
+                    }
+                  
                 }
             };
         }

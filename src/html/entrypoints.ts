@@ -9,31 +9,51 @@ import { filter } from "../routing/route-filter.ts";
 import { Element } from "../uix-dom/dom/mod.ts";
 
 
+declare global {
+	/**
+	 * Well-known global interface SharedData
+	 * Returned by context.getSharedData()
+	 */
+	interface SharedData { }
+
+	/**
+	 * Well-known global interface PrivateData
+	 * Returned by context.getPrivateDat()
+	 */
+	interface PrivateData { }
+}
+
+const a: SharedData = {
+	aa: "s",
+	b: 12
+}
+
+
 export type raw_content = Blob|Response // sent as raw Response
 export type special_content = URL|Deno.FsFile|HTTPStatus|Error // gets converted to a Response
 export type html_content = Datex.RefOrValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|undefined|raw_content|special_content;
 export type html_content_or_generator<
-	SharedData extends Record<string, unknown> = Record<string, unknown>,
-	PrivateData extends Record<string, unknown> = Record<string, unknown>
-	> = html_content|html_generator<SharedData, PrivateData>;
+	CustomSharedData extends Record<string, unknown>|SharedData = SharedData,
+	CustomPrivateData extends Record<any, unknown>|PrivateData = PrivateData
+	> = html_content|html_generator<CustomSharedData, CustomPrivateData>;
 export type html_content_or_generator_or_preset<
-	SharedData extends Record<string, unknown> = Record<string, unknown>,
-	PrivateData extends Record<string, unknown> = Record<string, unknown>
-	> = html_content_or_generator<SharedData, PrivateData>|RenderPreset<RenderMethod, html_content_or_generator<SharedData, PrivateData>>;
+	CustomSharedData extends Record<string, unknown>|SharedData = SharedData,
+	CustomPrivateData extends Record<any, unknown>|PrivateData = PrivateData
+	> = html_content_or_generator<CustomSharedData, CustomPrivateData>|RenderPreset<RenderMethod, html_content_or_generator<CustomSharedData, CustomPrivateData>>;
 
 export type EntrypointRouteMap<
-	SharedData extends Record<string, unknown> = Record<string, unknown>,
-	PrivateData extends Record<string, unknown> = Record<string, unknown>
-	> = {[route:string|filter]:Entrypoint<SharedData, PrivateData>}
+	CustomSharedData extends Record<string, unknown>|SharedData = SharedData,
+	CustomPrivateData extends Record<any, unknown>|PrivateData = PrivateData
+	> = {[route:string|filter]:Entrypoint<CustomSharedData, CustomPrivateData>}
 export type html_generator<
-	SharedData extends Record<string, unknown> = Record<string, unknown>,
-	PrivateData extends Record<string, unknown> = Record<string, unknown>
-	> = (ctx:Context<SharedData, PrivateData>, params:Record<string, string>)=>Entrypoint<SharedData, PrivateData> // html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
+	CustomSharedData extends Record<string, unknown>|SharedData = SharedData,
+	CustomPrivateData extends Record<any, unknown>|PrivateData = PrivateData
+	> = (ctx:Context<CustomSharedData, CustomPrivateData>, params:Record<string, string>)=>Entrypoint<CustomSharedData, CustomPrivateData> // html_content|RenderPreset<RenderMethod, html_content>|Promise<html_content|RenderPreset<RenderMethod, html_content>>;
 
 type _Entrypoint<
-	SharedData extends Record<string, unknown> = Record<string, unknown>,
-	PrivateData extends Record<string, unknown> = Record<string, unknown>
-	> = html_content_or_generator_or_preset<SharedData, PrivateData> | EntrypointRouteMap<SharedData, PrivateData> | typeof KEEP_CONTENT
+	CustomSharedData extends Record<string, unknown>|SharedData = SharedData,
+	CustomPrivateData extends Record<any, unknown>|PrivateData = PrivateData
+	> = html_content_or_generator_or_preset<CustomSharedData, CustomPrivateData> | EntrypointRouteMap<CustomSharedData, CustomPrivateData> | typeof KEEP_CONTENT
 
 /**
  * UIX Entrypoint type.
@@ -52,9 +72,9 @@ type _Entrypoint<
  * ```
  */
 export type Entrypoint<
-	SharedData extends Record<string, unknown> = Record<string, unknown>,
-	PrivateData extends Record<string, unknown> = Record<string, unknown>
-	> = _Entrypoint<SharedData, PrivateData> | Promise<_Entrypoint<SharedData, PrivateData>>
+	CustomSharedData extends Record<string, unknown>|SharedData = SharedData,
+	CustomPrivateData extends Record<any, unknown>|PrivateData = PrivateData
+	> = _Entrypoint<CustomSharedData, CustomPrivateData> | Promise<_Entrypoint<CustomSharedData, CustomPrivateData>>
 
 
 /**

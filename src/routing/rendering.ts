@@ -132,19 +132,27 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 	}
 	// return error as response with HTTPStatus error 500
 	catch (e) {
-		hasError = true;
-
-		if (e instanceof Error) returnValue = e;
-		else if (e instanceof HTTPStatus) returnValue = e;
+		
+		if (e instanceof Error) {
+			hasError = true;
+			returnValue = e;
+		}
+		else if (e instanceof HTTPStatus) {
+			hasError = true;
+			returnValue = e;
+		}
 		// TODO: fix instance check if transmitted via datex, currently just force converted to HTTPStatus
-		else if (typeof e == "object" && "code" in e && "content" in e && Object.keys(e).length == 2) returnValue = new HTTPStatus(e.code, e.content);
+		else if (typeof e == "object" && "code" in e && "content" in e && Object.keys(e).length == 2) {
+			hasError = true;
+			returnValue = new HTTPStatus(e.code, e.content);
+		}
 		else {
 			returnValue = HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
 		}
 	}
 
 	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: returnValue})
-	if (hasError) resolved.render_method = RenderMethod.BACKEND; // override: render errors as static
+	if (hasError) resolved.render_method = RenderMethod.BACKEND; // override: render errors as backend
 
 	return resolved;
 }
@@ -155,6 +163,14 @@ async function resolveRenderPreset(entrypointData: entrypointData<RenderPreset>)
 	resolved.render_method = entrypointData.entrypoint.__render_method;
 	return resolved;
 }
+
+async function resolveHTTPStatus(entrypointData: entrypointData<HTTPStatus>): Promise<resolvedEntrypointData> {
+	const content = await entrypointData.entrypoint.content;
+	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: content});
+	resolved.status_code = entrypointData.entrypoint.code;
+	return resolved;
+}
+
 
 async function resolveRouteHandler(entrypointData: entrypointData<RouteHandler>): Promise<resolvedEntrypointData> {
 	resolveContext(entrypointData)
@@ -325,8 +341,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 
 	// handle status code from HTTPStatus
 	else if (entrypointData.entrypoint instanceof HTTPStatus) {
-		resolved.status_code = entrypointData.entrypoint.code;
-		resolved.content = entrypointData.entrypoint.content;
+		resolved = await resolveHTTPStatus(entrypointData as entrypointData<HTTPStatus>);
 	}
 
 	// await Promise

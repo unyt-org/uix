@@ -389,7 +389,7 @@ export class FrontendManager extends HTMLProvider {
 				}
 
 				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:endpoint, __overrideMeta: {endpoint, signed: true, encrypted: true}});
-				req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON, mockPointers: true}));
+				await req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON, mockPointers: true}));
 			}
 			catch (e) {
 				req.respondWith(await this.server.getErrorResponse(500, "DATEX Error: " + e));
@@ -797,7 +797,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				combinedHeaders.set('content-language', lang)
 
 				let themeName = getCookie(UIX_COOKIE.theme, requestEvent.request.headers)!
-				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers) ?? "light";
+				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers) ?? UIX.Theme.mode;
 				
 				let currentThemeCSS = UIX.Theme.getThemeCSS(themeName, true);
 				// theme not found on the backend

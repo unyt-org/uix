@@ -662,6 +662,14 @@ export async function generateHTMLPage({
 	// TODO: remove icon_path, use icon instead
 	if (provider.app_options.icon || provider.app_options.icon) favicon = `<link rel="icon" href="${provider.resolveImport(provider.app_options.icon??provider.app_options.icon)}">`
 
+	let custom_meta = ""
+ 
+	if (provider.app_options.meta) {
+		for (const [key, value] of Object.entries(provider.app_options.meta)) {
+			custom_meta += `<meta name="${domUtils.escapeHtml(key)}" content="${domUtils.escapeHtml(value)}"/>\n`
+		}
+	}
+
 	// TODO: fix open_graph_meta_tags?.getMetaTags()
 	return indent `
 		<!DOCTYPE html>
@@ -672,8 +680,10 @@ export async function generateHTMLPage({
 				<meta name="view-transition" content="same-origin" />
 				<meta name="theme-color"/>	
 				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
+				${custom_meta}
 				${favicon}
-				${provider.app_options.installable ? `<link rel="manifest" href="/@uix/manifest.json">` : ''}
+				${provider.app_options.installable||provider.app_options.manifest ? `<link rel="manifest" href="/@uix/manifest.json">` : ''}
+				${provider.app_options.installable||provider.app_options.manifest ? `<script async src="https://cdn.jsdelivr.net/npm/pwacompat" crossorigin="anonymous"></script>` : ''}
 				${metaScripts}
 				${global_style}
 				${files}

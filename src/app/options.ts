@@ -13,6 +13,9 @@ export type appOptions = {
 	offline_support?: boolean, // add a service worker with offline cache
 	expose_deno?: boolean, // access Deno namespace from the frontend context
 	
+	manifest?: Record<string, any>, // override default PWA manifest options
+	meta?: Record<string, string>, // custom meta tags (name, content)
+
 	frontend?: string|URL|(string|URL)[], // directory for frontend code
 	backend?:  string|URL|(string|URL)[] // directory for backend code
 	common?: string|URL|(string|URL)[] // directory with access from both frontend end backend code
@@ -50,6 +53,9 @@ export async function normalizeAppOptions(options:appOptions = {}, base_url?:str
 	n_options.installable = options.installable ?? false;
 	n_options.expose_deno = options.expose_deno ?? false;
 	
+	n_options.manifest = options.manifest;
+	n_options.meta = options.meta;
+
 	// import map or import map path
 	if (options.import_map) n_options.import_map = new ImportMap(options.import_map);
 	else if (options.import_map_path) {

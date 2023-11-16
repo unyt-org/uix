@@ -290,7 +290,7 @@ export class FrontendManager extends HTMLProvider {
 		});
 
 		this.server.path("/@uix/window", (req, path)=>this.handleNewHTML(req, path));
-		if (this.app_options.installable) this.server.path("/@uix/manifest.json", (req, path)=>this.handleManifest(req, path));
+		if (this.app_options.installable || this.app_options.manifest) this.server.path("/@uix/manifest.json", (req, path)=>this.handleManifest(req, path));
 		this.server.path("/@uix/sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/@uix/sw.ts", (req, path)=>this.handleServiceWorker(req, path));
 
@@ -910,48 +910,41 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 			await this.server.sendError(requestEvent, 500);
 		}			
 	}
+
+	#manifest?: Record<string, any>;
+
+	private generateManifest() {
+		this.#manifest = {
+			"name": this.app_options.name,
+			"description": this.app_options.description,
+			"default_locale": "en",
+			"version": this.app_options.version,
+			"icons": [
+			  {
+				"src": this.resolveImport(this.app_options.icon),
+				"sizes": "287x287",
+				"type": "image/png"
+			  }
+			],
+			"start_url": "/",
+			"display": "standalone",
+			"display_override": ["window-controls-overlay"],
+			"theme_color": "#111111",
+			"manifest_version": 2,
+			"permissions": ["webNavigation", "unlimitedStorage"]
+		}
+
+		// custom manifest overrides
+		if (this.app_options.manifest) {
+			Object.assign(this.#manifest, this.app_options.manifest)
+		}
+	}
 	
 
 	private async handleManifest(requestEvent: Deno.RequestEvent, _path:string) {
+		if (!this.#manifest) this.generateManifest();
 		try {
-			await this.server.serveContent(requestEvent, "application/json", JSON.stringify({
-				"name": this.app_options.name,
-				"description": this.app_options.description,
-				"default_locale": "en",
-				"version": this.app_options.version,
-				"icons": [
-				  {
-					"src": this.resolveImport(this.app_options.icon),
-					"sizes": "287x287",
-					"type": "image/png"
-				  }
-				],
-				"start_url": "/",
-				"display": "standalone",
-				"display_override": ["window-controls-overlay"],
-				"theme_color": "#111111",
-				"manifest_version": 2,
-				"permissions": ["webNavigation", "unlimitedStorage"],
-				
-				"file_handlers": [
-				  {
-					"action": "/",
-					"accept": {
-					  "application/datex": ".dxb",
-					  "text/datex": ".dx",
-					  "application/json": ".json"
-					},
-					"icons": [
-					  {
-						"src": "https://dev.cdn.unyt.org/unyt_core/assets/square_dark_datex.png",
-						"sizes": "600x600",
-						"type": "image/png"
-					  }
-					],
-					"launch_type": "single-client"
-				  }
-				]
-			}));
+			await this.server.serveContent(requestEvent, "application/json", JSON.stringify(this.#manifest));
 		} catch {
 			await this.server.sendError(requestEvent, 500);
 		}			

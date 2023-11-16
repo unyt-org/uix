@@ -377,6 +377,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 		let rel = relative(_path.pathname, this.pathname);
 		if (!(rel.startsWith("./") || rel.startsWith("../"))) rel = "./" + rel;
 		if (rel.startsWith("./../")) rel = rel.replace("./../", "../")
+		if (rel.startsWith("./..\\")) rel = rel.replace("./..\\", "../")
 		if (this.is_dir && !rel.endsWith("/")) rel += "/";
 
 		// re-add query params

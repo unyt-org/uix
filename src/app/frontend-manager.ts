@@ -392,7 +392,7 @@ export class FrontendManager extends HTMLProvider {
 				await req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON, mockPointers: true}));
 			}
 			catch (e) {
-				req.respondWith(await this.server.getErrorResponse(500, "DATEX Error: " + e));
+				req.respondWith(await this.server.getErrorResponse(500, e?.message ?? e?.toString()));
 			}
 		});
 

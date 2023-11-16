@@ -263,10 +263,21 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 			script += `{\n`
 			script += `const __f1__ = ${fn.toString()};`; 
 			script += `const __original__ = el.${propName};`;
-			script += `const __f__ = function(diff) {
+			script += `const __f__ = async function(diff) {
 				const val = el.${propName};
 				if (diff && val == __original__) return;
-				return __f1__(val);
+				try {
+					const res = await __f1__(val);
+					el.setCustomValidity("")
+					el.reportValidity()
+					return res;
+				} 
+				catch (e) {
+					const message = e?.message ?? e?.toString()
+					console.log("invalid input",message)
+					el.setCustomValidity(message)
+					el.reportValidity()
+				}
 			};\n`;
 
 			// onsubmit

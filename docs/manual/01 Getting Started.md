@@ -68,8 +68,7 @@ This creates a new base project (https://github.com/unyt-org/uix-base-project.gi
 and starts the app locally.
 
 > [!NOTE]
-> We recommend using [Visual Studio Code](https://code.visualstudio.com/download) for developing UIX apps.
->
+> We recommend using [Visual Studio Code](https://code.visualstudio.com/download) for developing UIX apps.<br/>
 > For syntax highglighting and language support (DATEX, Typescript, deno), the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) is required.
 
 

@@ -173,7 +173,11 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	 * full path + hash
 	 */
 	get routename() {
-		return this.pathname + this.hash;
+		return this.getRoutename(true)
+	}
+
+	getRoutename(includeSearch = true) {
+		return this.pathname + (includeSearch ? this.search : "") + this.hash;
 	}
 
 	/**

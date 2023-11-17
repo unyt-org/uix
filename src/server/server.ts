@@ -15,7 +15,8 @@
 // ---
 import { Datex } from "datex-core-legacy";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
-import { Cookie, setCookie, getCookies } from "https://deno.land/std@0.177.0/http/cookie.ts";
+import { Cookie, setCookie, getCookies } from "../lib/cookie/cookie.ts";
+
 import { Path } from "../utils/path.ts";
 import { Transpiler } from "./transpiler.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts";

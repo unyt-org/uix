@@ -729,7 +729,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 	private getUIXContextGenerator(requestEvent: Deno.RequestEvent, path:string, conn?:Deno.Conn){
 		return ()=>{
 			const builder = new ContextBuilder();
-			builder.setRequestData(requestEvent, path, conn);
+			builder.setRequestData(requestEvent.request, path, conn);
 			return builder.build()
 		}
 	}

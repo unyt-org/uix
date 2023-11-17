@@ -69,9 +69,8 @@ and starts the app locally.
 
 > [!NOTE]
 > We recommend using [Visual Studio Code](https://code.visualstudio.com/download) for developing UIX apps.
-> In VS Code, you need to install the [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno) extension.
-> You can also install the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) extension
-> for UIX and DATEX language support.
+>
+> For syntax highglighting and language support (DATEX, Typescript, deno), the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) is required.
 
 
 ## Running your UIX app

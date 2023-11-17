@@ -43,7 +43,7 @@ export class Context
 	> 
 {
 
-	request?: Request
+	request: Request
 	requestData: RequestData = {
 		address: null
 	}
@@ -112,10 +112,10 @@ export class ContextBuilder {
 		return getCookie(UIX_COOKIE.language, req.headers) ?? req.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.split("-")[0] ?? "en"
 	}
 
-	setRequestData(req:Deno.RequestEvent, path:string, conn?:Deno.Conn) {
-		this.#ctx.request = req.request
-		this.#ctx.requestData.address = req.request.headers?.get("x-real-ip") ??
-					req.request.headers?.get("x-forwarded-for") ?? 
+	setRequestData(request:Request, path:string, conn?:Deno.Conn) {
+		this.#ctx.request = request
+		this.#ctx.requestData.address = request.headers?.get("x-real-ip") ??
+					request.headers?.get("x-forwarded-for") ?? 
 					(conn?.remoteAddr as Deno.NetAddr)?.hostname
 		
 		this.#ctx.path = path;
@@ -128,9 +128,8 @@ export class ContextBuilder {
 			},
 		})
 	
-
-		this.#ctx.language = ContextBuilder.getRequestLanguage(req.request);
-		this.#ctx.endpoint = this.getEndpoint(req.request) ?? BROADCAST;
+		this.#ctx.language = ContextBuilder.getRequestLanguage(request);
+		this.#ctx.endpoint = this.getEndpoint(request) ?? BROADCAST;
 
 		return this;
 	}

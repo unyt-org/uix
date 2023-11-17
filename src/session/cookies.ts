@@ -1,9 +1,4 @@
-// @ts-ignore
-const is_worker = (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope);
-const client_type = is_worker ? 'worker' : ("Deno" in globalThis && !(globalThis.Deno as any).isPolyfill ? 'deno' : 'browser')
-
-
-const { getCookies: getHeaderCookies, setCookie: setHeaderCookie, deleteCookie: deleteHeaderCookie } = client_type === "deno" ? await import("https://deno.land/std@0.203.0/http/cookie.ts") : {deleteCookie:null, setCookie:null, getCookies:null};
+import { getCookies as getHeaderCookies, setCookie as setHeaderCookie, deleteCookie as deleteHeaderCookie } from "../lib/cookie/cookie.ts";
 
 export const UIX_COOKIE = {
 	endpoint: "uix-endpoint",

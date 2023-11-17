@@ -294,7 +294,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	// init context if missing
 	if (!entrypointData.context) {
 		entrypointData.context = new Context()
-		if (entrypointData.route) entrypointData.context.path = entrypointData.route.routename
+		if (entrypointData.route) entrypointData.context.path = entrypointData.route.pathname
 	}
 	// init route if missing
 	entrypointData.route ??= Path.Route();

@@ -8,7 +8,8 @@ import { KEEP_CONTENT } from "../html/entrypoint-providers.tsx";
 import { displayError } from "../html/errors.tsx";
 import { domUtils } from "../app/dom-context.ts";
 import { PartialHydration } from "../hydration/partial-hydration.ts";
-import { Context } from "./context.ts";
+import { Context, ContextBuilder } from "./context.ts";
+import { COMPONENT_CONTEXT } from "../standalone/bound_content_properties.ts";
 
 /**
  * Generalized implementation for setting the route in the current tab URL
@@ -74,7 +75,16 @@ export namespace Routing {
 
 
 	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL()) {
-		const { content } = await resolveEntrypointRoute({entrypoint, route});
+		// create new context with fake request
+		const url = new Path(route, window.location.origin);
+		const path = route.pathname;
+		const context = new ContextBuilder()
+			.setRequestData(new Request(url), path)
+			.build()
+		context.path = path;
+		context.request = new Request(url)
+
+		const { content } = await resolveEntrypointRoute({entrypoint, context, route});
 		return content;
 	}
 

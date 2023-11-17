@@ -69,7 +69,7 @@ and starts the app locally.
 
 > [!NOTE]
 > We recommend using [Visual Studio Code](https://code.visualstudio.com/download) for developing UIX apps.<br/>
-> For syntax highlighting and language support (DATEX, Typescript, deno), the [DATEX Workbench](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) is required.
+> For syntax highlighting and language support (DATEX, Typescript, deno), the [DATEX Workbench extension](https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench) is required.
 
 
 ## Running your UIX app

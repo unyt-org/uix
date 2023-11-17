@@ -39,8 +39,9 @@ export class HTMLProvider {
 
 		for (const [key, value] of Object.entries(import_map.imports)) {
 			// make sure relative paths are converted to path relative to import map location
-			if (value.startsWith("./") || value.startsWith("../")) 
+			if (value.startsWith("./") || value.startsWith("../")) {
 				import_map.imports[key] = convertToWebPath(new Path(value, this.app_options.import_map.path));
+			}
 			else 
 				import_map.imports[key] = convertToWebPath(value);
 		}

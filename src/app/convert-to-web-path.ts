@@ -24,5 +24,7 @@ export function convertToWebPath(filePath:URL|string, includeDefaultDomain = fal
 	// is /@uix/cache
 	if (path.isChildOf(UIX.cacheDir)) return (includeDefaultDomain ? getDefaultDomainPrefix() : '') + path.getAsRelativeFrom(UIX.cacheDir).replace(/^\.\//, "/@uix/cache/");
 	// is /@uix/src
-	else return (includeDefaultDomain ? getDefaultDomainPrefix() : '') + path.getAsRelativeFrom(app.base_url).replace(/^\.\//, "/@uix/src/")
+	else {
+		return (includeDefaultDomain ? getDefaultDomainPrefix() : '') + path.getAsRelativeFrom(app.base_url).replace(/^\.\//, "/@uix/src/")
+	}
 }

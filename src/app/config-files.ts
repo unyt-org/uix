@@ -7,8 +7,13 @@ import type { AppPlugin } from "./app-plugin.ts";
 import { logger } from "../utils/global-values.ts";
 
 const default_importmap = "https://dev.cdn.unyt.org/importmap.json";
-const arg_import_map = command_line_options.option("import-map", {type:"URL", description: "Import map path"});
-
+const arg_import_map_string = command_line_options.option("import-map", {type:"string", description: "Import map path"});
+const arg_import_map = (arg_import_map_string?.startsWith("http://")||arg_import_map_string?.startsWith("https://")) ?
+	new URL(arg_import_map_string) :
+	(arg_import_map_string ? 
+		new URL("file://" + arg_import_map_string) :
+		undefined
+	)
 
 /**
  * get combined config of app.dx and deno.json and command line args
@@ -19,7 +24,7 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 	
 	if (config_path) {
 
-		const raw_config = await datex.get(config_path);
+		const raw_config = await Datex.Runtime.getURLContent(config_path);
 		if (typeof raw_config != "object" || !raw_config) {
 			throw "Invalid config file"
 		}

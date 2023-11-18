@@ -679,7 +679,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in Component.init
         // make sure static component data (e.g. datex module imports) is loaded
         await (<typeof Component>this.constructor).init();
-        this.loadTemplate();
+        await this.loadTemplate();
         this.loadDefaultStyle()
         await this.init(true);
         await this.onConstructed?.();
@@ -701,11 +701,11 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     /**
      * load template (@UIX.template)
      */
-    private loadTemplate() {
+    private async loadTemplate() {
         if ((<typeof Component> this.constructor).template) {
             // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
             const templateFn = (<typeof Component> this.constructor).template!;
-            const template = templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this);
+            const template = await templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this);
             domUtils.append(this, template);
         }
     }

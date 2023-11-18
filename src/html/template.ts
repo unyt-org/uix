@@ -76,7 +76,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Ch
 		this: Context,
 		props: Props<Options, Children, handleAllProps>,
 		propsValues: ObjectWithCollapsedValues<Props<Options, Children, handleAllProps>>
-	) => Return;
+	) => Return|Promise<Return>;
 
 
 /**

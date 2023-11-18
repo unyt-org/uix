@@ -263,7 +263,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 			script += `{\n`
 			script += `const __f1__ = ${fn.toString()};`; 
 			script += `const __original__ = el.${propName};`;
-			script += `const __f__ = async function(diff) {
+			script += `const __f__ = async function(diff, e) {
 				const val = el.${propName};
 				if (diff && val == __original__) return;
 				try {
@@ -276,13 +276,14 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 					const message = e?.message ?? e?.toString()
 					el.setCustomValidity(message)
 					el.reportValidity()
+					if (e) e.preventDefault() // TODO
 				}
 			};\n`;
 
 			// onsubmit
 			if (datexUpdateType == "onsubmit") {
 				script += `const form = querySelector('[uix-ptr="${form}"]');\n`
-				script += `form.addEventListener("submit", () => __f__(true));\n`
+				script += `form.addEventListener("submit", (e) => __f__(true, e));\n`
 			}
 			// onchange
 			else {

@@ -28,10 +28,11 @@ const a: SharedData = {
 	b: 12
 }
 
+type RefOrValueUnion<U> = (U extends any ? Datex.RefOrValue<U> : never)
 
 export type raw_content = Blob|Response // sent as raw Response
 export type special_content = URL|Deno.FsFile|HTTPStatus|Error // gets converted to a Response
-export type html_content = Datex.RefOrValue<Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|undefined|raw_content|special_content;
+export type html_content = RefOrValueUnion<JSX.Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|undefined|raw_content|special_content;
 export type html_content_or_generator<
 	CustomSharedData extends Record<string, unknown>|SharedData = SharedData,
 	CustomPrivateData extends Record<any, unknown>|PrivateData = PrivateData

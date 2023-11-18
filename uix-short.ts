@@ -11,6 +11,8 @@ import { domUtils } from "./src/app/dom-context.ts";
 import { template as _template, blankTemplate as _blankTemplate } from "./src/html/template.ts";
 import { style as _style } from "./src/html/style.ts";
 
+// TODO: remove
+export {unsafeHTML} from "./src/html/unsafe-html.ts";
 
 declare global {
 	const content: typeof _content;
@@ -46,9 +48,6 @@ globalThis.blankTemplate = _blankTemplate;
 // @ts-ignore global
 globalThis.style = _style;
 
-export function unsafeHTML(html:string, content?: Datex.RefOrValue<HTMLElement>|(Datex.RefOrValue<HTMLElement>)[]) {
-	return domUtils.createHTMLElement(html, content)
-}
 
 // @ts-ignore global HTML
 globalThis.HTML = HTML;

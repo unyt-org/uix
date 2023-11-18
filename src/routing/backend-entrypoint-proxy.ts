@@ -1,3 +1,4 @@
+import { RenderMethod } from "../base/render-methods.ts";
 import { Entrypoint } from "../html/entrypoints.ts";
 import { logger } from "../utils/global-values.ts";
 import { Path } from "../utils/path.ts";
@@ -19,7 +20,13 @@ export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 
 		// resolve entrypoint
 		const { content, render_method } = await resolveEntrypointRoute({entrypoint, route: Path.Route(ctx.path)});
-				
-		return content;
+		
+		// static response
+		if (render_method == RenderMethod.BACKEND) {
+			// TODO: handle special?
+			// already works when routing to backend route on frontend 
+		}
+
+		else return content;
 	}
 }

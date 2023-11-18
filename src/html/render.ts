@@ -274,7 +274,6 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 				} 
 				catch (e) {
 					const message = e?.message ?? e?.toString()
-					console.log("invalid input",message)
 					el.setCustomValidity(message)
 					el.reportValidity()
 				}

@@ -93,18 +93,66 @@ that there a complete UIX library and DATEX runtime is available on the frontend
 Example:
 ```tsx
 // file: backend/entrypoint.tsx
-import {renderHybrid} from "uix/base/render-methods.ts";
 
 const counter = $$(0);
 
-export default renderHybrid(
+export default
     <div>
         Counter: {counter}
         <button onclick={() => counter.val++}>Increment counter</button>
         <button onclick:frontend={() => alert("Hello")}>Show alert</button>
     </div>
+```
+
+## Hybrid Rendering with Frontend Slots
+
+With hybrid rendering, it is also possible to partially render content completely on the frontend inside predefined *slots*.
+
+In this case, you need to define content for both the backend and frontend entrypoint:
+
+```tsx
+// file: backend/entrypoint.tsx
+
+export default (
+    <div>
+        <title>Hello</title>
+        <frontend-slot>
+            Loading...
+        </frontend-slot>
+    </div>
 )
 ```
+
+```tsx
+// file: frontend/entrypoint.tsx
+
+export default (
+    <div>Created on frontend</div>
+)
+```
+
+You can also assign frontend-rendered elements to specific slots with names:
+```tsx
+// file: backend/entrypoint.tsx
+
+export default (
+    <div>
+        <frontend-slot name="a"/>
+        More backend content
+        <frontend-slot name="b"/>
+    </div>
+)
+```
+
+```tsx
+// file: frontend/entrypoint.tsx
+
+export default <>
+    <div slot="a">Div A</div> 
+    <div slot="b">Div B</div> 
+</>
+```
+
 
 ### Component Lifecycle
 

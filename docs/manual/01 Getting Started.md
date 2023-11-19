@@ -149,6 +149,15 @@ interface UIX {
 }
 ```
 
+## UIX development
+
+Per default, a UIX app is run in the `dev` stage. 
+
+In this stage, special development features are enabled:
+ * You can reset the current page state with <key>CTRL</key> <key>R</key>
+ * Error stacks for backend errors thrown during routing are displayed in the browser
+ * Source maps for TypeScript files are available in the browser
+
 
 ## Helpful articles
 

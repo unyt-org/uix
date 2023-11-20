@@ -688,8 +688,7 @@ export async function generateHTMLPage({
 	}
 
 	// TODO: fix open_graph_meta_tags?.getMetaTags()
-	return indent `
-		<!DOCTYPE html>
+	return indent `<!DOCTYPE html>
 		<html lang="${lang}" style="color-scheme:${color_scheme}">
 			<head>
 				<meta charset="UTF-8">

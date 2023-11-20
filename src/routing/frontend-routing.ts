@@ -58,7 +58,7 @@ export namespace Routing {
 		}
 
 		const backend_available = isHydrating || (backend_entrypoint ? await renderEntrypoint(backend_entrypoint) : false);
-		const frontend_available = (mergeFrontend || !backend_available) && frontend_entrypoint ? await renderEntrypoint(frontend_entrypoint, mergeFrontend) : false;
+		const frontend_available = (mergeFrontend || !backend_available) && frontend_entrypoint ? await renderEntrypoint(frontend_entrypoint, backend_available ? mergeFrontend : undefined) : false;
 
 		// no content for path found after initial loading
 		if (!frontend_available && !backend_available) {

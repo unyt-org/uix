@@ -41,13 +41,13 @@ The shared and private data for the current session can be accessed via the `Con
 ```tsx
 // backend/entrypoint.tsx
 export default {
-    '/get-name': (ctx) => {
+    '/get-name': async (ctx) => {
         // load sharedData object for this context
         const sharedData = await ctx.getSharedData()
         // return "name" entry
         return sharedData.name
     },
-    '/set-name/:name': (ctx, {name}) => {
+    '/set-name/:name': async (ctx, {name}) => {
         // load sharedData object for this context
         const sharedData = await ctx.getSharedData()
         // set "name" entry

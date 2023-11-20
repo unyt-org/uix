@@ -104,7 +104,7 @@ export default
     </div>
 ```
 
-## Hybrid Rendering with Frontend Slots
+### Hybrid Rendering with Frontend Slots
 
 With hybrid rendering, it is also possible to partially render content completely on the frontend inside predefined *slots*.
 

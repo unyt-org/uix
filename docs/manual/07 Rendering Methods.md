@@ -113,7 +113,7 @@ For the parts that should be rendered on the frontend, add a `<frontend-slot>` e
 
 A `<frontend-slot>` can contain placeholder content that is displayed until the
 actual slot content is fully rendered on the frontend.
-`<frontend-slot>` can only be defined in the backend entrypoint.
+Frontend slots can only be defined in the backend entrypoint.
 
 ```tsx
 // file: backend/entrypoint.tsx

@@ -108,7 +108,12 @@ export default
 
 With hybrid rendering, it is also possible to partially render content completely on the frontend inside predefined *slots*.
 
-In this case, you need to define content for both the backend and frontend entrypoint:
+To achieve this, define the content for both the backend and frontend entrypoint.
+
+`<frontend-slot>` elements can only be defined in the backend entrypoint.
+A `<frontend-slot>` can contain placeholder content that is displayed until the
+actual slot content is fully rendered on the frontend.
+
 
 ```tsx
 // file: backend/entrypoint.tsx
@@ -122,6 +127,8 @@ export default (
     </div>
 )
 ```
+
+In the frontend entrypoint, the content that that gets rendered inside the frontend slot is defined.
 
 ```tsx
 // file: frontend/entrypoint.tsx

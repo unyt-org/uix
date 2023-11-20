@@ -6,10 +6,14 @@
     --current_text_color_highlight: var(--text_highlight);
 } */
 
-light-root, transform-fragment {
+light-root, transform-fragment, frontend-slot {
     display: contents;
 }
 
+frontend-slot > * {
+    all: inherit;
+    display: initial;
+}
 
 :root {
     --current_text_color: var(--text);

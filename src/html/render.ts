@@ -319,7 +319,8 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 
 	const dependencies = listenerFn instanceof JSTransferableFunction ? listenerFn.deps : {};
 
-	if (listenerFn instanceof JSTransferableFunction && Object.keys(listenerFn.deps).length && !listenerFn.flags?.includes("no-datex")) {
+	const keys = listenerFn instanceof JSTransferableFunction ? Object.keys(listenerFn.deps) : null;
+	if (listenerFn instanceof JSTransferableFunction && keys!.length && !(keys!.length == 1 && keys![0] === "this") && !listenerFn.flags?.includes("no-datex")) {
 		throw new Error('use() declaration must have a "no-datex" flag because the context has no DATEX runtime: use("no-datex")')
 	}
 
@@ -554,7 +555,7 @@ export async function generateHTMLPage({
 	let metaScripts = ''
 
 	// use frontendRuntime if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content and standalone js
-	const useFrontendRuntime = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYBRID) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
+	const useFrontendRuntime = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYBRID || render_method == RenderMethod.PREVIEW) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
 
 	// js files
 	if (useFrontendRuntime) {
@@ -597,12 +598,17 @@ export async function generateHTMLPage({
 			files += indent(4) `\nlet frontend_entrypoint; if (_frontend_entrypoint.default) frontend_entrypoint = _frontend_entrypoint.default\nelse if (_frontend_entrypoint && Object.getPrototypeOf(_frontend_entrypoint) != null) frontend_entrypoint = _frontend_entrypoint;`
 		}
 
+		const isHydrating = prerendered_content && (render_method == RenderMethod.HYBRID || render_method == RenderMethod.BACKEND);
+		const isHydratingVal = isHydrating ? 'true' : 'false'
+
+		const mergeFrontendVal = render_method == RenderMethod.PREVIEW ? "'override'" : "'insert'"
+
 		if (backend_entrypoint && frontend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${prerendered_content && render_method == RenderMethod.HYBRID?'true':'false'})`
+			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
 		else if (backend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(undefined, backend_entrypoint, ${prerendered_content && render_method == RenderMethod.HYBRID?'true':'false'})`
+			files += `\n\nawait Routing.setEntrypoints(undefined, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
 		else if (frontend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined, ${prerendered_content && render_method == RenderMethod.HYBRID?'true':'false'})`
+			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal})`
 
 		files += '\n</script>\n'
 	}

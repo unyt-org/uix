@@ -19,13 +19,11 @@ export function renderHybrid<T extends html_content_or_generator>(content:T): Re
 /**
  * Server side prerendering, overriding with content on frontend
  * @param content HTML element or text content
+ * @deprecated use renderHybrid and slot default content for backend rendered content that gets overriden by frontend content
  */
-export function renderPreview<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.HYBRID, T> {
+export function renderPreview<T extends html_content_or_generator>(content:T): RenderPreset<RenderMethod.PREVIEW, T> {
 	if (UIX.context == "frontend") logger.warn("render methods have no effect for components created on the client side (renderPreview)")
-	const preset = new RenderPreset(RenderMethod.HYBRID, content)
-	// @ts-ignore
-	preset[DX_IGNORE] = true;
-	return preset
+	return new RenderPreset(RenderMethod.PREVIEW, content)
 }
 
 
@@ -71,6 +69,7 @@ export enum RenderMethod {
 	STATIC, // Just serve static HTML pages to the frontend, no frontend JS at all
 	DYNAMIC, // No server side prerendering, loading all content over DATEX
 	RAW_CONTENT, // Serve raw file content
+	PREVIEW // // Server side prerendering, override with content on frontend
 }
 
 

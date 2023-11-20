@@ -10,6 +10,7 @@ import { domUtils } from "../app/dom-context.ts";
 import { PartialHydration } from "../hydration/partial-hydration.ts";
 import { Context, ContextBuilder } from "./context.ts";
 import { COMPONENT_CONTEXT } from "../standalone/bound_content_properties.ts";
+import { querySelector } from "../uix-dom/dom/shadow_dom_selector.ts";
 
 /**
  * Generalized implementation for setting the route in the current tab URL
@@ -48,7 +49,7 @@ export namespace Routing {
 	}
 
 
-	export async function setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint, isHydrating = false) {
+	export async function setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint, isHydrating = false, mergeFrontend: 'override'|'insert'|undefined = 'insert') {
 		frontend_entrypoint = frontend;
 		backend_entrypoint = backend;
 		// entrypoints available - enable frontend routing
@@ -56,10 +57,8 @@ export namespace Routing {
 			enableFrontendRouting();
 		}
 
-		if (isHydrating) return; // no init required when hydrating
-
-		const backend_available = backend_entrypoint ? await renderEntrypoint(backend_entrypoint) : false;
-		const frontend_available = (!backend_available &&  frontend_entrypoint) ? await renderEntrypoint(frontend_entrypoint) : false;
+		const backend_available = isHydrating || (backend_entrypoint ? await renderEntrypoint(backend_entrypoint) : false);
+		const frontend_available = (mergeFrontend || !backend_available) && frontend_entrypoint ? await renderEntrypoint(frontend_entrypoint, mergeFrontend) : false;
 
 		// no content for path found after initial loading
 		if (!frontend_available && !backend_available) {
@@ -67,9 +66,36 @@ export namespace Routing {
 		}
 	}
 
-	export async function renderEntrypoint(entrypoint:Entrypoint) {
+	export async function renderEntrypoint(entrypoint:Entrypoint, mergeType?: 'override'|'insert') {
 		const content = await getContentFromEntrypoint(entrypoint, undefined)
-		if (content != null && content !== KEEP_CONTENT) await setContent(content, entrypoint)
+		if (content != null && content !== KEEP_CONTENT) {
+			if (mergeType == "insert") {
+
+				let elements = [];
+				if (content instanceof DocumentFragment) elements = [...content.children]
+				else if (content instanceof Array) elements = content;
+				else elements = [content];
+
+				for (const el of elements) {
+					let slot:HTMLElement|null = null;
+					if (el instanceof HTMLElement && el.hasAttribute("slot")) {
+						const name = el.getAttribute("slot")!
+						slot = querySelector(`frontend-slot[name="${domUtils.escapeHtml(name)}"]`) as HTMLElement;
+						if (!slot) logger.error(`Could not find a matching <frontend-slot name="${name}"/>`);
+					}
+					else {
+						slot = querySelector("frontend-slot") as HTMLElement;
+						if (!slot) logger.error("Could not find a matching <frontend-slot/>");
+					}
+	
+					if (slot) {
+						slot.innerHTML = "";
+						slot.append(el);
+					}
+				}				
+			}
+			else await setContent(content, entrypoint)
+		}
 		return content != null
 	}
 

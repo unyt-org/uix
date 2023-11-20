@@ -52,7 +52,8 @@ function buffer2hex(buffer:Uint8Array|ArrayBuffer, seperator?:string, pad_size_b
 export function init() {
 	const id = createNewID();
 	console.log("new id",id);
-	setCookie(UIX_COOKIE.endpoint, id);
+    // TODO: create + store keys, create signed endpoint validation cookie
+	setCookie(UIX_COOKIE.endpoint, id + '/0001');
     window.location.reload();
 }
 

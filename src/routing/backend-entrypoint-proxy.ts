@@ -1,4 +1,4 @@
-import { RenderMethod } from "../base/render-methods.ts";
+import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
 import { Entrypoint } from "../html/entrypoints.ts";
 import { logger } from "../utils/global-values.ts";
 import { Path } from "../utils/path.ts";
@@ -27,6 +27,6 @@ export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 			// already works when routing to backend route on frontend 
 		}
 
-		else return content;
+		else return new RenderPreset(render_method, content);
 	}
 }

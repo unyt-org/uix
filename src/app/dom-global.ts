@@ -12,6 +12,9 @@ declare global {
 	
 	const Element: typeof api.Element
 	type Element = api.Element
+
+	const Node: typeof api.Node
+	type Node = api.Node
 	
 	const HTMLElement: typeof api.HTMLElement
 	type HTMLElement = api.HTMLElement

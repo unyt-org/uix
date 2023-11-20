@@ -756,10 +756,10 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData, headers];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:render_method==RenderMethod.HYBRID, lang}), render_method, status_code, openGraphData, headers];
+		if (content instanceof Datex.Markdown) return [getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), lang}), render_method, status_code, openGraphData, headers];
 
 		// convert content to valid HTML string
-		if (content instanceof Element || content instanceof DocumentFragment) return [getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:render_method==RenderMethod.HYBRID, lang}), render_method, status_code, openGraphData, headers, content];
+		if (content instanceof Element || content instanceof DocumentFragment) return [getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), lang}), render_method, status_code, openGraphData, headers, content];
 		
 		// invalid content was created, should not happen
 		else if (content && typeof content == "object") {

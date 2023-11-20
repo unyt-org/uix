@@ -11,12 +11,15 @@ export class LightRoot extends domContext.HTMLElement {
 		// move all parent children to slots
 		for (const node of [...parent.childNodes as unknown as Iterable<Node>]) {
 			if (node === this) continue;
-			this.getChildSlot(node)?.append(node);
+			this.appendChildToSlot(node);
 		}
 
 		// proxyify parent node dom modification methods
-		parent.append = (...nodes) => {nodes.forEach(node => this.getChildSlot(node)?.append(node))}
-		parent.appendChild = (node) => {this.getChildSlot(node)?.appendChild(node); return node;}
+		parent.append = (...nodes) => {nodes.forEach(node => this.appendChildToSlot(node))}
+		parent.appendChild = (node) => {
+			this.appendChildToSlot(node, true)
+			return node;
+		}
 		parent.removeChild = (node) => {this.removeChild(node); return node;}
 
 		// TODO: support more methods, children, create virtual dom to keep track of parent children?
@@ -24,6 +27,14 @@ export class LightRoot extends domContext.HTMLElement {
 	}
 
 	#defaultSlot?: HTMLSlotElement|null = null
+
+	appendChildToSlot(child: Node|string, removeContent = false) {
+		const slot = this.getChildSlot(child);
+		if (slot) {
+			if (removeContent) slot.innerHTML = "";
+			slot.appendChild(child);
+		}
+	}
 
 	getChildSlot(child: Node|string) {
 		if (child instanceof domContext.Element && child.hasAttribute("slot")) {

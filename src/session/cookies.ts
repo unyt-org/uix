@@ -1,7 +1,7 @@
 import { getCookies as getHeaderCookies, setCookie as setHeaderCookie, deleteCookie as deleteHeaderCookie } from "../lib/cookie/cookie.ts";
 
 export const UIX_COOKIE = {
-	endpoint: "uix-endpoint",
+	endpoint: "datex-endpoint",
 	language: "uix-language",
 	theme: "uix-theme",
 	colorMode: "uix-color-mode",
@@ -9,11 +9,9 @@ export const UIX_COOKIE = {
 } as const;
 export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];
 
-
-
 export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers) {
 	if (headers) deleteHeaderCookie!(headers, name)
-    else document.cookie = name+'=; Max-Age=-99999999;';  
+    else document.cookie = name +'=; Path=/;  Domain=' + location.host +  '; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure'
 }
 
 export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:number, headers?: Headers) {
@@ -30,6 +28,7 @@ export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:numb
 		setHeaderCookie!(headers, {
 			name,
 			value,
+			// sameSite: "None",
 			path: '/',
 			expires: expiryDate
 		})

@@ -372,7 +372,7 @@ export class Server {
 
         // TODO: move, uix specific - ignore wss connections
         // TODO style noscript
-        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade" && !getCookies!(requestEvent.request.headers)["uix-endpoint"]) {
+        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade" && !getCookies!(requestEvent.request.headers)["datex-endpoint"]) {
 			let uixURL = import.meta.resolve('uix/session/init.ts');
             // local uix, use dev.cdn init as fallback - TODO: fix!;
             if (uixURL.startsWith("file://")) uixURL = "https://dev.cdn.unyt.org/uix/session/init.ts";

@@ -82,12 +82,16 @@ export async function startApp(app: {domains:string[]}, options:appOptions = {},
 			},
 			keys: Datex.Crypto.getOwnPublicKeysExported()
 		})
+
+		const dxFile = Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true)
+			.replace('"##location##"', '#location');
+
 		server.path("/.dx", async (req) => {
 			// direct web socket connection not suppported for unyt.app, don't send .dx
 			if (!req.request.headers.get("x-forwarded-host")?.endsWith(".unyt.app")) {
 				await req.respondWith(server!.getContentResponse(
 					"text/datex",
-					Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true).replace('"##location##"', '#location')
+					dxFile
 				))
 				return true;
 			}			

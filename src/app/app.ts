@@ -19,6 +19,7 @@ import "../../uix-short.ts"
 import "../base/init.ts"
 import { bindingOptions } from "./dom-context.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
+import { UIX_COOKIE, deleteCookie } from "../session/cookies.ts";
 
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
 
@@ -248,6 +249,13 @@ class App {
 		if (resetEndpoint) endpoint_config.clear();
         localStorage.clear();
 
+		// clear cookies
+		deleteCookie(UIX_COOKIE.colorMode)
+		deleteCookie(UIX_COOKIE.endpoint)
+		deleteCookie(UIX_COOKIE.language)
+		deleteCookie(UIX_COOKIE.sharedData)
+		deleteCookie(UIX_COOKIE.theme)
+
         // reset service worker
         await ServiceWorker.clearCache();
 
@@ -264,7 +272,16 @@ class App {
 export const app = new App();
 
 // @ts-ignore
-globalThis.reset = app.reset
+globalThis.reset = app.reset;
+
+// reset key shortcut
+if (app.stage == "dev") {
+	(globalThis as any).addEventListener("keydown", (e:any) => {
+		if (e.code == "KeyR" && e.ctrlKey) app.reset();
+	})
+}
+
+
 
 bindingOptions.mapFileURL = (url) => {
 	return convertToWebPath(url);

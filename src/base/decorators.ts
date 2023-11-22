@@ -3,7 +3,8 @@ import { context_kind, context_meta_getter, context_meta_setter, context_name, h
 import { logger } from "../utils/global-values.ts";
 import { getCloneKeys, Component } from "../components/Component.ts";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
-import { domContext } from "../app/dom-context.ts";
+import { domContext, domUtils } from "../app/dom-context.ts";
+import { getTransformWrapper } from "../uix-dom/datex-bindings/transform-wrapper.ts";
 
 
 
@@ -18,6 +19,7 @@ export function defaultOptions<C>(...args:any[]):any {
 	return handleDecoratorArgs(args, (...args)=>_defaultOptions(url, ...args));
 }
 
+const transformWrapper = getTransformWrapper(domUtils, domContext)
 
 function _defaultOptions(url:string, component_class:typeof HTMLElement, name:context_name, kind:context_kind, is_static:boolean, is_private:boolean, setMetadata:context_meta_setter, getMetadata:context_meta_getter, params:[any] = []) {
 	url = Object.hasOwn(component_class, "_init_module") ?
@@ -54,6 +56,9 @@ function _defaultOptions(url:string, component_class:typeof HTMLElement, name:co
 
 		const html_interface = Datex.Type.get('html').interface_config!;
 		datex_type.interface_config.cast_no_tuple = html_interface.cast_no_tuple; // handle casts from object
+		
+		Object.assign(datex_type.interface_config, transformWrapper)
+		
 		datex_type.interface_config.serialize = (value) => {
 
 			// serialize html part (style, attr, content)

@@ -16,9 +16,11 @@ const cacheDir = new Path<Path.Protocol.File, true>('./uix/', cache_path);
  */
 let version = "beta";
 try {
-	version = (await new Path("./version", import.meta.url).getTextContent()).replaceAll("\n","");
+	version = (await import("./VERSION.ts")).default
 }
-catch {/*ignore*/}
+catch {
+	console.error("Could not determine DATEX version")
+}
 
 export const UIX = {
 	version,

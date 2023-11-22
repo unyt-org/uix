@@ -25,7 +25,6 @@ export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 
 
 type version_change_handler = (version:string, prev_version:string)=>void|Promise<void>;
 
-
 // options passed in via command line arguments
 let stage: string|undefined
 let http_over_datex: boolean|undefined
@@ -46,7 +45,8 @@ export type appMetadata = {
 	version?: string,
 	stage?: string,
 	backend?: Datex.Endpoint,
-	usid?: string
+	backendLibVersions?: {uix: string, datex: string},
+	usid?: string,
 	hod?: boolean // is http-over-datex enabled?
 }
 

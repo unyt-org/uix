@@ -19,6 +19,8 @@ import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/m
 import { createProxyImports } from "./src/app/module-mapping.ts";
 import { ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { getDXConfigData } from "./src/app/dx-config-parser.ts";
+import { Path } from "./src/utils/path.ts";
+import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 
 const logger = new Datex.Logger("UIX Runner");
 
@@ -33,6 +35,18 @@ if (init) {
 	else await initBaseProject();
 }
 
+// version update?
+let forceUpdate = false;
+
+if (await handleAutoUpdate(new Path(import.meta.url).parent_dir, "UIX")) {
+	await updateCache(import.meta.resolve("./run.ts"))
+	await updateCache(import.meta.resolve("./src/app/start.ts"))
+	forceUpdate = true
+}
+if (await handleAutoUpdate(new Path(import.meta.resolve("datex-core-legacy")).parent_dir, "DATEX Core")) {
+	await updateCache(import.meta.resolve("datex-core-legacy/datex.ts"))
+	forceUpdate = true
+}
 
 
 if (clear) {
@@ -75,7 +89,7 @@ export type runParams = {
 }
 
 const params: runParams = {
-	reload: command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
+	reload: forceUpdate || command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
 	enableTLS: enableTLS,
 	inspect: command_line_options.option("inspect", {type:"boolean", description: "Enable debugging for the deno process"}),
 	unstable: command_line_options.option("unstable", {type:"boolean", description: "Enable unstable deno features"}),

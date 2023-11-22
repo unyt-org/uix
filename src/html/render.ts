@@ -625,6 +625,10 @@ export async function generateHTMLPage({
 					version: provider.app_options.version, 
 					stage: stage, 
 					backend: Datex.Runtime.endpoint.toString(),
+					backendLibVersions: {
+						uix: UIX.version,
+						datex: Datex.Runtime.VERSION,
+					},
 					host: Datex.Unyt.endpoint_info.app?.host ? Datex.Unyt.endpoint_info.app.host.toString() : null,
 					dynamicData: {
 						domains: app.domains

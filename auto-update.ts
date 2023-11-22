@@ -5,10 +5,9 @@ export async function handleAutoUpdate(baseLibPath: Path, name: string) {
 	const { renderMarkdown } = await import('https://deno.land/x/charmd/mod.ts');
 
 	baseLibPath = baseLibPath.asDir()
-	console.log("Finding updates for " + name + " (" + baseLibPath + ")")
+	// console.log("Finding updates for " + name + " (" + baseLibPath + ")")
 	const currentCachedVersion = (await import(baseLibPath.getChildPath("./VERSION.ts").toString())).default;
 	const currentVersion = (await baseLibPath.getChildPath("VERSION").getTextContent()).replaceAll("\n","")
-	console.log("versions",currentCachedVersion, currentVersion);
 	// TODO: check if current version higher?
 	if (currentCachedVersion !== currentVersion) {
 		let changelog = "";

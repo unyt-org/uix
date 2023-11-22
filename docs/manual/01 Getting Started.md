@@ -54,7 +54,7 @@ $ brew install uix
 Installation via `deno install`:
 
 ```bash
-$ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aqr -n uix https://cdn.unyt.org/uix/run.ts
+$ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
 ```
 
 ## Creating a new UIX project

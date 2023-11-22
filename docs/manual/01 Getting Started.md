@@ -82,7 +82,7 @@ $ uix
 
 You can pass the following args to the UIX command line utility:
 * `-p {PORT}`, `--port {PORT}`  - Specify the port
-* `-b`, `--watch-backend`       - Automaticall reload the backend deno process when backend files are modified
+* `-b`, `--watch-backend`       - Automatically reload the backend deno process when backend files are modified
 * `-l`, `--live`                - Automatically reload connected browsers tabs when files are modified
 * `-w`, `--watch`               - Recompile frontend scripts when files are modified
 * `-d`, `--detach`              - Keep the app running in background

@@ -634,7 +634,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     #anchor_lifecycle_ready_resolve?:Function
     #anchor_lifecycle_ready = new Promise((resolve)=>this.#anchor_lifecycle_ready_resolve = resolve)
 
-    private static template?:jsxInputGenerator<Element,any,any,any>
+    private static template?:jsxInputGenerator<HTMLElement,any,any,any>
     private static style_templates?:Set<jsxInputGenerator<DynamicCSSStyleSheet|URL,any,any,any>>
 
     /**

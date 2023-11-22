@@ -466,7 +466,7 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRo
 
 	// scripts when DOM loaded:
 	script += `
-	addEventListener("DOMContentLoaded", async ()=>{
+	(globalThis.addEventListenerOnce ?? globalThis.addEventListener)("DOMContentLoaded", async ()=>{
 		// polyfill for browsers that don't support declarative shadow DOM
 		if (!HTMLTemplateElement.prototype.hasOwnProperty('shadowRootMode')) {
 			(function attachShadowRoots(root) {
@@ -523,7 +523,8 @@ export type HTMLPageOptions = {
 	backend_entrypoint?:URL|string, 
 	open_graph_meta_tags?:OpenGraphInformation, 
 	lang?: string, 
-	livePointers?: string[]
+	livePointers?: string[],
+	includeImportMap?: boolean
 }
 
 
@@ -541,7 +542,8 @@ export async function generateHTMLPage({
 	backend_entrypoint, 
 	open_graph_meta_tags, 
 	lang, 
-	livePointers
+	livePointers,
+	includeImportMap
 }: HTMLPageOptions) {
 
 	lang ??= "en"
@@ -550,6 +552,7 @@ export async function generateHTMLPage({
 	static_js_files ??= []
 	global_css_files ??= []
 	body_css_files ??= []
+	includeImportMap ??= true;
 
 	let files = '';
 	let metaScripts = ''
@@ -646,7 +649,7 @@ export async function generateHTMLPage({
 	}
 
 	// TODO: add condition if (add_importmap), when polyfill for declarative shadow root is no longer required
-	metaScripts += `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;
+	if (includeImportMap) metaScripts += `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;
 	
 	let global_style = '';
 	// stylesheets
@@ -705,7 +708,7 @@ export async function generateHTMLPage({
 				${files}
 				${prerendered_content instanceof Array ? prerendered_content[0] : ''}
 				<script>
-					addEventListener("DOMContentLoaded", () => {
+					(globalThis.addEventListenerOnce ?? globalThis.addEventListener)("DOMContentLoaded", () => {
 						document.body.style.visibility = "visible"
 					});
 				</script>

@@ -1,4 +1,6 @@
 import { Logger } from "datex-core-legacy/utils/logger.ts";
+import { addPersistentListener } from "datex-core-legacy/utils/persistent-listeners.ts";
+
 const logger = new Logger("sse-listener")
 
 declare const EventSource:any;
@@ -37,9 +39,9 @@ export class SSEListener {
 			setTimeout(()=>this.#listenToSSE(), 500)
 		}
 
-		globalThis.addEventListener('beforeunload', () => {
+		addPersistentListener(globalThis, "beforeunload", () => {
 			evtSource.close();
-		});
+		})
 	}
 
 	handleSSECommand(cmd: string, callback: (data?:string)=>void) {

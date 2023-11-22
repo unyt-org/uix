@@ -76,7 +76,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Ch
 		this: Context,
 		props: Props<Options, Children, handleAllProps>,
 		propsValues: ObjectWithCollapsedValues<Props<Options, Children, handleAllProps>>
-	) => Return|Promise<Return>;
+	) => Return;
 
 
 /**
@@ -110,7 +110,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Ch
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(elementGenerator:jsxInputGenerator<Element, Options, never, false, false, Context>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(elementGenerator:jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, never, false, false, Context>):jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl:typeof HTMLElement)=>any)
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * Default HTML Attributes defined in JSX are also set for the root element.
@@ -122,7 +122,7 @@ export function template<Options extends Record<string, any> = {}, Children = JS
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:Element):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:JSX.Element):jsxInputGenerator<JSX.Element, Options, Children>&((cl:typeof HTMLElement)=>any)
 
 /**
  * Empty template for component
@@ -133,10 +133,10 @@ export function template<Options extends Record<string, any> = {}, Children = JS
  * ```
  * @param elementGenerator 
  */
-export function template():jsxInputGenerator<Element, Record<string, never>, never>&((cl:typeof HTMLElement)=>any)
+export function template():jsxInputGenerator<JSX.Element, Record<string, never>, never>&((cl:typeof HTMLElement)=>any)
 
 
-export function template(templateOrGenerator?:Element|jsxInputGenerator<Element, any, any, any>) {
+export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.Element|Promise<JSX.Element>, any, any, any>) {
 	let generator:any;
 	const module = getCallerFile();
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
@@ -152,12 +152,13 @@ export function template(templateOrGenerator?:Element|jsxInputGenerator<Element,
 
 			const collapsedPropsProxy = new Proxy(propsOrClass??{}, {
 				get(target,p) {
-					return val(target[p])
+					return val(target[p]);
 				},
 			});
 
 			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass, collapsedPropsProxy)
 			else return templateOrGenerator(propsOrClass, collapsedPropsProxy);
+
 		}
 	}
 	else if (templateOrGenerator) {
@@ -216,7 +217,7 @@ export function template(templateOrGenerator?:Element|jsxInputGenerator<Element,
  * ```
  * @param elementGenerator 
  */
-export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<Element, Options, Children, true, true>):jsxInputGenerator<Element, Options, Children>&((cl:typeof HTMLElement)=>any) {
+export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children, true, true>):jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl:typeof HTMLElement)=>any) {
 	return function(props:any) {
 		const collapsedPropsProxy = new Proxy(props??{}, {
 			get(target,p) {

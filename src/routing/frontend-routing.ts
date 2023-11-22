@@ -8,9 +8,10 @@ import { KEEP_CONTENT } from "../html/entrypoint-providers.tsx";
 import { displayError } from "../html/errors.tsx";
 import { domUtils } from "../app/dom-context.ts";
 import { PartialHydration } from "../hydration/partial-hydration.ts";
-import { Context, ContextBuilder } from "./context.ts";
-import { COMPONENT_CONTEXT } from "../standalone/bound_content_properties.ts";
+import { ContextBuilder } from "./context.ts";
 import { querySelector } from "../uix-dom/dom/shadow_dom_selector.ts";
+import { recreateGlobalStyleSheetLinks } from "../utils/css-style-compat.ts";
+import { recreatePersistentListeners } from "datex-core-legacy/utils/persistent-listeners.ts";
 
 /**
  * Generalized implementation for setting the route in the current tab URL
@@ -44,7 +45,7 @@ export namespace Routing {
 
 		history.pushState(null, "", route.routename);
 	
-		if (!silent) return handleCurrentURLRoute();
+		if (!silent) return resolveCurrentRoute();
 		else return true;
 	}
 
@@ -74,6 +75,9 @@ export namespace Routing {
 				let elements = [];
 				if (content instanceof DocumentFragment) elements = [...content.children]
 				else if (content instanceof Array) elements = content;
+				else if (content instanceof Response) {
+					logger.error("Frontend entrypoint returned a Response object - this cannot be merged with the provided backend content");
+				}
 				else elements = [content];
 
 				for (const el of elements) {
@@ -161,9 +165,20 @@ export namespace Routing {
 	async function renderResponse(response: Response) {
 		if (response.body instanceof ReadableStream) {
 			if (isContentType(response, "text/html")) {
-				document.body.innerHTML = await response.text();
+				if (response.redirected) setCurrentRoute(response.url, true);
+				try {
+					document.write(await response.text());
+				}
+				catch (e) {
+					console.error(e)
+				}
+				// important: insert global style sheet urls from already loaded component classes again
+				await recreateGlobalStyleSheetLinks()
+				recreatePersistentListeners()
+				document.close();
 			}
 			else if (isContentType(response, "text/plain")) {
+				if (response.redirected) setCurrentRoute(response.url, true);
 				const content = await response.text()
 				document.body.innerHTML = '<pre style="all:initial;word-wrap: break-word; white-space: pre-wrap;">'+domUtils.escapeHtml(content)+'</pre>'
 			}
@@ -188,46 +203,78 @@ export namespace Routing {
 	}
 
 
-	async function handleCurrentURLRoute(allowReload=true){
+	async function resolveCurrentRoute(allowReload=true){
 		let content:any;
 		let entrypoint:Entrypoint|undefined;
 
-		// try frontend entrypoint
-		if (frontend_entrypoint) {
-			content = await getContentFromEntrypoint(frontend_entrypoint)
-			entrypoint = frontend_entrypoint;
-		}
-
-		// try backend entrypoint
-		if (content == null && backend_entrypoint) {
-			content = await getContentFromEntrypoint(backend_entrypoint);
-			entrypoint = backend_entrypoint;
-		}
-		if (!frontend_entrypoint && !backend_entrypoint) {
-			const inferred_entrypoint = getInferredDOMEntrypoint();
-			const _content = await getContentFromEntrypoint(inferred_entrypoint);
-			const refetched_route = await refetchRoute(getCurrentRouteFromURL(), inferred_entrypoint);
-			
-			// check of accepted route matches new calculated current_route
-			if (!Path.routesAreEqual(getCurrentRouteFromURL(), refetched_route)) {
-				logger.warn `invalid route from inferred frontend entrypoint, reloading page from backend`; 
-				if (allowReload) window?.location?.reload?.()
-				return false
+		// try to load backend route content
+		const backendResponse = await fetch(getCurrentRouteFromURL().routename, {
+			credentials: "include",
+			headers: {
+				'UIX-Inline-Backend': 'true' // prevent duplicate loading of importmap (leads to errors)
 			}
-			// window.location.reload()
-			return true;
-			// TODO: what to do with returned content (full entrypoint route not known)
+		})
+
+		// handle redirect (does not matter if response ok or not)
+		if (backendResponse.redirected) setCurrentRoute(backendResponse.url, true);
+
+		// load backend content
+		if (backendResponse.ok) {
+			// is supported mime type for frontend rendering?
+			if (isContentType(backendResponse, "text/html") || isContentType(backendResponse, "text/plain")) {
+				content = backendResponse
+			}
+			// reload window to correctly display backend response
+			// TODO: better solution?
+			else {
+				window.location.reload()
+			}
 		}
 
-		// still nothing found - route could not be fully resolved on frontend, try to reload from backend
-		if (content == null) {
-			logger.warn `no content for ${getCurrentRouteFromURL().routename}, reloading page from backend`; 
-			if (allowReload) window?.location?.reload?.()
-			return false;
+		else {
+			// try frontend entrypoint
+			if (frontend_entrypoint) {
+				content = await getContentFromEntrypoint(frontend_entrypoint)
+				entrypoint = frontend_entrypoint;
+			}
+			else {
+				displayError("UIX Rendering Error", "Route not found on backend or frontend");
+				return false;
+			}
 		}
 
-		await setContent(content, entrypoint!);
+		setContent(content, entrypoint!);
 		return true;
+
+		// // try backend entrypoint
+		// if (content == null && backend_entrypoint) {
+		// 	content = await getContentFromEntrypoint(backend_entrypoint);
+		// 	entrypoint = backend_entrypoint;
+		// }
+		// if (!frontend_entrypoint && !backend_entrypoint) {
+		// 	const inferred_entrypoint = getInferredDOMEntrypoint();
+		// 	const _content = await getContentFromEntrypoint(inferred_entrypoint);
+		// 	const refetched_route = await refetchRoute(getCurrentRouteFromURL(), inferred_entrypoint);
+			
+		// 	// check of accepted route matches new calculated current_route
+		// 	if (!Path.routesAreEqual(getCurrentRouteFromURL(), refetched_route)) {
+		// 		logger.warn `invalid route from inferred frontend entrypoint, reloading page from backend`; 
+		// 		if (allowReload) window?.location?.reload?.()
+		// 		return false
+		// 	}
+		// 	// window.location.reload()
+		// 	return true;
+		// 	// TODO: what to do with returned content (full entrypoint route not known)
+		// }
+
+		// // still nothing found - route could not be fully resolved on frontend, try to reload from backend
+		// if (content == null) {
+		// 	logger.warn `no content for ${getCurrentRouteFromURL().routename}, reloading page from backend`; 
+		// 	if (allowReload) window?.location?.reload?.()
+		// 	return false;
+		// }
+
+		// await setContent(content, entrypoint!);
 	}
 
 	function getInferredDOMEntrypoint(){
@@ -245,19 +292,19 @@ export namespace Routing {
 		const route = route_should_equal ?? current;
 
 		// first load current route
-		if (load_current_new) await handleCurrentURLRoute();
+		if (load_current_new) await resolveCurrentRoute();
 
 		let changed = !!route_should_equal;
 
 		const usingInferredEntrypoint = !current_entrypoint; // reconstructing entrypoint from DOM. Probable reason: content was server side rendered
-		const entrypoint = current_entrypoint ?? getInferredDOMEntrypoint();
+		const entrypoint = current_entrypoint// ?? getInferredDOMEntrypoint();
 
 		if (entrypoint) {
 			// entrypoint was inferred but inferred entrypoint was not yet initially routed
 			if (usingInferredEntrypoint) {
 				const loadedInitial = entrypoint[INITIAL_LOAD];
 				entrypoint[INITIAL_LOAD] = true;
-				if (!loadedInitial) await handleCurrentURLRoute();
+				if (!loadedInitial) await resolveCurrentRoute();
 			} 
 
 			// TODO: use route refetching?
@@ -306,7 +353,7 @@ export namespace Routing {
 				// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)
 				e.intercept({
 					async handler() {
-						await handleCurrentURLRoute();
+						await resolveCurrentRoute();
 					},
 					focusReset: 'manual',
 					scroll: 'manual'
@@ -318,7 +365,7 @@ export namespace Routing {
 		// fallback if "navigate" event not supported - only works for # paths, otherwise, page is reloaded
 		else {
 			globalThis.addEventListener('popstate', (e) => {
-				handleCurrentURLRoute();
+				resolveCurrentRoute();
 			})
 		}
 	}

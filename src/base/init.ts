@@ -12,6 +12,7 @@ import { initSession } from "../session/frontend.ts";
 
 // custom dom elements
 import "../html/light-root.ts"
+import { overrideEventTargetPrototype } from "datex-core-legacy/utils/persistent-listeners.ts";
 
 if (client_type == "browser") {
 	await initSession();
@@ -19,6 +20,11 @@ if (client_type == "browser") {
 
 
 if (UIX.context == "frontend") {
+
+
+	// TODO: keep this? only required when using document.write
+	overrideEventTargetPrototype()
+
     // keyboard overlay content (on chrome)
     if ('virtualKeyboard' in navigator) {
         // @ts-ignore

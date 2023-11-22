@@ -741,7 +741,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 	 * @param context request context
 	 * @returns 
 	 */
-	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers, contentElement?: Element]> {
+	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content|null, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers, contentElement?: Element]> {
 		// extract content from provider, depending on path
 		const {content, render_method, status_code, headers} = await resolveEntrypointRoute({
 			entrypoint: entrypoint,
@@ -767,13 +767,16 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 			const [status_code, html] = createErrorHTML(`Cannot render content type`, 500);
 			return [getOuterHTML(html, {includeShadowRoots:true, lang}), RenderMethod.STATIC, status_code, undefined];
 		}
-		else return [domUtils.escapeHtml(content?.toString() ?? ""), render_method, status_code, openGraphData, headers];
+		else return [content ? domUtils.escapeHtml(content.toString() ?? "") : null, render_method, status_code, openGraphData, headers];
 	}
 
 	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider, recursiveError = true) {
 		const url = new Path(requestEvent.request.url);
 		const pathAndQueryParameters = url.normal_pathname + url.search;
 		const lang = ContextBuilder.getRequestLanguage(requestEvent.request);
+
+		const isInlineRendered = requestEvent.request.headers.get("UIX-Inline-Backend") == "true"
+
 		try {
 			this.updateCheckEntrypoint();
 
@@ -781,6 +784,15 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 			// Datex.Runtime.ENV.LANG = lang;
 			// await Datex.Runtime.ENV.$.LANG.setVal(lang);
 			const [prerendered_content, render_method, status_code, open_graph_meta_tags, headers, contentElement] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
+
+			// empty backend route & UIX-Inline-Backend => return 400 and just render frontend route
+			if (isInlineRendered && render_method == RenderMethod.DYNAMIC && prerendered_content==null) {
+				try {
+					await this.server.sendError(requestEvent, 500);
+				}
+				catch {/* ignore*/}
+				return;
+			}
 
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == RenderMethod.RAW_CONTENT) {
@@ -797,7 +809,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				combinedHeaders.set('content-language', lang)
 
 				let themeName = getCookie(UIX_COOKIE.theme, requestEvent.request.headers)!
-				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers) ?? UIX.Theme.mode;
+				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers) as "dark"|"light" ?? UIX.Theme.mode;
 				
 				let currentThemeCSS = UIX.Theme.getThemeCSS(themeName, true);
 				// theme not found on the backend
@@ -825,7 +837,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					"text/html", 
 					await generateHTMLPage({
 						provider: this,
-						prerendered_content: prerendered_content as string,
+						prerendered_content: (prerendered_content??"") as string,
 						render_method,
 						js_files: this.#client_scripts,
 						lang,
@@ -837,7 +849,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 						frontend_entrypoint: this.#entrypoint,
 						backend_entrypoint: this.#backend?.web_entrypoint,
 						open_graph_meta_tags,
-						livePointers: liveNodePointers
+						livePointers: liveNodePointers,
+						includeImportMap: !isInlineRendered
 					}),
 					undefined, status_code, combinedHeaders
 				);

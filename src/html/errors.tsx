@@ -63,7 +63,7 @@ export function createErrorHTML(title: string, error?: Error|number|HTTPStatus<n
 		const stack = domUtils.escapeHtml(stackMessage).replace(matchURL, `<a target="_blank" onclick="event.preventDefault();document.getElementById('source-iframe').src='$&${isBackend ? ':source': ''}'" style="color:#a4c1f3" href="$&${isBackend ? ':source': ''}">$&</a>`)
 		errorMessage = unsafeHTML(`<div>${stack}</div>`);
 		attachment = lastURL ? 
-			<iframe id="source-iframe" onload={bindToOrigin(e => e.target.style.display="block")} style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+(isBackend ? ':source': '')}></iframe> :
+			<iframe id="source-iframe" onload:frontend={e => e.target.style.display="block"} style="height: 250px;margin-top: 30px;width: 100%;border:none; border-radius:8px" src={lastURL+(isBackend ? ':source': '')}></iframe> :
 			undefined;
 	}
 

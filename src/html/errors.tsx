@@ -11,7 +11,7 @@ function createErrorMessageHTML(title: string, message?: string|Element, attachm
 
 	return <div style="all: revert; font-size: 1rem; position: absolute; left: 0; top: 0; width:100%; height:100vh; background-color:#282828; display:flex; justify-content:center; align-items:center">
 		
-		<div style="display:grid; padding:20px; margin: 15px; color: #ef7b7b; background-color:#4e3635; border-radius:10px; width: fit-content;max-width: 100%; max-height: 100%; overflow: scroll; ">
+		<div style="display:grid; padding:20px; margin: 15px; color: #ef7b7b; background-color:#4e3635; border-radius:10px; width: fit-content;max-width: 100%; max-height: 100%; overflow: auto;">
 			<div style="display:flex">
 				<svg style="margin-top: 2px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
 					<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>

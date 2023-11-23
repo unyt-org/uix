@@ -1,5 +1,5 @@
 import { Logger } from "datex-core-legacy/utils/logger.ts";
-import { getInjectedAppData } from "../app/app-data.ts";
+import { getInjectedAppDataStandalone } from "../app/app-data-standalone.ts";
 import { SSEListener } from "./sse-listener.ts";
 import { querySelector } from "../uix-dom/dom/shadow_dom_selector.ts";
 // import { getServiceWorkerThread, ThreadModule } from "datex-core-legacy/threads/threads.ts";
@@ -30,7 +30,7 @@ export class BackgroundRunner {
 	// TODO: implement with sw thread
 	enableHotReloading() {
 		if (this.#hotReloadListener) return;
-		const usid = getInjectedAppData()?.usid;
+		const usid = getInjectedAppDataStandalone()?.usid;
 		if (!usid) {
 			logger.error("Could not enable hot reloading");
 			return false;

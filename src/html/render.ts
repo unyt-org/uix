@@ -77,7 +77,7 @@ function loadInitScript(component:(Element|ShadowRoot) & {getStandaloneInit?:()=
 	}
 }
 
-export function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collectedStylsheets?:string[], standaloneContext = false) {
+export function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collectedStylesheets?:string[], standaloneContext = false) {
 	if (!opts?.includeShadowRoots) return el.innerHTML;
 
 	let html = "";
@@ -99,19 +99,19 @@ export function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collec
 
 	else {
 		// @ts-ignore
-		if (el.style_sheets_urls && collectedStylsheets) collectedStylsheets.push(...el.style_sheets_urls)
+		if (el.style_sheets_urls && collectedStylesheets) collectedStylesheets.push(...el.style_sheets_urls)
 		// @ts-ignore
-		if (el.activatedScopedStyles && collectedStylsheets) collectedStylsheets.push(...el.activatedScopedStyles)
+		if (el.activatedScopedStyles && collectedStylesheets) collectedStylesheets.push(...el.activatedScopedStyles)
 	}
 
 	for (const child of (el.childNodes as unknown as Node[])) {
-		html += _getOuterHTML(child, opts, collectedStylsheets, standaloneContext);
+		html += _getOuterHTML(child, opts, collectedStylesheets, standaloneContext);
 	}
 
 	return html || domUtils.escapeHtml((el as HTMLElement).innerText ?? ""); // TODO: why sometimes no childnodes in jsdom (e.g UIX.Elements.Button)
 }
 
-function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:string[], isStandaloneContext = false):string {
+function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:string[], isStandaloneContext = false):string {
 	isStandaloneContext = isStandaloneContext || (<any>el)[STANDALONE];
 
 	if (el instanceof domContext.Text) return domUtils.escapeHtml(el.textContent ?? ""); // text node
@@ -119,7 +119,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 	if (el instanceof domContext.DocumentFragment) {
 		const content = [];
 		for (const child of (el.childNodes as unknown as Node[])) {
-			content.push(_getOuterHTML(child, opts, collectedStylsheets, isStandaloneContext));
+			content.push(_getOuterHTML(child, opts, collectedStylesheets, isStandaloneContext));
 		}
 		return content.join("\n");
 	}
@@ -149,7 +149,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylsheets?:strin
 		opts.forms.push(dataPtr)
 	}
 
-	const inner = getInnerHTML(el, opts, collectedStylsheets, isStandaloneContext);
+	const inner = getInnerHTML(el, opts, collectedStylesheets, isStandaloneContext);
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
 	
@@ -432,9 +432,19 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRo
 
 	// add collected stylesheet urls from html components
 	let injectedStyles = ""
-	for (const url of collectedStylesheets) {
-		const link = `<link rel="stylesheet" href="${convertToWebPath(url)}">`;
-		if (!injectedStyles.includes(link)) injectedStyles += `${link}\n`;
+	let injectedStyleSheets = new Set<string>()
+	for (const urlOrStylesheet of collectedStylesheets) {
+		if (urlOrStylesheet instanceof CSSStyleSheet) {
+			const css = urlOrStylesheet._cached_css ?? [...urlOrStylesheet.cssRules].map(c=>c.cssText).join("\n");
+			if (!injectedStyleSheets.has(css)) {
+				injectedStyles += `<style>${css}</style>`
+				injectedStyleSheets.add(css)
+			}
+		}
+		else {
+			const link = `<link rel="stylesheet" href="${convertToWebPath(urlOrStylesheet)}">`;
+			if (!injectedStyles.includes(link)) injectedStyles += `${link}\n`;
+		}
 	}
 	html = injectedStyles + html;
 
@@ -726,10 +736,7 @@ export async function generateHTMLPage({
 				</noscript>
 			</head>
 			<body style="visibility:hidden;" data-color-scheme="${color_scheme}">
-				<template shadowrootmode=open>
-					<slot></slot>
-					${body_style}
-				</template>` +
+			` +
 (prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')) + `
 			</body>
 		</html>

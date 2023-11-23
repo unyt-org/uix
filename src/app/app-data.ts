@@ -1,13 +1,12 @@
 import { Datex } from "datex-core-legacy/mod.ts";
 import { UIX } from "../../uix.ts";
 import { logger } from "../utils/global-values.ts";
-import { appMetadata } from "./app.ts";
+import { getInjectedAppDataStandalone } from "./app-data-standalone.ts";
 
 export function getInjectedAppData() {
 	// get injected uix app metadata
-	const appDataContent = ((globalThis as any).document)?.querySelector("script[type=uix-app]")?.textContent
-	const appData = appDataContent ? JSON.parse(appDataContent) as {[key in keyof appMetadata]: appMetadata[key]} : undefined;
-
+	const appData = getInjectedAppDataStandalone()
+	
 	// compare current backend and frontend version
 	if (appData?.backendLibVersions) {
 		if (appData.backendLibVersions.uix !== UIX.version) {

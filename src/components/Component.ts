@@ -711,7 +711,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     }
 
     /**
-     * load stylesheet from @UIX.style
+     * load stylesheet from @style
      */
     private loadDefaultStyle() {
         for (const templateFn of (<typeof Component> this.constructor).style_templates??[]) {
@@ -719,13 +719,13 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             const options = Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options
             const stylesheet = templateFn(options, this)
             // invalid scoped stylesheet
-            if (stylesheet.scope && stylesheet.scope !== this.tagName) throw new Error(`Stylesheet uses multiple component scopes (<${stylesheet.scope.toLowerCase()}>, <${this.tagName.toLowerCase()}>). Make sure you don't use the same stylesheet for multiple components.`)
+            if (stylesheet.scope && stylesheet.scope !== this.tagName.toLowerCase()) throw new Error(`Stylesheet uses multiple component scopes (<${stylesheet.scope.toLowerCase()}>, <${this.tagName.toLowerCase()}>). Make sure you don't use the same stylesheet for multiple components.`)
             // inject css scoping if component has no shadow root
             if (stylesheet instanceof CSSStyleSheet && !this.shadowRoot && !stylesheet.scope) {
-                const css = [...(stylesheet.cssRules as any)].map(r=>r.cssText).join("\n");
-                const scopedCSS = addCSSScopeSelector(css, this.tagName)
+                const css = stylesheet._cached_css ?? [...(stylesheet.cssRules as any)].map(r=>r.cssText).join("\n");
+                const scopedCSS = addCSSScopeSelector(css, this.tagName.toLowerCase())
                 stylesheet.replaceSync(scopedCSS)
-                stylesheet.scope = this.tagName;
+                stylesheet.scope = this.tagName.toLowerCase();
             }
             if (stylesheet instanceof CSSStyleSheet && stylesheet.activate) {
                 stylesheet.activate(this.shadowRoot??document);

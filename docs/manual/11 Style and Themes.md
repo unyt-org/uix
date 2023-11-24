@@ -9,7 +9,8 @@ to other components.
 
 You can use the `:host` selector to access the component root element (also when not using a shadow dom).
 
-For general global styles, you can add an `entrypoint.(s)css` file next to the `entrypoint.ts` file.
+If you need to apply styles to elements outside of a component,
+you can define general global styles in an `entrypoint.(s)css` file next to the `entrypoint.ts` file.
 
 ## Inline styles
 

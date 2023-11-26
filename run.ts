@@ -7,7 +7,7 @@ import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppC
 
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
-import { clear, command_line_options, enableTLS, login, init, rootPath, stage } from "./src/app/args.ts";
+import { clear, command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live } from "./src/app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
@@ -87,6 +87,8 @@ export type runParams = {
 	detach: boolean | undefined;
     deno_config_path: URL | null;
 }
+
+const isWatching = live || watch_backend;
 
 const params: runParams = {
 	reload: forceUpdate || command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
@@ -171,7 +173,7 @@ async function runBackends(options: normalizedAppOptions) {
 
 	// no backends defined, can just run local
 	if (!options.backend.length) {
-		runLocal(params, new_base_url, options);
+		runLocal(params, new_base_url, options, isWatching);
 		return;
 	}
 
@@ -230,7 +232,7 @@ async function runBackends(options: normalizedAppOptions) {
 					(new Datex.Logger()).error("Cannot run the UIX app directly on the CI Runner.\n Make sure your .dx configuration is correct.\n The 'location' option for the '"+stage+"' stage must be a host endpoint, but is currently unset (defaults to local)\n Example .dx configuration: \n" + example)
 					Deno.exit(1);
 				}
-				runLocal(params, new_base_url, options)
+				runLocal(params, new_base_url, options, isWatching)
 			}
 		}
 		catch (e) {

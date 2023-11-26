@@ -1,6 +1,6 @@
 import { normalizedAppOptions } from "../app/options.ts";
 import { stage, env, watch } from "../app/args.ts";
-import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";
+import { ESCAPE_SEQUENCES, verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
 import { Path } from "../utils/path.ts";
 import { runParams } from "./runner.ts";
@@ -71,6 +71,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 	// sanitized uix args
 	const args = [];
 	if (watch) args.push("--watch");
+	if (verboseArg) args.push("--verbose");
 
 	try {
 		let loaded = false;

@@ -12,7 +12,7 @@ export const CTRLSEQ = {
 
 
 
-export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions) {
+export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
 
 	const run_script_url = "app/start.ts"
 	const run_script_abs_url = options.import_map.imports['uix/'] + run_script_url;
@@ -94,6 +94,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				...Deno.args,
 			]
 		})
+
+
 		// detach, continues in background
 		// TODO: fix child process does not keep running correctly
 		if (params.detach) {
@@ -104,7 +106,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		if (exitStatus.code == 42) {
 			await run();
 		}
-		else {
+		else if (isWatching) {
 			console.log("waiting until files are updated...");
 			// error - wait until a file was modified before restart
 			for await (const _event of Deno.watchFs(new Path(root_path).normal_pathname, {recursive: true})) {
@@ -112,5 +114,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			}
 			await run();
 		}
+
+		Deno.exit(exitStatus.code);
 	}
 }

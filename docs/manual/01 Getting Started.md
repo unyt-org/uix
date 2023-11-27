@@ -158,6 +158,16 @@ In this stage, special development features are enabled:
  * Error stacks for backend errors thrown during routing are displayed in the browser
  * Source maps for TypeScript files are available in the browser
 
+### Running UIX apps locally
+
+Per default, UIX apps run on `http://localhost:80`.
+You can specify a custom port with the `--port` argument if this port is not available
+on your system or if you want to run multiple UIX simultaneously.
+
+> [!WARNING]
+> Keep in mind that the cookies are the same for all localhost apps, regardless of the port.
+> This can lead to unexpected behaviour when opening multiple apps that are running on different localhost ports in the same browser (e.g. endpoint and themes might get overridden).
+
 
 ## Helpful articles
 

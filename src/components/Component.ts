@@ -776,9 +776,10 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         const loaders = []
         for (const url of (<typeof Component>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
     
-        Datex.Pointer.onPointerForValueCreated(this, ()=>{
-            bindObserver(this)
-        })
+        // TODO: required? should probably not be called per default
+        // Datex.Pointer.onPointerForValueCreated(this, ()=>{
+        //     bindObserver(this)
+        // })
 
         this.onCreateLayout?.(); // custom layout extensions
 

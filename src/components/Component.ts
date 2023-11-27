@@ -776,10 +776,14 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         const loaders = []
         for (const url of (<typeof Component>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
     
-        // TODO: required? should probably not be called per default
-        // Datex.Pointer.onPointerForValueCreated(this, ()=>{
-        //     bindObserver(this)
-        // })
+        Datex.Pointer.onPointerForValueCreated(this, () => {
+            const pointer = Datex.Pointer.getByValue(this)!
+            if (!this.hasAttribute("uix-ptr")) this.setAttribute("uix-ptr", pointer.id);
+
+            // TODO: required? should probably not be called per default
+            // bindObserver(this)
+        })
+
 
         this.onCreateLayout?.(); // custom layout extensions
 
@@ -840,6 +844,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     public getStandaloneInit() {
         let js_code = '';
  
+        console
         js_code += `const self = querySelector("[uix-ptr='${this.getAttribute("uix-ptr")}']");\n`
         js_code += `bindPrototype(self, globalThis.UIX_Standalone.${this.constructor.name});\n`
 

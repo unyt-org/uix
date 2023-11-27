@@ -1,7 +1,16 @@
 import { doc } from "https://deno.land/x/deno_doc@0.68.0/mod.ts";
 import { Path } from "../utils/path.ts";
+import { sha256 } from "datex-core-legacy/utils/sha256.ts";
+
+const caches = new Map<string, [hash: string, generated: string]>()
 
 export async function getEternalModule(filePath: Path, specifier: string) {
+
+	const pathString = filePath.toString();
+	const hash = sha256(await Deno.readTextFile(filePath.normal_pathname));
+	const cached = caches.get(pathString);
+	if (hash && cached && cached?.[0] === hash) return cached[1];
+
 	const tree = await doc(filePath.toString(), {
 		load: async (specifier) => {
 			if (specifier == filePath.toString()) return {kind: "module", specifier, content: await Deno.readTextFile(filePath.normal_pathname)};
@@ -28,6 +37,9 @@ export async function getEternalModule(filePath: Path, specifier: string) {
 		if (exportName == "default") source += `export default await lazyEternalVar("${exportName}") ?? $$((await import("${specifier}"))["${exportName}"]);\n`;
 		else source += `export const ${exportName} = await lazyEternalVar("${exportName}") ?? $$((await import("${specifier}"))["${exportName}"]);\n`;
 	}
+
+	// save in cache (TODO: store file?)
+	if (hash) caches.set(pathString, [hash, source]);
 
 	return source;
 }

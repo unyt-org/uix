@@ -63,7 +63,7 @@ type Props<Options extends Record<string,unknown>, Children, handleAllProps = tr
 (
 	handleAllProps extends true ? 
 		(JSX._IntrinsicAttributes & 
-			(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: Children}))
+			(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: Children})) // TODO: optional children for JSX, but not for template callback function
 		) : unknown
 )
 
@@ -217,15 +217,31 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
  * ```
  * @param elementGenerator 
  */
-export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children, true, true>):jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl:typeof HTMLElement)=>any) {
-	return function(props:any) {
-		const collapsedPropsProxy = new Proxy(props??{}, {
-			get(target,p) {
-				return val(target[p])
-			},
-		});
+export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children extends any[] ? Children : Children[], true, true>):jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl:typeof HTMLElement)=>any) {
+	const module = getCallerFile();
 
-		return elementGenerator(props, collapsedPropsProxy);
+	return function generator(propsOrClass:any) {
+
+		// decorator
+		if (Component.isPrototypeOf(propsOrClass)) {
+			propsOrClass._init_module = module;
+			const decoratedClass = defaultOptions(propsOrClass)
+			decoratedClass.template = generator
+			decoratedClass[SET_DEFAULT_CHILDREN] = false;
+			return decoratedClass
+		}
+
+		else {
+			const collapsedPropsProxy = new Proxy(propsOrClass??{}, {
+				get(target,p) {
+					return val(target[p])
+				},
+			});
+	
+			return elementGenerator(propsOrClass, collapsedPropsProxy);
+		}
+
+		
 	}
 }
 

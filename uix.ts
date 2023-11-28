@@ -9,7 +9,7 @@ import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 /**
  * get UIX cache path
  */
-const cacheDir = new Path<Path.Protocol.File, true>('./uix/', cache_path);
+const cacheDir = client_type == "deno" ? new Path<Path.Protocol.File, true>('./uix/', cache_path) : new Path<Path.Protocol.HTTP|Path.Protocol.HTTPS, true>('/@uix/cache/', location.origin);
 
 /**
  * get version from ./version file

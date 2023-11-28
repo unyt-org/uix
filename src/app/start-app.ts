@@ -1,5 +1,5 @@
 import { Datex, f } from "datex-core-legacy";
-import type { appOptions } from "./options.ts";
+import type { appOptions, normalizedAppOptions } from "./options.ts";
 import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
 import { http_over_datex, live, stage, watch, watch_backend } from "./args.ts";
 import { BackendManager } from "./backend-manager.ts";
@@ -9,7 +9,7 @@ import { Path } from "../utils/path.ts";
 
 const logger = new Datex.Logger("UIX App");
 
-export async function startApp(app: {domains:string[]}, options:appOptions = {}, original_base_url?:string|URL) {
+export async function startApp(app: {domains:string[], options?:normalizedAppOptions, base_url?: URL}, options:appOptions = {}, original_base_url?:string|URL) {
 
 	const frontends = new Map<string, FrontendManager>()
 
@@ -17,6 +17,10 @@ export async function startApp(app: {domains:string[]}, options:appOptions = {},
 	const {normalizeAppOptions} = await import("./options.ts")
 
 	const [nOptions, baseURL] = await normalizeAppOptions(options, original_base_url);
+
+	// set app base_url + options directly
+	app.options = nOptions;
+	app.base_url = baseURL;
 
 	// for unyt log
 	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") && Deno.env.get("UIX_HOST_ENDPOINT")!.startsWith("@") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, dynamicData: app})

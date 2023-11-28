@@ -19,6 +19,7 @@ export interface Theme {
 	scripts?: Readonly<(URL|string)[]>,
 	onActivate?: () => void|Promise<void>,
 	onDeactivate?: () => void|Promise<void>
+	onRegister?: () => void|Promise<void>
 }
 
 type themeName = "uix-dark" | "uix-dark-plain" | "uix-light" | "uix-light-plain" | (string&{});
@@ -127,6 +128,8 @@ class ThemeManager  {
 		this.#loadedThemes.set(theme.name, theme);
 		this.addGlobalThemeClass(theme);
 		this.#themeCustomStylesheets.set(theme.name, [...this.#normalizeThemeStylesheets(theme)])
+
+		if (theme.onRegister && client_type == "deno") theme.onRegister()
 	}
 
 	/**
@@ -159,15 +162,24 @@ class ThemeManager  {
 
 	
 	/**
-	 * Activate themes.
+	 * Activate multiple themes. All previously activated themes
+	 * are disabled.
+	 * 
 	 * The current theme is automatically selected
 	 * from the provided themes, depending on the current dark/light mode
 	 * @param themes 
 	 */
-	public useThemes(...themes: themeName[]) {
+	public useThemes(...themes: (themeName|Theme)[]) {
 		let hasDarkTheme = false;
 		let hasLightTheme = false;
-		for (const name of themes) {
+		for (const nameOrTheme of themes) {
+			let name: string;
+			if (typeof nameOrTheme == "object") {
+				this.registerTheme(nameOrTheme);
+				name = nameOrTheme.name;
+			}
+			else name = nameOrTheme;
+
 			const theme = this.getTheme(name);
 			if (!theme) logger.warn(`Theme ${name} is not a registered theme`);
 			else {
@@ -186,6 +198,15 @@ class ThemeManager  {
 		// no custom themes found, activate default themes
 		if (!hasDarkTheme) this.setDefaultDarkTheme(uixDark)
 		if (!hasLightTheme) this.setDefaultLightTheme(uixLight)
+	}
+
+	/**
+	 * Activate a theme. All previously activated themes
+	 * are disabled.
+	 * @param themes 
+	 */
+	public useTheme(theme: themeName|Theme) {
+		return this.useThemes(theme)
 	}
 
 	/**

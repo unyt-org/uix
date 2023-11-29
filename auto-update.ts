@@ -26,8 +26,10 @@ export async function handleAutoUpdate(baseLibPath: Path, name: string) {
 }
 
 export async function updateCache(module: URL|string) {
-	const removeDenoLockCommand = new Deno.Command("rm", {args: ["deno.lock"]});
-	await removeDenoLockCommand.output()
+	const denoLock = Path.File(Deno.cwd()).asDir().getChildPath("deno.lock");
+	if (denoLock.fs_exists) {
+		await Deno.remove(denoLock.normal_pathname)
+	}
 
 	console.log("-> updating " + module)
 	const cacheReloadCommand = new Deno.Command(Deno.execPath(), {

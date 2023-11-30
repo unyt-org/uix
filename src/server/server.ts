@@ -381,7 +381,7 @@ export class Server {
                 <noscript>Please activate JavaScript in your browser!</noscript>
                 <script type="module" src="${uixURL}"></script>
             `
-			await this.serveContent(requestEvent, "text/html", html, undefined, undefined, undefined, false);
+			await this.serveContent(requestEvent, "text/html", html, undefined, 300, undefined, false);
             return;
         }
 

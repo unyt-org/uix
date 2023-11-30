@@ -1,10 +1,12 @@
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { allowAll, allowNone, stage } from "../app/args.ts";
 import { Path } from "./path.ts";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 
 export async function getErrorReportingPreference() {
 	if (client_type !== "deno") return false;
+
+	const { allowAll, allowNone, stage } = await import("../app/args.ts");
+
 	if (stage !== "dev") return false;
 
 	if (allowAll) return true;
@@ -18,7 +20,9 @@ function getFile() {
 	return Deno.env.has("HOME")||Deno.env.has("LOCALAPPDATA") ? new Path("./.unyt-diagonistics", Path.File(Deno.env.get("HOME")??Deno.env.get("LOCALAPPDATA")).asDir()) : new Path<Path.Protocol.File, true>('./uix/.unyt-diagonistics', cache_path);
 }
 
-export function shouldAskForErrorReportingPreference() {
+export async function shouldAskForErrorReportingPreference() {
+	const { allowAll, allowNone, stage } = await import("../app/args.ts");
+
 	return !getFile().fs_exists && !allowAll && !allowNone;
 }
 

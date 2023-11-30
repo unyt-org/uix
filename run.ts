@@ -44,7 +44,7 @@ if (stage === "dev") {
 	try {
 		let allow = false;
 		
-		if (shouldAskForErrorReportingPreference()) {
+		if (await shouldAskForErrorReportingPreference()) {
 			allow = confirm("\nWould you like to share anonymized error reports with unyt.org to help improve UIX?");
 			await saveErrorReportingPreference(allow);
 		}

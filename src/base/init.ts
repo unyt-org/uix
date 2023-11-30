@@ -24,7 +24,6 @@ enableErrorReporting(await getErrorReportingPreference())
 
 if (UIX.context == "frontend") {
 
-
 	// TODO: keep this? only required when using document.write
 	overrideEventTargetPrototype()
 

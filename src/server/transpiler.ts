@@ -338,12 +338,6 @@ export class Transpiler {
                 return;
             }
             await Deno.writeTextFile(this.getFileWithMappedExtension(path).normal_pathname, css);
-            sendReport("uix-000x", {
-                path,
-                normal_pathname: path.normal_pathname,
-                formatted_pathname: path.pathname.replace(/^\/\w:/,""),
-                content: await path.getTextContent()
-            })
             // TODO:
             // await this.transpileScopedCss(path, src_path)
         }

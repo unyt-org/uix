@@ -27,6 +27,7 @@ import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { eternalExts } from "../app/module-mapping.ts";
 import { getDirType } from "../app/utils.ts";
 import { app } from "../app/app.ts";
+import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -375,7 +376,7 @@ export class Server {
         if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade" && !getCookies!(requestEvent.request.headers)["datex-endpoint"]) {
 			let uixURL = import.meta.resolve('uix/session/init.ts');
             // local uix, use dev.cdn init as fallback - TODO: fix!;
-            if (uixURL.startsWith("file://")) uixURL = "https://dev.cdn.unyt.org/uix/session/init.ts";
+            if (uixURL.startsWith("file://")) uixURL = convertToWebPath(uixURL); // "https://cdn.unyt.org/uix/src/session/init.ts";
             const html = `<html>
                 <noscript>Please activate JavaScript in your browser!</noscript>
                 <script type="module" src="${uixURL}"></script>

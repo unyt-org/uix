@@ -7,7 +7,7 @@ import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppC
 
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
-import { clear, command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live } from "./src/app/args.ts";
+import { clear, command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live, allowAll, allowNone } from "./src/app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
@@ -17,10 +17,13 @@ import { triggerLogin } from "./src/utils/login.ts";
 import { initBaseProject } from "./src/utils/init-base-project.ts";
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
 import { createProxyImports } from "./src/app/module-mapping.ts";
-import { ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
+import { cache_path, ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { getDXConfigData } from "./src/app/dx-config-parser.ts";
 import { Path } from "./src/utils/path.ts";
 import { handleAutoUpdate, updateCache } from "./auto-update.ts";
+
+import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
+import { errorReportingPreferenceFileExists, getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
 
 const logger = new Datex.Logger("UIX Runner");
 
@@ -34,6 +37,29 @@ if (init) {
 	}
 	else await initBaseProject();
 }
+
+// allow unyt.org diagnostics?
+if (stage === "dev") {
+
+	try {
+		let allow = false;
+		
+		if (shouldAskForErrorReportingPreference()) {
+			allow = confirm("\nWould you like to share anonymized error reports with unyt.org to help improve UIX?");
+			await saveErrorReportingPreference(allow);
+		}
+		else {
+			await getErrorReportingPreference();
+		}
+		
+		enableErrorReporting(allow);
+	}
+	catch {
+		// ignore
+	}
+}
+
+
 
 // version update?
 let forceUpdate = false;

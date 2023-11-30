@@ -18,6 +18,9 @@ export const enable_datex_cli = command_line_options.option("datex-cli", {type:"
 export const stage = command_line_options.option("stage", {type:"string", default: "dev", description: "Current deployment stage"})!;
 export const env = command_line_options.option("env", {type:"string", multiple: true, description: "Exposed environment variables (for remote deployment)"});
 
+export const allowAll = command_line_options.option("allow-all", {type:"boolean", default: false, aliases:["y"], description: "Autmatically confirm all dialogs"});
+export const allowNone = command_line_options.option("allow-none", {type:"boolean", default: false, aliases:["n"], description: "Automatically decline all dialog"});
+
 export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});
 export const init = command_line_options.option("init", {type:"boolean", description: "Inititialize a new UIX project"});
 

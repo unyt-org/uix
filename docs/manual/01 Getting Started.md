@@ -141,11 +141,11 @@ import { UIX } from "uix"
 This namespace contains some important global properties:
 ```ts
 interface UIX {
-    Theme: ThemeManager;        // UIX Theme manager to register and activate themes and dark/light mode
-    cacheDir: Path;      // URL pointing to the local UIX cache directory (only for backend)
+    Theme: ThemeManager;           // UIX Theme manager to register and activate themes and dark/light mode
+    cacheDir: Path;                // URL pointing to the local UIX cache directory
     context: "backend"|"frontend"; // current context in which the process is running
-    language: string;    // language ("de" | "en" | ...)
-    version: string;     // UIX version ("beta" | "1.0.0" | ...)
+    language: string;              // language ("de" | "en" | ...)
+    version: string;               // UIX version ("beta" | "1.0.0" | ...)
 }
 ```
 

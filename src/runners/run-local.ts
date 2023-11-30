@@ -15,7 +15,11 @@ export const CTRLSEQ = {
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
 
 	const run_script_url = "app/start.ts"
-	const run_script_abs_url = options.import_map.imports['uix/'] + run_script_url;
+	const run_script_import_map_entry = options.import_map.imports['uix/'] + run_script_url;
+	const run_script_abs_url = 
+		(run_script_import_map_entry.startsWith("https://") || run_script_import_map_entry.startsWith("http://")) ?
+		run_script_import_map_entry :
+		new Path(run_script_import_map_entry, options.import_map.path??options.import_map_path).toString();
 
 	// reload cache
 	if (params.reload) {

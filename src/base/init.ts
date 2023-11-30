@@ -13,11 +13,14 @@ import { initSession } from "../session/frontend.ts";
 // custom dom elements
 import "../html/light-root.ts"
 import { overrideEventTargetPrototype } from "datex-core-legacy/utils/persistent-listeners.ts";
+import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
+import { getErrorReportingPreference } from "../utils/error-reporting-preference.ts";
 
 if (client_type == "browser") {
 	await initSession();
 }
 
+enableErrorReporting(await getErrorReportingPreference())
 
 if (UIX.context == "frontend") {
 

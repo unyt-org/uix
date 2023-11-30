@@ -4,6 +4,7 @@ import { TypescriptImportResolver } from "./ts-import-resolver.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { eternalExts, updateEternalFile } from "../app/module-mapping.ts";
 import { app } from "../app/app.ts";
+import { sendReport } from "datex-core-legacy/utils/error-reporting.ts";
 
 const copy = Datex.client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = Datex.client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
@@ -337,10 +338,22 @@ export class Transpiler {
                 return;
             }
             await Deno.writeTextFile(this.getFileWithMappedExtension(path).normal_pathname, css);
+            // sendReport("uix-000x", {
+            //     path,
+            //     normal_pathname: path.normal_pathname,
+            //     formatted_pathname: path.pathname.replace(/^\/\w:/,""),
+            //     content: await path.getTextContent()
+            // })
             // TODO:
             // await this.transpileScopedCss(path, src_path)
         }
         catch (e) {
+            sendReport("uix-0002", {
+                path,
+                normal_pathname: path.normal_pathname,
+                formatted_pathname: path.pathname.replace(/^\/\w:/,""),
+                content: await path.getTextContent()
+            })
             if (e.message?.endsWith("memory access out of bounds")) logger.error("SCSS error ("+src_path.normal_pathname+"): memory access out of bounds (possible circular imports)");
             else logger.error("SCSS error ("+src_path.normal_pathname+"): " + e)
         }

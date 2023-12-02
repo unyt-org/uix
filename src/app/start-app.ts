@@ -6,6 +6,7 @@ import { BackendManager } from "./backend-manager.ts";
 import { Server } from "../server/server.ts";
 import { FrontendManager } from "./frontend-manager.ts";
 import { Path } from "../utils/path.ts";
+import { convertToWebPath } from "./convert-to-web-path.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -102,6 +103,14 @@ export async function startApp(app: {domains:string[], options?:normalizedAppOpt
 			return false;
 		})
 	}
+
+	// js type def module mapping
+	Datex.Type.setJSTypeDefModuleMapper(url => {
+		// console.log("url", url, convertToWebPath(url));
+		const webPath = convertToWebPath(url);
+		if (webPath.startsWith("https://") || webPath.startsWith("http://")) return webPath;
+		else return `route:${webPath}`
+	})
 
 
 	// enable HTTP-over-DATEX

@@ -5,6 +5,7 @@ import { getCloneKeys, Component } from "../components/Component.ts";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { getTransformWrapper } from "../uix-dom/datex-bindings/transform-wrapper.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 
 
 
@@ -50,6 +51,11 @@ function _defaultOptions(url:string, component_class:typeof HTMLElement, name:co
 
 		const datex_type = Datex.Type.get("std", "uix", name);
 		const options_datex_type = Datex.Type.get("uixopt", name);
+
+		// js module reference
+		if (client_type == "deno") {
+			datex_type.jsTypeDefModule = url;
+		}
 
 		// create template class for component
 		const new_class = Datex.createTemplateClass(component_class, datex_type, true);

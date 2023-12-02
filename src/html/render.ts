@@ -392,16 +392,18 @@ function getFunctionWrapper(fn: Function, contextName = "ctx") {
 	// normal function with own 'this' context
 	if (isNormalFunction(fnSource)) return fnSource;
 	// object methods check if 'this' context is component context;
-	else if (isObjectMethod(fnSource)) {
-		logger.warn("Unstable function binding for standalone mode: cannot determine 'this' context for '"+fn.name+"()'");	
+	else if (!isArrowFunction(fnSource) && isObjectMethod(fnSource)) {
+		console.log(fn);
+		logger.warn("Unstable function binding (not supported for backend rendering): cannot determine 'this' context for '"+fn.name+"()'");	
 	}
 	// context wrapper for arrow function or object method
 	else return `(function (...args){return (${fnSource})(...args)}).bind(${contextName})`
 }
 
-// const isArrowFn = (fn:Function) => 
-//   (typeof fn === 'function') &&
-//   !/^(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*\s*(?:(?:(?:async\s(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*\s*)?function|class)(?:\s|(?:(?:\/\*[^(?:\*\/)]*\*\/\s*)|(?:\/\/[^\r\n]*))*)|(?:[_$\w][\w0-9_$]*\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*\()|(?:\[\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*(?:(?:['][^']+['])|(?:["][^"]+["]))\s*(?:\/\*[^(?:\*\/)]*\*\/\s*)*\s*\]\())/.test(fn.toString());
+
+const isArrowFunction = (fnSrc:string) => {
+	return !!fnSrc.match(/^(async\s+)?\([^)]*\)\s*=>/)
+}
 
 const isObjectMethod = (fnSrc:string) => {
 	return !!fnSrc.match(/^(async\s+)?[^\s(]+ *(\(|\*)/)

@@ -23,6 +23,8 @@ export type appOptions = {
 
 	import_map_path?: string|URL, // custom importmap for the frontend
 	import_map?: {imports:Record<string,string>} // prefer over import map path
+
+	experimentalFeatures?: string|string[]
 }
 
 export interface normalizedAppOptions extends appOptions {
@@ -34,7 +36,9 @@ export interface normalizedAppOptions extends appOptions {
 
 	scripts: (Path|string)[],
 	import_map_path: never
-	import_map: ImportMap
+	import_map: ImportMap,
+
+	experimentalFeatures: string[]
 }
 export async function normalizeAppOptions(options:appOptions = {}, base_url?:string|URL): Promise<[normalizedAppOptions, URL]> {
 	const n_options = <normalizedAppOptions> {};
@@ -55,6 +59,8 @@ export async function normalizeAppOptions(options:appOptions = {}, base_url?:str
 	
 	n_options.manifest = options.manifest;
 	n_options.meta = options.meta;
+
+	n_options.experimentalFeatures = options.experimentalFeatures ? (options.experimentalFeatures instanceof Array ? options.experimentalFeatures : [options.experimentalFeatures]) : [];
 
 	// import map or import map path
 	if (options.import_map) n_options.import_map = new ImportMap(options.import_map);

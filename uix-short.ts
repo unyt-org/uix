@@ -10,6 +10,7 @@ import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _l
 import { domUtils } from "./src/app/dom-context.ts";
 import { template as _template, blankTemplate as _blankTemplate } from "./src/html/template.ts";
 import { style as _style } from "./src/html/style.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 
 // TODO: remove
 export {unsafeHTML} from "./src/html/unsafe-html.ts";
@@ -67,12 +68,12 @@ declare global {
 	const HTML: typeof _HTML;
 	const SCSS: typeof _SCSS;
 
-	interface CallableFunction {
-		bindToOrigin<T, A extends unknown[], R>(this: (this: T, ...args: A) => R, context?:any): (...args: A)=>Promise<Awaited<Promise<R>>>;
-	}
+	// interface CallableFunction {
+	// 	bindToOrigin<T, A extends unknown[], R>(this: (this: T, ...args: A) => R, context?:any): (...args: A)=>Promise<Awaited<Promise<R>>>;
+	// }
 }
 
-// @ts-ignore
-Function.prototype.bindToOrigin = function (this:(...args: any)=>any, context:any) {
-	return bindToOrigin(this, context);
-}
+// // @ts-ignore
+// Function.prototype.bindToOrigin = function (this:(...args: any)=>any, context:any) {
+// 	return bindToOrigin(this, context);
+// }

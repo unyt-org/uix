@@ -25,10 +25,16 @@ console.log(map); // Map {"a"->"Value for A"}
 console.log(await getData()); // [1,2,3]
 ```
 
-
 > [!WARNING]
 > Because network requests are asynchronous, imported functions always return a `Promise` that must be awaited.
 > For the same reason, all value updates are propagated asynchronously between endpoints.
+
+> [!WARNING]
+> The following values have limitations when they are imported as backend exports from the frontend:
+> * Classes 
+>   * Class definitions should always be put in `common` module if the class is used both on the backend and frontend.
+>   * static class fields can still be accessed on a class imported from the backend
+> * Symbols exported from a backend module cannot be imported in a frontend module
 
 ## Common Modules
 

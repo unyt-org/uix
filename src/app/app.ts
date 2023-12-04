@@ -240,6 +240,11 @@ class App {
 		this.defaultServer = defaultServer;
 		this.base_url = baseURL;
 
+		// log enabled experimental features
+		for (const feature of this.options.experimentalFeatures) {
+			logger.info(`experimental feature "${feature}" enabled`)
+		}
+
 		this.#ready = true;
 		for (const handler of this.#ready_handlers) await handler();	
 	}

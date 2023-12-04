@@ -112,7 +112,6 @@ export async function startApp(app: {domains:string[], options?:normalizedAppOpt
 		else return `route:${webPath}`
 	})
 
-
 	// enable HTTP-over-DATEX
 	if (server && http_over_datex) {
 		const {HTTP} = await import("./http-over-datex.ts")

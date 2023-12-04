@@ -5,11 +5,14 @@ import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { eternalExts, updateEternalFile } from "../app/module-mapping.ts";
 import { app } from "../app/app.ts";
 import { sendReport } from "datex-core-legacy/utils/error-reporting.ts";
+import { client_type } from "datex-core-legacy/utils/constants.ts";
 
-const copy = Datex.client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
-const walk = Datex.client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
-const {transpile} = Datex.client_type === "deno" ? (await import("https://deno.land/x/ts_transpiler@v0.0.1/mod.ts")) : {transpile:null};
-const sass = Datex.client_type === "deno" ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
+const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
+const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
+const {transpile} = client_type === "deno" ? (await import("https://deno.land/x/ts_transpiler@v0.0.1/mod.ts")) : {transpile:null};
+const sass = client_type === "deno" ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
+
+
 
 const logger = new Datex.Logger("transpiler");
 
@@ -501,7 +504,9 @@ export class Transpiler {
 
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
-        return this.transpileToJSDenoEmit(ts_dist_path);
+        return app.options?.experimentalFeatures.includes('embedded-reactivity') ?
+            this.transpileToJSSWC(ts_dist_path):
+            this.transpileToJSDenoEmit(ts_dist_path)
     }
   
     private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
@@ -521,6 +526,50 @@ export class Transpiler {
             else throw "unknown error"
         }
         catch (e) {
+            logger.error("could not transpile " + ts_dist_path + ": " + e.message??e);
+        }
+       
+        return js_dist_path;
+    }
+
+    private async transpileToJSSWC(ts_dist_path: Path.File) {
+        const {transformSync} = await import("npm:@swc/core");
+
+        const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
+        try {
+            const transpiled = transformSync!(await Deno.readTextFile(ts_dist_path.normal_pathname), {
+                jsc: {
+                    parser: {
+                        tsx: !!ts_dist_path.hasFileExtension("tsx"),
+                        syntax: "typescript",
+                        decorators: true,
+                        dynamicImport: true,
+
+                    },
+                    transform: {
+                        legacyDecorator: true,
+                        decoratorMetadata: true,
+                        react: {
+                            runtime: "automatic",
+                            importSource: "uix",
+                            throwIfNamespace: false
+                        }
+                    },
+                    target: "es2022",
+                    keepClassNames: true,
+                    externalHelpers: false,
+                    experimental: {
+                        plugins: [
+                            ["jusix", {}]
+                        ]
+                    }
+                }
+            }).code
+            if (transpiled != undefined) await Deno.writeTextFile(js_dist_path.normal_pathname, transpiled);
+            else throw "unknown error"
+        }
+        catch (e) {
+            console.log(e)
             logger.error("could not transpile " + ts_dist_path + ": " + e.message??e);
         }
        

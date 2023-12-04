@@ -39,8 +39,8 @@ const version = command_line_options.option("version", {type:"boolean", descript
 if (version) {
 	const DATEX_VERSION = (await import("datex-core-legacy/VERSION.ts")).default;
 
-	let log = `${ESCAPE_SEQUENCES.BOLD}${ESCAPE_SEQUENCES.UNYT_BLUE}UIX ${UIX.version == "beta" ? "beta" : "v." + UIX.version}${ESCAPE_SEQUENCES.RESET} (${new URL("../../", import.meta.url)})`;
-	log += `\n\n${ESCAPE_SEQUENCES.BOLD}DATEX Core: ${ESCAPE_SEQUENCES.RESET} ${DATEX_VERSION == "beta" ? "beta" : "v." + DATEX_VERSION} (${import.meta.resolve("datex-core-legacy/")})`
+	let log = `${ESCAPE_SEQUENCES.BOLD}${ESCAPE_SEQUENCES.UNYT_BLUE}UIX ${UIX.version == "beta" ? "beta" : "v" + UIX.version}${ESCAPE_SEQUENCES.RESET} (${new URL("../../", import.meta.url)})`;
+	log += `\n\n${ESCAPE_SEQUENCES.BOLD}DATEX Core: ${ESCAPE_SEQUENCES.RESET} ${DATEX_VERSION == "beta" ? "beta" : "v" + DATEX_VERSION} (${import.meta.resolve("datex-core-legacy/")})`
 	log +=   `\n${ESCAPE_SEQUENCES.BOLD}Deno:       ${ESCAPE_SEQUENCES.RESET} ${Deno.version.deno}`
 	log +=   `\n${ESCAPE_SEQUENCES.BOLD}TypeScript: ${ESCAPE_SEQUENCES.RESET} ${Deno.version.typescript}`
 	log +=   `\n${ESCAPE_SEQUENCES.BOLD}V8:         ${ESCAPE_SEQUENCES.RESET} ${Deno.version.v8}`

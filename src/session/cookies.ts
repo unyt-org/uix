@@ -1,5 +1,11 @@
 import { getCookies as getHeaderCookies, setCookie as setHeaderCookie, deleteCookie as deleteHeaderCookie } from "../lib/cookie/cookie.ts";
 
+// @ts-ignore
+// from "datex-core-legacy/utils/constants.ts"
+const is_worker = (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope);
+export const client_type = is_worker ? 'worker' : ("Deno" in globalThis && !(globalThis.Deno as any).isPolyfill ? 'deno' : 'browser')
+
+const portPrefix = client_type == "browser" ? window.location.port : undefined;
 
 export const UIX_COOKIE = {
 	endpoint: "datex-endpoint",
@@ -10,12 +16,19 @@ export const UIX_COOKIE = {
 } as const;
 export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];
 
-export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers) {
+export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string) {
+
+	port ??= portPrefix
+	if (port) name += ":" + port;
+
 	if (headers) deleteHeaderCookie!(headers, name)
     else document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
 }
 
-export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:number, headers?: Headers) {
+export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:number, headers?: Headers, port?:string) {
+
+	port ??= portPrefix
+	if (port) name += ":" + port;
 
 	value = encodeURIComponent(value)
 
@@ -44,7 +57,10 @@ export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:numb
 	
 }
 
-export function getCookie(name: UIX_COOKIE | string, headers?: Headers) {
+export function getCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string) {
+
+	port ??= portPrefix
+	if (port) name += ":" + port;
 
 	if (headers) {
 		const cookie = getHeaderCookies!(headers)?.[name];

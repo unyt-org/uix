@@ -81,7 +81,7 @@ export class Context
 		}
 		else {
 			if (!this.request) throw new Error("Cannot get shared data from UIX Context with request object");
-			const {sharedData} = await getSharedDataPointer(this.request.headers, this.responseHeaders);
+			const {sharedData} = await getSharedDataPointer(this.request.headers, this.responseHeaders, new URL(this.request.url).port);
 			if (sharedData[Symbol.dispose]) this.#disposeCallbacks.add(sharedData[Symbol.dispose]!)
 			return sharedData as CustomSharedData;
 		}
@@ -109,7 +109,8 @@ export class ContextBuilder {
 	#ctx = new Context()
 
 	public static getRequestLanguage(req:Request) {
-		return getCookie(UIX_COOKIE.language, req.headers) ?? req.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.split("-")[0] ?? "en"
+		const port = new URL(req.url).port;
+		return getCookie(UIX_COOKIE.language, req.headers, port) ?? req.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.split("-")[0] ?? "en"
 	}
 
 	setRequestData(request:Request, path:string, conn?:Deno.Conn) {
@@ -152,7 +153,8 @@ export class ContextBuilder {
  */
 export function getHTTPRequestEndpoint(request: Request, responseHeaders?: Headers) {
 	if (!request) return null;
-	const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers);
+	const port = new URL(request.url).port;
+	const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers, port);
 	if (!endpointCookie) return null;
 	else {
 		try {
@@ -160,7 +162,7 @@ export function getHTTPRequestEndpoint(request: Request, responseHeaders?: Heade
 		}
 		// invalid cookie content, reset
 		catch {
-			if (responseHeaders) deleteCookie(UIX_COOKIE.endpoint, responseHeaders)
+			if (responseHeaders) deleteCookie(UIX_COOKIE.endpoint, responseHeaders, port)
 			return null;
 		}
 	}

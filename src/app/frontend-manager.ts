@@ -775,6 +775,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		const pathAndQueryParameters = url.normal_pathname + url.search;
 		const lang = ContextBuilder.getRequestLanguage(requestEvent.request);
 
+		const port = new URL(requestEvent.request.url).port;
+
 		const isInlineRendered = requestEvent.request.headers.get("UIX-Inline-Backend") == "true"
 
 		try {
@@ -808,8 +810,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				const combinedHeaders = headers ?? new Headers();
 				combinedHeaders.set('content-language', lang)
 
-				let themeName = getCookie(UIX_COOKIE.theme, requestEvent.request.headers)!
-				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers) as "dark"|"light" ?? UIX.Theme.mode;
+				let themeName = getCookie(UIX_COOKIE.theme, requestEvent.request.headers, port)!
+				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers, port) as "dark"|"light" ?? UIX.Theme.mode;
 				
 				let currentThemeCSS = UIX.Theme.getThemeCSS(themeName, true);
 				// theme not found on the backend
@@ -817,7 +819,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					const newThemeName = modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme
 					if (themeName) {
 						logger.warn(`Theme "${themeName}" is not registered on the backend, using "${newThemeName}" as a fallback`);
-						setCookie(UIX_COOKIE.theme, themeName, undefined, combinedHeaders)!
+						setCookie(UIX_COOKIE.theme, themeName, undefined, combinedHeaders, port)!
 					}
 					themeName = newThemeName;
 					currentThemeCSS = UIX.Theme.getThemeCSS(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme, true);

@@ -235,10 +235,11 @@ class App {
 
 	public async start(options:appOptions = {}, originalBaseURL?:string|URL) {
 		const { startApp } = await import("./start-app.ts");
-		const {nOptions, baseURL, defaultServer} = await startApp(this, options, originalBaseURL)
+		const {nOptions, baseURL, defaultServer, frontends} = await startApp(this, options, originalBaseURL)
 		this.options = nOptions;
 		this.defaultServer = defaultServer;
 		this.base_url = baseURL;
+		this.frontends = frontends;
 
 		// log enabled experimental features
 		for (const feature of this.options.experimentalFeatures) {
@@ -253,6 +254,7 @@ class App {
 	async reset(resetEndpoint = false) {
 		if (resetEndpoint) endpoint_config.clear();
         localStorage.clear();
+		sessionStorage.clear();
 
 		// clear cookies
 		deleteCookie(UIX_COOKIE.colorMode)

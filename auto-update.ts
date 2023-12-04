@@ -19,8 +19,7 @@ export async function handleAutoUpdate(baseLibPath: Path, name: string) {
 		}
 		console.log(`\n${ESCAPE_SEQUENCES.BOLD}New ${name} release:${ESCAPE_SEQUENCES.RESET} ${currentCachedVersion} -> ${ESCAPE_SEQUENCES.UNYT_GREEN}${currentVersion}${ESCAPE_SEQUENCES.RESET}`)
 		console.log(`${ESCAPE_SEQUENCES.BOLD}Changelog:\n${ESCAPE_SEQUENCES.RESET}${renderMarkdown(changelog)}\n`)
-		alert("Update");
-		return true;
+		return confirm("Update");
 	}
 	return false;
 }

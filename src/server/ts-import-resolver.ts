@@ -57,17 +57,24 @@ export class TypescriptImportResolver {
 
 	resolveImportSpecifier(specifier:string): string {
 
-        // TODO: how does deno handle scope mapping? for eternal.ts modules (seems to work like we want it - scopes are ignored)
-        // keep relative paths, else resolve specifier
-        const resolved = (specifier.startsWith("./") || specifier.startsWith("../")) ?
-            specifier :
-            import.meta.resolve(specifier);
+        try {
+            // TODO: how does deno handle scope mapping? for eternal.ts modules (seems to work like we want it - scopes are ignored)
+            // keep relative paths, else resolve specifier
+            const resolved = (specifier.startsWith("./") || specifier.startsWith("../")) ?
+                specifier :
+                import.meta.resolve(specifier);
 
-        // keep original specifier for eternal.ts
-        // if (resolved.endsWith(".eternal.ts") || resolved.endsWith(".eternal.tsx") || resolved.endsWith(".eternal.js") || resolved.endsWith(".eternal.jsx") || resolved.endsWith(".eternal.mts") || resolved.endsWith(".eternal.mjs")) 
-        //     resolved = specifier
+            // keep original specifier for eternal.ts
+            // if (resolved.endsWith(".eternal.ts") || resolved.endsWith(".eternal.tsx") || resolved.endsWith(".eternal.js") || resolved.endsWith(".eternal.jsx") || resolved.endsWith(".eternal.mts") || resolved.endsWith(".eternal.mjs")) 
+            //     resolved = specifier
 
-        return resolved
+            return resolved
+        }
+        
+        catch {
+            logger.error("Could not resolve import specifier '"+specifier+"'");
+            return specifier;
+        }
 	}
 
     /**

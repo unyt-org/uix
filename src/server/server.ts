@@ -378,7 +378,6 @@ export class Server {
         const endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
         try {
             const valid = await Crypto.verify(nonce, validation, endpoint);
-            console.log("validate " + endpoint, valid)
 
             if (valid) {
                 const session = createSession(endpoint);
@@ -392,7 +391,7 @@ export class Server {
         }
         catch (e) {
             // cannot get endpoint keys, no valid session for now
-            console.log(e)
+            //console.log(e)
         }
         return true;
     }
@@ -418,15 +417,7 @@ export class Server {
             const datexEndpointNew = getCookie("datex-endpoint-new", requestEvent.request.headers, port);
 
             const uixSessionCookie = getCookie("uix-session", requestEvent.request.headers, port);
-
-            console.log(
-                datexEndpointCookie,
-                datexEndpointValidationCookie,
-                datexEndpointNonceCookie,
-                datexEndpointNew,
-                uixSessionCookie
-            )
-
+            
             // has datex-endpoint
             if (datexEndpointCookie) {
 

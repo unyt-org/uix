@@ -9,6 +9,11 @@ const portPrefix = client_type == "browser" ? window.location.port : undefined;
 
 export const UIX_COOKIE = {
 	endpoint: "datex-endpoint",
+	endpointValidation: "datex-endpoint-validation",
+	endpointNew: "datex-endpoint-new",
+	endpointNonce: "datex-endpoint-nonce",
+
+	session: "uix-session",
 	language: "uix-language",
 	theme: "uix-theme",
 	colorMode: "uix-color-mode",
@@ -19,7 +24,7 @@ export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];
 export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string) {
 
 	port ??= portPrefix
-	if (port) name += ":" + port;
+	if (port) name += "/" + port;
 
 	if (headers) deleteHeaderCookie!(headers, name)
     else document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
@@ -28,7 +33,7 @@ export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?
 export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:number, headers?: Headers, port?:string) {
 
 	port ??= portPrefix
-	if (port) name += ":" + port;
+	if (port) name += "/" + port;
 
 	value = encodeURIComponent(value)
 
@@ -60,7 +65,7 @@ export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:numb
 export function getCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string) {
 
 	port ??= portPrefix
-	if (port) name += ":" + port;
+	if (port) name += "/" + port;
 
 	if (headers) {
 		const cookie = getHeaderCookies!(headers)?.[name];

@@ -55,7 +55,8 @@ export class Context
 
 	language = "en";
 	endpoint: Datex.Endpoint = client_type == "browser" ? Datex.Runtime.endpoint : BROADCAST
-
+	endpointIsTrusted = false
+	
 	get responseHeaders() {
 		if (!this._responseHeaders) this._responseHeaders = new Headers();
 		return this._responseHeaders
@@ -131,12 +132,17 @@ export class ContextBuilder {
 	
 		this.#ctx.language = ContextBuilder.getRequestLanguage(request);
 		this.#ctx.endpoint = this.getEndpoint(request) ?? BROADCAST;
+		this.#ctx.endpointIsTrusted = this.getEndpointIsTrusted(request)
 
 		return this;
 	}
 
 	getEndpoint(request: Request) {
 		return getHTTPRequestEndpoint(request, this.#ctx.responseHeaders)
+	}
+
+	getEndpointIsTrusted(request: Request) {
+		return !!getCookie("uix-session", request.headers, new URL(request.url).port)
 	}
 
 	build() {

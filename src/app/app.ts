@@ -135,8 +135,8 @@ class App {
         }
 	}
 
-	#uniqueStartId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-		.replace(/[xy]/g, function (c) {
+	#uniqueStartId = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+		.replaceAll('x', function (c) {
 			const r = Math.random() * 16 | 0, 
 				v = c == 'x' ? r : (r & 0x3 | 0x8);
 			return v.toString(16);
@@ -259,6 +259,10 @@ class App {
 		// clear cookies
 		deleteCookie(UIX_COOKIE.colorMode)
 		deleteCookie(UIX_COOKIE.endpoint)
+		deleteCookie(UIX_COOKIE.endpointNonce)
+		deleteCookie(UIX_COOKIE.endpointNew)
+		deleteCookie(UIX_COOKIE.endpointValidation)
+		deleteCookie(UIX_COOKIE.session)
 		deleteCookie(UIX_COOKIE.language)
 		deleteCookie(UIX_COOKIE.sharedData)
 		deleteCookie(UIX_COOKIE.theme)

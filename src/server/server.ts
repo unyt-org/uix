@@ -28,7 +28,11 @@ import { eternalExts } from "../app/module-mapping.ts";
 import { getDirType } from "../app/utils.ts";
 import { app } from "../app/app.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
-import { getCookie } from "../session/cookies.ts";
+import { deleteCookie, getCookie, setCookie as setCookieUIX } from "../session/cookies.ts";
+import { arrayBufferToBase64, base64ToArrayBuffer } from "datex-core-legacy/utils/utils.ts";
+import { Crypto } from "datex-core-legacy/runtime/crypto.ts";
+import { Target } from "datex-core-legacy/datex_all.ts";
+import { createSession, validateSession } from "../session/backend.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -361,6 +365,38 @@ export class Server {
         catch {}
     }
 
+    // TODO: validate if nonce was created on server
+    private getNonce() {
+        const array = new Uint8Array(30);
+        self.crypto.getRandomValues(array);
+        return arrayBufferToBase64(array);
+    }
+
+    private async validateEndpoint(requestEvent:Deno.RequestEvent, port: string, datexEndpointNonceCookie: string, datexEndpointValidationCookie: string, datexEndpointCookie: string) {
+        const nonce = base64ToArrayBuffer(datexEndpointNonceCookie)
+        const validation = base64ToArrayBuffer(datexEndpointValidationCookie)
+        const endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
+        try {
+            const valid = await Crypto.verify(nonce, validation, endpoint);
+            console.log("validate " + endpoint, valid)
+
+            if (valid) {
+                const session = createSession(endpoint);
+                const headers = new Headers();
+                deleteCookie('datex-endpoint-validation', headers, port)
+                setCookieUIX('uix-session', session, undefined, headers, port)
+                headers.set("Location", requestEvent.request.url);
+                await this.serveContent(requestEvent, "text/plain", "", undefined, 302, headers, false);
+                return false;
+            }
+        }
+        catch (e) {
+            // cannot get endpoint keys, no valid session for now
+            console.log(e)
+        }
+        return true;
+    }
+
     public async handleRequest(requestEvent:Deno.RequestEvent, conn: Deno.Conn){
         
         let normalized_path:string|false = this.normalizeURL(requestEvent.request);
@@ -371,20 +407,99 @@ export class Server {
             this.sendError(requestEvent, 500);
             return;
         }
+            
+        // session/endpoint handling:
+        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
 
-        // TODO: move, uix specific - ignore wss connections
-        // TODO style noscript
-        
-        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade" && !getCookie("datex-endpoint", requestEvent.request.headers, new URL(requestEvent.request.url).port)) {
-			let uixURL = import.meta.resolve('uix/session/init.ts');
-            // local uix, use dev.cdn init as fallback - TODO: fix!;
-            if (uixURL.startsWith("file://")) uixURL = convertToWebPath(uixURL); // "https://cdn.unyt.org/uix/src/session/init.ts";
-            const html = `<html>
-                <noscript>Please activate JavaScript in your browser!</noscript>
-                <script type="module" src="${uixURL}"></script>
-            `
-			await this.serveContent(requestEvent, "text/html", html, undefined, 300, undefined, false);
-            return;
+            const port = new URL(requestEvent.request.url).port;
+            const datexEndpointCookie = getCookie("datex-endpoint", requestEvent.request.headers, port);
+            const datexEndpointValidationCookie = getCookie("datex-endpoint-validation", requestEvent.request.headers, port);
+            const datexEndpointNonceCookie = getCookie("datex-endpoint-nonce", requestEvent.request.headers, port);
+            const datexEndpointNew = getCookie("datex-endpoint-new", requestEvent.request.headers, port);
+
+            const uixSessionCookie = getCookie("uix-session", requestEvent.request.headers, port);
+
+            console.log(
+                datexEndpointCookie,
+                datexEndpointValidationCookie,
+                datexEndpointNonceCookie,
+                datexEndpointNew,
+                uixSessionCookie
+            )
+
+            // has datex-endpoint
+            if (datexEndpointCookie) {
+
+                if (datexEndpointNew) {
+                    // endpoint is new and not yet registered in network - cannot validate at this point, no valid session
+                }
+
+                // has uix-session - check if still a valid session
+                else if (uixSessionCookie) {
+                    const endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
+                    // invalid session
+                    if (!validateSession(endpoint, uixSessionCookie)) {
+                        logger.debug("invalid session for " + endpoint + " (" + uixSessionCookie + ")")
+                        // try to create a new session
+                        if (datexEndpointValidationCookie && datexEndpointNonceCookie) {
+                            const handleRequest = await this.validateEndpoint(
+                                requestEvent,
+                                port,
+                                datexEndpointNonceCookie,
+                                datexEndpointValidationCookie,
+                                datexEndpointCookie
+                            )
+                            // new session is valid, session cookie is updated
+                            if (!handleRequest) return;
+                            // no valid new session, remove session cookie
+                            else {
+                                const headers = new Headers();
+                                deleteCookie('datex-endpoint-validation', headers, port)
+                                deleteCookie('uix-session', headers, port)
+                                headers.set("Location", requestEvent.request.url);
+                                await this.serveContent(requestEvent, "text/plain", "", undefined, 302, headers, false);
+                                return;
+                            }
+                        }
+                        
+                    }
+                    else {
+                        logger.debug("valid session for " + endpoint + " (" + uixSessionCookie + ")")
+                    }
+                }
+                
+                // has datex-endpoint-validation and datex-endpoint-nonce
+                // -> convert to uix-session
+                else if (datexEndpointValidationCookie && datexEndpointNonceCookie) {
+                    const handleRequest = await this.validateEndpoint(
+                        requestEvent,
+                        port,
+                        datexEndpointNonceCookie,
+                        datexEndpointValidationCookie,
+                        datexEndpointCookie
+                    )
+                    if (!handleRequest) return;
+                }
+                
+                // else: has no validated session or datex-endpoint-validation
+            }
+            
+            // has no datex-endpoint -> init
+            else {
+                let uixURL = import.meta.resolve('uix/session/init.ts');
+                // local uix, use dev.cdn init as fallback - TODO: fix!;
+                if (uixURL.startsWith("file://")) uixURL = convertToWebPath(uixURL); // "https://cdn.unyt.org/uix/src/session/init.ts";
+                const html = `<html>
+                    <noscript>Please activate JavaScript in your browser!</noscript>
+                    <script type="module" src="${uixURL}"></script>
+                `
+                const headers = new Headers();
+                setCookieUIX('datex-endpoint-nonce', this.getNonce(), undefined, headers, port)
+
+                await this.serveContent(requestEvent, "text/html", html, undefined, 300, headers, false);
+                return;
+            }
+            
         }
 
         for (const handler of this.requestHandlers) {

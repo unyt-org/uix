@@ -380,15 +380,16 @@ export class FrontendManager extends HTMLProvider {
 				// TODO: fix mock requests
 				const dx = await req.request.text()
 				// TODO: rate limiting
-				// TODO: endpoint cookie verification
-				const endpoint = new ContextBuilder().getEndpoint(req.request)
+				const builder = new ContextBuilder();
+				const endpoint = builder.getEndpoint(req.request)
+				const signed = builder.getEndpointIsTrusted(req.request);
 				if (!endpoint) {
 					logger.error("DATEX over HTTP: No endpoint session");
 					req.respondWith(this.server.getErrorResponse(400, "No endpoint session"));
 					return;
 				}
 
-				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:endpoint, __overrideMeta: {endpoint, signed: true, encrypted: true}});
+				const res = await Datex.Runtime.executeDatexLocally(dx, undefined, {from:endpoint, __overrideMeta: {sender:endpoint, signed, encrypted: true}});
 				await req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON, mockPointers: true}));
 			}
 			catch (e) {

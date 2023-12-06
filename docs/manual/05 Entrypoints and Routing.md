@@ -322,6 +322,11 @@ UIX provider utility functions allow backend entrypoint to directly return HTTP 
    This function returns a HTTP Response with the mime type `application/json`, `application/datex` or `text/datex`,
    containing the serialized value. When the `options.type` is `Datex.DATEX_FILE_TYPE.JSON`, the value must be serializable with JSON.stringify. The default value for `options.type` is `Datex.FILE_TYPE.DATEX_SCRIPT`. In this configuration, any DATEX-compatible value can be provided.
  * ```typescript
+   function provideJSON(value:unknown, options?:{formatted?:boolean})
+   ```
+   This function returns a HTTP Response with the mime type `application/json`,
+   containing the serialized value. The value must be JSON-compatible.
+ * ```typescript
    function provideContent(content:string|ArrayBuffer, type:mime_type = "text/plain;charset=utf-8", status?:number)
    ```
    Returns a HTTP Response with custom content and a custom mime type and status code.

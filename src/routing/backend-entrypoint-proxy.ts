@@ -31,9 +31,7 @@ export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 		else return new RenderPreset(render_method, content);
 	})
 
-	if (Datex.Runtime.OPTIONS.PROTECT_POINTERS) {
-		Datex.Pointer.getByValue(fn)!.grantPublicAccess()
-	}
+	Datex.Pointer.getByValue(fn)!.grantPublicAccess(true)
 
 	return fn;
 }

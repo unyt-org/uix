@@ -2,9 +2,9 @@
  * DATEX ComInterface with web server (TCP / HTTP / Websockets)
  */
 
-import { Datex , pointer, meta, expose, scope, datex } from "datex-core-legacy";
+import { Datex , pointer, expose, scope, datex } from "datex-core-legacy";
 import { Server } from "./server.ts";
-import { initPublicStaticClasses, type ComInterface, type datex_meta } from "datex-core-legacy/datex_all.ts";
+import { type ComInterface } from "datex-core-legacy/datex_all.ts";
 import { logger } from "../utils/global-values.ts";
 
 /** common class for all interfaces (WebSockets, TCP Sockets, GET Requests, ...)*/

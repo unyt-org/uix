@@ -111,9 +111,11 @@ export async function startApp(app: {domains:string[], options?:normalizedAppOpt
 
 	// js type def module mapping
 	Datex.Type.setJSTypeDefModuleMapper(url => {
-		// console.log("url", url, convertToWebPath(url));
 		const webPath = convertToWebPath(url);
-		if (webPath.startsWith("https://") || webPath.startsWith("http://")) return webPath;
+		// ignore cdn urls, assumes that the modules are already imported on all clients
+		// TODO: improve, what if type modules are not all loaded per default?
+		if (webPath.startsWith("https://dev.cdn.unyt.org/") || webPath.startsWith("https://cdn.unyt.org/")) return;
+		else if (webPath.startsWith("https://") || webPath.startsWith("http://")) return webPath;
 		else return `route:${webPath}`
 	})
 

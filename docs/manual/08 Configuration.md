@@ -40,17 +40,18 @@ The following options provide some general information or behaviour of the app.
 * `manifest`: *Record<string,any>* - Custom web manifest options that override the defaults set by UIX
 * `experimentalFeatures`: *string[]* - List of [experimental UIX features](#experimental-features) that should be enabled
 
-
-### Experimental Features
-
-* *embedded-reactivity*: Enables compile-time reactivity features for JSX templates and the `$()` syntax
-
-
 <!--
 * `installable`: *(boolean)* - The app can be installed as standalone web app
 * `offline_support`: *(boolean)* - Adds a service worker with offline cache
 * `expose_deno`: *(boolean)* - Experimental, allows access for the Deno namespace from frontend contexts
 -->
+
+### Experimental Features
+
+* *embedded-reactivity*: Enables compile-time reactivity features for JSX templates and the `$()` syntax
+* *protected-pointers*: Sets the `PROTECTED_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints per default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
+
+
 
 ### Paths
 

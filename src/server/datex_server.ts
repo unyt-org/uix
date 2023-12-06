@@ -4,7 +4,7 @@
 
 import { Datex , pointer, meta, expose, scope, datex } from "datex-core-legacy";
 import { Server } from "./server.ts";
-import type { ComInterface, datex_meta } from "datex-core-legacy/datex_all.ts";
+import { initPublicStaticClasses, type ComInterface, type datex_meta } from "datex-core-legacy/datex_all.ts";
 import { logger } from "../utils/global-values.ts";
 
 /** common class for all interfaces (WebSockets, TCP Sockets, GET Requests, ...)*/
@@ -669,10 +669,9 @@ Datex.InterfaceManager.handleNoRedirectFound = function(receiver){
 @scope("network") abstract class network {
     
     /** add push notification channel connection data */
-    @meta(2)
-    @expose static async add_push_channel (channel:string, data:push_data, meta:datex_meta) {
-        console.log("new push endpoint: " + meta.sender.getInstance(channel).toString());
-        return DatexServer.web_push_interface.registerChannel(meta.sender.getInstance(channel), data);
+    @expose static async add_push_channel (channel:string, data:push_data) {
+        console.log("new push endpoint: " + datex.meta.sender.getInstance(channel).toString());
+        return DatexServer.web_push_interface.registerChannel(datex.meta.sender.getInstance(channel), data);
     }
 
     /** get sign and encryption keys for an alias */

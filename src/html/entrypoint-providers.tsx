@@ -58,6 +58,18 @@ export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FI
 	}
 }
 
+/**
+ * serve a value as JSON
+ * @param value any JSON compatible value
+ * @param options optional options:
+ *  formatted: boolean if true, the DX/JSON is formatted with newlines/spaces
+ * @returns blob containing DATEX/JSON encoded value
+ */
+export function provideJSON(value:unknown, options?:{formatted?:boolean}) {
+	return provideValue(value, {formatted: options?.formatted, type: Datex.FILE_TYPE.JSON})
+}
+
+
 
 /**
  * Show an interactive value view in the browser, including syntax highlighting

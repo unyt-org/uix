@@ -1,3 +1,4 @@
+import { Datex } from "datex-core-legacy/mod.ts";
 import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
 import { Entrypoint } from "../html/entrypoints.ts";
 import { logger } from "../utils/global-values.ts";
@@ -16,7 +17,7 @@ import { resolveEntrypointRoute } from "./rendering.ts";
  * @returns 
  */
 export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
-	return async function(ctx: Context, _params:Record<string,string>) {
+	const fn = $$(async function(ctx: Context, _params:Record<string,string>) {
 
 		// resolve entrypoint
 		const { content, render_method } = await resolveEntrypointRoute({entrypoint, route: Path.Route(ctx.path)});
@@ -28,5 +29,11 @@ export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 		}
 
 		else return new RenderPreset(render_method, content);
+	})
+
+	if (Datex.Runtime.OPTIONS.PROTECT_POINTERS) {
+		Datex.Pointer.getByValue(fn)!.grantPublicAccess()
 	}
+
+	return fn;
 }

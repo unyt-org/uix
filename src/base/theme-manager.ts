@@ -93,8 +93,6 @@ class ThemeManager  {
 		const currentDarkTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.themeDark) ?? "uix-dark") : "uix-dark";
 		const currentLightTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.themeLight) ?? "uix-light") : "uix-light";
 
-		console.log(initialMode, currentModeCookie, currentMode, currentDarkTheme, currentLightTheme)
-
 		// set current theme if not a parsed theme
 		if (currentMode == "dark" && this.getTheme(currentDarkTheme, true)) {
 			this.setTheme(currentDarkTheme, true);

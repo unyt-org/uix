@@ -60,6 +60,8 @@ function _defaultOptions(url:string, component_class:typeof HTMLElement, name:co
 		// create template class for component
 		const new_class = Datex.createTemplateClass(component_class, datex_type, true);
 
+		component_class[Datex.DX_TYPE] = datex_type;
+
 		const html_interface = Datex.Type.get('html').interface_config!;
 		datex_type.interface_config.cast_no_tuple = html_interface.cast_no_tuple; // handle casts from object
 		
@@ -106,9 +108,7 @@ function _defaultOptions(url:string, component_class:typeof HTMLElement, name:co
 			proxify_children: true,
 			is_normal_object: true,
 		})
-
 		// define custom DOM element after everything is initialized
-		// TODO: rename, also in Component.ts
 		domContext.customElements.define("uix-" + name, component_class)
 		return new_class //element_class
 	}

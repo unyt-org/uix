@@ -562,18 +562,20 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             // @ts-ignore preemptive [INIT_PROPS], because construct is called - normally handled by js interface (TODO: better solution?)
             if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
 
-            if (!(<typeof Component>this.constructor)[Datex.DX_TYPE]) {
+            const classType = Datex.Type.getClassDatexType(this.constructor as typeof Component);
+            if (classType.name !== "uix") {
+                console.log(this.constructor);
                 logger.error("cannot construct UIX element from DOM because DATEX type could not be found ("+this.constructor.name+")")
                 return;
             }
             // ignore if currently hydrating static element
             if (this.hasAttribute("uix-static") || this.hasAttribute("uix-dry")) {
                 this.is_skeleton = true;
-                logger.debug("hydrating component " + (<typeof Component>this.constructor)[Datex.DX_TYPE]);
+                logger.debug("hydrating component " + classType);
             }
             else {
                 // logger.debug("creating " + this.constructor[Datex.DX_TYPE] + " component from DOM");
-                return (<Datex.Type>(<typeof Component>this.constructor)[Datex.DX_TYPE]).construct(this, [], true, true);
+                return (<Datex.Type>classType).construct(this, [], true, true);
             }
         }
 

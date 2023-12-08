@@ -111,7 +111,9 @@ export class ContextBuilder {
 
 	public static getRequestLanguage(req:Request) {
 		const port = new URL(req.url).port;
-		return getCookie(UIX_COOKIE.language, req.headers, port) ?? req.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.split("-")[0] ?? "en"
+		const lang = getCookie(UIX_COOKIE.language, req.headers, port) ?? req.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.split("-")[0];
+		if (!lang || lang?.includes("*") || lang?.length !== 2) return "en";
+		else return lang;
 	}
 
 	setRequestData(request:Request, path:string, conn?:Deno.Conn) {

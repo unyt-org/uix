@@ -35,7 +35,7 @@ if (!globalThis.URLPattern) {
 export async function createSnapshot<T extends Element|DocumentFragment>(content:T, render_method = RenderMethod.HYBRID):Promise<T> {
 	await preloadElementOnBackend(content);
 	// @ts-ignore
-	content[CACHED_CONTENT] = getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
+	content[CACHED_CONTENT] = getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
 	return content;
 }
 

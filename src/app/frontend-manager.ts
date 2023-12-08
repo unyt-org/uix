@@ -77,7 +77,7 @@ export class FrontendManager extends HTMLProvider {
 		this.updateCheckEntrypoint();
 
 		// generate entrypoint.ts interface for backend
-		if (this.#backend?.web_entrypoint && this.#backend.entrypoint) this.handleOutOfScopePath(this.#backend.entrypoint, this.scope, new Set(["*"]), false);
+		if (this.#backend?.web_entrypoint && this.#backend.entrypoint) this.handleOutOfScopePath(this.#backend.entrypoint, this.scope, new Set(["default"]), false);
 		// bind virtual backend entrypoint
 		if (this.#backend?.web_entrypoint && this.#backend?.virtualEntrypointContent) {
 			const path = this.resolveImport(this.#backend?.web_entrypoint);
@@ -757,10 +757,10 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData, headers];
 
 		// Markdown
-		if (content instanceof Datex.Markdown) return [getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), lang}), render_method, status_code, openGraphData, headers];
+		if (content instanceof Datex.Markdown) return [getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID/*TODO: should also work with HYBRID, but cannot create standalone component class and new class later*/, allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), lang}), render_method, status_code, openGraphData, headers];
 
 		// convert content to valid HTML string
-		if (content instanceof Element || content instanceof DocumentFragment) return [getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC, allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), lang}), render_method, status_code, openGraphData, headers, content];
+		if (content instanceof Element || content instanceof DocumentFragment) return [getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), lang}), render_method, status_code, openGraphData, headers, content];
 		
 		// invalid content was created, should not happen
 		else if (content && typeof content == "object") {
@@ -811,23 +811,44 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				const combinedHeaders = headers ?? new Headers();
 				combinedHeaders.set('content-language', lang)
 
-				let themeName = getCookie(UIX_COOKIE.theme, requestEvent.request.headers, port)!
-				const modeCookie = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers, port) as "dark"|"light" ?? UIX.Theme.mode;
-				
-				let currentThemeCSS = UIX.Theme.getThemeCSS(themeName, true);
-				// theme not found on the backend
-				if (!currentThemeCSS) {
-					const newThemeName = modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme
-					if (themeName) {
-						logger.warn(`Theme "${themeName}" is not registered on the backend, using "${newThemeName}" as a fallback`);
-						setCookie(UIX_COOKIE.theme, themeName, undefined, combinedHeaders, port)!
-					}
-					themeName = newThemeName;
-					currentThemeCSS = UIX.Theme.getThemeCSS(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme, true);
+				let themeDark = getCookie(UIX_COOKIE.themeDark, requestEvent.request.headers, port)
+				let themeLight = getCookie(UIX_COOKIE.themeLight, requestEvent.request.headers, port)
+				let mode = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers, port) || getCookie(UIX_COOKIE.initialColorMode, requestEvent.request.headers, port) as "dark"|"light"
+
+				// no mode cookie or invalid, set server default (uix-initial-color-mode)
+				if (mode && mode !== "dark" && mode !== "light") {
+					logger.warn(`Invalid color mode set on frontend, using "${UIX.Theme.mode}" as a fallback`);
+					mode = UIX.Theme.mode
+					setCookie(UIX_COOKIE.initialColorMode, mode, undefined, combinedHeaders, port);
 				}
-				
+				else if (!mode) {
+					mode = UIX.Theme.mode
+					setCookie(UIX_COOKIE.initialColorMode, mode, undefined, combinedHeaders, port);
+				}
+
+				// select matching light theme for mode
+				const currentDarkThemeCSS = themeDark ? UIX.Theme.getThemeCSS(themeDark, true) : undefined;
+				const currentLightThemeCSS = themeLight ? UIX.Theme.getThemeCSS(themeLight, true) : undefined;
+
+				// fall back to default dark theme
+				if (!currentDarkThemeCSS) {
+					if (themeDark) logger.warn(`Theme "${themeDark}" is not registered on the backend, using "${UIX.Theme.defaultDarkTheme}" as a fallback`);
+					setCookie(UIX_COOKIE.themeDark, UIX.Theme.defaultDarkTheme, undefined, combinedHeaders, port);
+					themeDark = UIX.Theme.defaultDarkTheme
+				}
+
+				// fall back to default light theme
+				if (!currentLightThemeCSS) {
+					if (themeLight) logger.warn(`Theme "${themeLight}" is not registered on the backend, using "${UIX.Theme.defaultLightTheme}" as a fallback`);
+					setCookie(UIX_COOKIE.themeLight, UIX.Theme.defaultLightTheme, undefined, combinedHeaders, port);
+					themeLight = UIX.Theme.defaultLightTheme
+				}
+
+				const preferredThemeName = mode == "dark" ? themeDark! : themeLight!;
+
 				// get stylesheets for theme
-				const currentThemeStylesSheets = UIX.Theme.getThemeStylesheets(themeName) ?? UIX.Theme.getThemeStylesheets(modeCookie == "dark" ? UIX.Theme.defaultDarkTheme : UIX.Theme.defaultLightTheme) ?? [];
+				const currentThemeCSS = preferredThemeName ? UIX.Theme.getThemeCSS(preferredThemeName, true) : undefined;
+				const currentThemeStylesSheets = UIX.Theme.getThemeStylesheets(preferredThemeName) ?? [];
 				
 				// get live pointer ids for sse observer
 				let liveNodePointers:string[]|undefined = undefined;
@@ -845,7 +866,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 						js_files: this.#client_scripts,
 						lang,
 						static_js_files: this.#static_client_scripts,
-						color_scheme: modeCookie,
+						color_scheme: mode,
 						css: currentThemeCSS,
 						global_css_files: ['uix/style/document.css', ...currentThemeStylesSheets.map(s=>({href:s, class:"custom-theme"})), ...entrypoint_css],
 						body_css_files: ['uix/style/body.css', ...entrypoint_css],

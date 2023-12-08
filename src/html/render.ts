@@ -25,7 +25,7 @@ if (client_type === "deno") {
 
 type injectScriptData = {declare:Record<string,string>, init:string[]};
 
-type _renderOptions = {includeShadowRoots?:boolean, forms?:string[], datex_update_type?:string[], _injectedJsData?:injectScriptData, lang?:string, allowIgnoreDatexFunctions?: boolean}
+type _renderOptions = {includeShadowRoots?:boolean, injectStandaloneComponents?: boolean, forms?:string[], datex_update_type?:string[], _injectedJsData?:injectScriptData, lang?:string, allowIgnoreDatexFunctions?: boolean}
 
 export const CACHED_CONTENT = Symbol("CACHED_CONTENT");
 
@@ -49,7 +49,7 @@ const selfClosingTags = new Set([
 
 function loadStandaloneJS(el:(Element|ShadowRoot) & {standaloneEnabled?:()=>boolean}, opts?:_renderOptions){
 	// is UIX component with standalone methods?
-	if (opts?._injectedJsData && el.standaloneEnabled?.()) {
+	if (opts?._injectedJsData && opts?.injectStandaloneComponents && el.standaloneEnabled?.()) {
 		// add all class declarations
 		loadClassDeclarations(<any>el.constructor, opts._injectedJsData);
 		// add init script for instance
@@ -164,7 +164,9 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 
 	// TODO: only workaround
-	if (opts?.lang) UIX.language = opts.lang;
+	if (opts?.lang) {
+		UIX.language = opts.lang
+	};
 
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];
@@ -418,7 +420,7 @@ function isLiveNode(node: Node) {
 	if (node[DOMUtils.EVENT_LISTENERS]?.size) return true;
 }
 
-export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, allowIgnoreDatexFunctions?: boolean, lang?:string}):[header_script:string, html_content:string] {
+export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, injectStandaloneComponents?: boolean, allowIgnoreDatexFunctions?: boolean, lang?:string}):[header_script:string, html_content:string] {
 
 	if ((el as any)[CACHED_CONTENT]) return (el as any)[CACHED_CONTENT];
 
@@ -464,10 +466,13 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRo
 		script += `const EVENT_LISTENERS = Symbol.for("DOMUtils.EVENT_LISTENERS");\n`
 
 		// inject declarations
-		script += `globalThis.UIX_Standalone = {};\n`
-		for (const [name, val] of Object.entries(scriptData.declare)) {
-			script += `globalThis.UIX_Standalone.${name} = ${val};\n`
+		if (opts?.injectStandaloneComponents) {
+			script += `globalThis.UIX_Standalone = {};\n`
+			for (const [name, val] of Object.entries(scriptData.declare)) {
+				script += `globalThis.UIX_Standalone.${name} = ${val};\n`
+			}
 		}
+		
 	}
 	
 	// initialization scripts
@@ -515,7 +520,7 @@ if (!domContext.Element.prototype.getInnerHTML) {
 // @ts-ignore
 if (!domContext.Element.prototype.getOuterHTML) {
 	// @ts-ignore
-	domContext.Element.prototype.getOuterHTML = function(opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, lang?:string}) {
+	domContext.Element.prototype.getOuterHTML = function(opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, injectStandaloneComponents?: boolean, lang?:string}) {
 		return getOuterHTML(this, opts);
 	}
 }

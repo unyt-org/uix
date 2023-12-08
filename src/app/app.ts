@@ -20,6 +20,7 @@ import "../base/init.ts"
 import { bindingOptions } from "./dom-context.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
 import { UIX_COOKIE, deleteCookie } from "../session/cookies.ts";
+import { UIX } from "../../uix.ts";
 
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
 
@@ -259,7 +260,6 @@ class App {
 		sessionStorage.clear();
 
 		// clear cookies
-		deleteCookie(UIX_COOKIE.colorMode)
 		deleteCookie(UIX_COOKIE.endpoint)
 		deleteCookie(UIX_COOKIE.endpointNonce)
 		deleteCookie(UIX_COOKIE.endpointNew)
@@ -267,7 +267,9 @@ class App {
 		deleteCookie(UIX_COOKIE.session)
 		deleteCookie(UIX_COOKIE.language)
 		deleteCookie(UIX_COOKIE.sharedData)
-		deleteCookie(UIX_COOKIE.theme)
+		deleteCookie(UIX_COOKIE.themeDark)
+		deleteCookie(UIX_COOKIE.themeLight)
+		deleteCookie(UIX_COOKIE.colorMode)
 
         // reset service worker
         await ServiceWorker.clearCache();
@@ -288,11 +290,22 @@ export const app = new App();
 globalThis.reset = app.reset;
 
 // reset key shortcut
-if (app.stage == "dev") {
-	(globalThis as any).addEventListener("keydown", (e:any) => {
-		if (e.code == "KeyR" && e.ctrlKey) app.reset();
-	})
-}
+
+// if (app.stage == "dev")  TODO: only in dev stage?
+(globalThis as any).addEventListener("keydown", (e:any) => {
+	if (e.code == "KeyR" && e.ctrlKey) app.reset();
+	else if (e.code == "KeyL" && e.ctrlKey) {
+		if (UIX.language == "en") UIX.language = "de"
+		else UIX.language = "en";
+		console.log("[Debug] Switched language to '" + UIX.language + "'")
+	}
+	else if (e.code == "KeyT" && e.ctrlKey) {
+		if (UIX.Theme.mode == "dark") UIX.Theme.mode = "light"
+		else UIX.Theme.mode = "dark";
+		console.log("[Debug] Switched theme to '" + UIX.Theme.mode + "'")
+	}
+})
+
 
 
 

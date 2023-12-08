@@ -33,7 +33,7 @@ class ThemeManager  {
 	#values:{[key:string]:string} = {}
 
 	#auto_mode = true
-	#current_mode: "dark"|"light"
+	#current_mode?: "dark"|"light"
 	#current_theme!: string
 	#waiting_theme?: string;
 
@@ -44,6 +44,8 @@ class ThemeManager  {
 	#document_stylesheets_added = false;
 
 	#themeCustomStylesheets = new Map<string, string[]>()
+
+	#preferredModeIfThemeAvailable?: "dark"|"light"
 
 	#global_style_sheet = new CSSStyleSheet();
 
@@ -84,18 +86,31 @@ class ThemeManager  {
 		if (!this.getTheme(uixLight.name, true)) this.registerTheme(uixLight);
 
 
-		const currentMode: "dark"|"light" = client_type == "browser" ?  
-			(["dark", "light"].includes(getCookie(UIX_COOKIE.colorMode) as any) ? getCookie(UIX_COOKIE.colorMode) as "dark"|"light" : window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") :
-			"light";
-		const currentTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.theme) ?? "uix-"+currentMode) : "uix-"+currentMode;
+		const initialMode = client_type == "browser" && getCookie(UIX_COOKIE.initialColorMode) as "dark"|"light";
+		const currentModeCookie = client_type == "browser" && getCookie(UIX_COOKIE.colorMode) as "dark"|"light";
+		const currentMode = currentModeCookie || (client_type == "browser" ? (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") : "light");
+		
+		const currentDarkTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.themeDark) ?? "uix-dark") : "uix-dark";
+		const currentLightTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.themeLight) ?? "uix-light") : "uix-light";
 
+		console.log(initialMode, currentModeCookie, currentMode, currentDarkTheme, currentLightTheme)
 
 		// set current theme if not a parsed theme
-		if (this.getTheme(currentTheme, true)) this.setTheme(currentTheme, true);
+		if (currentMode == "dark" && this.getTheme(currentDarkTheme, true)) {
+			this.setTheme(currentDarkTheme, true);
+		}
+		else if (currentMode == "light" && this.getTheme(currentLightTheme, true)) {
+			this.setTheme(currentLightTheme, true);
+		}
+		else {
+			this.#current_mode = currentMode;
+			this.#current_theme = currentDarkTheme;
+		}
 
-		// make sure theme and mode are set
-		this.#current_mode = currentMode;
-		this.#current_theme = currentTheme;
+		// current server-guessed mode does not match client mode, remember preferred theme to enable if a frontend theme is loaded
+		if (!currentModeCookie && this.getTheme(currentDarkTheme, true)?.mode != currentMode) {
+			this.#preferredModeIfThemeAvailable = currentMode;
+		}
 
 		// watch system theme change
 		if (client_type == "browser") {
@@ -278,9 +293,10 @@ class ThemeManager  {
 		}
 
 		this.#current_theme = theme.name;
+		console.warn(theme.name)
 		logger.debug(`using theme "${theme.name}"`)
 
-		setCookie(UIX_COOKIE.theme, theme.name);
+		setCookie(UIX_COOKIE.themeDark, theme.name);
 		if (theme.mode) setCookie(UIX_COOKIE.colorMode, theme.mode);
 
 		let text = ":root{";
@@ -301,6 +317,7 @@ class ThemeManager  {
 
 		this.updateCurrentThemeStyle()
 
+		console.log("active",theme)
 		this.#current_mode = theme.mode ?? "light"; // only now trigger Theme.mode observers
 		// css global color scheme
 		if (client_type === "browser") {

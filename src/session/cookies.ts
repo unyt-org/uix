@@ -15,11 +15,15 @@ export const UIX_COOKIE = {
 
 	session: "uix-session",
 	language: "uix-language",
-	theme: "uix-theme",
+	themeDark: "uix-theme-dark",
+	themeLight: "uix-theme-light",
 	colorMode: "uix-color-mode",
+	initialColorMode: "uix-initial-color-mode",
 	sharedData: "uix-shared-data"
 } as const;
 export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];
+
+const isSafari = (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
 
 export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string) {
 
@@ -47,8 +51,8 @@ export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:numb
 		setHeaderCookie!(headers, {
 			name,
 			value,
-			// sameSite: "None",
-			// secure: true,
+			sameSite: "None",
+			secure: true,
 			path: '/',
 			expires: expiryDate
 		})
@@ -57,7 +61,7 @@ export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:numb
 	else {
 		const expires = "expires=" + expiryDate.toUTCString() + ";";
 		// SameSite none leads to errors (in combination with Secure/Not secure)
-		document.cookie = name + "=" + value + "; " + expires + " path=/;"
+		document.cookie = name + "=" + value + "; " + expires + " path=/; SameSite=None;" + (isSafari ? "" :" Secure;")
 	}
 	
 }

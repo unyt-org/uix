@@ -85,8 +85,6 @@ class ThemeManager  {
 		if (!this.getTheme(uixDark.name, true)) this.registerTheme(uixDark);
 		if (!this.getTheme(uixLight.name, true)) this.registerTheme(uixLight);
 
-
-		const initialMode = client_type == "browser" && getCookie(UIX_COOKIE.initialColorMode) as "dark"|"light";
 		const currentModeCookie = client_type == "browser" && getCookie(UIX_COOKIE.colorMode) as "dark"|"light";
 		const currentMode = currentModeCookie || (client_type == "browser" ? (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") : "light");
 		

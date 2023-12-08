@@ -57,7 +57,7 @@ A fragment is collapsed into its child elements when appended to another DOM ele
 > This means that after a fragment was appended to another element, it no longer has any content.
 > If you want to directly return a top-level fragment for an entrypoint, you should always
 > return it from a function, not as a single instantiation:
-> ```ts
+> ```tsx
 > export default <>Content</> // Don't do this
 > export default () => <>Content</> // This is correct
 > ```

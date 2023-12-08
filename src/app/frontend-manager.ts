@@ -791,7 +791,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 			// empty backend route & UIX-Inline-Backend => return 400 and just render frontend route
 			if (isInlineRendered && render_method == RenderMethod.DYNAMIC && prerendered_content==null) {
 				try {
-					await this.server.sendError(requestEvent, 500);
+					await this.server.sendError(requestEvent, 300, "IS_FRONTEND_ROUTE");
 				}
 				catch {/* ignore*/}
 				return;

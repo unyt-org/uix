@@ -29,6 +29,74 @@ Components support the common attributes for DOM element (e.g. `id`, `class`, `s
 can accept additional custom attributes defined in the component class or function.
 
 
+## Fragments
+
+There are two ways to create fragments in UIX.
+
+### DocumentFragments
+
+The most common way is to use create DocumentFragments with `<></>`:
+```tsx
+<>
+    <div>Content 1</div>
+    <div>Content 2</div>
+</>
+```
+
+This is equivalent to 
+```tsx
+<DocumentFragment>
+    <div>Content 1</div>
+    <div>Content 2</div>
+</DocumentFragment>
+```
+A fragment is collapsed into its child elements when appended to another DOM element.
+
+> [!NOTE]
+> Keep in mind that native `DocumentFragment`s are *not reusable*.
+> This means that after a fragment was appended to another element, it no longer has any content
+> If you want to directly return a top-level fragment for an entrypoint, you should always
+> return it from a function, not as a single instance:
+> ```ts
+> export default <>Content</> // Don't do this
+> export default () => <>Content</> // This is correct
+> ```
+> Alternatively, you can use `uix-fragment` elements
+
+
+### UIX Fragments
+
+A `uix-fragment` is a reusable fragment that is part of the actual DOM but is never rendered itself. Just the children are visible in the DOM. It can be created like this:
+
+```tsx
+<uix-fragment>
+    <div>Content 1</div>
+    <div>Content 2</div>
+</uix-fragment>
+```
+
+UIX Fragments do not face the reusablity issues of normal DocumentFragments, but you need to keep in mind
+that they are still visible to CSS selectors:
+
+```tsx
+<div>
+    <uix-fragment>
+        <h1>Title</h1>
+    </uix-fragment>
+</div>
+```
+
+```scss
+div > h1 {
+    // this does not work
+}
+div h1 {
+    // this works
+}
+div > uix-fragment > h1 {
+    // this also works
+}
+```
 
 ## Reactivity
 

@@ -81,7 +81,8 @@ type entrypointData<T extends Entrypoint = Entrypoint> = {
 	route?:Path.Route, 
 	context?:ContextGenerator|Context, 
 	only_return_static_content?: boolean
-	return_first_routing_handler?: boolean
+	return_first_routing_handler?: boolean,
+	probe_no_side_effects?: boolean, // if true, only check if the route exists, if possible, but don' call function etc
 }
 
 type resolvedEntrypointData<T extends Entrypoint = Entrypoint> = {
@@ -89,7 +90,7 @@ type resolvedEntrypointData<T extends Entrypoint = Entrypoint> = {
 	render_method: RenderMethod, // get_render_method<T>, 
 	status_code: number, 
 	loaded: boolean, 
-	remaining_route?: Path.Route
+	remaining_route?: Path.Route,
 	headers?: Headers // additional response headers
 }
 
@@ -317,7 +318,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	}
 
 	// handle generator functions (exclude class)
-	else if (typeof entrypointData.entrypoint == "function" && !/^\s*class/.test(entrypointData.entrypoint.toString())) {
+	else if (!entrypointData.probe_no_side_effects && typeof entrypointData.entrypoint == "function" && !/^\s*class/.test(entrypointData.entrypoint.toString())) {
 		resolved = await resolveGeneratorFunction(entrypointData as entrypointData<html_generator>);
 	}
 
@@ -327,7 +328,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	}
 
 	// handle RouteHandler TODO: better checks for interfaces? (not just 'getRoute')
-	else if (typeof (entrypointData.entrypoint as any)?.getRoute == "function") {
+	else if (!entrypointData.probe_no_side_effects && typeof (entrypointData.entrypoint as any)?.getRoute == "function") {
 		resolved = await resolveRouteHandler(entrypointData as entrypointData<RouteHandler>);
 	}
 

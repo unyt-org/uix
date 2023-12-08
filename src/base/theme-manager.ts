@@ -289,7 +289,6 @@ class ThemeManager  {
 		}
 
 		this.#current_theme = theme.name;
-		console.warn(theme.name)
 		logger.debug(`using theme "${theme.name}"`)
 
 		setCookie(UIX_COOKIE.themeDark, theme.name);
@@ -313,7 +312,6 @@ class ThemeManager  {
 
 		this.updateCurrentThemeStyle()
 
-		console.log("active",theme)
 		this.#current_mode = theme.mode ?? "light"; // only now trigger Theme.mode observers
 		// css global color scheme
 		if (client_type === "browser") {

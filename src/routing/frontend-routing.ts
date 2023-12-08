@@ -104,7 +104,7 @@ export namespace Routing {
 	}
 
 
-	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL()) {
+	async function getContentFromEntrypoint(entrypoint: Entrypoint, route: Path.Route = getCurrentRouteFromURL(), probe_no_side_effects = false) {
 		// create new context with fake request
 		const url = new Path(route, window.location.origin);
 		const path = route.pathname;
@@ -114,7 +114,7 @@ export namespace Routing {
 		context.path = path;
 		context.request = new Request(url)
 
-		const { content } = await resolveEntrypointRoute({entrypoint, context, route});
+		const { content } = await resolveEntrypointRoute({entrypoint, context, route, probe_no_side_effects});
 		return content;
 	}
 
@@ -202,10 +202,39 @@ export namespace Routing {
 		return actualMimeType === mimeType || actualMimeType?.startsWith(mimeType + ";")
 	}
 
+	async function resolveCurrentRouteFrontend(){
+		// try frontend entrypoint
+		if (frontend_entrypoint) {
+			const content = await getContentFromEntrypoint(frontend_entrypoint)
+			if (content !== null) {
+				const entrypoint = frontend_entrypoint;
+				return {content, entrypoint}
+			}
+			else {
+				displayError("UIX Rendering Error", "Route not found on backend or frontend");
+				return {}
+			}
+		}
+		else {
+			displayError("UIX Rendering Error", "Route not found on backend or frontend");
+			return {};
+		}
+	}
 
 	async function resolveCurrentRoute(allowReload=true){
 		let content:any;
 		let entrypoint:Entrypoint|undefined;
+
+		// first check if we can guarantee that the frontend route exists (might still be blocked by a backend route, but this is the
+		// best tradeoff for now)
+		const frontendRouteExists = await getContentFromEntrypoint(frontend_entrypoint, getCurrentRouteFromURL(), true)
+		if (frontendRouteExists !== null) {
+			({content, entrypoint} = await resolveCurrentRouteFrontend());
+			if (content !== null) {
+				setContent(content, entrypoint!);
+				return true;
+			}
+		}
 
 		// try to load backend route content
 		const backendResponse = await fetch(getCurrentRouteFromURL().routename, {
@@ -232,15 +261,8 @@ export namespace Routing {
 		}
 
 		else {
-			// try frontend entrypoint
-			if (frontend_entrypoint) {
-				content = await getContentFromEntrypoint(frontend_entrypoint)
-				entrypoint = frontend_entrypoint;
-			}
-			else {
-				displayError("UIX Rendering Error", "Route not found on backend or frontend");
-				return false;
-			}
+			console.log("not ok",backendResponse,frontend_entrypoint);
+			({content, entrypoint} = await resolveCurrentRouteFrontend());
 		}
 
 		setContent(content, entrypoint!);

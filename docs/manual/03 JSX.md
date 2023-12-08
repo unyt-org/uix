@@ -35,7 +35,7 @@ There are two ways to create fragments in UIX.
 
 ### DocumentFragments
 
-The most common way is to use create DocumentFragments with `<></>`:
+You can create HTML DocumentFragments with `<></>`:
 ```tsx
 <>
     <div>Content 1</div>
@@ -53,10 +53,10 @@ This is equivalent to
 A fragment is collapsed into its child elements when appended to another DOM element.
 
 > [!NOTE]
-> Keep in mind that native `DocumentFragment`s are *not reusable*.
-> This means that after a fragment was appended to another element, it no longer has any content
+> Keep in mind that native DocumentFragments are *not reusable*.
+> This means that after a fragment was appended to another element, it no longer has any content.
 > If you want to directly return a top-level fragment for an entrypoint, you should always
-> return it from a function, not as a single instance:
+> return it from a function, not as a single instantiation:
 > ```ts
 > export default <>Content</> // Don't do this
 > export default () => <>Content</> // This is correct
@@ -75,8 +75,7 @@ A `uix-fragment` is a reusable fragment that is part of the actual DOM but is ne
 </uix-fragment>
 ```
 
-UIX Fragments do not face the reusablity issues of normal DocumentFragments, but you need to keep in mind
-that they are still visible to CSS selectors:
+UIX Fragments do not face the reusablity issues of normal DocumentFragments, but you need to keep in mind that they are always visible to CSS selectors:
 
 ```tsx
 <div>

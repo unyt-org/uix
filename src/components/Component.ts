@@ -556,7 +556,6 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         // (this should not happen when reconstructing, because options are undefined or have [INIT_PROPS])
         if (options && !options[INIT_PROPS]) this.initOptions(options);
 
-
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
             // @ts-ignore preemptive [INIT_PROPS], because construct is called - normally handled by js interface (TODO: better solution?)
@@ -782,6 +781,10 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             const pointer = Datex.Pointer.getByValue(this)!
             if (!this.hasAttribute("uix-ptr")) this.setAttribute("uix-ptr", pointer.id);
 
+            if (this.is_skeleton && UIX.context == "frontend") {
+                this.logger.debug("hybrid initialization")
+                this.onDisplay?.();
+            }
             // TODO: required? should probably not be called per default
             // bindObserver(this)
         })
@@ -997,7 +1000,8 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     
     // called when added to DOM
     connectedCallback() {
-        if (this.is_skeleton) return; // ignore
+        // hybrid rendered, ignore, onDisplay() is called somewhere else
+        if (this.is_skeleton) return;
 
         // handle child on parent
         if (this.parentElement instanceof Component) {

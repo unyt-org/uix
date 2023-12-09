@@ -16,6 +16,7 @@ import { blobToBase64 } from "../uix-dom/datex-bindings/blob-to-base64.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { UIX } from "../../uix.ts";
 import { serializeJSValue } from "../utils/serialize-js.ts";
+import { Component } from "../components/Component.ts";
 
 let stage:string|undefined = '?'
 
@@ -416,6 +417,8 @@ const isNormalFunction = (fnSrc:string) => {
 }
 
 function isLiveNode(node: Node) {
+	// hybrid components are always live (TODO: not for backend-only components)
+	if (node instanceof Component) return true;
 	if (node[DOMUtils.ATTR_BINDINGS]?.size) return true;
 	if (node[DOMUtils.EVENT_LISTENERS]?.size) return true;
 }

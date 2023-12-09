@@ -225,16 +225,17 @@ export namespace Routing {
 		let content:any;
 		let entrypoint:Entrypoint|undefined;
 
+		// TODO: this does not work with frontend slots! content must always first be backend rendered
 		// first check if we can guarantee that the frontend route exists (might still be blocked by a backend route, but this is the
 		// best tradeoff for now)
-		const frontendRouteExists = await getContentFromEntrypoint(frontend_entrypoint, getCurrentRouteFromURL(), true)
-		if (frontendRouteExists !== null) {
-			({content, entrypoint} = await resolveCurrentRouteFrontend());
-			if (content !== null) {
-				setContent(content, entrypoint!);
-				return true;
-			}
-		}
+		// const frontendRouteExists = await getContentFromEntrypoint(frontend_entrypoint, getCurrentRouteFromURL(), true)
+		// if (frontendRouteExists !== null) {
+		// 	({content, entrypoint} = await resolveCurrentRouteFrontend());
+		// 	if (content !== null) {
+		// 		setContent(content, entrypoint!);
+		// 		return true;
+		// 	}
+		// }
 
 		// try to load backend route content
 		const backendResponse = await fetch(getCurrentRouteFromURL().routename, {

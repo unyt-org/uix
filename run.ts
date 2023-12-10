@@ -21,7 +21,7 @@ import type { runParams } from "./runners/runner.ts";
 
 const logger = new Datex.Logger("UIX Runner");
 
-// login flow
+// login flow	
 if (login) await triggerLogin();
 
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.WARNING
@@ -120,7 +120,7 @@ async function runBackends(options: normalizedAppOptions) {
 		try {
 			const {requiredLocation, stageEndpoint, domains, volumes} = await getDXConfigData(backend, options);
 
-			if (requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && requiredLocation?.toString() !== Deno.env.get("UIX_HOST_ENDPOINT")) {
+			if (requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && !Deno.env.get("UIX_HOST_ENDPOINT")?.startsWith(requiredLocation?.toString())) {
 				// custom runner
 				if (typeof requiredLocation == "string") {
 					let found = false;

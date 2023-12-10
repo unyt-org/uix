@@ -240,6 +240,7 @@ export namespace Routing {
 		// try to load backend route content
 		const backendResponse = await fetch(getCurrentRouteFromURL().routename, {
 			credentials: "include",
+			cache: "no-store",
 			headers: {
 				'UIX-Inline-Backend': 'true' // prevent duplicate loading of importmap (leads to errors)
 			}
@@ -262,7 +263,6 @@ export namespace Routing {
 		}
 
 		else {
-			console.log("not ok",backendResponse,frontend_entrypoint);
 			({content, entrypoint} = await resolveCurrentRouteFrontend());
 		}
 

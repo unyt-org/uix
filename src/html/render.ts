@@ -722,7 +722,8 @@ export async function generateHTMLPage({
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-				<meta name="view-transition" content="same-origin" />
+				<meta name="view-transition" content="same-origin"/>
+				<meta name="color-scheme" content="${color_scheme}"/>
 				<meta name="theme-color"/>	
 				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
 				${custom_meta}

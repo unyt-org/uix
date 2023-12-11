@@ -28,6 +28,16 @@ The following options can be set in a backend `.dx` file to configure a remote d
 * `domain`: *(text or text[])* One or multiple custom domains on which the web server is listening. This only works if the domain is pointing to the ip address of the docker host.
 * `volumes`: *(url or url[])* Directories that are mapped to persistent docker volumes on the docker host
 
+
+#### Inspecting UIX apps remote docker hosts
+
+You can start a UIX app with `--inspect` to debug the app while running on a remote docker host.
+To access the inspect port, you need to have ssh access to the docker host server and run the following command to map the server inspect port to a port on your local device:
+
+```
+ssh -L 127.0.0.1:9229:127.0.0.1:9229 YOUR_USERNAME@YOUR_SERVER_DOMAIN
+```
+
 **Example:**
 
 ```datex

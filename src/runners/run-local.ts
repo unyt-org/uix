@@ -47,7 +47,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	}
 
 	if (params.inspect!=undefined) {
-		if (params.inspect) cmd.push(`--inspect="${params.inspect}"`);
+		if (params.inspect) cmd.push(`--inspect=${params.inspect}`);
 		else cmd.push("--inspect");
 	}
 

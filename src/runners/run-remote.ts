@@ -73,7 +73,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 	if (watch) args.push("--watch");
 	if (verboseArg) args.push("--verbose");
 	if (params.inspect!=undefined) {
-		if (params.inspect) args.push(`--inspect="${params.inspect}"`);
+		if (params.inspect) args.push(`--inspect=${params.inspect}`);
 		else args.push("--inspect");
 	}
 
@@ -153,15 +153,21 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 function streamLogs(reader: ReadableStreamDefaultReader) {
 	function readStream() {
 		reader.read().then(({ done, value }) => {
-		  if (done) {
-			// Stream ended, exit the loop
-			console.log("Stream ended");
-			return;
-		  }
+			if (done) {
+				// Stream ended, exit the loop
+				console.log("Stream ended");
+				return;
+			}
 	  
-		  // Process and print the data
-		  Deno.stdout.writeSync(value)
-	  
+		  	// Process and print the data
+			if (value instanceof Uint8Array) {
+				Deno.stdout.writeSync(value)
+			}
+			else  if (value instanceof ArrayBuffer) {
+				Deno.stdout.writeSync(new Uint8Array(value))
+			}
+	  		else console.log("invalid stream value", 	value);
+
 		  // Continue reading the stream
 		  readStream();
 		});

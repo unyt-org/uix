@@ -72,6 +72,10 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 	const args = [];
 	if (watch) args.push("--watch");
 	if (verboseArg) args.push("--verbose");
+	if (params.inspect!=undefined) {
+		if (params.inspect) args.push(`--inspect="${params.inspect}"`);
+		else args.push("--inspect");
+	}
 
 	try {
 		let loaded = false;

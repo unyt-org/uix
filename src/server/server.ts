@@ -546,7 +546,15 @@ export class Server {
 
     async handleHTTPRequest(requestEvent: Deno.RequestEvent, normalizedPath?:string) {
         try {
-            await requestEvent.respondWith(await this.getResponse(requestEvent.request, normalizedPath))
+            let res:any;
+            try {
+                res = await this.getResponse(requestEvent.request, normalizedPath)
+            }
+            catch (e) {
+                console.error(e);
+                throw e;
+            }
+            await requestEvent.respondWith(res)
         } catch {
             try {
                 await requestEvent.respondWith(this.getErrorResponse(500))

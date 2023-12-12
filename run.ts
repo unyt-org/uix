@@ -119,7 +119,7 @@ const isWatching = live || watch_backend;
 const params: runParams = {
 	reload: forceUpdate || command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
 	enableTLS: enableTLS,
-	inspect: command_line_options.option("inspect", {type:"string", default:"", description: "Enable debugging for the deno process"}),
+	inspect: command_line_options.option("inspect", {type:"string", description: "Enable debugging for the deno process"}),
 	unstable: command_line_options.option("unstable", {type:"boolean", description: "Enable unstable deno features"}),
 	detach: command_line_options.option("detach", {type:"boolean", aliases: ["d"], default: false, description: "Keep the app running in background"}),
 

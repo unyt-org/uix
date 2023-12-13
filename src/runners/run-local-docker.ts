@@ -84,7 +84,8 @@ export default class LocalDockerRunner implements UIXRunner {
 			traefikLabels.push(...this.getTraefikLabels(name, host, port))
 		}
 
-		const volumeName = name.replace(/[^a-zA-Z0-9_.-]/g, '-') + '-datex-cache'
+		const dxCacheVolumeName = name.replace(/[^a-zA-Z0-9_.-]/g, '-') + '-datex-cache'
+		const localStorage = name.replace(/[^a-zA-Z0-9_.-]/g, '-') + '-localstorage'
 
 		// TODO: generic arg sanitisation (also for run-remote)
 		// TODO: inject args dynamically? not in docker compose file
@@ -111,7 +112,8 @@ export default class LocalDockerRunner implements UIXRunner {
 					working_dir: "/app",
 					volumes: [
 						`${new Path(baseURL).getAsRelativeFrom(deploymentDir)}:/app`,
-						`${volumeName}:/datex-cache`
+						`${dxCacheVolumeName}:/datex-cache`,
+						`${localStorage}:/deno-dir/location_data`
 					],
 					labels: traefikLabels,
 					
@@ -122,7 +124,10 @@ export default class LocalDockerRunner implements UIXRunner {
 				}
 			},
 			volumes: {
-				[volumeName]: {
+				[dxCacheVolumeName]: {
+					external: false
+				},
+				[localStorage]: {
 					external: false
 				}
 			},

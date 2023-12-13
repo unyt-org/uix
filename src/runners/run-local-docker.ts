@@ -118,7 +118,8 @@ export default class LocalDockerRunner implements UIXRunner {
 					labels: traefikLabels,
 					
 					entrypoint: "/bin/sh",
-    				command: `-c "deno run --import-map https://cdn.unyt.org/uix/importmap.json -Aqr https://cdn.unyt.org/uix/run.ts -r --port 80 --stage ${stage} --cache-path /datex-cache ${args.join(" ")}"`,
+					// keep dev.cdn for now to allow supranet relays to start without cdn running
+    				command: `-c "deno run --import-map https://dev.cdn.unyt.org/uix1/importmap.json -Aqr https://dev.cdn.unyt.org/uix1/run.ts -r --port 80 --stage ${stage} --cache-path /datex-cache ${args.join(" ")}"`,
 		
 					restart: "always"
 				}

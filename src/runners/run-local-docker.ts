@@ -98,7 +98,7 @@ export default class LocalDockerRunner implements UIXRunner {
 			services: {
 				"uix-app": {
 					container_name: `${name}`,
-					image: "denoland/deno",
+					image: "denoland/deno:1.37.2",
 
 					expose: ["80"],
 	
@@ -116,7 +116,7 @@ export default class LocalDockerRunner implements UIXRunner {
 					labels: traefikLabels,
 					
 					entrypoint: "/bin/sh",
-    				command: `-c "deno run --import-map https://dev.cdn.unyt.org/uix/importmap.dev.json -Aqr https://dev.cdn.unyt.org/uix/run.ts -r --port 80 --stage ${stage} --cache-path /datex-cache ${args.join(" ")}"`,
+    				command: `-c "deno run --import-map https://cdn.unyt.org/uix/importmap.json -Aqr https://cdn.unyt.org/uix/run.ts -r --port 80 --stage ${stage} --cache-path /datex-cache ${args.join(" ")}"`,
 		
 					restart: "always"
 				}

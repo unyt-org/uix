@@ -17,6 +17,7 @@ import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { UIX } from "../../uix.ts";
 import { serializeJSValue } from "../utils/serialize-js.ts";
 import { Component } from "../components/Component.ts";
+import { DX_VALUE } from "datex-core-legacy/runtime/constants.ts";
 
 let stage:string|undefined = '?'
 
@@ -115,7 +116,35 @@ export function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collec
 function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:string[], isStandaloneContext = false):string {
 	isStandaloneContext = isStandaloneContext || (<any>el)[STANDALONE];
 
-	if (el instanceof domContext.Text) return domUtils.escapeHtml(el.textContent ?? ""); // text node
+	// TODO: also for attributes
+	if (opts?.lang) {
+		for (const childPtr of (el as DOMUtils.elWithEventListeners)[DOMUtils.CHILDREN_DX_VALUES]??[]) {
+			if (childPtr.transformSource) {
+				for (const ptr of [...childPtr.transformSource.deps, ...childPtr.transformSource.keyedDeps.keys()]) {
+					if (ptr instanceof Datex.Pointer && ptr.transformMap) {
+						const localizedValue = ptr.transformMap[opts.lang] ?? ptr.transformMap["en"];
+						if (localizedValue != undefined) ptr.val = localizedValue;
+					}
+				}
+				childPtr.transformSource.update();
+			}
+		}
+	}
+	
+
+	if (el instanceof domContext.Text) {
+		// localized
+		let content: string; 
+		if (opts?.lang && (el as any)[DX_VALUE] instanceof Datex.Pointer && (el as any)[DX_VALUE].transformMap) {
+			const map = (el as any)[DX_VALUE].transformMap;
+			content = map[opts?.lang] ?? map["en"] ?? el.textContent;
+		}
+		// not localized
+		else {
+			content = el.textContent
+		}
+		return domUtils.escapeHtml(content ?? ""); // text node
+	}
 
 	if (el instanceof domContext.DocumentFragment) {
 		const content = [];
@@ -165,13 +194,23 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 
 	// TODO: only workaround
-	if (opts?.lang) {
-		UIX.language = opts.lang
-	};
+	// if (opts?.lang) {
+	// 	UIX.language = opts.lang
+	// };
+
+
 
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];
-		let val = attrib.value;
+		let val:string;
+
+		const transformMap = opts?.lang && (el as any)[DOMUtils.ATTR_DX_VALUES]?.get(attrib.name)?.transformMap;
+		if (transformMap) {
+			val = transformMap[opts!.lang!] ?? transformMap["en"] ?? attrib.value;
+		}
+		else {
+			val = attrib.value;
+		}
 
 		// relative web path (@...)
 		if (val.startsWith("file://")) val = convertToWebPath(val);
@@ -198,7 +237,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 	else attrs.push("uix-static");
 
 	// inject event listeners
-	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithEventListeners>el)[DOMUtils.ATTR_BINDINGS])) {
+	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithEventListeners>el)[DOMUtils.PSEUDO_ATTR_BINDINGS])) {
 		let context: HTMLElement|undefined;
 		let parent: Element|null = el;
 		let hasScriptContent = false; // indicates whether the generated script actually contains relevant content, not just skeleton code
@@ -258,7 +297,8 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 			throw new Error(`Invalid datex-update="onsubmit", no form found`)
 		}
 
-		for (const [attr, ptr] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.ATTR_BINDINGS] ?? []) {
+		for (const [attr, ptr] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.PSEUDO_ATTR_BINDINGS] ?? []) {
+
 			hasScriptContent = true;
 			const propName = attr == "checked" ? "checked" : "value";
 			const keepAlive = datexUpdateType == "onsubmit"
@@ -419,7 +459,7 @@ const isNormalFunction = (fnSrc:string) => {
 function isLiveNode(node: Node) {
 	// hybrid components are always live (TODO: not for backend-only components)
 	if (node instanceof Component) return true;
-	if (node[DOMUtils.ATTR_BINDINGS]?.size) return true;
+	if (node[DOMUtils.PSEUDO_ATTR_BINDINGS]?.size) return true;
 	if (node[DOMUtils.EVENT_LISTENERS]?.size) return true;
 }
 
@@ -433,7 +473,7 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRo
 	const collectedStylesheets:string[] = []
 
 	// TODO: only workaround
-	if (opts?.lang) UIX.language = opts.lang;
+	// if (opts?.lang) UIX.language = opts.lang;
 
 	let html = _getOuterHTML(el, opts, collectedStylesheets);
 

@@ -30,7 +30,7 @@ export function getLiveNodes(treeRoot: Element, includeEventListeners = true, _l
 	}
 	
 	if (!isLive) {
-		if (treeRoot[DOMUtils.ATTR_BINDINGS]?.size) isLive = true
+		if (treeRoot[DOMUtils.PSEUDO_ATTR_BINDINGS]?.size) isLive = true
 	}
 
 	if (isLive) _list.push(treeRoot);

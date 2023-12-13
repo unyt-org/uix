@@ -783,9 +783,6 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		try {
 			this.updateCheckEntrypoint();
 
-			// TODO:
-			// Datex.Runtime.ENV.LANG = lang;
-			// await Datex.Runtime.ENV.$.LANG.setVal(lang);
 			const [prerendered_content, render_method, status_code, open_graph_meta_tags, headers, contentElement] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
 
 			// empty backend route & UIX-Inline-Backend => return 400 and just render frontend route

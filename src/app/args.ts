@@ -62,5 +62,5 @@ export function updateRootPath(allowFail = false) {
 		throw "Could not find an app.dx or app.json config file in " + _path.normal_pathname
 	}
 
-	rootPath = (config_path ? new Path(config_path).parent_dir : null) as Path.File;;
+	rootPath = (config_path ? new Path(config_path).parent_dir : null) as Path.File;
 }

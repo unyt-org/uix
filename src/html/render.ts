@@ -116,7 +116,7 @@ export function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collec
 function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:string[], isStandaloneContext = false):string {
 	isStandaloneContext = isStandaloneContext || (<any>el)[STANDALONE];
 
-	// TODO: also for attributes
+	// TODO: also for attributes transforms
 	if (opts?.lang) {
 		for (const childPtr of (el as DOMUtils.elWithEventListeners)[DOMUtils.CHILDREN_DX_VALUES]??[]) {
 			if (childPtr.transformSource) {
@@ -126,7 +126,6 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 						if (localizedValue != undefined) ptr.val = localizedValue;
 					}
 				}
-				childPtr.transformSource.update();
 			}
 		}
 	}

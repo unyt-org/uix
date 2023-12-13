@@ -1,3 +1,4 @@
+import { clear } from "../app/args.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "../utils/path.ts";
@@ -77,12 +78,16 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 	Deno.addSignalListener("SIGINT", ()=>Deno.exit())
 
+
 	try {
 		// not supported by WiNdoWs
 		await Deno.addSignalListener("SIGTERM", ()=>Deno.exit())
 		await Deno.addSignalListener("SIGQUIT", ()=>Deno.exit())
 	}
 	catch {}
+	
+	let isClearingState = clear;
+	const args = [...Deno.args];
 
 	await run();
 
@@ -96,7 +101,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				...config_params,
 				run_script_abs_url,
 				...config_params, // pass --import-map and --config also as runtime args to reconstruct the command when the backend restarts
-				...Deno.args,
+				...args,
 			]
 		})
 
@@ -109,6 +114,12 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		}
 		const exitStatus = await process.status();
 		if (exitStatus.code == 42) {
+			await run();
+		}
+		else if (isClearingState) {
+			isClearingState = false;
+			// restart without --clear
+			args.splice(args.indexOf("--clear"), 1);
 			await run();
 		}
 		else if (isWatching) {

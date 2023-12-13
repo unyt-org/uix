@@ -1,10 +1,15 @@
 import { Datex } from "datex-core-legacy";
 import { getAppOptions } from "./config-files.ts";
-import { env, rootPath } from "./args.ts";
+import { clear, env, rootPath } from "./args.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import "./dom-context.ts";
 import { app } from "./app.ts";
 const logger = new Datex.Logger("UIX App Runner");
+
+// clear state and exit
+if (clear) {
+	await Datex.Storage.clearAndReload();
+}
 
 if (client_type !== "deno") {
 	logger.error("The UIX app runner can only be used on a deno backend");

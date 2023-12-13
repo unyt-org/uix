@@ -77,7 +77,7 @@ export class FrontendManager extends HTMLProvider {
 		this.updateCheckEntrypoint();
 
 		// generate entrypoint.ts interface for backend
-		if (this.#backend?.web_entrypoint && this.#backend.entrypoint) this.handleOutOfScopePath(this.#backend.entrypoint, this.scope, new Set(["default"]), false);
+		if (this.#backend?.web_entrypoint && this.#backend.entrypoint) this.handleOutOfScopePath(this.#backend.entrypoint, this.scope, new Set(["default"]), false, true);
 		// bind virtual backend entrypoint
 		if (this.#backend?.web_entrypoint && this.#backend?.virtualEntrypointContent) {
 			const path = this.resolveImport(this.#backend?.web_entrypoint);
@@ -422,8 +422,9 @@ export class FrontendManager extends HTMLProvider {
 	// resolve oos paths from local (client side) imports - resolve to web (https) paths
 	// + resolve .dx/.dxb imports
 	// if no_side_effects is true, don't update any files
-	private async handleOutOfScopePath(import_path:Path.File|string, module_path:Path, imports:Set<string>, no_side_effects:boolean){
+	private async handleOutOfScopePath(import_path:Path.File|string, module_path:Path, imports:Set<string>, no_side_effects:boolean, ignore_export_failures = false){
 
+		// TODO: propagate ignore_export_failures
 		if (typeof import_path == "string") return this.handleEndpointImport(import_path, module_path, imports, no_side_effects);
 
 		// map .dx -> .dx.ts

@@ -17,6 +17,7 @@ import { getJSONCompatibleSerializedValue } from "../utils/serialize-js.ts";
 const fileServer = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : null;
 
 type mime_type = `${'text'|'image'|'application'|'video'|'audio'}/${string}`;
+type json_mime_type = `application/${string}+json`;
 
 export function lazy<T extends html_generator>(generator: T): T {
 	let result:Awaited<ReturnType<T>>|undefined;
@@ -43,15 +44,16 @@ export const once = lazy
  * @param options optional options:
  * 	type: Datex.FILE_TYPE (DX, DXB, JSON)
  *  formatted: boolean if true, the DX/JSON is formatted with newlines/spaces
+ *  mimeType: custom mime type if type is JSON
  * @returns blob containing DATEX/JSON encoded value
  */
-export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FILE_TYPE, formatted?:boolean, mockPointers?:boolean}) {
+export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FILE_TYPE, formatted?:boolean, mockPointers?:boolean, mimeType?: json_mime_type}) {
 	if (options?.type == Datex.FILE_TYPE.DATEX_BINARY) {
 		return provideContent(await Datex.Compiler.compile("?", [value]) as ArrayBuffer, options.type[0])
 	}
 	else if (options?.type == Datex.FILE_TYPE.JSON) {
 		if (options?.mockPointers) value = getJSONCompatibleSerializedValue(value);
-		return provideContent(JSON.stringify(value??null, null, options?.formatted ? '    ' : undefined), options.type[0])
+		return provideContent(JSON.stringify(value??null, null, options?.formatted ? '    ' : undefined), options.mimeType ?? options.type[0])
 	}
 	else {
 		return provideContent(Datex.Runtime.valueToDatexStringExperimental(value, options?.formatted), (options?.type ?? Datex.FILE_TYPE.DATEX_SCRIPT)[0])
@@ -63,10 +65,11 @@ export async function provideValue(value:unknown, options?:{type?:Datex.DATEX_FI
  * @param value any JSON compatible value
  * @param options optional options:
  *  formatted: boolean if true, the DX/JSON is formatted with newlines/spaces
+ *  mimeType: custom mime type (e.g. "application/geo+json")
  * @returns blob containing DATEX/JSON encoded value
  */
-export function provideJSON(value:unknown, options?:{formatted?:boolean}) {
-	return provideValue(value, {formatted: options?.formatted, type: Datex.FILE_TYPE.JSON})
+export function provideJSON(value:unknown, options?:{formatted?:boolean, mimeType?: json_mime_type}) {
+	return provideValue(value, {formatted: options?.formatted, type: Datex.FILE_TYPE.JSON, mimeType:options?.mimeType})
 }
 
 

@@ -546,6 +546,8 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
 
     protected is_skeleton = false // true if component not yet fully initialized, still displayed as skeleton and not associated with DATEX object
 
+    protected reconstructed_from_dom = false
+
     constructor()
     constructor(options?:Datex.DatexObjectInit<O>)
     constructor(options?:Datex.DatexObjectInit<O>) {
@@ -570,9 +572,11 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             // ignore if currently hydrating static element
             if (this.hasAttribute("uix-static") || this.hasAttribute("uix-dry")) {
                 this.is_skeleton = true;
+                this.reconstructed_from_dom = true;
                 logger.debug("hydrating component " + classType);
             }
             else {
+                this.reconstructed_from_dom = true;
                 // logger.debug("creating " + this.constructor[Datex.DX_TYPE] + " component from DOM");
                 return (<Datex.Type>classType).construct(this, [], true, true);
             }
@@ -675,12 +679,18 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         // handle default component options (class, ...)
         if (this.options?.class) 
             domUtils.setElementAttribute(this, "class", this.options.$.class);
-
         
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in Component.init
+ 
+        if (!((<typeof Component>this.constructor).prototype instanceof Component)) {
+            logger.warn("Cannot initialize standalone component as normal UIX component (<"+this.tagName.toLowerCase()+">)")
+            return;
+        }
+
         // make sure static component data (e.g. datex module imports) is loaded
         await (<typeof Component>this.constructor).init();
-        await this.loadTemplate();
+        if (!this.reconstructed_from_dom) await this.loadTemplate();
+        else this.logger.debug("Reconstructed from DOM, not creating new template content")
         this.loadDefaultStyle()
         await this.init(true);
         await this.onConstructed?.();

@@ -491,12 +491,13 @@ class WebsocketComInterface extends ServerDatexInterface {
 
             socket.onclose = dispose
             socket.onerror = dispose
+            socket.binaryType = "arraybuffer";
 
             const proxySource:{type:string, description: string, endpoint?:Datex.Endpoint} = {type: this.type, description: this.description};
 
-            socket.onmessage = async (e:MessageEvent<ArrayBuffer|Blob>) => {
+            socket.onmessage = async (e:MessageEvent<ArrayBuffer>) => {
 
-                const dmx_block = e.data instanceof ArrayBuffer ? e.data : await e.data.arrayBuffer();
+                const dmx_block = e.data;
 
                 let header: Datex.dxb_header;
 

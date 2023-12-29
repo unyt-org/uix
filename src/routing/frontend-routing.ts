@@ -167,7 +167,9 @@ export namespace Routing {
 			if (isContentType(response, "text/html")) {
 				if (response.redirected) setCurrentRoute(response.url, true);
 				try {
-					document.write(await response.text());
+					const text = await response.text();
+					document.clear()
+					document.write(text);
 				}
 				catch (e) {
 					console.error(e)

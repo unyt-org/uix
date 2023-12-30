@@ -343,10 +343,8 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 
 	// handle FileHandle
 	else if (client_type === "deno" && entrypointData.entrypoint instanceof FileHandle) {
-		console.log("filehandle", entrypointData.entrypoint)
 		const file = await Deno.open(entrypointData.entrypoint.path.normal_pathname);
 		resolved.content = new Response(file.readable)
-		resolved.content[Symbol.dispose] = () => file.close()
 		// cors headers (TODO: more general way to define cors behaviour)
 		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
 		resolved.content.headers.set("Access-Control-Allow-Headers", "*");

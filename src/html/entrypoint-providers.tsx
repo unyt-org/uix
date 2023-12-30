@@ -172,6 +172,11 @@ export async function provideContent(content:string|ArrayBuffer, type:mime_type 
 	return provideResponse(blob, type, status);
 }
 
+export class FileHandle {
+	constructor(public path: Path) {}
+}
+
+
 /**
  * serve a file
  * @param path local file path
@@ -179,7 +184,7 @@ export async function provideContent(content:string|ArrayBuffer, type:mime_type 
  */
 export function provideFile(path:string|URL) {
 	const resolvedPath = new Path(path, getCallerFile());
-	return () => Deno.open(resolvedPath);
+	return () => new FileHandle(resolvedPath) //Deno.open(resolvedPath);
 }
 
 /**

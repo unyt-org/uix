@@ -877,6 +877,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					undefined, status_code, combinedHeaders
 				);
 			}
+
 		} catch (error) {
 			console.log(error)
 			if (recursiveError) {

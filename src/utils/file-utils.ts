@@ -5,7 +5,8 @@ export function getExistingFile(root_path:URL, ...paths:(string|URL)[]):URL|null
 		const path = paths.shift();
 		if (!path) return null;
 		const abs_path = new Path(path, root_path);
-		Deno.openSync(abs_path.normal_pathname)
+		const file = Deno.openSync(abs_path.normal_pathname)
+		file.close()
 		return abs_path;
 	}
 	catch {
@@ -25,7 +26,8 @@ function _getExistingFileExclusive(root_path:URL, found:URL|null = null, ...path
 		const path = paths.shift();
 		if (!path) return found;
 		const abs_path = new URL(path, root_path);
-		Deno.openSync(abs_path)
+		const file = Deno.openSync(abs_path)
+		file.close()
 		// file exists, but already found one
 		if (found) return 'invalid'
 		else return _getExistingFileExclusive(root_path, abs_path, ...paths);

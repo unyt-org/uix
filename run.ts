@@ -129,7 +129,7 @@ async function runBackends(options: normalizedAppOptions) {
 							await runner.run({
 								params,
 								baseURL: new_base_url,
-								options,
+				 				options,
 								backend,
 								endpoint: stageEndpoint,
 								domains,

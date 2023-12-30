@@ -959,7 +959,12 @@ export abstract class Base<O extends Base.Options = Base.Options> extends Elemen
                 return indent(4) `
                 _standalone_construct() {
                     ${propInit};
-                    super._standalone_construct();
+                    try {
+                        super._standalone_construct();
+                    }
+                    catch (e) {
+                        console.error(e)
+                    }
                 }
                 `
             }

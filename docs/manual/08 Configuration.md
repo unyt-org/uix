@@ -49,7 +49,7 @@ The following options provide some general information or behaviour of the app.
 ### Experimental Features
 
 * *embedded-reactivity*: Enables compile-time reactivity features for JSX templates and the `$()` syntax
-* *protected-pointers*: Sets the `PROTECTED_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints per default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
+* *protect-pointers*: Sets the `PROTECT_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints per default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
 
 
 

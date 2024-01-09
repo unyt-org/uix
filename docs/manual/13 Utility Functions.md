@@ -13,10 +13,10 @@ redirect("/home");
 
 This is equivalent to
 ```ts
-// wait until DATEX updates are sent
+// wait until all scheduled DATEX updates are sent
 await Datex.Runtime.synchronized; 
 // navigate to "/home"
 window.location.href = "/home"
 ```
 
-The `redirect` function is available in the global scope per default, but can also be imported from `"uix/utils/window-apis.ts"``.
+The `redirect` function is available in the global scope per default, but can also be imported from `"uix/utils/window-apis.ts"`.

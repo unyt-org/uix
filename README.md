@@ -57,11 +57,14 @@ This is why UIX ships with integrated features such as:
 7. [Rendering Methods](./docs/manual/07%20Rendering%20Methods.md)
 8. [Configuration](./docs/manual/08%20Configuration.md)
 9. [Localization](./docs/manual/09%20Localization.md)
-10. [Styles and Themes](./docs/manual/10%20Styles%20and%20Themes.md)
-13. [Shadow DOM](./docs/manual/13%20Shadow%20DOM.md)
-13. [Deployment](./docs/manual/13%20Deployment.md)
-14. [HTTP Tunneling](./docs/manual/14%20HTTP%20Tunneling.md)
-15. [Plugins](./docs/manual/15%20Plugins.md)
+10. [Functions and Contexts](./docs/manual/10%20Functions%20and%20Contexts.md)
+11. [Styles and Themes](./docs/manual/11%20Styles%20and%20Themes.md)
+12. [Shadow DOM](./docs/manual/12%20Shadow%20DOM.md)
+13. [Utility Functions](./docs/manual/13%20Utility%20Functions.md)
+14. [Deployment](./docs/manual/14%20Deployment.md)
+15. [HTTP Tunneling](./docs/manual/15%20HTTP%20Tunneling.md)
+16. [Plugins](./docs/manual/16%20Plugins.md)
+17. [Tutorials](./docs/manual/17%20Tutorials.md)
 
 ## Examples
 Feel free to browse a collection of UIX projects on [uix.unyt.org/templates](https://uix.unyt.org/templates).

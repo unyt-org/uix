@@ -12,6 +12,8 @@ import { template as _template, blankTemplate as _blankTemplate } from "./src/ht
 import { style as _style } from "./src/html/style.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 
+import "./src/utils/window-apis.ts";
+
 // TODO: remove
 export {unsafeHTML} from "./src/html/unsafe-html.ts";
 

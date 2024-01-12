@@ -322,29 +322,29 @@
   }
   
   /* Format tables */
-  table {
+  table:not(.plain) {
 	border-collapse: collapse;
 	margin: 1.5rem 0;
   }
   
-  td,
-  th {
+  table:not(.plain) td,
+  table:not(.plain) th {
 	border: 1px solid var(--border);
 	text-align: start;
 	padding: 0.5rem;
   }
   
-  th {
+  table:not(.plain) th {
 	background-color: var(--accent-bg);
 	font-weight: bold;
   }
   
-  tr:nth-child(even) {
+  table:not(.plain) tr:nth-child(even) {
 	/* Set every other cell slightly darker. Improves readability. */
 	background-color: var(--accent-bg);
   }
   
-  table caption {
+  table:not(.plain) caption {
 	font-weight: bold;
 	margin-bottom: 0.5rem;
   }

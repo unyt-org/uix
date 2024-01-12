@@ -573,9 +573,10 @@ class WebsocketComInterface extends ServerDatexInterface {
         // try to find an other endpoint over which the requested endpoint is connected
         let connectedEndpointSocket = this.getConnectedEndpointSocket(to);
         if (!connectedEndpointSocket) {
+            const previousTo = to;
             to = this.getReachableEndpointRedirectEndpoint(to)!;
             if (to) connectedEndpointSocket = this.getConnectedEndpointSocket(to);
-            else {logger.debug(to + " not reachable via redirect");return;}
+            else {logger.debug(previousTo + " not reachable via redirect");return;}
         }
 
         // send to a connected endpoint

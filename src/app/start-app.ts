@@ -7,6 +7,7 @@ import { Server } from "../server/server.ts";
 import { FrontendManager } from "./frontend-manager.ts";
 import { Path } from "../utils/path.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
+import { getDirType } from "./utils.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -110,8 +111,22 @@ export async function startApp(app: {domains:string[], options?:normalizedAppOpt
 	}
 
 	// js type def module mapping
-	Datex.Type.setJSTypeDefModuleMapper(url => {
+	Datex.Type.setJSTypeDefModuleMapper((url, type) => {
 		const webPath = convertToWebPath(url);
+
+		try {
+			url = new URL(url);
+		}
+		catch {
+			// ignore
+		}
+
+		if (url instanceof URL && app.options) {
+			const dirType = getDirType(app.options, new Path(url));
+			if (dirType == "backend") {
+				return `fatal:Tried to load the @sync class "${type.interface_config?.class?.name ?? type.name}" from the backend module ${webPath.replace("/@uix/src/","")} in the frontend. This is currently not supported - please put the class definition in a common module.`
+			}
+		}
 		// ignore cdn urls, assumes that the modules are already imported on all clients
 		// TODO: improve, what if type modules are not all loaded per default?
 		if (webPath.startsWith("https://dev.cdn.unyt.org/") || webPath.startsWith("https://cdn.unyt.org/")) return;

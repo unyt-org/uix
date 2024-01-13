@@ -417,12 +417,12 @@ export class FrontendManager extends HTMLProvider {
 		}
 	}
 
-	#backend_virtual_files = new Map<string, Map<string, Set<string>>>()
+	#backend_virtual_files = new Map<string, Map<string, [imports: Set<string>, ignore_failure?: Set<string>]>>()
 
 	// resolve oos paths from local (client side) imports - resolve to web (https) paths
 	// + resolve .dx/.dxb imports
 	// if no_side_effects is true, don't update any files
-	private async handleOutOfScopePath(import_path:Path.File|string, module_path:Path, imports:Set<string>, no_side_effects:boolean, ignore_export_failures = false){
+	private async handleOutOfScopePath(import_path:Path.File|string, module_path:Path, imports:Set<string>, no_side_effects:boolean, ignore_export_failures:Set<string>|boolean = false){
 
 		// TODO: propagate ignore_export_failures
 		if (typeof import_path == "string") return this.handleEndpointImport(import_path, module_path, imports, no_side_effects);
@@ -454,7 +454,7 @@ export class FrontendManager extends HTMLProvider {
 				const import_pseudo_path = this.scope.getChildPath(web_path);
 				// const rel_import_pseudo_path = import_pseudo_path.getAsRelativeFrom(module_path.parent_dir);
 
-				if (!no_side_effects) await this.updateBackendInterfaceFile(web_path, import_pseudo_path, import_path, module_path, imports);
+				if (!no_side_effects) await this.updateBackendInterfaceFile(web_path, import_pseudo_path, import_path, module_path, imports, ignore_export_failures);
 
 				return this.normalizeImportFileExt(web_path);
 			}
@@ -570,7 +570,7 @@ export class FrontendManager extends HTMLProvider {
 
 	#update_backend_promise?: Promise<any>
 
-	private async updateBackendInterfaceFile(web_path:string, import_pseudo_path:Path.File, import_path:Path, module_path:Path, imports:Set<string>) {
+	private async updateBackendInterfaceFile(web_path:string, import_pseudo_path:Path.File, import_path:Path, module_path:Path, imports:Set<string>, ignore_export_failures:Set<string>|boolean = false) {
 
 		await this.#update_backend_promise;
 		let resolve_done: Function|undefined;
@@ -579,17 +579,27 @@ export class FrontendManager extends HTMLProvider {
 		const module_path_string = module_path.toString();
 
 		if (!this.#backend_virtual_files.has(web_path)) this.#backend_virtual_files.set(web_path, new Map())
-		if (!this.#backend_virtual_files.get(web_path)!.has(module_path_string)) this.#backend_virtual_files.get(web_path)!.set(module_path_string, new Set())
+		if (!this.#backend_virtual_files.get(web_path)!.has(module_path_string)) this.#backend_virtual_files.get(web_path)!.set(module_path_string, [new Set()])
 
 		const used_imports = this.#backend_virtual_files.get(web_path)!;
 
-		const combined_imports_before = <Set<string>> new Set([...used_imports.values()].reduce((a, c) => a.concat( <any>[...c] ), []))
+		const ignorable_exports_before = this.findIgnorableExports(used_imports);
+		const combined_imports_before = <Set<string>> new Set([...used_imports.values()].map(([imports]) => imports).reduce((a, c) => a.concat( <any>[...c] ), []))
+		
 		// update imports used by module
-		this.#backend_virtual_files.get(web_path)!.set(module_path_string, imports)
-		let new_combined_imports = <Set<string>> new Set([...used_imports.values()].reduce((a, c) => a.concat( <any>[...c] ), []))
+		this.#backend_virtual_files.get(web_path)!.set(module_path_string, [imports, ignore_export_failures ? (ignore_export_failures instanceof Set ? ignore_export_failures : imports) : undefined])
+		
+		let new_combined_imports = <Set<string>> new Set([...used_imports.values()].map(([imports]) => imports).reduce((a, c) => a.concat( <any>[...c] ), []))
+		const ignorable_exports_after = this.findIgnorableExports(used_imports);
+
+		const ignorable_exports_changed = 
+			ignorable_exports_before.size != ignorable_exports_after.size || 
+			[...ignorable_exports_before].some(e => !ignorable_exports_after.has(e));
+
+		// changed is true if ignorable exports changed
+		let changed = ignorable_exports_changed;
+
 		// check if imports changed:
-	
-		let changed = false;
 		const removed = new Set<string>();
 
 		for (const import_before of combined_imports_before) {
@@ -610,33 +620,73 @@ export class FrontendManager extends HTMLProvider {
 
 		// imports changed, update file
 		if (changed) {
-			this.createExposeExportsFile(web_path, import_pseudo_path, import_path, module_path, new_combined_imports, removed)
+			this.createExposeExportsFile(web_path, import_pseudo_path, import_path, module_path, new_combined_imports, removed, ignorable_exports_after)
 		}
 
 		resolve_done?.();
 	}
 
+	/**
+	 * Find exports that can be ignored if they are not available
+	 * @param used_imports 
+	 */
+	private findIgnorableExports(used_imports: Map<string, [imports: Set<string>, ignore_failure?: Set<string>]>) {
+		const ignore_export_failures = new Set<string>();
+		for (const [, possible_ignores] of used_imports.values()) {
+			if (!possible_ignores) continue;
+			for (const possible_ignore of possible_ignores) {
+				// already allowed to ignore
+				if (ignore_export_failures.has(possible_ignore)) continue;
+				// check if import is not used by any other module where failures can't be ignored
+				let can_ignore = true;
+				for (const [other_imports, other_possible_ignores] of used_imports.values()) {
+					if (other_imports.has(possible_ignore) && !other_possible_ignores?.has(possible_ignore)) {
+						can_ignore = false;
+						break;
+					}
+				}
+				if (can_ignore) ignore_export_failures.add(possible_ignore);
+			}
+		}
+		return ignore_export_failures
+	}
+
+	private intersect<T>(...sets:Set<T>[]): Set<T> {
+		if (!sets.length) return new Set();
+		const i = sets.reduce((m, s, i) => s.size < sets[m].size ? i : m, 0);
+		const [smallest] = sets.splice(i, 1);
+		const res = new Set<T>();
+		for (const val of smallest) {
+			if (sets.every(s => s.has(val))) res.add(val);
+		}
+		return res;
+	}
+
 	#exposingFunctions = new Map<string, ()=>void>()
 
-	private createExposeExportsFile(web_path:string, import_pseudo_path:Path.File, import_path:Path, module_path:Path, newImports:Set<string>, removedImports:Set<string>) {
-		// task to run after 500ms to create backend exports file, gets canceled if new backend expors are available
+	private createExposeExportsFile(web_path:string, import_pseudo_path:Path.File, import_path:Path, module_path:Path, newImports:Set<string>, removedImports:Set<string>, ignore_export_failures:Set<string>|boolean = false) {
+		// task to run after 300ms to create backend exports file, gets canceled if new backend exports are available
 		const expose = async () => {
 			// still the latests exposing function, otherwise cancel
 			if (this.#exposingFunctions.get(web_path.toString()) !== expose) {
 				return;
 			}
 			this.#logger.info(`exposed exports from ${this.getShortPathName(import_path)}: ${newImports.size ? `\n#color(green)  + ${[...newImports].join(", ")}` :' '}${removedImports.size ? `\n#color(red)  - ${[...removedImports].join(", ")}` : ''}`)
-			await this.createTypescriptInterfaceFiles(web_path, import_path, import_pseudo_path, module_path, newImports)
-			this.#exposingFunctions.delete(web_path.toString());
+			await this.createTypescriptInterfaceFiles(web_path, import_path, import_pseudo_path, module_path, newImports, ignore_export_failures)
+			
+			// only delete if still the latest exposing function
+			if (this.#exposingFunctions.get(web_path.toString()) === expose) {
+				this.#exposingFunctions.delete(web_path.toString());
+			}
 		}
 		this.#exposingFunctions.set(web_path.toString(), expose)
-		setTimeout(expose, 500);
+		setTimeout(expose, 300);
 	}
 
 
 	// create ts + d.ts interface file for ts/dx/dxb file and try to update import map
-	private async createTypescriptInterfaceFiles(web_path:string, import_path_or_specifier:Path|string, import_pseudo_path:Path.File, module_path:Path, imports:Set<string>){
-		const {ts, dts} = await this.generateTypeScriptInterface(import_path_or_specifier, web_path.replace(new RegExp(String.raw`^${this.srcPrefixRegex}`), '').replace(/.dx.ts$/, '.dx').replace(/.dxb.ts$/, '.dxb'), module_path, imports);
+	private async createTypescriptInterfaceFiles(web_path:string, import_path_or_specifier:Path|string, import_pseudo_path:Path.File, module_path:Path, imports:Set<string>, ignore_export_failures:Set<string>|boolean = false){
+		const {ts, dts} = await this.generateTypeScriptInterface(import_path_or_specifier, web_path.replace(new RegExp(String.raw`^${this.srcPrefixRegex}`), '').replace(/.dx.ts$/, '.dx').replace(/.dxb.ts$/, '.dxb'), module_path, imports, ignore_export_failures);
 		await this.transpiler.addVirtualFile(import_pseudo_path, ts, true);
 		if (dts) {
 			const actual_path = await this.transpiler.addVirtualFile(import_pseudo_path.replaceFileExtension("ts", "d.ts"), dts, true);
@@ -656,15 +706,15 @@ export class FrontendManager extends HTMLProvider {
 	 * @param module_path module from which the interface is imported
 	 * @returns 
 	 */
-	private async generateTypeScriptInterface(path_or_specifier:Path|string, web_path:string, module_path:Path, exports:Set<string>) {
+	private async generateTypeScriptInterface(path_or_specifier:Path|string, web_path:string, module_path:Path, exports:Set<string>, ignore_export_failures:Set<string>|boolean = false) {
 		const is_dx = typeof path_or_specifier == "string" || path_or_specifier.hasFileExtension("dx", "dxb");
 
 		// create ts
 		if (is_dx) exports = new Set(['default', ...exports]); // add default for DATEX modules
-		const ts = await generateTSModuleForRemoteAccess(path_or_specifier, exports, true, web_path, this.getShortPathName(module_path));
+		const ts = await generateTSModuleForRemoteAccess(path_or_specifier, exports, true, web_path, this.getShortPathName(module_path), ignore_export_failures);
 
 		// create d.ts for dx file
-		const dts = is_dx ? await generateDTSModuleForRemoteAccess(path_or_specifier, undefined, web_path, this.getShortPathName(module_path)) : null;
+		const dts = is_dx ? await generateDTSModuleForRemoteAccess(path_or_specifier, undefined, web_path, this.getShortPathName(module_path), ignore_export_failures) : null;
 
 		return {ts, dts};
 	}

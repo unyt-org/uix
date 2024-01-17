@@ -81,11 +81,15 @@ All attributes and the children are available in the props argument of the gener
 import { blankTemplate } from "uix/html/template.ts";
 
 // define:
-const CustomComponent = blankTemplate<{color:string}>(({color, style, id, children}) => <div id={id} style={style}><h1>Header</h1>{...children}</div>)
+const CustomComponent = blankTemplate<{color:string}>(({color, style, id, children}) => 
+    <div id={id} style={style}>
+        <h1 style={{color}}>Header</h1>{...children}
+    </div>
+)
 
 // create:
 const comp = (
-<CustomComponent id="c1">
+<CustomComponent id="c1" color="blue">
      <div>first child</div>
      <div>second child</div>
 </CustomComponent>
@@ -97,7 +101,7 @@ This behaviour is more similar to other JSX frameworks. You can also just use a 
 Keep in mind that UIX always returns the `children` property as an array, even if just a single child was provided in JSX.
 ```tsx
 // define:
-function CustomFunctionComponent({color, id, children}: {id:string, children:HTMLElement[], color:string}) {
+function CustomFunctionComponent({color, id, children}: {id:string, children:JSX.Element[], color:string}) {
     return <div id={id} style={{color}}>
         {...children}
     </div>

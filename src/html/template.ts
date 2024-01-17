@@ -1,6 +1,6 @@
 import { Datex } from "datex-core-legacy";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
-import { SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../uix-dom/jsx/parser.ts";
+import { IS_TEMPLATE, SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../uix-dom/jsx/parser.ts";
 import { Component } from "../components/Component.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
@@ -59,11 +59,16 @@ type Equals<X, Y> =
     (<T>() => T extends Y ? 1 : 2) ? true : false;
 
 
-type Props<Options extends Record<string,unknown>, Children, handleAllProps = true> = JSX.DatexValueObject<Options> & 
+type Props<Options extends Record<string,unknown>, Children, handleAllProps = true, optionalChildren = false> = JSX.DatexValueObject<Options> & 
 (
 	handleAllProps extends true ? 
 		(JSX._IntrinsicAttributes & 
-			(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : {children?: Children})) // TODO: optional children for JSX, but not for template callback function
+			(Equals<Children, undefined> extends true ? unknown : (Equals<Children, never> extends true ? unknown : (
+				optionalChildren extends true ? 
+					{children?: Children} :
+					{children: Children}
+			)
+			)) // TODO: optional children for JSX, but not for template callback function
 		) : unknown
 )
 
@@ -71,11 +76,11 @@ type ObjectWithCollapsedValues<O extends Record<string, unknown>> = {
 	[K in keyof O]: O[K] extends Datex.RefOrValue<infer T> ? T : O[K]
 }
 
-export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Children, handleAllProps = true, childrenAsArray = false, Context = unknown> =
+export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Children, handleAllProps = true, optionalChildren = true, Context = unknown> =
 	(
 		this: Context,
-		props: Props<Options, Children, handleAllProps>,
-		propsValues: ObjectWithCollapsedValues<Props<Options, Children, handleAllProps>>
+		props: Props<Options, Children, handleAllProps, optionalChildren>,
+		propsValues: ObjectWithCollapsedValues<Props<Options, Children, handleAllProps, optionalChildren>>
 	) => Return;
 
 
@@ -190,6 +195,7 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 
 	(generator as any)[SET_DEFAULT_ATTRIBUTES] = true;
 	(generator as any)[SET_DEFAULT_CHILDREN] = true;
+	(generator as any)[IS_TEMPLATE] = true;
 	return generator;
 }
 
@@ -217,10 +223,10 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
  * ```
  * @param elementGenerator 
  */
-export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children extends any[] ? Children : Children[], true, true>):jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl:typeof HTMLElement)=>any) {
+export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children extends any[] ? Children : Children[], true, false>):jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl:typeof HTMLElement)=>any) {
 	const module = getCallerFile();
 
-	return function generator(propsOrClass:any) {
+	function generator(propsOrClass:any) {
 
 		// decorator
 		if (Component.isPrototypeOf(propsOrClass)) {
@@ -241,7 +247,9 @@ export function blankTemplate<Options extends Record<string, any>, Children = JS
 			return elementGenerator(propsOrClass, collapsedPropsProxy);
 		}
 
-		
 	}
+
+	(generator as any)[IS_TEMPLATE] = true;
+	return generator;
 }
 

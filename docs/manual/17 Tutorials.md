@@ -55,5 +55,32 @@ const UpdateUserData = template<{user:User}>((_, {user}) =>
 > The "onsubmit" option is currently not supported for frontend rendering.
 
 
-<!-- ### Form validation -->
+### Form validation
 
+```ts
+// reactive 'User' class
+@sync class User {
+    @assert(
+      (name:string) => name.length <= 2 ? "Name must not be longer than 2 characters" : true
+    )
+    @property name = ""
+    @property age = 42
+}
+
+function handleNewUser(user: User) {
+ // ...
+}
+
+// <NewUserForm/> form template
+const NewUserForm = template(() => {
+    const user = new User()
+    return <form action={() => handleNewUser(user)}>
+        Register User:
+        <input type="text"   value={user.$.name}/>
+        <input type="number" value={user.$.age}/><
+        <button type="submit">Speichern</button>
+    </form>
+})
+
+export default () => <NewUserForm/>
+```

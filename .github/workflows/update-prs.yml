@@ -1,0 +1,50 @@
+name: Refresh PRs
+on:
+  push:
+    # branches:
+    #   - main
+    
+permissions:
+    pull-requests: write
+
+jobs:
+      trigger-pr-update:
+          runs-on: ubuntu-latest
+  
+          steps:
+            - uses: actions/github-script@v7
+              with:
+                script: |
+                    // Get a list of all issues created by the PR opener
+                    // See: https://octokit.github.io/rest.js/#pagination
+                    const creator = context.payload.sender.login
+                    const prs = await github.request('GET /repos/{owner}/{repo}/pulls', {
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                    
+                    for (const pr of prs.data) {
+                        if (pr.state !== 'open') continue;
+                        console.log("Refreshing PR diff for #" + pr.number + " (" + pr.title + ")");
+                        await github.request('PATCH /repos/{owner}/{repo}/pulls/{pull_number}', {
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            pull_number: pr.number,
+                            base: 'develop',
+                            headers: {
+                                'X-GitHub-Api-Version': '2022-11-28'
+                            }
+                        })
+                        await github.request('PATCH /repos/{owner}/{repo}/pulls/{pull_number}', {
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            pull_number: pr.number,
+                            base: 'uix-new',
+                            headers: {
+                                'X-GitHub-Api-Version': '2022-11-28'
+                            }
+                        })
+                    }

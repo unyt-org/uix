@@ -32,7 +32,7 @@ console.log(await getData()); // [1,2,3]
 > [!WARNING]
 > The following values have limitations when they are imported as backend exports from the frontend:
 > * Classes 
->   * Class definitions should always be put in `common` module if the class is used both on the backend and frontend.
+>   * Class definitions should always be put in a `common` module if the class is used both on the backend and frontend.
 >   * static class fields can still be accessed on a class imported from the backend
 > * Symbols exported from a backend module cannot be imported in a frontend module
 

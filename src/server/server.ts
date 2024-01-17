@@ -19,7 +19,7 @@ import { Cookie, setCookie, getCookies } from "../lib/cookie/cookie.ts";
 
 import { Path } from "../utils/path.ts";
 import { Transpiler } from "./transpiler.ts";
-import { addCSSScopeSelector } from "../utils/css-scoping.ts";
+import { addCSSScope, addCSSScopeSelector } from "../utils/css-scoping.ts";
 import { getEternalModule } from "../app/eternal-module-generator.ts";
 import { highlightText } from 'https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js'
 import {serveFile} from "https://deno.land/std@0.164.0/http/file_server.ts"
@@ -634,8 +634,18 @@ export class Server {
         // UIX special query parameters (TODO: move)
         // special scoped css
         if (url.searchParams.has("scope") && (url.ext === "scss" || url.ext === "css") && filepath.fs_exists) {
-            const scopedCSS = addCSSScopeSelector(await Deno.readTextFile(filepath.normal_pathname), url.searchParams.get("scope")!);
-            return this.getContentResponse("text/css", scopedCSS);
+            const scope = url.searchParams.get("scope");
+            // custom scope selector
+            if (scope) {
+                const scopedCSS = addCSSScopeSelector(await Deno.readTextFile(filepath.normal_pathname), scope);
+                return this.getContentResponse("text/css", scopedCSS);
+            }
+            // wrap with @scope
+            else {
+                const scopedCSS = addCSSScope(await Deno.readTextFile(filepath.normal_pathname));
+                return this.getContentResponse("text/css", scopedCSS);
+            }
+            
         }
         if (url.searchParams.has("useDirective") && url.hasFileExtension("tsx", "ts", "js", "jsx", "mts", "mjs")) {
             const {PageProvider} = await import("../routing/rendering.ts")

@@ -4,6 +4,7 @@ import { BROADCAST, Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
 import { getSharedDataPointer } from "../session/shared-data.ts";
+import { datex_meta } from "datex-core-legacy/utils/global_types.ts";
 
 // TODO: remove params, use ctx.searchParams instead
 export type RequestData = {address:string|null}
@@ -102,6 +103,27 @@ export class Context
 	[Symbol.dispose]() {
 		console.log("disposing context", this.#disposeCallbacks);
 		for (const dispose of this.#disposeCallbacks) dispose();
+	}
+
+
+	/**
+	 * Gets the context-bound private data. This can be used inside normal functions
+	 * that are called from remote endpoints but do not have access to the UIX context object.
+	 * If the DATEX request triggering the function call is not signed, an error is thrown.
+	 * 
+	 * Example:
+	 * ```ts
+	 * // backend/functions.ts
+	 * export function doBackendStuff() {
+	 *    const privateData = Context.getPrivateData(datex.meta);
+	 * 	  // ..
+	 * }
+	 * ```
+	 */
+	static async getPrivateData(meta: datex_meta) {
+		if (!meta.signed) throw new Error("Cannot get private data for unsigned endpoint request");
+		if (!await privateData.has(meta.sender)) await privateData.set(meta.sender, {});
+		return (await privateData.get(meta.sender))! as PrivateData;
 	}
 }
 

@@ -346,7 +346,7 @@ export class PageProvider implements RouteHandler {
 				if (client_type == "browser") url.searchParams.append("useDirective", this.useDirective??"")
 				// deno: read file and check if use directive matches, otherwise return null
 				else {
-					if (url.fs_exists && !await PageProvider.useDirectiveMatchesForFile(url, this.useDirective)) {
+					if (await url.fsExists() && !await PageProvider.useDirectiveMatchesForFile(url, this.useDirective)) {
 						// console.log("use directive '" + (this.useDirective??'') + "' does not match for " + url)
 						return null;
 					}

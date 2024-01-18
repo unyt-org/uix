@@ -606,7 +606,7 @@ export class Server {
         const displayWithSyntaxHighlighting = isBrowser && (request.headers.get("Sec-Fetch-Dest") == "document" || request.headers.get("Sec-Fetch-Dest") == "iframe") && !!url.hasFileExtension("ts", "tsx", "js", "jsx", "css", "scss", "dx")
 
         const transpile = isBrowser && (displayWithSyntaxHighlighting ? contentType == "transpiled" : true)
-        let filepath = this.findFilePath(url, normalizedPath, transpile, isSafari)
+        let filepath = await this.findFilePath(url, normalizedPath, transpile, isSafari)
 
         // override filepath, exposes raw source files to browser for debugging TODO: only workaround with _base_path, improve
         if (displayWithSyntaxHighlighting && contentType == "source" && this._app?.stage === "dev" && normalizedPath.startsWith("/@uix/src/")) {
@@ -633,7 +633,7 @@ export class Server {
 
         // UIX special query parameters (TODO: move)
         // special scoped css
-        if (url.searchParams.has("scope") && (url.ext === "scss" || url.ext === "css") && filepath.fs_exists) {
+        if (url.searchParams.has("scope") && (url.ext === "scss" || url.ext === "css") && await filepath.fsExists()) {
             const scope = url.searchParams.get("scope");
             // custom scope selector
             if (scope) {
@@ -665,7 +665,7 @@ export class Server {
             return this.getContentResponse("text/javascript", this.#eternalModulesCache.get(urlString));
         }
 
-        if (this.#options.directory_indices && filepath.fs_exists && filepath.fs_is_dir) {
+        if (this.#options.directory_indices && await filepath.fsExists() && await filepath.fsIsDir()) {
             return this.getContentResponse("application/directory+json", JSON.stringify(
                 await this.generateDirectoryIndex(srcDir), 
                 null, '    ')
@@ -676,8 +676,8 @@ export class Server {
         if ((filepath.ext == "dx" || filepath.ext == "dxb") && request.headers.get("Sec-Fetch-Dest") == "script") {
 
             // check if generated matching dx.ts file exists
-            const matchingTsFile = this.findFilePath(url.getWithFileExtension(filepath.ext + '.ts'), normalizedPath + '.ts', isBrowser, isSafari)
-            if (matchingTsFile?.fs_exists) {
+            const matchingTsFile = await this.findFilePath(url.getWithFileExtension(filepath.ext + '.ts'), normalizedPath + '.ts', isBrowser, isSafari)
+            if (await matchingTsFile?.fsExists()) {
                 filepath = matchingTsFile
             }
 
@@ -696,7 +696,7 @@ export class Server {
         // render file preview with syntax highlighting in browser
         if (displayWithSyntaxHighlighting) {
 
-            if (!filepath.fs_exists) return this.getErrorResponse(404, "Not found");
+            if (!filepath || !await filepath?.fsExists()) return this.getErrorResponse(404, "Not found");
             
             const content = await Deno.readTextFile(filepath.normal_pathname);
             const highlighted = await highlightText!(content.replace(/\/\/\# sourceMappingURL=.*$/, ""), langsByExtension[filepath.ext as keyof typeof langsByExtension]);
@@ -770,7 +770,7 @@ export class Server {
     }
 
 
-    protected findFilePath(url: Path, normalizedPath: string, transpile: boolean, isSafari: boolean) {
+    protected async findFilePath(url: Path, normalizedPath: string, transpile: boolean, isSafari: boolean) {
         if (!this.#dir) return;
 
         let filepath = this.#dir.getChildPath(normalizedPath);
@@ -791,7 +791,7 @@ export class Server {
 
                     // js file requested that does not exist (this should normally not happen) - try .ts extension
                     // TODO: try all extension (also tsx, ...)
-                    else if (!filepath.fs_exists) {
+                    else if (!await filepath.fsExists()) {
                         if (filepath.hasFileExtension('js', 'mjs')) {
                             const dist_path = transpiler.getDistPath(filepath.getWithFileExtension('ts'), true);
                             if (dist_path) filepath = dist_path;

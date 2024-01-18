@@ -109,21 +109,19 @@ export class Context
 	/**
 	 * Gets the context-bound private data. This can be used inside normal functions
 	 * that are called from remote endpoints but do not have access to the UIX context object.
-	 * If the DATEX request triggering the function call is not signed, an error is thrown.
 	 * 
 	 * Example:
 	 * ```ts
 	 * // backend/functions.ts
 	 * export function doBackendStuff() {
-	 *    const privateData = Context.getPrivateData(datex.meta);
+	 *    const privateData = Context.getPrivateData(datex.meta.sender);
 	 * 	  // ..
 	 * }
 	 * ```
 	 */
-	static async getPrivateData(meta: datex_meta) {
-		if (!meta.signed) throw new Error("Cannot get private data for unsigned endpoint request");
-		if (!await privateData.has(meta.sender)) await privateData.set(meta.sender, {});
-		return (await privateData.get(meta.sender))! as PrivateData;
+	static async getPrivateData(endpoint: Datex.Endpoint) {
+		if (!await privateData.has(endpoint)) await privateData.set(endpoint, {});
+		return (await privateData.get(endpoint))! as PrivateData;
 	}
 }
 

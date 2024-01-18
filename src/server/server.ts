@@ -134,8 +134,12 @@ if (globalThis.Deno) {
 
 type mime_type = `${'text'|'image'|'application'|'video'|'audio'}/${string}`;
 
+export type requestMetadata = {
+    endpoint?: Datex.Endpoint
+}
+
 type connectionHandler = (conn: Deno.Conn)=>void|boolean|Promise<void|boolean>;// when true returned, handle connection with default handler
-type requestHandler = (req: Deno.RequestEvent, path:string, con:Deno.Conn)=>void|boolean|string|Promise<void|boolean|string>;// when true returned, request was handled, returned string is passed on to server path handler
+type requestHandler = (req: Deno.RequestEvent, path:string, con:Deno.Conn, metadata:requestMetadata)=>void|boolean|string|Promise<void|boolean|string>;// when true returned, request was handled, returned string is passed on to server path handler
 
 type server_options = {
     cors?: boolean, // enable cors, default: false
@@ -238,18 +242,18 @@ export class Server {
     private path_request_handler?:requestHandler;
 
     private createPathRequestHandler(){
-        this.path_request_handler = (req:Deno.RequestEvent, req_path:string, conn: Deno.Conn)=>{
+        this.path_request_handler = (req:Deno.RequestEvent, req_path:string, conn: Deno.Conn, metadata)=>{
             // handler
             for (const [path, handler] of this.pathHandlers) {
 
                 // full string match
                 if (typeof path == "string") {
-                    if (req_path == path) return handler(req, req_path, conn);
+                    if (req_path == path) return handler(req, req_path, conn, metadata);
                     else continue;
                 }
                 // regex match
                 else {
-                    if (req_path.match(path)) return handler(req, req_path, conn);
+                    if (req_path.match(path)) return handler(req, req_path, conn, metadata);
                     else continue;
                 }
             }  
@@ -406,6 +410,8 @@ export class Server {
             this.sendError(requestEvent, 500);
             return;
         }
+
+        let endpoint: Datex.Endpoint|undefined;
             
         // session/endpoint handling:
         if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
@@ -428,7 +434,7 @@ export class Server {
 
                 // has uix-session - check if still a valid session
                 else if (uixSessionCookie) {
-                    const endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
+                    endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
                     // invalid session
                     if (!validateSession(endpoint, uixSessionCookie)) {
                         logger.debug("invalid session for " + endpoint + " (" + uixSessionCookie + ")")
@@ -494,9 +500,11 @@ export class Server {
             
         }
 
+        const metadata = {endpoint}
+
         for (const handler of this.requestHandlers) {
             try { 
-                handled = await handler(requestEvent, normalized_path, conn)
+                handled = await handler(requestEvent, normalized_path, conn, metadata)
                 if (handled!==false) { // request was handled
                     if (typeof handled == "string") { // path redirect
                         normalized_path = handled;

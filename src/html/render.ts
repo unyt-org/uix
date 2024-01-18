@@ -27,7 +27,15 @@ if (client_type === "deno") {
 
 type injectScriptData = {declare:Record<string,string>, init:string[]};
 
-type _renderOptions = {includeShadowRoots?:boolean, injectStandaloneComponents?: boolean, forms?:string[], datex_update_type?:string[], _injectedJsData?:injectScriptData, lang?:string, allowIgnoreDatexFunctions?: boolean}
+type _renderOptions = {
+	includeShadowRoots?:boolean, 
+	injectStandaloneComponents?: boolean, 
+	forms?:string[], datex_update_type?:string[], 
+	_injectedJsData?:injectScriptData, 
+	lang?:string, 
+	allowIgnoreDatexFunctions?: boolean,
+	hydratableNodes?: Set<Node>,
+}
 
 export const CACHED_CONTENT = Symbol("CACHED_CONTENT");
 
@@ -163,7 +171,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		throw "invalid HTML node"
 	}
 
-	const dataPtr:string = el.attributes.getNamedItem("uix-ptr")?.value;
+	const dataPtr:string|undefined = el.attributes.getNamedItem("uix-ptr")?.value;
 
 	// add datex-update type to stack
 	const datexUpdateType = (el as any)[DOMUtils.DATEX_UPDATE_TYPE];
@@ -231,7 +239,10 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 	}
 
 	// hydratable
-	if (isLiveNode(el)) attrs.push("uix-dry");
+	if (isLiveNode(el)) {
+		if (opts?.hydratableNodes) opts.hydratableNodes.add(el);
+		attrs.push("uix-dry");
+	}
 	// just static
 	else attrs.push("uix-static");
 
@@ -462,7 +473,14 @@ function isLiveNode(node: Node) {
 	if (node[DOMUtils.EVENT_LISTENERS]?.size) return true;
 }
 
-export function getOuterHTML(el:Element|DocumentFragment, opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, injectStandaloneComponents?: boolean, allowIgnoreDatexFunctions?: boolean, lang?:string}):[header_script:string, html_content:string] {
+export function getOuterHTML(el:Element|DocumentFragment, opts?:{
+	includeShadowRoots?:boolean, 
+	injectStandaloneJS?:boolean, 
+	injectStandaloneComponents?: boolean, 
+	allowIgnoreDatexFunctions?: boolean, 
+	lang?:string, 
+	hydratableNodes?: Set<Node>
+}): [header_script:string, html_content:string] {
 
 	if ((el as any)[CACHED_CONTENT]) return (el as any)[CACHED_CONTENT];
 

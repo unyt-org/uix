@@ -2,7 +2,7 @@ import { Transpiler } from "../server/transpiler.ts";
 import { TypescriptImportResolver } from "../server/ts-import-resolver.ts";
 
 import { $$, Datex } from "datex-core-legacy";
-import { Server } from "../server/server.ts";
+import { Server, requestMetadata } from "../server/server.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "./app.ts";
 import { Path } from "../utils/path.ts";
 import { BackendManager } from "./backend-manager.ts";
@@ -270,7 +270,7 @@ export class FrontendManager extends HTMLProvider {
 		});
 
 		// handled default web paths
-		this.server.path("/", (req, path, con)=>this.handleRequest(req, path, con));
+		this.server.path("/", (req, path, con, metadata)=>this.handleRequest(req, path, con, metadata));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
 		this.server.path("/robots.txt", (req, path)=>this.handleRobotsTXT(req, path));
 
@@ -278,14 +278,14 @@ export class FrontendManager extends HTMLProvider {
 			await req.respondWith(await serveDir!(req.request, {fsRoot:UIX.cacheDir.normal_pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
 		});
 
-		this.server.path(/^\/@uix\/form-action\/.*$/, (req, path, con)=>{
+		this.server.path(/^\/@uix\/form-action\/.*$/, (req, path, con, metadata)=>{
 			const ptrId = path.replace("/@uix/form-action/", "").split("/")[0].slice(1);
 			const ptr = Datex.Pointer.get(ptrId)
 
 			if (!ptr) this.server.sendError(req, 400, "Invalid Form Action");
 			else {
 				// console.log("form-action", ptrId, req);
-				this.handleRequest(req, path, con, ptr.val)
+				this.handleRequest(req, path, con, metadata, ptr.val)
 			}
 		});
 
@@ -399,8 +399,8 @@ export class FrontendManager extends HTMLProvider {
 
 
 		// handle routes (ignore /@uix/.... .dx)
-		this.server.path(/^((?!^(\/@uix\/|\/\.dx)).)*$/, (req, path, con)=>{
-			this.handleRequest(req, path, con)
+		this.server.path(/^((?!^(\/@uix\/|\/\.dx)).)*$/, (req, path, con, metadata)=>{
+			this.handleRequest(req, path, con, metadata)
 		});
 
 
@@ -793,7 +793,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 	 * @param context request context
 	 * @returns 
 	 */
-	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content|null, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers, contentElement?: Element]> {
+	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content|null, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers, contentElement?: Element|DocumentFragment, hydratableNodes?:Set<Node>]> {
 		// extract content from provider, depending on path
 		const {content, render_method, status_code, headers} = await resolveEntrypointRoute({
 			entrypoint: entrypoint,
@@ -811,7 +811,21 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		if (content instanceof Datex.Markdown) return [getOuterHTML(<Element> content.getHTML(false), {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, injectStandaloneComponents:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID/*TODO: should also work with HYBRID, but cannot create standalone component class and new class later*/, allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), lang}), render_method, status_code, openGraphData, headers];
 
 		// convert content to valid HTML string
-		if (content instanceof Element || content instanceof DocumentFragment) return [getOuterHTML(content, {includeShadowRoots:true, injectStandaloneJS:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, injectStandaloneComponents:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), lang}), render_method, status_code, openGraphData, headers, content];
+		if (content instanceof Element || content instanceof DocumentFragment) {
+			const hydratableNodes = new Set<Node>()
+			const html = getOuterHTML(
+				content as Element, 
+				{
+					includeShadowRoots:true, 
+					injectStandaloneJS:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, 
+					injectStandaloneComponents:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, 
+					allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), 
+					lang,
+					hydratableNodes
+				}
+			);
+			return [html, render_method, status_code, openGraphData, headers, content as Element, hydratableNodes];
+		}
 		
 		// invalid content was created, should not happen
 		else if (content && typeof content == "object") {
@@ -822,7 +836,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		else return [content ? domUtils.escapeHtml(content.toString() ?? "") : null, render_method, status_code, openGraphData, headers];
 	}
 
-	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, entrypoint = this.#backend?.content_provider, recursiveError = true) {
+	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, metadata:requestMetadata, entrypoint = this.#backend?.content_provider, recursiveError = true) {
 		const url = new Path(requestEvent.request.url);
 		const pathAndQueryParameters = url.normal_pathname + url.search;
 		const lang = ContextBuilder.getRequestLanguage(requestEvent.request);
@@ -834,7 +848,15 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		try {
 			this.updateCheckEntrypoint();
 
-			const [prerendered_content, render_method, status_code, open_graph_meta_tags, headers, contentElement] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
+			const [
+				prerendered_content, 
+				render_method, 
+				status_code, 
+				open_graph_meta_tags, 
+				headers, 
+				contentElement, 
+				hydratableNodes
+			] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
 
 			// empty backend route & UIX-Inline-Backend => return 400 and just render frontend route
 			if (isInlineRendered && render_method == RenderMethod.DYNAMIC && prerendered_content==null) {
@@ -904,6 +926,13 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					liveNodePointers = getLiveNodes(contentElement, false).map(e => Datex.Pointer.getByValue(e)?.id).filter(e=>!!e);
 				}
 
+				// give pointer read permissions for hydratable nodes to client endpoint
+				if (hydratableNodes && metadata.endpoint) {
+					for (const node of hydratableNodes) {
+						grantAccess(node, metadata.endpoint.main)
+					}
+				}
+
 				await this.server.serveContent(
 					requestEvent, 
 					"text/html", 
@@ -930,7 +959,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		} catch (error) {
 			console.log(error)
 			if (recursiveError) {
-				await this.handleRequest(requestEvent, path, conn, error, false);
+				await this.handleRequest(requestEvent, path, conn, metadata, error, false);
 			}
 			else this.server.sendError(requestEvent, 500);
 		}

@@ -927,11 +927,14 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				}
 
 				// give pointer read permissions for hydratable nodes to client endpoint
-				if (hydratableNodes && metadata.endpoint) {
-					for (const node of hydratableNodes) {
-						grantAccess(node, metadata.endpoint.main)
+				if (Datex.Runtime.OPTIONS.PROTECT_POINTERS) {
+					if (hydratableNodes && metadata.endpoint) {
+						for (const node of hydratableNodes) {
+							grantAccess(node, metadata.endpoint.main)
+						}
 					}
 				}
+				
 
 				await this.server.serveContent(
 					requestEvent, 

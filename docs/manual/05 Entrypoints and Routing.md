@@ -127,6 +127,8 @@ One important use cases for filters are the `RequestMethod` filters that can be 
 route depending on the HTTP request method:
 
 ```tsx
+import { RequestMethod } from "uix/routing/request-methods.ts"
+
 export default {
     '/login': {
         // Provide login page

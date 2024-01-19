@@ -2,7 +2,7 @@ name: Refresh PRs
 on:
   push:
     branches:
-      - main
+      - uix-new
     
 permissions:
     pull-requests: write

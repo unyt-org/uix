@@ -126,6 +126,16 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	}
 
 	/**
+	 * returns true if the path is an actual directory in the file system
+	 */
+	async fsIsDir() {
+		if (this.is_web) return false;
+		if (client_type !== "deno") throw new Error("filesystem operations not supported");
+		if (!await this.fsExists()) return false;
+		return (await Deno.stat(this.normal_pathname)).isDirectory;
+	}
+
+	/**
 	 * path sections as array
 	 */
 	get path(){
@@ -212,7 +222,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	}
 
 	/**
-	 * true if file/directory exists in filesystem
+	 * is true if file/directory exists in filesystem
 	 */
 	get fs_exists() {
 		if (this.is_web) return false;
@@ -241,11 +251,26 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 	}
 
 	/**
+	 * return true if file/directory exists in filesystem
+	 */
+	async fsExists() {
+		if (this.is_web) return false;
+		if (client_type !== "deno") throw new Error("filesystem operations not supported");
+		try {
+			await Deno.stat(this.normal_pathname);
+			return true
+		} 
+		catch {
+			return false
+		}
+	}
+
+	/**
 	 * returns true if path exists on filesystem or web
 	 * @returns 
 	 */
 	async exists() {
-		return this.fs_exists || await this.webExists();
+		return await this.fsExists() || await this.webExists();
 	}
 
 	/**

@@ -252,7 +252,7 @@ export class Transpiler {
             } 
     
             // TODO: ignore directories for now
-            if (src_path.fs_is_dir) return;
+            if (await src_path.fsIsDir()) return;
     
             this.currentlyUpdating.delete(path);
             await this.updateFile(src_path);
@@ -287,23 +287,23 @@ export class Transpiler {
 
     private async updateFileToDist(src_path:Path.File, dist_dir:Path.File, _transpile_only_if_not_exists = false) {
         if (!this.isClonedFile(src_path)) return; // ignore, no copy required
-        if (src_path.fs_is_dir) throw new Error("src path is directory")
+        if (await src_path.fsIsDir()) throw new Error("src path is directory")
 
         const dist_path = src_path.getWithChangedParent(this.src_dir, dist_dir);
 
         // update in dist
-        if (src_path.fs_exists) {
+        if (await src_path.fsExists()) {
             dist_path.parent_dir.fsCreateIfNotExists();
             await Deno.copyFile(src_path, dist_path); 
             // transpile?
             const mapped_dist_path = this.getFileWithMappedExtension(dist_path);
             const transpileExtEqualsSrcExt = this.transpiledNameEqualsSourceName(src_path) // e.g. css -> scc, should always recompile, cannot rely on mapped_dist_path.fs_exists
-            if (this.isTranspiledFile(dist_path) && (!_transpile_only_if_not_exists || !mapped_dist_path.fs_exists || transpileExtEqualsSrcExt)) {
+            if (this.isTranspiledFile(dist_path) && (!_transpile_only_if_not_exists || !await mapped_dist_path.fsExists() || transpileExtEqualsSrcExt)) {
                 await this.transpile(dist_path, src_path);
             }
         }
         // delete in dist if deleted
-        else if (dist_path.fs_exists) {
+        else if (await dist_path.fsExists()) {
             await Deno.remove(dist_path)
         }
     }
@@ -367,7 +367,7 @@ export class Transpiler {
         for (const dep of content.matchAll(/^\s*@use\s*"([^"]*)"/gm)) {
             let import_path = new Path<Path.Protocol.File>(dep[1], src_path);
             if (!import_path.ext) import_path = import_path.getWithFileExtension("scss");
-            if (!this.getDistPath(import_path)?.fs_exists) {
+            if (!await this.getDistPath(import_path)?.fsExists()) {
                 // console.log("+ imp " + import_path,src_path.toString())
                 await this.updateFile(import_path, true, true)
             }
@@ -478,10 +478,10 @@ export class Transpiler {
 
     private async _deleteVirtualFile(path:Path.File) {
         const dist_path_ts = this.getDistPath(path, false);
-        if (dist_path_ts?.fs_exists) await Deno.remove(dist_path_ts)
+        if (dist_path_ts && await dist_path_ts.fsExists()) await Deno.remove(dist_path_ts)
 
-        const dist_path_js = this.getDistPath(path, false);
-        if (dist_path_js?.fs_exists) await Deno.remove(dist_path_js)
+        const dist_path_js = this.getDistPath(path, true);
+        if (dist_path_js && await dist_path_js.fsExists()) await Deno.remove(dist_path_js)
     }
 
     private transpileToJS(ts_dist_path: Path.File) {

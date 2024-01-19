@@ -1,3 +1,9 @@
+/**
+ * Add a scope selector everywhere in a CSS document
+ * @param css css document
+ * @param scope scope selector
+ * @returns 
+ */
 export function addCSSScopeSelector(css: string, scope: string) {
 	const scopedCSS = css.replace(/^[^@\n]+{[^}]*}/gm, (part) => {
 		if (part.match(/^(to|from|\d+%|[\s,\n])+{[^}]*}$/)) return part; // is inside @keyframe (e.g. "50% {}""), ignore
@@ -17,4 +23,8 @@ export function addCSSScopeSelector(css: string, scope: string) {
 		}
 	});
 	return scopedCSS;
+}
+
+export function addCSSScope(css: string) {
+	return "@scope {\n" + css + "\n}";
 }

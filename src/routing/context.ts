@@ -4,6 +4,7 @@ import { BROADCAST, Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
 import { getSharedDataPointer } from "../session/shared-data.ts";
+import { datex_meta } from "datex-core-legacy/utils/global_types.ts";
 
 // TODO: remove params, use ctx.searchParams instead
 export type RequestData = {address:string|null}
@@ -102,6 +103,25 @@ export class Context
 	[Symbol.dispose]() {
 		console.log("disposing context", this.#disposeCallbacks);
 		for (const dispose of this.#disposeCallbacks) dispose();
+	}
+
+
+	/**
+	 * Gets the context-bound private data. This can be used inside normal functions
+	 * that are called from remote endpoints but do not have access to the UIX context object.
+	 * 
+	 * Example:
+	 * ```ts
+	 * // backend/functions.ts
+	 * export function doBackendStuff() {
+	 *    const privateData = Context.getPrivateData(datex.meta.sender);
+	 * 	  // ..
+	 * }
+	 * ```
+	 */
+	static async getPrivateData(endpoint: Datex.Endpoint) {
+		if (!await privateData.has(endpoint)) await privateData.set(endpoint, {});
+		return (await privateData.get(endpoint))! as PrivateData;
 	}
 }
 

@@ -307,9 +307,8 @@ globalThis.reset = app.reset;
 })
 
 if (app.stage !== "dev") {
-	// don't expose native error messages and stack traces via DATEX
+	// don't expose native error stack traces via DATEX
 	Datex.Runtime.OPTIONS.NATIVE_ERROR_STACK_TRACES = false
-	Datex.Runtime.OPTIONS.NATIVE_ERROR_MESSAGES = false
 }
 
 bindingOptions.mapFileURL = (url) => {

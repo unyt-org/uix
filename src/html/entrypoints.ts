@@ -3,7 +3,7 @@ import { Context } from "../routing/context.ts";
 import { Path } from "../utils/path.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { RenderPreset, RenderMethod } from "../base/render-methods.ts";
-import { KEEP_CONTENT } from "./entrypoint-providers.tsx";
+import { FileHandle, KEEP_CONTENT } from "./entrypoint-providers.tsx";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { filter } from "../routing/route-filter.ts";
 import { Element } from "../uix-dom/dom/mod.ts";
@@ -31,7 +31,7 @@ const a: SharedData = {
 type RefOrValueUnion<U> = (U extends any ? Datex.RefOrValue<U> : never)
 
 export type raw_content = Blob|Response // sent as raw Response
-export type special_content = URL|Deno.FsFile|HTTPStatus|Error // gets converted to a Response
+export type special_content = URL|Deno.FsFile|FileHandle|HTTPStatus|Error // gets converted to a Response
 export type html_content = RefOrValueUnion<JSX.Element|string|number|boolean|bigint|Datex.Markdown|RouteManager|RouteHandler>|null|undefined|raw_content|special_content;
 export type html_content_or_generator<
 	CustomSharedData extends Record<string, unknown>|SharedData = SharedData,

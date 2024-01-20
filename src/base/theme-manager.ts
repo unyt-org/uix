@@ -104,7 +104,7 @@ class ThemeManager  {
 		}
 		else {
 			this.#current_mode = currentMode;
-			this.#current_theme = currentDarkTheme;
+			this.#current_theme = currentMode == "dark" ? currentDarkTheme : currentLightTheme;
 		}
 
 		// current server-guessed mode does not match client mode, remember preferred theme to enable if a frontend theme is loaded
@@ -295,7 +295,9 @@ class ThemeManager  {
 		this.#current_theme = theme.name;
 		logger.debug(`using theme "${theme.name}"`)
 
-		setCookie(UIX_COOKIE.themeDark, theme.name);
+		if (!theme.mode || theme.mode == "dark") setCookie(UIX_COOKIE.themeDark, theme.name);
+		else if (!theme.mode || theme.mode == "light") setCookie(UIX_COOKIE.themeLight, theme.name);
+
 		if (theme.mode) setCookie(UIX_COOKIE.colorMode, theme.mode);
 
 		let text = ":root{";

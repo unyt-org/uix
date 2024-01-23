@@ -9,7 +9,7 @@ import { Context } from "../routing/context.ts";
 import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../standalone/scroll_container.ts";
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open-graph.ts";
 import { bindContentProperties } from "../standalone/bound_content_properties.ts";
-import { DX_IGNORE, INIT_PROPS } from "datex-core-legacy/runtime/constants.ts"
+import { DX_IGNORE, DX_TYPE, DX_ROOT, INIT_PROPS } from "datex-core-legacy/runtime/constants.ts"
 import { PlaceholderCSSStyleDeclaration, addGlobalStyleSheetLink, addStyleSheetLink } from "../utils/css-style-compat.ts";
 import { indent } from "datex-core-legacy/utils/indent.ts"
 import { serializeJSValue } from "../utils/serialize-js.ts";
@@ -1377,6 +1377,13 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
 
 }
 
+// construct pseudo @sync class
+const type = Datex.Type.get("uixcomponent")
+Component[DX_TYPE] = type;
+Component[DX_ROOT] = true
+type.setTemplate({
+    options: any
+})
 
 // get object-like keys that need to be cloned from the prototype
 export function getCloneKeys(object:any):Set<string> {

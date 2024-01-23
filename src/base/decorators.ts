@@ -47,7 +47,7 @@ function _defaultOptions(url:string, component_class:typeof HTMLElement, name:co
 		// preload css files
 		component_class.preloadStylesheets?.();
 
-		const name = String(component_class.name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // convert from CamelCase to snake-case
+		const name = String(component_class.name).replace(/1$/,'').split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // convert from CamelCase to snake-case
 
 		const datex_type = Datex.Type.get("std", "uix", name);
 		const options_datex_type = Datex.Type.get("uixopt", name);

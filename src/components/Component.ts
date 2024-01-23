@@ -554,6 +554,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
 
+
         // pre-init options before other DATEX state is initialized 
         // (this should not happen when reconstructing, because options are undefined or have [INIT_PROPS])
         if (options && !options[INIT_PROPS]) this.initOptions(options);
@@ -574,6 +575,12 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 this.is_skeleton = true;
                 this.reconstructed_from_dom = true;
                 logger.debug("hydrating component " + classType);
+                // throw error if option properties are access during class instance member initialization (can't know options at this point)
+                this.options = new Proxy({}, {
+                    get: (target, prop) => {
+                        throw new Error(`Tried to access uninitialized option property '${String(prop)}' during class instance member initialization of hydrated component. Please put the property initialization in the onConstruct() method.`)
+                    }
+                })
             }
             else {
                 this.reconstructed_from_dom = true;

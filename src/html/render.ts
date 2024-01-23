@@ -126,7 +126,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 	// TODO: also for attributes transforms
 	if (opts?.lang) {
-		for (const childPtr of (el as DOMUtils.elWithEventListeners)[DOMUtils.CHILDREN_DX_VALUES]??[]) {
+		for (const childPtr of (el as DOMUtils.elWithUIXAttributes)[DOMUtils.CHILDREN_DX_VALUES]??[]) {
 			if (childPtr.transformSource) {
 				for (const ptr of [...childPtr.transformSource.deps, ...childPtr.transformSource.keyedDeps.keys()]) {
 					if (ptr instanceof Datex.Pointer && ptr.transformMap) {
@@ -247,7 +247,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 	else attrs.push("uix-static");
 
 	// inject event listeners
-	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithEventListeners>el)[DOMUtils.PSEUDO_ATTR_BINDINGS])) {
+	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithUIXAttributes>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.PSEUDO_ATTR_BINDINGS])) {
 		let context: HTMLElement|undefined;
 		let parent: Element|null = el;
 		let hasScriptContent = false; // indicates whether the generated script actually contains relevant content, not just skeleton code
@@ -264,7 +264,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		script += `el[EVENT_LISTENERS] ??= new Map();\n`
 
 		// inject listeners
-		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.EVENT_LISTENERS] ?? []) {
+		for (const [event, listeners] of (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.EVENT_LISTENERS] ?? []) {
 			
 			for (const [listener] of listeners) {
 
@@ -307,7 +307,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 			throw new Error(`Invalid datex-update="onsubmit", no form found`)
 		}
 
-		for (const [attr, ptr] of (<DOMUtils.elWithEventListeners>el)[DOMUtils.PSEUDO_ATTR_BINDINGS] ?? []) {
+		for (const [attr, ptr] of (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.PSEUDO_ATTR_BINDINGS] ?? []) {
 
 			hasScriptContent = true;
 			const propName = attr == "checked" ? "checked" : "value";

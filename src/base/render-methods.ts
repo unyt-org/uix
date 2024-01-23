@@ -1,7 +1,9 @@
 import { UIX } from "../../uix.ts";
 import { logger } from "../utils/global-values.ts";
-import { html_content_or_generator } from "../html/entrypoints.ts";
-import { DX_IGNORE } from "datex-core-legacy/runtime/constants.ts";
+import { Entrypoint, html_content, html_content_or_generator, html_generator } from "../html/entrypoints.ts";
+import { DX_IGNORE, DX_SERIALIZED, DX_SOURCE } from "datex-core-legacy/runtime/constants.ts";
+import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
+import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 
 
 /**
@@ -61,6 +63,28 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
 }
 
 
+/**
+ * Render on frontend only, no server side prerendering.
+ * This function can be used to request frontend rendering from a backend context.
+ * @param content_generator 
+ * @returns 
+ */
+export function renderFrontend(content_generator:()=>Entrypoint, placeholder: html_content): Entrypoint {
+	if (UIX.context == "frontend") {
+		return content_generator()
+	}
+	else {
+		const fn = JSTransferableFunction.functionIsAsync(content_generator) ?
+			JSTransferableFunction.createAsync(content_generator).then(fn=>{
+				fn = $$(fn);
+				(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder;
+				return fn;
+			}) :
+			$$(JSTransferableFunction.create(content_generator));
+		(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder;
+		return fn
+	}
+}
 
 
 export enum RenderMethod {

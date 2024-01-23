@@ -85,11 +85,11 @@ export namespace Routing {
 					if (el instanceof HTMLElement && el.hasAttribute("slot")) {
 						const name = el.getAttribute("slot")!
 						slot = querySelector(`frontend-slot[name="${domUtils.escapeHtml(name)}"]`) as HTMLElement;
-						if (!slot) logger.error(`Could not find a matching <frontend-slot name="${name}"/>`);
+						if (!slot) logger.error(`Could not find a matching <frontend-slot name="${name}"/> for frontend entrypoint route`);
 					}
 					else {
 						slot = querySelector("frontend-slot") as HTMLElement;
-						if (!slot) logger.error("Could not find a matching <frontend-slot/>");
+						if (!slot) logger.error("Could not find a matching <frontend-slot/> for frontend entrypoint route");
 					}
 	
 					if (slot) {

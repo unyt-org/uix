@@ -18,10 +18,10 @@ import "./src/utils/window-apis.ts";
 export {unsafeHTML} from "./src/html/unsafe-html.ts";
 
 declare global {
-	const content: typeof _content;
+	const ref: typeof _content;
 	const id: typeof _id;
 	const layout: typeof _layout;
-	const child: typeof _child;
+	const value: typeof _child;
 	const NoResources: typeof _NoResources;
 	const frontend: typeof _frontend;
 	const bindOrigin: typeof _bindOrigin;

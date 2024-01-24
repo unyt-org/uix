@@ -68,7 +68,7 @@ other elements in the DOM.
 Element-scoped styles can also be used inside function components, which do not support [external style sheets](#external-style-sheets) like class components.
 
 > [!WARNING]
-> This feature only works in browsers that support the experimental [`@scope` block](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope).
+> This feature only works in browsers that support the experimental [`@scope` block](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope#browser_compatibility).
 
 
 ### The `SCSS` template function

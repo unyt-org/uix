@@ -171,8 +171,13 @@ export class Transpiler {
      */
     public async transpileDir(dir: Path.File) {
         const promises = []
+        const maxParallel = 100;
         for await (const e of walk!(dir, {includeDirs: false, exts: this.#transpile_exts.map(x=>'.'+x)})) {
             promises.push(this.updateFile(new Path(e.path), true, true));
+            if (promises.length >= maxParallel) {
+                await Promise.all(promises);
+                promises.length = 0;
+            }
         }
         await Promise.all(promises)
     }
@@ -505,8 +510,8 @@ export class Transpiler {
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
         return app.options?.experimentalFeatures.includes('embedded-reactivity') ?
-            this.transpileToJSSWC(ts_dist_path):
-            this.transpileToJSDenoEmit(ts_dist_path)
+            this.transpileToJSSWC(ts_dist_path, true):
+            this.transpileToJSSWC(ts_dist_path, false)
     }
   
     private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
@@ -532,8 +537,14 @@ export class Transpiler {
         return js_dist_path;
     }
 
-    private async transpileToJSSWC(ts_dist_path: Path.File) {
+    private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
         const {transformSync} = await import("npm:@swc/core");
+
+        const experimentalPlugins = useJusix ? {
+            plugins: [
+                ["jusix", {}]
+            ]
+        } : {}
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
@@ -558,11 +569,7 @@ export class Transpiler {
                     target: "es2022",
                     keepClassNames: true,
                     externalHelpers: false,
-                    experimental: {
-                        plugins: [
-                            ["jusix", {}]
-                        ]
-                    }
+                    experimental: experimentalPlugins
                 }
             }).code
             if (transpiled != undefined) await Deno.writeTextFile(js_dist_path.normal_pathname, transpiled);

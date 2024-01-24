@@ -6,7 +6,7 @@
     --current_text_color_highlight: var(--text_highlight);
 } */
 
-light-root, uix-fragment, frontend-slot {
+light-root, uix-fragment, uix-placeholder, frontend-slot {
     display: contents;
 }
 

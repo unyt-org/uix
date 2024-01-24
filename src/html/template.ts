@@ -41,7 +41,7 @@ function cloneWithListeners(element: Node) {
 	// cannot use cloneNode(true) because listeners have to be copied for all children
 	const clone = element.cloneNode(false);
 	if (clone instanceof domContext.Element) {
-		for (const [event, listeners] of (<DOMUtils.elWithEventListeners>element)[DOMUtils.EVENT_LISTENERS]??[]) {
+		for (const [event, listeners] of (<DOMUtils.elWithUIXAttributes>element)[DOMUtils.EVENT_LISTENERS]??[]) {
 			for (const [listener] of listeners) {
 				domUtils.setElementAttribute(clone, "on"+event, listener);
 			}

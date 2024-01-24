@@ -306,8 +306,10 @@ globalThis.reset = app.reset;
 	}
 })
 
-
-
+if (app.stage !== "dev") {
+	// don't expose native error stack traces via DATEX
+	Datex.Runtime.OPTIONS.NATIVE_ERROR_STACK_TRACES = false
+}
 
 bindingOptions.mapFileURL = (url) => {
 	return convertToWebPath(url);

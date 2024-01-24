@@ -430,6 +430,7 @@ export class Server {
                 if (datexEndpointNew || !Datex.Supranet.connected) {
                     // endpoint is new and not yet registered in network - cannot validate at this point, no valid session
                     // or not connected to supranet -> cannot validate keys
+                    endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
                 }
 
                 // has uix-session - check if still a valid session

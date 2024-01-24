@@ -1,6 +1,6 @@
 # Styles and Themes
 
-## External style files
+## External style sheets
 
 To apply css styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
 
@@ -31,6 +31,45 @@ class MyComponent extends Component {
 
 The `@style` decorator accepts a `CSSStylesheet` as a parameter.
 The best way to create this stylesheet is using the `SCSS` template function.
+
+
+## Element-scoped styles
+
+Besides setting individual css properties on the `"style"` attribute of an element, you can also use
+the custom UIX `"stylesheet"` attribute for applying a stylesheet to the scope of the element.
+
+```tsx
+// normal "style" attribute:
+export default <div style="color:red">...</div> 
+
+// "stylesheet" attribute:
+export default <div stylesheet="./myStyle.css">  
+    <h1>Title</h1>
+  </div> 
+```
+```css
+/* file: myStyle.css */
+
+/* applies to the outer div*/
+:scope {
+  color: green
+}
+
+/* applies to all h1 elements contained in the div*/
+h1 {
+  font-size: 2em;
+}
+```
+
+This is the preferred way over putting styles in the `entrypoint.css` or a custom theme stylesheet,
+because the styles are always scoped to the element in which they are needed and never leaked out to
+other elements in the DOM.
+
+Element-scoped styles can also be used inside function components, which do not support [external style sheets](#external-style-sheets) like class components.
+
+> [!WARNING]
+> This feature only works in browsers that support the experimental [`@scope` block](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope).
+
 
 ### The `SCSS` template function
 

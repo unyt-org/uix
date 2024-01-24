@@ -585,9 +585,9 @@ class WebsocketComInterface extends ServerDatexInterface {
                 connectedEndpointSocket.send(dx)
             }
             catch (e) {
-                this.socket_connection.delete(connectedEndpointSocket);
+                this.socket_endpoints.delete(connectedEndpointSocket);
                 this.connected_endpoints.delete(to);
-                console.log("Socket Error sending to " + to, e);
+                // console.log("Socket Error sending to " + to, e);
             }
         }
     }

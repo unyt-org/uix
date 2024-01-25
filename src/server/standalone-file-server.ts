@@ -5,7 +5,9 @@ await Deno.run({
         "-Aq",
         "--import-map",
         "https://dev.cdn.unyt.org/importmap.json",
-        "https://dev.cdn.unyt.org/uix1/src/server/file-server-runner.ts",
+        "--config",
+        "https://dev.cdn.unyt.org/deno.json",
+        "https://cdn.unyt.org/uix/src/server/file-server-runner.ts",
         ...Deno.args
     ]
 }).status()

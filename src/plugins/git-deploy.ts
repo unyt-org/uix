@@ -83,9 +83,9 @@ export default class GitDeployPlugin implements AppPlugin {
 					{
 						name: 'Setup Deno',
 						uses: 'denoland/setup-deno@v1',
-						// with: {
-						// 	'deno-version': '1.32.5'
-						// }
+						with: {
+							'deno-version': '1.39.4'
+						}
 					},
 					{
 						name: 'Run Tests',
@@ -113,9 +113,9 @@ export default class GitDeployPlugin implements AppPlugin {
 					{
 						name: 'Setup Deno',
 						uses: 'denoland/setup-deno@v1',
-						// with: {
-						// 	'deno-version': '1.32.5'
-						// }
+						with: {
+							'deno-version': '1.39.4'
+						}
 					},
 					{
 						name: 'Deploy UIX App',

@@ -14,7 +14,7 @@ export default class GitDeployPlugin implements AppPlugin {
 
 		// don't update CI workflows from inside a CI runner
 		if (isCIRunner()) {
-			logger.warn("Not updating CI workflows from inside a CI runner.");
+			console.log("Skipping git_deploy plugin in CI runner.")
 			return;
 		}
 

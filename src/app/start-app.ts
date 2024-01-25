@@ -86,15 +86,28 @@ export async function startApp(app: {domains:string[], options?:normalizedAppOpt
 		const DatexServer = (await import("../server/datex_server.ts")).DatexServer
 		DatexServer.addInterfaces(["websocket", "webpush"], server);
 		// also add custom .dx file
-		const data = new Map<Datex.Endpoint, {channels:Record<string,string>,keys:[ArrayBuffer, ArrayBuffer]}>();
-		data.set(Datex.Runtime.endpoint,  {
+		const nodes = new Map<Datex.Endpoint, {channels:Record<string,string>,keys:[ArrayBuffer, ArrayBuffer]}>();
+		nodes.set(Datex.Runtime.endpoint,  {
 			channels: {
 				'websocket': '##location##'
 			},
 			keys: Datex.Crypto.getOwnPublicKeysExported()
 		})
 
-		const dxFile = Datex.Runtime.valueToDatexStringExperimental(new Datex.Tuple({nodes:data}), true)
+		// copy nodes from backend dx to frontend dx
+		if (endpoint_config.nodes) {
+			for (const [endpoint, config] of endpoint_config.nodes) {
+				nodes.set(endpoint, config);
+			}
+		}
+		const dxContent = {
+			nodes:nodes
+		};
+		// copy blockchain_relay from backend dx to frontend dx
+		if (endpoint_config.blockchain_relay) dxContent.blockchain_relay = endpoint_config.blockchain_relay;
+
+		const dxFile = Datex.Runtime
+			.valueToDatexStringExperimental(new Datex.Tuple(dxContent), true, false, false, false, false)
 			.replace('"##location##"', '#location');
 
 		server.path("/.dx", async (req) => {

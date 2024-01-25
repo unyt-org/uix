@@ -24,6 +24,7 @@ import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
+import { isCIRunner } from "./src/utils/check-ci.ts";
 
 const logger = new Datex.Logger("UIX Runner");
 
@@ -89,18 +90,7 @@ if (clear) {
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
 
-const CI_INDICATOR_VARS = [
-	'CI',
-	'GITLAB_CI',
-	'GITHUB_ACTIONS'
-]
 
-function isCIRunner() {
-	for (const ciVar of CI_INDICATOR_VARS) {
-		if (Deno.env.has(ciVar)) return true;
-	}
-	return false;
-}
 
 /**
  * command line params + files

@@ -27,7 +27,7 @@ function onlyDenoFileChanges(fileOutput: string) {
  * Run UIX app on a remote host
  * Currently using git for file sync with remote
  */
-export async function runRemote(params: runParams, root_path: URL, options: normalizedAppOptions, backend: URL, requiredLocation: Datex.Endpoint, stageEndpoint: Datex.Endpoint, customDomains: Record<string,number|null> = {}, volumes?:URL[] = []) {
+export async function runRemote(params: runParams, root_path: URL, options: normalizedAppOptions, backend: URL, requiredLocation: Datex.Endpoint, stageEndpoint: Datex.Endpoint, customDomains: Record<string,number|null> = {}, volumes:URL[] = []) {
 	const logger = new Datex.Logger();
 
 	const repo = await GitRepo.get();

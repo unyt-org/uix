@@ -3,6 +3,7 @@ import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
 import { Datex } from "datex-core-legacy/mod.ts";
+import { isCIRunner } from "../utils/check-ci.ts";
 
 const logger = new Logger("Git Deploy Plugin");
 
@@ -10,6 +11,13 @@ export default class GitDeployPlugin implements AppPlugin {
 	name = "git_deploy"
 
 	async apply(data: Record<string, unknown>) {
+
+		// don't update CI workflows from inside a CI runner
+		if (isCIRunner()) {
+			console.log("Skipping git_deploy plugin in CI runner.")
+			return;
+		}
+
 		data = Object.fromEntries(Datex.DatexObject.entries(data));
 
 		const gitRepo = await GitRepo.get();
@@ -83,9 +91,9 @@ export default class GitDeployPlugin implements AppPlugin {
 					{
 						name: 'Setup Deno',
 						uses: 'denoland/setup-deno@v1',
-						// with: {
-						// 	'deno-version': '1.32.5'
-						// }
+						with: {
+							'deno-version': '1.39.4'
+						}
 					},
 					{
 						name: 'Run Tests',
@@ -113,9 +121,9 @@ export default class GitDeployPlugin implements AppPlugin {
 					{
 						name: 'Setup Deno',
 						uses: 'denoland/setup-deno@v1',
-						// with: {
-						// 	'deno-version': '1.32.5'
-						// }
+						with: {
+							'deno-version': '1.39.4'
+						}
 					},
 					{
 						name: 'Deploy UIX App',

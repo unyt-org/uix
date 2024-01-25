@@ -544,7 +544,7 @@ export class Transpiler {
             plugins: [
                 ["jusix", {}]
             ]
-        } : {}
+        } as Record<string, any> : undefined;
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {

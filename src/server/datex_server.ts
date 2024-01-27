@@ -309,7 +309,7 @@ class TCPComInterface extends ServerDatexInterface  {
                 }
 
                 /* an other endpoint is reachable over this interface*/
-                if (header && header.sender!=conn_endpoint && !this.reachable_endpoints.has(header.sender)) {
+                if (header && header.sender!=conn_endpoint && !this.reachable_endpoints.has(header.sender)) {
                     this.reachable_endpoints.set(header.sender, conn_endpoint)
                     Datex.CommonInterface.addIndirectInterfaceForEndpoint(header.sender, this)
                 }
@@ -408,7 +408,7 @@ class WebsocketStreamComInterface extends ServerDatexInterface {
                 }
 
                 /* an other endpoint is reachable over this interface*/
-                if (header && header.sender!=ws_stream.endpoint && !this.reachable_endpoints.has(header.sender)) {
+                if (header && header.sender!=ws_stream.endpoint && !this.reachable_endpoints.has(header.sender)) {
                     this.reachable_endpoints.set(header.sender, ws_stream.endpoint)
                     Datex.CommonInterface.addIndirectInterfaceForEndpoint(header.sender, this)
                 }
@@ -487,6 +487,11 @@ class WebsocketComInterface extends ServerDatexInterface {
                 const endpoint = this.socket_endpoints.get(socket)!;
                 this.connected_endpoints.delete(endpoint)
                 this.socket_endpoints.delete(socket)
+                this.endpoints.delete(endpoint)
+                // also remove all reachable endpoints
+                for (const [reachableEndpoint, redirect] of this.reachable_endpoints) {
+                    if (redirect === endpoint) this.reachable_endpoints.delete(reachableEndpoint)
+                }
             }
 
             socket.onclose = dispose
@@ -518,7 +523,7 @@ class WebsocketComInterface extends ServerDatexInterface {
                     }, proxySource)
                 }
                 else {
-                    header = await this.handleBlock(new Uint8Array(dmx_block).buffer, this.socket_endpoints.get(socket), null, proxySource)
+                    header = await this.handleBlock(new Uint8Array(dmx_block).buffer, this.socket_endpoints.get(socket)!, undefined, proxySource)
                 }
 
                 /* an other endpoint is reachable over this interface*/
@@ -587,6 +592,11 @@ class WebsocketComInterface extends ServerDatexInterface {
             catch (e) {
                 this.socket_endpoints.delete(connectedEndpointSocket);
                 this.connected_endpoints.delete(to);
+                this.endpoints.delete(to)
+                // also remove all reachable endpoints
+                for (const [reachableEndpoint, redirect] of this.reachable_endpoints) {
+                    if (redirect === to) this.reachable_endpoints.delete(reachableEndpoint)
+                }
                 // console.log("Socket Error sending to " + to, e);
             }
         }

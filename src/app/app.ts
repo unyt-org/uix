@@ -21,6 +21,7 @@ import { bindingOptions } from "./dom-context.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
 import { UIX_COOKIE, deleteCookie } from "../session/cookies.ts";
 import { UIX } from "../../uix.ts";
+import { formatEndpointURL } from "../utils/format-endpoint-url.ts";
 
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
 
@@ -208,31 +209,33 @@ class App {
 
 	/**
 	 * A list of all known domains for this app instance, sorted by priority
-	 * 
 	 * This includes auto-generated *.unyt.app domains
 	 */
 	public get domains() {
 		if (!this.#domains) {
-			// custom host domains
-			const domains = globalThis.Deno?.env.get("UIX_HOST_DOMAINS")?.split(",") ?? [];
-
 			// TODO: use this in the unyt core status logger, currently implemented twice
 			// app domains inferred from current endpoint
 			const urlEndpoint = this.metadata.hod === false ? null : Datex.Runtime.endpoint.main;
-			const endpointURLs = urlEndpoint ? [this.formatEndpointURL(urlEndpoint)].filter(v=>!!v) as string[] : [];
+			const endpointURLs = urlEndpoint ? [formatEndpointURL(urlEndpoint)].filter(v=>!!v) as string[] : [];
 
-			this.#domains = [...new Set([...domains, ...endpointURLs])];
+			this.#domains = [...new Set([...this.hostDomains, ...endpointURLs])];
 		}
 
 		return this.#domains!;
 	}
 
-	public formatEndpointURL(endpoint:Datex.Endpoint) {
-        const endpointName = endpoint.toString();
-        if (endpointName.startsWith("@+")) return `${endpointName.replace("@+","")}.unyt.app`
-        else if (endpointName.startsWith("@@")) return `${endpointName.replace("@@","")}.unyt.app`
-        else if (endpointName.startsWith("@")) return `${endpointName.replace("@","")}.unyt.me`
-    }
+	#hostDomains?: string[]
+
+	/**
+	 * A list of all known domains for this app instance, assigned by the host.
+	 * It is assumed that the host will directly forward all requests to these domains to the current endpoint.
+	 */
+	public get hostDomains() {
+		if (!this.#hostDomains) {
+			this.#hostDomains = globalThis.Deno?.env.get("UIX_HOST_DOMAINS")?.split(",").filter(v=>!!v) ?? [];
+		}
+		return this.#hostDomains!;
+	}
 
 	public async start(options:appOptions = {}, originalBaseURL?:string|URL) {
 		const { startApp } = await import("./start-app.ts");

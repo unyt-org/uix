@@ -18,13 +18,13 @@ there are two other possible endpoint location types:
 A remote docker host is a special endpoint running on another device (e.g. on a deployment server) that manages
 dockers on the device and can communicate with a UIX app to deploy new docker containers.
 
-Unyt.org provides public docker hosts (`@+unyt_eu1`, `@+unyt_eu2`) that can be used to deploy UIX apps under `unyt.app` domains.
+Unyt.org provides public docker hosts (`@+app-host-eu2`) that can be used to deploy UIX apps under `unyt.app` domains.
 
 If you want to set up you own docker host on your server, take a look at the [Docker Host](https://github.com/unyt-org/docker-host/) documentation.
 
 The following options can be set in a backend `.dx` file to configure a remote docker host.
 
-* `location`: *(endpoint or text)* A docker host endpoint (e.g. `@+unyt_eu1` or a self-hosted endpoint) where the UIX should be hosted. The default is `@@local`, meaning that the app is run locally and not on a docker host.
+* `location`: *(endpoint or text)* A docker host endpoint (e.g. `@+app-host-eu2` or a self-hosted endpoint) where the UIX should be hosted. The default is `@@local`, meaning that the app is run locally and not on a docker host.
 * `domain`: *(text or text[])* One or multiple custom domains on which the web server is listening. This only works if the domain is pointing to the ip address of the docker host.
 * `volumes`: *(url or url[])* Directories that are mapped to persistent docker volumes on the docker host
 
@@ -42,12 +42,12 @@ ssh -L 127.0.0.1:9229:127.0.0.1:9229 YOUR_USERNAME@YOUR_SERVER_DOMAIN
 
 ```datex
 endpoint: @+my_app,
-location: @+unyt_eu1,
+location: @+app-host-eu2,
 volumes:  [../data]
 ```
 
 With this example configuration, every time you start your app by running `uix`,
-it will get deployed on `@+unyt_eu1`.
+it will get deployed on `@+app-host-eu2`.
 
 To still run the app locally during development and
 get a fine-grained control for the behaviour in different stages,
@@ -74,8 +74,8 @@ endpoint: stage {
 // and 'prod'. The default 'dev' stage has no assigned value 
 // and falls back to the default (running locally)
 location: stage {
-    staging:    @+unyt_eu1,
-    prod:       @+unyt_eu2
+    staging:    @+app-host-eu1,
+    prod:       @+app-host-eu2
 }
 ```
 
@@ -99,6 +99,9 @@ Now, you can start your app like always with the `uix` command.
 > [!WARNING]
 > Currently, only the following uix command line arguments are supported when running with 'local-docker'
 > * `--watch`
+> * `--inspect`
+> * `--verbose`
+> * `--clear`
 
 
 ## GitHub deployment

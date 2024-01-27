@@ -79,7 +79,7 @@ export default class LocalDockerRunner implements UIXRunner {
 
 	}
 
-	generateDockerComposeFile({baseURL, endpoint, domains}: runOptions, deploymentDir: Path) {
+	generateDockerComposeFile({baseURL, endpoint, domains, params}: runOptions, deploymentDir: Path) {
 		if (!endpoint) throw new Error("Missing in endpoint for stage '" + stage + "' ('"+this.name+"' runner)");
 
 		const name = endpoint.toString().replace(/[^A-Za-z0-9_-]/g,'').toLowerCase()
@@ -98,6 +98,13 @@ export default class LocalDockerRunner implements UIXRunner {
 		if (verboseArg) args.push("-v")
 		if (clear) args.push("--clear");
 
+		const ports = []
+
+		if (params.inspect!=undefined) {
+			args.push("--inspect=0.0.0.0:9229");
+			ports.push(`${params.inspect||'9229'}:${params.inspect||'9229'}`)
+		}
+
 		const dockerCompose = {
 			version: "3",
 
@@ -107,6 +114,7 @@ export default class LocalDockerRunner implements UIXRunner {
 					image: "denoland/deno:1.37.2",
 
 					expose: ["80"],
+					ports,
 	
 					environment: [
 						"UIX_HOST_ENDPOINT=local-docker",

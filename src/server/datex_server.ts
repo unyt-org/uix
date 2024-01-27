@@ -446,7 +446,7 @@ class WebsocketComInterface extends ServerDatexInterface {
     override in = true
     override out = true
 
-    private connected_endpoints = new Map<Datex.Target, any>();
+    private connected_endpoints = new Map<Datex.Endpoint, WebSocket>();
     private socket_endpoints = new WeakMap<WebSocket, Datex.Endpoint>() 
 
     public get activeConnections() {
@@ -466,6 +466,27 @@ class WebsocketComInterface extends ServerDatexInterface {
         return socketEndpoint && (source.endpoint?.equals(socketEndpoint) || source.endpoint?.main?.equals(socketEndpoint));
     }
 
+    private disposeConnection(socket: WebSocket) {
+        // delete all connected endpoints that reference the socket
+        for (const [connectedEndpoint, endpointSocket] of this.connected_endpoints) {
+            if (socket === endpointSocket) this.clearEndpoint(connectedEndpoint)
+        }
+        // delete socket from socket_endpoints map
+        const endpoint = this.socket_endpoints.get(socket)!;
+        this.socket_endpoints.delete(socket)
+        this.clearEndpoint(endpoint)
+    }
+
+    private clearEndpoint(endpoint: Datex.Endpoint) {
+        this.connected_endpoints.delete(endpoint)
+        this.endpoints.delete(endpoint);
+
+        // also remove all reachable endpoints
+        for (const [reachableEndpoint, redirect] of this.reachable_endpoints) {
+            if (redirect === endpoint) this.reachable_endpoints.delete(reachableEndpoint)
+        }
+    }
+
     private handleRequest(requestEvent:Deno.RequestEvent){
         try {
             const req = requestEvent.request; 
@@ -483,19 +504,9 @@ class WebsocketComInterface extends ServerDatexInterface {
                 .replace("https://", "wss://");
             if (this.description.endsWith("/")) this.description = this.description.slice(0, -1);
 
-            const dispose = () => {
-                const endpoint = this.socket_endpoints.get(socket)!;
-                this.connected_endpoints.delete(endpoint)
-                this.socket_endpoints.delete(socket)
-                this.endpoints.delete(endpoint)
-                // also remove all reachable endpoints
-                for (const [reachableEndpoint, redirect] of this.reachable_endpoints) {
-                    if (redirect === endpoint) this.reachable_endpoints.delete(reachableEndpoint)
-                }
-            }
-
-            socket.onclose = dispose
-            socket.onerror = dispose
+   
+            socket.onclose = () => this.disposeConnection(socket);
+            socket.onerror = () => this.disposeConnection(socket);
             socket.binaryType = "arraybuffer";
 
             const proxySource:{type:string, description: string, endpoint?:Datex.Endpoint} = {type: this.type, description: this.description};
@@ -590,14 +601,7 @@ class WebsocketComInterface extends ServerDatexInterface {
                 connectedEndpointSocket.send(dx)
             }
             catch (e) {
-                this.socket_endpoints.delete(connectedEndpointSocket);
-                this.connected_endpoints.delete(to);
-                this.endpoints.delete(to)
-                // also remove all reachable endpoints
-                for (const [reachableEndpoint, redirect] of this.reachable_endpoints) {
-                    if (redirect === to) this.reachable_endpoints.delete(reachableEndpoint)
-                }
-                // console.log("Socket Error sending to " + to, e);
+                this.disposeConnection(connectedEndpointSocket);
             }
         }
     }

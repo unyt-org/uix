@@ -34,7 +34,7 @@ type _renderOptions = {
 	_injectedJsData?:injectScriptData, 
 	lang?:string, 
 	allowIgnoreDatexFunctions?: boolean,
-	hydratableNodes?: Set<Node>,
+	requiredPointers?: Set<any>,
 }
 
 export const CACHED_CONTENT = Symbol("CACHED_CONTENT");
@@ -240,7 +240,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 	// hydratable
 	if (isLiveNode(el)) {
-		if (opts?.hydratableNodes) opts.hydratableNodes.add(el);
+		if (opts?.requiredPointers) opts.requiredPointers.add(el);
 		attrs.push("uix-dry");
 	}
 	// just static
@@ -272,6 +272,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 				// special form "action" on submit (no js required)
 				if (event == "submit" && Datex.Pointer.getByValue(listenerFn)) {
+					opts?.requiredPointers?.add(listenerFn);
 					attrs.push(`action="/@uix/form-action/${Datex.Pointer.getByValue(listenerFn)!.idString()}/"`);
 				} 
 
@@ -309,6 +310,8 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 		for (const [attr, ptr] of (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.PSEUDO_ATTR_BINDINGS] ?? []) {
 
+			opts?.requiredPointers?.add(ptr);
+			
 			hasScriptContent = true;
 			const propName = attr == "checked" ? "checked" : "value";
 			const keepAlive = datexUpdateType == "onsubmit"
@@ -479,7 +482,7 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{
 	injectStandaloneComponents?: boolean, 
 	allowIgnoreDatexFunctions?: boolean, 
 	lang?:string, 
-	hydratableNodes?: Set<Node>
+	requiredPointers?: Set<any>
 }): [header_script:string, html_content:string] {
 
 	if ((el as any)[CACHED_CONTENT]) return (el as any)[CACHED_CONTENT];

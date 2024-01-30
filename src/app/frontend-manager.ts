@@ -393,6 +393,7 @@ export class FrontendManager extends HTMLProvider {
 				await req.respondWith(await provideValue(res, {type:Datex.FILE_TYPE.JSON, mockPointers: true}));
 			}
 			catch (e) {
+				console.log(e)
 				req.respondWith(await this.server.getErrorResponse(500, e?.message ?? e?.toString()));
 			}
 		});
@@ -793,7 +794,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 	 * @param context request context
 	 * @returns 
 	 */
-	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content|null, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers, contentElement?: Element|DocumentFragment, hydratableNodes?:Set<Node>]> {
+	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content|null, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers, contentElement?: Element|DocumentFragment, requiredPointers?:Set<Node>]> {
 		// extract content from provider, depending on path
 		const {content, render_method, status_code, headers} = await resolveEntrypointRoute({
 			entrypoint: entrypoint,
@@ -812,7 +813,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 
 		// convert content to valid HTML string
 		if (content instanceof Element || content instanceof DocumentFragment) {
-			const hydratableNodes = new Set<Node>()
+			const requiredPointers = new Set<Node>()
 			const html = getOuterHTML(
 				content as Element, 
 				{
@@ -821,10 +822,10 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					injectStandaloneComponents:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, 
 					allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), 
 					lang,
-					hydratableNodes
+					requiredPointers
 				}
 			);
-			return [html, render_method, status_code, openGraphData, headers, content as Element, hydratableNodes];
+			return [html, render_method, status_code, openGraphData, headers, content as Element, requiredPointers];
 		}
 		
 		// invalid content was created, should not happen
@@ -855,7 +856,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				open_graph_meta_tags, 
 				headers, 
 				contentElement, 
-				hydratableNodes
+				requiredPointers
 			] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
 
 			// empty backend route & UIX-Inline-Backend => return 400 and just render frontend route
@@ -926,12 +927,15 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					liveNodePointers = getLiveNodes(contentElement, false).map(e => Datex.Pointer.getByValue(e)?.id).filter(e=>!!e);
 				}
 
-				// give pointer read permissions for hydratable nodes to client endpoint
+				// give pointer read permissions for hydratable nodes / other required pointers to client endpoint
 				if (Datex.Runtime.OPTIONS.PROTECT_POINTERS) {
-					if (hydratableNodes && metadata.endpoint) {
+					if (requiredPointers && metadata.endpoint) {
 						try {
-							for (const node of hydratableNodes) {
-								grantAccess(node, metadata.endpoint.main)
+							for (const val of requiredPointers) {
+								// grant access to whole pointer if pointer property (TODO: property level access)
+								if (val instanceof Datex.PointerProperty) grantAccess((val as Datex.PointerProperty).pointer, metadata.endpoint.main)
+								// grant normal access
+								else grantAccess(val, metadata.endpoint.main)
 							}
 						}
 						catch (e) {

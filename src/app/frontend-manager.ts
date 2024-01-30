@@ -795,6 +795,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 	 * @returns 
 	 */
 	public async getEntrypointContent(entrypoint: Entrypoint, path?: string, lang = 'en', context?:ContextGenerator|Context): Promise<[content:[string,string]|string|raw_content|null, render_method:RenderMethod, status_code?:number, open_graph_meta_tags?:OpenGraphInformation|undefined, headers?:Headers, contentElement?: Element|DocumentFragment, requiredPointers?:Set<Node>]> {
+		
 		// extract content from provider, depending on path
 		const {content, render_method, status_code, headers} = await resolveEntrypointRoute({
 			entrypoint: entrypoint,

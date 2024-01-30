@@ -1,6 +1,6 @@
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
 import { Path } from "../utils/path.ts";
-import { stage, watch } from "../app/args.ts";
+import { clear, stage, watch } from "../app/args.ts";
 import { createHash } from "https://deno.land/std@0.91.0/hash/mod.ts";
 // import { Datex } from "datex-core-legacy/no_init.ts";
 import { UIXRunner, runOptions } from "./runner.ts";
@@ -61,10 +61,11 @@ export default class LocalDockerRunner implements UIXRunner {
 			console.log(ESCAPE_SEQUENCES.GREEN + runOptions.endpoint + (Object.keys(runOptions.domains).length ? ` (${Object.keys(runOptions.domains).map(domain=>`https://${domain}`).join(", ")})` : '') +" is running in local docker container ("+id+")" + ESCAPE_SEQUENCES.RESET);
 			
 			if (runOptions.params.detach || id === "unknown id") {
-				return;
+				Deno.exit(0);
 			}
 		
 			else {
+				
 				await new Deno.Command("docker", {
 					args: [
 						"logs",
@@ -78,7 +79,7 @@ export default class LocalDockerRunner implements UIXRunner {
 
 	}
 
-	generateDockerComposeFile({baseURL, endpoint, domains}: runOptions, deploymentDir: Path) {
+	generateDockerComposeFile({baseURL, endpoint, domains, params}: runOptions, deploymentDir: Path) {
 		if (!endpoint) throw new Error("Missing in endpoint for stage '" + stage + "' ('"+this.name+"' runner)");
 
 		const name = endpoint.toString().replace(/[^A-Za-z0-9_-]/g,'').toLowerCase()
@@ -95,6 +96,15 @@ export default class LocalDockerRunner implements UIXRunner {
 		const args = [];
 		if (watch) args.push("--watch");
 		if (verboseArg) args.push("-v")
+		if (clear) args.push("--clear");
+
+		const ports = []
+
+		if (params.inspect!=undefined) {
+			const port = params.inspect||'9229';
+			args.push(`--inspect=0.0.0.0:${port}`);
+			ports.push(`${port}:${port}`)
+		}
 
 		const dockerCompose = {
 			version: "3",
@@ -105,6 +115,7 @@ export default class LocalDockerRunner implements UIXRunner {
 					image: "denoland/deno:1.37.2",
 
 					expose: ["80"],
+					ports,
 	
 					environment: [
 						"UIX_HOST_ENDPOINT=local-docker",

@@ -4,8 +4,11 @@ import { ESCAPE_SEQUENCES, verboseArg } from "datex-core-legacy/utils/logger.ts"
 import { GitRepo } from "../utils/git.ts";
 import { Path } from "../utils/path.ts";
 import { runParams } from "./runner.ts";
+import { logger } from "../utils/global-values.ts";
+import { githubToken } from "../app/args.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
+type Endpoint = any
 
 // copied from ContainerManager
 enum ContainerStatus {
@@ -74,6 +77,10 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 	if (verboseArg) args.push("--verbose");
 	if (clear) args.push("--clear");
 
+	// don't log internal verbose messages
+	Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
+	Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
+
 
 	if (params.inspect!=undefined) {
 		if (params.inspect) args.push(`--inspect=${params.inspect}`);
@@ -111,7 +118,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 				${env},
 				${args},
 				${normalizedVolumes},
-				${Deno.env.get("GITHUB_TOKEN")}
+				${githubToken ?? Deno.env.get("GITHUB_TOKEN")}
 			)
 		`
 		// console.log("");
@@ -119,9 +126,10 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 
 
 		// observe container status and exit
-		Datex.Value.observeAndInit(await datex `${container}->status`, async (status: ContainerStatus) => {
+		const handler = async (status: ContainerStatus) => {
 			// As soon as container is running, keep process alive, show remote container logs
 			if (!params.detach && status == ContainerStatus.RUNNING) {
+				Datex.Value.unobserve(containerStatus, handler);
 				loaded = true;
 				const stream = (await container.getLogs());
 				// @ts-ignore TODO: only workaround, make persistent
@@ -133,49 +141,69 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 			// As soon as endpoint is online: don't stream logs, close process
 			else if (params.detach && status == ContainerStatus.ONLINE) {
 				loaded = true;
-				console.log(ESCAPE_SEQUENCES.GREEN + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" is running on " + requiredLocation + ESCAPE_SEQUENCES.RESET);
-				Deno.exit(0)
+				logSuccess(stageEndpoint, requiredLocation, customDomains)
 			}
 			else if (status == ContainerStatus.FAILED) {
 				loaded = true;
-				logger.error('❌ Failed to start ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation);
-				Deno.exit(1)
+				logFailure(stageEndpoint, requiredLocation, customDomains, container.errorMessage)
 			}
-		})
+		}
+
+		const containerStatus = await datex `${container}->status`;
+
+		Datex.Value.observeAndInit(containerStatus, handler)
 	}
 
 	catch (e) {
-		console.log(e.message);
-		logger.error('❌ Failed to start ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation);
-		Deno.exit(1)
+		logFailure(stageEndpoint, requiredLocation, customDomains, e.message)
 	}
-	
 
 }
 
+function logFailure(stageEndpoint: Endpoint, requiredLocation: Endpoint, customDomains: Record<string,number|null> = {}, message?: string) {
+	console.log("");
+	logger.error('❌ Failed to start ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation + (message ? `:` : ""));
+	if (message) console.log(message);
+	Deno.exit(1)
+}
+
+function logSuccess(stageEndpoint: Endpoint, requiredLocation: Endpoint, customDomains: Record<string,number|null> = {}) {
+	logger.success(ESCAPE_SEQUENCES.GREEN + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" is running on " + requiredLocation + ESCAPE_SEQUENCES.RESET);
+	Deno.exit(0)
+}
+
+let streaming = false;
+
 function streamLogs(reader: ReadableStreamDefaultReader) {
+
+	if (streaming) return;
+	streaming = true;
+
 	function readStream() {
 		reader.read().then(({ done, value }) => {
 			if (done) {
 				// Stream ended, exit the loop
-				console.log("Stream ended");
-				return;
+				console.log("[Stream was closed]");
+				Deno.exit(0)
 			}
-	  
+	  		if (value instanceof ArrayBuffer) {
+				value = new Uint8Array(value);
+			}
 		  	// Process and print the data
 			if (value instanceof Uint8Array) {
 				Deno.stdout.writeSync(value)
+				// check of EOT character contained in stream
+				if (value.includes(4)) {
+					Deno.exit(0)
+				}
 			}
-			else  if (value instanceof ArrayBuffer) {
-				Deno.stdout.writeSync(new Uint8Array(value))
-			}
-	  		else console.log("invalid stream value", 	value);
+	  		else console.log("[invalid stream value]", value);
 
 		  // Continue reading the stream
 		  readStream();
 		});
-	  }
+	}
 	  
-	  // Start reading the stream
-	  readStream();
+	// Start reading the stream
+	readStream();
 }

@@ -4,6 +4,7 @@ import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppC
 import type {Datex as DatexType} from "datex-core-legacy";
 import { Path } from "../utils/path.ts";
 import { normalizedAppOptions } from "../app/options.ts";
+import { formatEndpointURL } from "../utils/format-endpoint-url.ts";
 
 async function readDXConfigData(path: URL) {
 	const dx = (await Datex.Runtime.getURLContent(path, false, false) ?? {}) as Record<string,any>;
@@ -66,6 +67,13 @@ export async function getDXConfigData(backend: Path, options:normalizedAppOption
 				}
 			}
 		}
+	}
+
+
+	// add unyt.app domain for stageEndpoint
+	if (stageEndpoint && stageEndpoint !== Datex.LOCAL_ENDPOINT) {
+		const endpointURL = formatEndpointURL(stageEndpoint);
+		if (endpointURL) domains[endpointURL] = null;
 	}
 
 	return {

@@ -11,7 +11,7 @@ import { getDirType } from "./utils.ts";
 
 const logger = new Datex.Logger("UIX App");
 
-export async function startApp(app: {domains:string[], options?:normalizedAppOptions, base_url?: URL}, options:appOptions = {}, original_base_url?:string|URL) {
+export async function startApp(app: {domains:string[], hostDomains: string[], options?:normalizedAppOptions, base_url?: URL}, options:appOptions = {}, original_base_url?:string|URL) {
 
 	const frontends = new Map<string, FrontendManager>()
 
@@ -111,8 +111,12 @@ export async function startApp(app: {domains:string[], options?:normalizedAppOpt
 			.replace('"##location##"', '#location');
 
 		server.path("/.dx", async (req) => {
-			// direct web socket connection not suppported for unyt.app, don't send .dx
-			if (!req.request.headers.get("x-forwarded-host")?.endsWith(".unyt.app")) {
+			const host = req.request.headers.get("x-forwarded-host");
+			// direct web socket connection not suppported for unyt.app with HTTP-over-DATEX, don't send .dx
+			if (!(
+				host?.endsWith(".unyt.app") // is a unyt.app subdomain
+				&& !app.hostDomains.includes(host) // can be assumed use HTTP-over-DATEX
+			)) {
 				await req.respondWith(server!.getContentResponse(
 					"text/datex",
 					dxFile

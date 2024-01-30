@@ -5,7 +5,7 @@ import { GitRepo } from "../utils/git.ts";
 import { Path } from "../utils/path.ts";
 import { runParams } from "./runner.ts";
 import { logger } from "../utils/global-values.ts";
-import { githubToken } from "../app/args.ts";
+import { gitToken } from "../app/args.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 type Endpoint = any
@@ -118,7 +118,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 				${env},
 				${args},
 				${normalizedVolumes},
-				${githubToken ?? Deno.env.get("GITHUB_TOKEN")}
+				${gitToken ?? Deno.env.get("GITHUB_TOKEN")}
 			)
 		`
 		// console.log("");

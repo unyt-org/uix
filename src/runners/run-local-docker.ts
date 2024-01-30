@@ -112,7 +112,7 @@ export default class LocalDockerRunner implements UIXRunner {
 			services: {
 				"uix-app": {
 					container_name: `${name}`,
-					image: "denoland/deno:1.39.4",
+					image: "denoland/deno:1.37.2", // max 1.39.4, currently 1.37.2 because of websocket issues
 
 					expose: ["80"],
 					ports,

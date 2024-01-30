@@ -597,10 +597,14 @@ class WebsocketComInterface extends ServerDatexInterface {
 
         // send to a connected endpoint
         if (connectedEndpointSocket) {
+            if (connectedEndpointSocket._closed) {
+                console.error("tried to send message to " + to + " over closed websocket!")
+            }
             try {
                 connectedEndpointSocket.send(dx)
             }
             catch (e) {
+                connectedEndpointSocket._closed = true;
                 this.disposeConnection(connectedEndpointSocket);
             }
         }

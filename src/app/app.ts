@@ -21,7 +21,7 @@ import { bindingOptions } from "./dom-context.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
 import { UIX_COOKIE, deleteCookie } from "../session/cookies.ts";
 import { UIX } from "../../uix.ts";
-import { formatEndpointURL } from "../utils/format-endpoint-url.ts";
+import { formatEndpointURL } from "datex-core-legacy/utils/format-endpoint-url.ts";
 
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
 

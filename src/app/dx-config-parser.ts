@@ -4,7 +4,7 @@ import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppC
 import type {Datex as DatexType} from "datex-core-legacy";
 import { Path } from "../utils/path.ts";
 import { normalizedAppOptions } from "../app/options.ts";
-import { formatEndpointURL } from "../utils/format-endpoint-url.ts";
+import { formatEndpointURL } from "datex-core-legacy/utils/format-endpoint-url.ts";
 
 async function readDXConfigData(path: URL) {
 	const dx = (await Datex.Runtime.getURLContent(path, false, false) ?? {}) as Record<string,any>;

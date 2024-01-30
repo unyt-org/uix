@@ -4,6 +4,9 @@ import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 
 const relative = client_type === "deno" ? (await import("https://deno.land/std@0.172.0/path/mod.ts")).relative : null;
 
+/**
+ * @deprecated - Please use import from datex-core-legacy/utils/path.ts. Will get removed soon!
+ */
 export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean = boolean> extends URL {
 
 	declare protocol: P

@@ -25,6 +25,7 @@ import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
 import { isCIRunner } from "./src/utils/check-ci.ts";
+import { runParams } from "./src/runners/runner.ts";
 
 const logger = new Datex.Logger("UIX Runner");
 
@@ -91,18 +92,6 @@ Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
 
 
-
-/**
- * command line params + files
- */
-export type runParams = {
-    reload: boolean | undefined;
-    enableTLS: boolean | undefined;
-    inspect: string | undefined;
-    unstable: boolean | undefined;
-	detach: boolean | undefined;
-    deno_config_path: URL | null;
-}
 
 const isWatching = live || watch_backend;
 

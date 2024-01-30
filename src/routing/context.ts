@@ -11,7 +11,7 @@ export type RequestData = {address:string|null}
 
 
 // persistent data
-const privateData = await Datex.Storage.loadOrCreate("UIX.privateData", () => $$(new StorageMap<Endpoint, Record<string, unknown>>()))
+const privateData = await Datex.Storage.loadOrCreate("UIX.privateData", () => new StorageMap<Endpoint, Record<string, unknown>>())
 const emptyMatch = Object.freeze({});
 
 

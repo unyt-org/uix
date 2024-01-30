@@ -83,9 +83,10 @@ export default class LocalDockerRunner implements UIXRunner {
 		if (!endpoint) throw new Error("Missing in endpoint for stage '" + stage + "' ('"+this.name+"' runner)");
 
 		const name = endpoint.toString().replace(/[^A-Za-z0-9_-]/g,'').toLowerCase()
-		const traefikLabels = []
+		const traefikLabels = new Set()
+		let i = 0;
 		for (const [host, port] of Object.entries(domains)) {
-			traefikLabels.push(...this.getTraefikLabels(name, host, port))
+			for (const label of this.getTraefikLabels(name + '_' + (i++), host, port)) traefikLabels.add(label)
 		}
 
 		const dxCacheVolumeName = name.replace(/[^a-zA-Z0-9_.-]/g, '-') + '-datex-cache'
@@ -112,7 +113,7 @@ export default class LocalDockerRunner implements UIXRunner {
 			services: {
 				"uix-app": {
 					container_name: `${name}`,
-					image: "denoland/deno:1.37.2",
+					image: "denoland/deno:1.39.4",
 
 					expose: ["80"],
 					ports,
@@ -129,7 +130,7 @@ export default class LocalDockerRunner implements UIXRunner {
 						`${dxCacheVolumeName}:/datex-cache`,
 						`${localStorage}:/deno-dir/location_data`
 					],
-					labels: traefikLabels,
+					labels: [...traefikLabels],
 					
 					entrypoint: "/bin/sh",
 					// keep dev.cdn for now to allow supranet relays to start without cdn running

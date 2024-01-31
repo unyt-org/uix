@@ -1,0 +1,19 @@
+name: 'Feature request'
+description: 'Suggest a new feature or change for UIX'
+body:
+  - type: textarea
+    id: suggestion_summary
+    attributes:
+      label: '⭐ Suggestion'
+      description: "Describe your suggestion in a few sentences."
+    validations:
+      required: true
+  - type: textarea
+    id: motivating_example
+    attributes:
+      label: '📃 Motivating Example'
+      description: |
+        1. Why do you want to see this feature added to UIX?
+        2. What use cases does it support?
+    validations:
+      required: true

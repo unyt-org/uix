@@ -240,26 +240,42 @@ export class Transpiler {
         this.currentlyUpdating.add(path);
 
         setTimeout(async ()=>{
-            const src_path = new Path<Path.Protocol.File>(path);
+            try {
+                const src_path = new Path<Path.Protocol.File>(path);
 
-            logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
+                logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
+    
+                // is eternal file, update
+                if (src_path.hasFileExtension(...eternalExts)) {
+                    await updateEternalFile(src_path, app.base_url, app.options!.import_map, app.options!);
+                }
 
-            // is eternal file, update
-            if (src_path.hasFileExtension(...eternalExts)) {
-                await updateEternalFile(src_path, app.base_url, app.options!.import_map, app.options!);
+                // trigger recursive update for directory
+                if (await src_path.fsIsDir()) {
+                    // trigger update for all files in directory that need to be transpiled
+                    const promises = []
+                    for await (const e of walk!(src_path, {includeDirs: false, exts: this.#transpile_exts.map(x=>'.'+x)})) {
+                        promises.push(this.handleFileWatchUpdate(e.path));
+                    }
+                    await Promise.all(promises);
+                }
+        
+                // ignore file if using file from original src directory
+                else if (!this.#options.copy_all && !src_path.hasFileExtension(...this.#transpile_exts)) {
+                    for (const handler of this.#file_update_listeners) handler(src_path);
+                } 
+                
+                // trigger file update
+                else {
+                    await this.updateFile(src_path);
+                }
+        
             }
-    
-            // ignore file if using file from original src directory
-            if (!this.#options.copy_all && !src_path.hasFileExtension(...this.#transpile_exts)) {
-                for (const handler of this.#file_update_listeners) handler(src_path);
-                return;
-            } 
-    
-            // TODO: ignore directories for now
-            if (await src_path.fsIsDir()) return;
-    
-            this.currentlyUpdating.delete(path);
-            await this.updateFile(src_path);
+
+            finally {
+                this.currentlyUpdating.delete(path);
+            }
+            
         }, 50)
     }
 

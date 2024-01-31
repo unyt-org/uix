@@ -250,7 +250,7 @@ export class Transpiler {
                     await updateEternalFile(src_path, app.base_url, app.options!.import_map, app.options!);
                 }
 
-                // TODO: ignore directories for now
+                // trigger recursive update for directory
                 if (await src_path.fsIsDir()) {
                     // trigger update for all files in directory that need to be transpiled
                     const promises = []

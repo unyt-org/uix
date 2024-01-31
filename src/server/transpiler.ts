@@ -242,6 +242,7 @@ export class Transpiler {
         setTimeout(async ()=>{
             try {
                 const src_path = new Path<Path.Protocol.File>(path);
+                const src_path_string = src_path.toString();
 
                 logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
     
@@ -261,13 +262,13 @@ export class Transpiler {
                 }
         
                 // ignore file if using file from original src directory
-                else if (!this.#options.copy_all && !src_path.hasFileExtension(...this.#transpile_exts)) {
+                else if (!this.#options.copy_all && !src_path.hasFileExtension(...this.#transpile_exts) && !this.#forceCopySrcFiles.has(src_path_string)) {
                     for (const handler of this.#file_update_listeners) handler(src_path);
                 } 
                 
                 // trigger file update
                 else {
-                    await this.updateFile(src_path);
+                    await this.updateFile(src_path, false, false, true); // force copy
                 }
         
             }
@@ -294,20 +295,27 @@ export class Transpiler {
         }
     }
 
-    async updateFile(src_path:Path.File|string, _transpile_only_if_not_exists = false, silent_update = false) {
+    // list of non-transpilable files that still should be synced to the transpile directory (e.g. css files required by scss)
+    #forceCopySrcFiles = new Set<string>()
+
+    async updateFile(src_path:Path.File|string, _transpile_only_if_not_exists = false, silent_update = false, force_copy = false) {
         const p = this.resolveRelativeSrcPath(src_path);
         if (!p) return;
         src_path = p;
 
-        await this.updateFileToDist(src_path, this.dist_dir, _transpile_only_if_not_exists);
+        await this.updateFileToDist(src_path, this.dist_dir, _transpile_only_if_not_exists, force_copy);
         if (!silent_update) {
             for (const handler of this.#file_update_listeners) handler(src_path);
         }
     }
 
-    private async updateFileToDist(src_path:Path.File, dist_dir:Path.File, _transpile_only_if_not_exists = false) {
-        if (!this.isClonedFile(src_path)) return; // ignore, no copy required
+    private async updateFileToDist(src_path:Path.File, dist_dir:Path.File, _transpile_only_if_not_exists = false, force_copy = false) {
+        if (!force_copy && !this.isClonedFile(src_path)) return; // ignore, no copy required
         if (await src_path.fsIsDir()) throw new Error("src path is directory")
+
+        if (force_copy) {
+            this.#forceCopySrcFiles.add(src_path.toString())
+        }
 
         const dist_path = src_path.getWithChangedParent(this.src_dir, dist_dir);
 
@@ -384,12 +392,13 @@ export class Transpiler {
         this.#loadedSCSSFiles.add(srcPathString);
 
         const content = await Deno.readTextFile(src_path.normal_pathname);
-        for (const dep of content.matchAll(/^\s*@use\s*"([^"]*)"/gm)) {
-            let import_path = new Path<Path.Protocol.File>(dep[1], src_path);
+        for (const dep of content.matchAll(/^\s*@use\s*("[^"]*"|'[^']*')/gm)) {
+            const useSpecifier = dep[1].slice(1,-1);
+            let import_path = new Path<Path.Protocol.File>(useSpecifier, src_path);
             if (!import_path.ext) import_path = import_path.getWithFileExtension("scss");
             if (!await this.getDistPath(import_path)?.fsExists()) {
                 // console.log("+ imp " + import_path,src_path.toString())
-                await this.updateFile(import_path, true, true)
+                await this.updateFile(import_path, true, true, true)
             }
         }
     }

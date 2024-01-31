@@ -1,0 +1,50 @@
+name: 'Bug report'
+description: 'Create a report to help us improve UIX'
+body:
+  - type: markdown
+    attributes:
+      value: 'Please check out the UIX documentation before filing a bug report: https://docs.unyt.org/manual/uix/getting-started'
+  - type: textarea
+    id: version_info
+    attributes:
+      label: '🕗 Version & Regression Information'
+      description: |
+        When did you start seeing this bug occur?
+        Please keep and fill in the line that best applies.
+      value: |
+        - This is a crash
+        - This changed between versions ______ and _______
+        - This is the behavior in every version I tried
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: 💻 Code
+      description: |
+        Please post a relevant code sample here if applicable.
+        Try to keep the code sample minimal and easy to understand.
+      value: |
+        ```tsx
+        // Your code here
+        ```
+    validations:
+      required: false
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: 🙁 Actual behavior
+      description: 'What happened, and why it was wrong.'
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: 🙂 Expected behavior
+      description: What you expected to happen instead, and why
+    validations:
+      required: true
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: Additional information about the issue

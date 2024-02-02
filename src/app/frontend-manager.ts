@@ -931,16 +931,16 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				// give pointer read permissions for hydratable nodes / other required pointers to client endpoint
 				if (Datex.Runtime.OPTIONS.PROTECT_POINTERS) {
 					if (requiredPointers && metadata.endpoint) {
-						try {
-							for (const val of requiredPointers) {
+						for (const val of requiredPointers) {
+							try {
 								// grant access to whole pointer if pointer property (TODO: property level access)
 								if (val instanceof Datex.PointerProperty) grantAccess((val as Datex.PointerProperty).pointer, metadata.endpoint.main)
 								// grant normal access
 								else grantAccess(val, metadata.endpoint.main)
 							}
-						}
-						catch (e) {
-							console.error(e);
+							catch (e) {
+								console.error(e)
+							}
 						}
 					}
 				}

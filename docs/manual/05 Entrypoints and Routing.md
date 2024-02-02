@@ -110,7 +110,7 @@ Matches can be accessed via the second argument in the callback function. The ra
 ```tsx
 export default {
     // Match user route with name
-    '/user/:name/': (_ctx, {name}) => `Hello ${name}!`
+    '/user/:name/': (_, {name}) => `Hello ${name}!`
     // Match page route using a Regular Expression
     '/page/(1|2|3)/': (ctx) => `This is page ${ctx.urlPattern.pathname.groups[0]}` 
     // Fallback if nothing else matches

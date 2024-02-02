@@ -1,7 +1,7 @@
 # Getting Started with UIX
 
 UIX is an open-source full-stack framework for developing reactive web apps with *restorable and shared state*.
-UIX apps run on a [deno](https://docs.deno.com/runtime/manual) backend and use state-of-the-art web technologies.
+UIX apps run on a [Deno](https://docs.deno.com/runtime/manual) backend and use state-of-the-art web technologies.
 
 The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity and cross-device data exchange*.
 In contrast to frameworks like React, UIX provides *direct wiring* to the DOM for reactivity and does not need a virtual DOM.
@@ -17,7 +17,7 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
  * [Server side rendering with partial hydration](07%20Rendering%20Methods.md)
  * [Hybrid backend/frontend routing](05%20Entrypoints%20and%20Routing.md)
  * [Cross-realm imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports)
- * [Shared memory](02%20Cross-Realm%20Imports.md#Synchronization)
+ * [Restorable state](06%20Persistent%20Contexts.md)
  * [JSX support](./03%20JSX.md)
  * [Reusable web components](./04%20Components.md)
  * [SCSS support](./11%20Style%20and%20Themes.md#SCSS)
@@ -26,17 +26,18 @@ In contrast to frameworks like React, UIX provides *direct wiring* to the DOM fo
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
 This is why UIX ships with integrated features such as:
  * Hot reloading
- * [Testing library](https://github.com/unyt-org/unyt-tests/)
  * [Stage management](./08%20Configuration.md#app-deployment-stages)
- * Version management
+# * Version management
  * [Automated deployment](./13%20Deployment.md)
+ * [Testing library](https://github.com/unyt-org/unyt-tests/)
 
 ### CLI Installation
 
-To install uix, you need to install [deno](https://docs.deno.com/runtime/manual/getting_started/installation) first.
+To install uix, you need to install [Deno](https://docs.deno.com/runtime/manual/getting_started/installation) first.
 
 > [!WARNING]
-> UIX is currently only supported for Deno versions <= 1.39.4
+> UIX is currently only supported for Deno versions <= 1.39.4. We are actively working on a
+> release that is compatible with newer Deno versions.
 
 #### Linux / MacOS
 
@@ -72,11 +73,11 @@ and starts the app locally.
 
 > [!NOTE]
 > We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for developing UIX apps.<br/>
-> For syntax highlighting and language support (DATEX, Typescript, deno), the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> is required.
+> For syntax highlighting and language support (DATEX, Typescript, Deno), the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> is required.
 
 
 ## Running your UIX app
-To run your UIX app, make sure the [app.dx]() configuration file exists.
+To run your UIX app, make sure the [app.dx](./08%20Configuration.md#the-app-dx-file) configuration file exists.
 Execute the `uix` command in the root directory of your application (where the `app.dx` is located) to initialize and run the project.
 
 ```bash
@@ -112,7 +113,7 @@ $ deno run -A --import-map https://cdn.unyt.org/importmap.json https://cdn.unyt.
 ```
 
 ## Architecture of a UIX Project
-With UIX, frontend and backend source code and other resources can be combined in one single project.
+In a UIX project, frontend and backend source code or other resources are combined in one single project.
 
 ```
 .
@@ -164,7 +165,9 @@ In this stage, special development features are enabled:
 ### Running UIX apps locally
 
 Per default, UIX apps run on `http://localhost:80`.
-You can specify a custom port with the `--port` argument if this port is not available
+If port 80 is already in use, UIX automatically finds a free port.
+
+You can also specify a custom port with the `--port` argument if this port is not available
 on your system or if you want to run multiple UIX simultaneously.
 
 > [!WARNING]

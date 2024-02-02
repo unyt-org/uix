@@ -1,12 +1,12 @@
 # Cross-Realm Imports
 
-Modules in the `frontend` directory of a UIX app can use exported values from modules in the `backend` directory, as if they are running on the same device and within the same process. 
+Modules in the `frontend` directory of a UIX app can import values from `backend` modules, as if they are running on the same device and within the same process. 
 This is accomplished with DATEX exchange between the frontend and backend endpoints.
 
 **Cross-Realm Import Example**:
 
 ```typescript
-// file: backend/public.ts
+// file: backend/public.ts - running on the backend (Deno)
 
 export function getData() {
     return [1,2,3];
@@ -17,7 +17,7 @@ map.set("a", "Value for A");
 ```
 
 ```typescript
-// file: frontend/entrypoint.ts
+// file: frontend/entrypoint.ts - running on the frontend (browser client)
 
 import {map, getData} from "../backend/public.ts";
 
@@ -34,7 +34,6 @@ console.log(await getData()); // [1,2,3]
 > * Classes 
 >   * Class definitions should always be put in a `common` module if the class is used both on the backend and frontend.
 >   * static class fields can still be accessed on a class imported from the backend
-> * Symbols exported from a backend module cannot be imported in a frontend module
 
 ## Common Modules
 

@@ -27,7 +27,7 @@ UIX aims to simplify all phases of the app development cycle, including design, 
 This is why UIX ships with integrated features such as:
  * Hot reloading
  * [Stage management](./08%20Configuration.md#app-deployment-stages)
-# * Version management
+ <!-- * Version management -->
  * [Automated deployment](./13%20Deployment.md)
  * [Testing library](https://github.com/unyt-org/unyt-tests/)
 

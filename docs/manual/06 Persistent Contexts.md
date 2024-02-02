@@ -58,8 +58,18 @@ export default {
 ```
 
 In the same way, you can access the private data for a session on the backend with `await ctx.getPrivateData()`.
-
 You can store any DATEX-compatible value in the shared/private data objects.
+
+You can also access private data in normal backend functions that have no access to a UIX context element, by passing
+the caller information provided by `datex.meta` to `Context.getPrivateData`:
+```ts
+export async function updatePrivateId(id: number) {
+    // get the private data for the caller endpoint
+    const privateData = await Context.getPrivateData(datex.meta);
+    // update the 'id' field in the private data 
+    privateData.id = id;
+}
+```
 
 > [!WARNING]
 > Private data is directly stored on the backend and can contain an arbitrary amount of data.<br>

@@ -35,6 +35,7 @@ type _renderOptions = {
 	lang?:string, 
 	allowIgnoreDatexFunctions?: boolean,
 	requiredPointers?: Set<any>,
+	forceParentLive?: boolean // set by child nodes to indicate parent should be marked as hydratable
 }
 
 export const CACHED_CONTENT = Symbol("CACHED_CONTENT");
@@ -140,13 +141,17 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 	
 
 	if (el instanceof domContext.Text) {
-		// localized
-		let content: string; 
+		// special case: localized text
+		let content: string;
 		if (opts?.lang && (el as any)[DX_VALUE] instanceof Datex.Pointer && (el as any)[DX_VALUE].transformMap) {
 			const map = (el as any)[DX_VALUE].transformMap;
 			content = map[opts?.lang] ?? map["en"] ?? el.textContent;
 		}
-		// not localized
+		// live ref value
+		else if ((el as any)[DX_VALUE] instanceof Datex.Ref) {
+			if (opts) opts.forceParentLive = true;
+		}
+		// static value
 		else {
 			content = el.textContent
 		}
@@ -186,9 +191,14 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		opts.forms.push(dataPtr)
 	}
 
+	if (opts) opts.forceParentLive = false;
 	const inner = getInnerHTML(el, opts, collectedStylesheets, isStandaloneContext);
 	const tag = el.tagName.toLowerCase();
 	const attrs = [];
+
+	// child forced this parent to be live
+	const forceLive = opts?.forceParentLive;
+	if (opts) opts.forceParentLive = false;
 	
 	// pop datex-update type from stack
 	if (opts && datexUpdateType) {
@@ -239,10 +249,11 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 	}
 
 	// hydratable
-	if (isLiveNode(el)) {
+	if (forceLive || isLiveNode(el)) {
 		if (opts?.requiredPointers) opts.requiredPointers.add(el);
 		attrs.push("uix-dry");
 	}
+	
 	// just static
 	else attrs.push("uix-static");
 
@@ -474,6 +485,8 @@ function isLiveNode(node: Node) {
 	if (node instanceof Component) return true;
 	if (node[DOMUtils.PSEUDO_ATTR_BINDINGS]?.size) return true;
 	if (node[DOMUtils.EVENT_LISTENERS]?.size) return true;
+	// uix-placeholder are always live
+	if (node instanceof domContext.Element && node.tagName?.toLowerCase() == "uix-placeholder") return true;
 }
 
 export function getOuterHTML(el:Element|DocumentFragment, opts?:{

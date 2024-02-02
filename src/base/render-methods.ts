@@ -69,7 +69,7 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
  * @param content_generator 
  * @returns 
  */
-export function renderFrontend(content_generator:()=>Entrypoint, placeholder: html_content): Entrypoint {
+export function renderFrontend(content_generator:() => JSX.singleChild, placeholder?: html_content): JSX.singleChild {
 	if (UIX.context == "frontend") {
 		return content_generator()
 	}
@@ -77,11 +77,11 @@ export function renderFrontend(content_generator:()=>Entrypoint, placeholder: ht
 		const fn = JSTransferableFunction.functionIsAsync(content_generator) ?
 			JSTransferableFunction.createAsync(content_generator).then(fn=>{
 				fn = $$(fn);
-				(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder;
+				(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder ?? "";
 				return fn;
 			}) :
 			$$(JSTransferableFunction.create(content_generator));
-		(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder;
+		(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder ?? "";
 		return fn
 	}
 }

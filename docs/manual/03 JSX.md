@@ -208,6 +208,12 @@ accept other values:
  * `display`: The display property accepts a `boolean` value. If the value is `true`, `display` is set to the default display value (e.g. `display: block` for a div). If the value is `false`, `display` is set to `none`.
 
 
+#### Scoped stylesheets
+
+The special `stylesheet` attribute can be used on JSX elements to apply a whole CSS
+stylesheet to the scope of the element (See [Element-scoped styles](./11%20Style%20and%20Themes.md#element-scoped-styles]))
+
+
 #### Class
 Similar to the `style` attribute, the `class` accepts a string or an object.
 The object must contain the potential class names as properties and booleans as the corresponding properties,

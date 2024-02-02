@@ -34,7 +34,7 @@ The following options provide some general information or behaviour of the app.
 
 * `name`: *(text)* - The name of the app
 * `description`: *(text)* - Short description for the app
-* `icon`: *(text or url)* - URL path to an app icon image
+* `icon`: *(text or url)* - URL path to an app icon image - can also be a relative path, e.g. `./common/res/icon.png`
 * `installable`: *(boolean)* - The app can be installed as standalone web app
 * `meta`: *(Record<string,string>)* - Custom `<meta>` tags (name and content) that are added to the HTML head on each page
 * `manifest`: *Record<string,any>* - Custom web manifest options that override the defaults set by UIX
@@ -48,9 +48,10 @@ The following options provide some general information or behaviour of the app.
 
 ### Experimental Features
 
+Experimental features are subject to change and might be enabled by default in future versions of UIX.
+
 * *embedded-reactivity*: Enables compile-time reactivity features for JSX templates and the `$()` syntax
 * *protect-pointers*: Sets the `PROTECT_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints per default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
-
 
 
 ### Paths

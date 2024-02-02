@@ -107,19 +107,43 @@ export class Context
 
 
 	/**
+	 * Gets the context-bound private data for an endpoint.
+	 * 
+	 * Example:
+	 * ```ts
+	 * const endpoint = f('@example')
+	 * const privateData = Context.getPrivateData(endpoint);
+	 * ```
+	 */
+	static async getPrivateData(endpoint: Datex.Endpoint): Promise<PrivateData>
+	/**
 	 * Gets the context-bound private data. This can be used inside normal functions
 	 * that are called from remote endpoints but do not have access to the UIX context object.
+	 * 
+	 * If the calling endpoint cannot be verified, an error is thrown.
 	 * 
 	 * Example:
 	 * ```ts
 	 * // backend/functions.ts
 	 * export function doBackendStuff() {
-	 *    const privateData = Context.getPrivateData(datex.meta.sender);
+	 *    const privateData = Context.getPrivateData(datex.meta);
 	 * 	  // ..
 	 * }
 	 * ```
 	 */
-	static async getPrivateData(endpoint: Datex.Endpoint) {
+	static async getPrivateData(meta: datex_meta): Promise<PrivateData>
+	static async getPrivateData(endpoint_or_meta: Datex.Endpoint|datex_meta) {
+		let endpoint: Datex.Endpoint;
+		// return private data for endpoint
+		if (endpoint_or_meta instanceof Datex.Endpoint) {
+			endpoint = endpoint_or_meta;
+		}
+		// return private data for verified caller endpoint
+		else {
+			if (!endpoint_or_meta.signed || endpoint_or_meta.local) throw new Error("Cannot get private data for unverified endpoint");
+			else endpoint = endpoint_or_meta.sender;
+		}
+
 		if (!await privateData.has(endpoint)) await privateData.set(endpoint, {});
 		return (await privateData.get(endpoint))! as PrivateData;
 	}

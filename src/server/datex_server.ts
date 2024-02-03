@@ -461,6 +461,10 @@ class WebsocketComInterface extends ServerDatexInterface {
         DatexServer.http_com_interface.addUpgradeHandler("websocket", (r)=>this.handleRequest(r));        
     }
 
+    // WebSocketComInterface : sending from A->B is allowed, not from A->A
+    // |      ^    |
+    // v      |
+    // A -->  B    C
     isEqualSource(source: ComInterface, to: Datex.Endpoint) {
         const socketEndpoint = this.getReachableEndpointRedirectEndpoint(to);
         return socketEndpoint && (source.endpoint?.equals(socketEndpoint) || source.endpoint?.main?.equals(socketEndpoint));

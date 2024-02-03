@@ -1,10 +1,10 @@
 {
 	"imports": {
 		"unyt/": "https://cdn.unyt.org/",
-		"unyt_core": "https://cdn.unyt.org/unyt_core/datex.ts",
+		"unyt_core": "https://cdn.unyt.org/unyt_core@0.0.13/datex.ts",
 		"uix": "./uix.ts",
 
-		"unyt_core/": "https://cdn.unyt.org/unyt_core/",
+		"unyt_core/": "https://cdn.unyt.org/unyt_core@0.0.13/",
 		"uix/": "./",
 		"uix_std/": "./uix_std/",
 		"unyt_tests/": "https://cdn.unyt.org/unyt_tests/",

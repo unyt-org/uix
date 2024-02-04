@@ -377,10 +377,11 @@ export class Server {
     }
 
     private async validateEndpoint(requestEvent:Deno.RequestEvent, port: string, datexEndpointNonceCookie: string, datexEndpointValidationCookie: string, datexEndpointCookie: string) {
-        const nonce = base64ToArrayBuffer(datexEndpointNonceCookie)
-        const validation = base64ToArrayBuffer(datexEndpointValidationCookie)
-        const endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
         try {
+            const nonce = base64ToArrayBuffer(datexEndpointNonceCookie)
+            const validation = base64ToArrayBuffer(datexEndpointValidationCookie)
+            const endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
+
             const valid = await Crypto.verify(nonce, validation, endpoint);
 
             if (valid) {

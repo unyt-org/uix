@@ -362,10 +362,13 @@ export class Transpiler {
         await this.loadSCSSDependencies(src_path);
         try {
             // remove /C: for winDoWs
-            if (path.pathname.match(/^\/\w:/) && !path.pathname.startsWith(Deno.cwd().slice(0,2))) {
+            if (path.pathname.match(/^\/\w:/)) {
                 const tempDrive = path.pathname.match(/^\/(\w:)/)![1];
-                logger.error("Invalid filepath " + path.pathname + " - the temporary data drive " + tempDrive + " does not match the project directory drive " + Deno.cwd().slice(0,2) + ". Please put your project in the "+tempDrive+" drive.")
-                return;
+                const dirDrive = Deno.cwd().slice(0,2);
+                if (tempDrive != dirDrive) {
+                    logger.error("Invalid filepath " + path.pathname + " - the temporary data drive '" + tempDrive + "' does not match the project directory drive '" + dirDrive + "'. Please put your project in the "+tempDrive+" drive.")
+                    return;
+                }
             }
             const compiler = sass!([path.pathname.replace(/^\/\w:/,"")], {})
             const css = (compiler.to_string("expanded") as Map<string,string>).get(path.name.split(".")[0]);

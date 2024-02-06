@@ -139,7 +139,7 @@ export class ButtonComponent extends Component {
 
 The frontend rendering mode can be used to render parts of the UI only on the frontend.
 
-> [!NODE]
+> [!NOTE]
 > If you want to render a page completely on the frontend, we recommend to just put the page in the frontend entrypoint.
 > The frontend rendering mode only makes sense when you want to render parts of the UI in the backend, and hydrate other sections with > frontend-rendered content.
 

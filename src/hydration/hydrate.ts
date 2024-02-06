@@ -21,7 +21,7 @@ export async function hydrate() {
 		if (!(resolved instanceof Node)) {
 			const node = querySelector(`[uix-ptr="${ptrs[Number(index)].substring(1)}"]`)
 			if (!node) console.error("hydrate: node not found for uix-ptr " + ptrs[Number(index)])
-			else domUtils.replaceWith(node, resolved)
+			else domUtils.replaceWith(node, resolved, true)
 		}
 	}
 

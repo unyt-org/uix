@@ -8,10 +8,19 @@ import { FrontendManager } from "./frontend-manager.ts";
 import { Path } from "../utils/path.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
 import { getDirType } from "./utils.ts";
+import { WebSocketServerInterface } from "datex-core-legacy/network/communication-interfaces/websocket-server-interface.ts"
+import { HTTPServerInterface } from "datex-core-legacy/network/communication-interfaces/http-server-interface.ts"
+import { communicationHub } from "datex-core-legacy/network/communication-hub.ts";
 
 const logger = new Datex.Logger("UIX App");
 
+/**
+ * Start the UIX app on the backendase_url 
+ */
 export async function startApp(app: {domains:string[], hostDomains: string[], options?:normalizedAppOptions, base_url?: URL}, options:appOptions = {}, original_base_url?:string|URL) {
+
+	// enable network interface
+	await import("../server/network-interface.ts");
 
 	const frontends = new Map<string, FrontendManager>()
 
@@ -79,12 +88,13 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 		frontends.set(dir.toString(), frontend_manager);
 	}
 
-
 	// expose DATEX ws server node, shown in /.dx
-	// TODO: option to disable direct backend ws connection
 	if (server && endpoint_config.ws_relay !== false) {
-		const DatexServer = (await import("../server/datex_server.ts")).DatexServer
-		DatexServer.addInterfaces(["websocket", "webpush"], server);
+
+		// add WebSocket and HTTP server interfaces
+		await communicationHub.addInterface(new WebSocketServerInterface(server));
+		await communicationHub.addInterface(new HTTPServerInterface(server));
+
 		// also add custom .dx file
 		const nodes = new Map<Datex.Endpoint, {channels:Record<string,string>,keys:[ArrayBuffer, ArrayBuffer]}>();
 		nodes.set(Datex.Runtime.endpoint,  {

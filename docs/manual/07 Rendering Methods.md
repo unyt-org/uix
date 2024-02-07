@@ -51,63 +51,6 @@ export default
     </div>
 ```
 
-<!-- TODO: are frontend slots still relevant?->
-<!-- ### Frontend Slots
-
-With hybrid rendering, it is also possible to render parts of the content completely on the frontend inside predefined *slots*.
-
-To achieve this, define your hybrid-rendered elements in the backend entrypoint as normally.
-For the parts that should be rendered on the frontend, add a `<frontend-slot>` element.
-
-A `<frontend-slot>` can contain placeholder content that is displayed until the
-actual slot content is fully rendered on the frontend.
-Frontend slots can only be defined in the backend entrypoint.
-
-```tsx
-// file: backend/entrypoint.tsx
-
-export default (
-    <div>
-        <title>Hello</title>
-        <frontend-slot>
-            Loading...
-        </frontend-slot>
-    </div>
-)
-```
-
-In the frontend entrypoint, define the content that that should be rendered inside the frontend slot.
-
-```tsx
-// file: frontend/entrypoint.tsx
-
-export default (
-    <div>Created on frontend</div>
-)
-```
-
-You can also assign frontend-rendered elements to specific slots with names:
-```tsx
-// file: backend/entrypoint.tsx
-
-export default (
-    <div>
-        <frontend-slot name="a"/>
-        More backend content
-        <frontend-slot name="b"/>
-    </div>
-)
-```
-
-```tsx
-// file: frontend/entrypoint.tsx
-
-export default <>
-    <div slot="a">Div A</div> 
-    <div slot="b">Div B</div> 
-</>
-``` -->
-
 
 ### Component Lifecycle
 
@@ -220,6 +163,65 @@ export default
 > ```
 > `renderFrontend` is useful for more complex scenarios, where you want to outsource part of the rendering
 > to the browser client, or where hybrid rendering does not yet work as expected.
+
+
+### Frontend Slots
+
+As an alternative to `renderFrontend`, you can also use *frontend slots* to mix backend- and frontend rendered content.
+
+Frontend slots allow you to render parts of the content completely on the frontend inside predefined *slots*.
+
+To achieve this, define your hybrid-rendered elements in the backend entrypoint as normally.
+For the parts that should be rendered on the frontend, add a `<frontend-slot>` element.
+
+A `<frontend-slot>` can contain placeholder content that is displayed until the
+actual slot content is fully rendered on the frontend.
+Frontend slots can only be defined in the backend entrypoint.
+
+```tsx
+// file: backend/entrypoint.tsx
+
+export default (
+    <div>
+        <title>Hello</title>
+        <frontend-slot>
+            Loading...
+        </frontend-slot>
+    </div>
+)
+```
+
+In the frontend entrypoint, define the content that that should be rendered inside the frontend slot.
+
+```tsx
+// file: frontend/entrypoint.tsx
+
+export default (
+    <div>Created on frontend</div>
+)
+```
+
+You can also assign frontend-rendered elements to specific slots with names:
+```tsx
+// file: backend/entrypoint.tsx
+
+export default (
+    <div>
+        <frontend-slot name="a"/>
+        More backend content
+        <frontend-slot name="b"/>
+    </div>
+)
+```
+
+```tsx
+// file: frontend/entrypoint.tsx
+
+export default <>
+    <div slot="a">Div A</div> 
+    <div slot="b">Div B</div> 
+</>
+```
 
 
 ## Static Rendering

@@ -18,7 +18,7 @@ there are two other possible endpoint location types:
 A remote docker host is a special endpoint running on another device (e.g. on a deployment server) that manages
 dockers on the device and can communicate with a UIX app to deploy new docker containers.
 
-Unyt.org provides public docker hosts (`@+app-host-eu2`) that can be used to deploy UIX apps under `unyt.app` domains.
+unyt.org provides public docker hosts (`@+app-host-eu2`) that can be used to deploy UIX apps under `unyt.app` domains.
 
 If you want to set up you own docker host on your server, take a look at the [Docker Host](https://github.com/unyt-org/docker-host/) documentation.
 

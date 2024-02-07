@@ -8,7 +8,7 @@ import { Path } from "../utils/path.ts";
 export type runParams = {
     reload: boolean | undefined;
     enableTLS: boolean | undefined;
-    inspect: boolean | undefined;
+    inspect: string | undefined;
     unstable: boolean | undefined;
 	detach: boolean | undefined;
     deno_config_path: string | URL | null;

@@ -1,5 +1,5 @@
 name: 'Feature request'
-description: 'Suggest a new feature or change for UIX'
+description: 'Suggest a new feature or change for UIX.'
 body:
   - type: textarea
     id: suggestion_summary

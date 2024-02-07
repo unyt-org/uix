@@ -1,5 +1,5 @@
 name: 'Other'
-description: 'Something not captured by any other template'
+description: 'Something not captured by any other template.'
 body:
   - type: checkboxes
     id: acknowledgement

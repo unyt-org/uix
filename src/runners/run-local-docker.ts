@@ -102,8 +102,9 @@ export default class LocalDockerRunner implements UIXRunner {
 		const ports = []
 
 		if (params.inspect!=undefined) {
-			args.push("--inspect=0.0.0.0:9229");
-			ports.push(`${params.inspect||'9229'}:${params.inspect||'9229'}`)
+			const port = params.inspect||'9229';
+			args.push(`--inspect=0.0.0.0:${port}`);
+			ports.push(`${port}:${port}`)
 		}
 
 		const dockerCompose = {

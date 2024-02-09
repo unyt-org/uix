@@ -52,6 +52,7 @@ Experimental features are subject to change and might be enabled by default in f
 
 * *embedded-reactivity*: Enables compile-time reactivity features for JSX templates and the `$()` syntax
 * *protect-pointers*: Sets the `PROTECT_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints per default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
+* *indirect-references*: Sets the `INDIRECT_REFERENCES` DATEX Runtime, which enables for indirect references to pointers from other pointers.
 
 
 ### Paths

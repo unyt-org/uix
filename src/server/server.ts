@@ -415,7 +415,7 @@ export class Server {
         let endpoint: Datex.Endpoint|undefined;
             
         // session/endpoint handling:
-        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
+        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" || requestEvent.request.headers.get("Uix-Inline-Backend") == "true" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
 
             const port = new URL(requestEvent.request.url).port;
             const datexEndpointCookie = getCookie("datex-endpoint", requestEvent.request.headers, port);

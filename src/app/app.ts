@@ -246,7 +246,7 @@ class App {
 		this.frontends = frontends;
 
 		// log enabled experimental features
-		const allowedFeatures = ['embedded-reactivity', 'protect-pointers'];
+		const allowedFeatures = ['embedded-reactivity', 'protect-pointers', 'indirect-references'];
 		for (const feature of this.options.experimentalFeatures) {
 			if (allowedFeatures.includes(feature)) logger.info(`experimental feature "${feature}" enabled`)
 			else logger.error(`unknown experimental feature "${feature}"`)

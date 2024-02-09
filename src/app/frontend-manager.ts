@@ -928,6 +928,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					liveNodePointers = getLiveNodes(contentElement, false).map(e => Datex.Pointer.getByValue(e)?.id).filter(e=>!!e);
 				}
 
+				console.log("req" + path, metadata.endpoint)
 				// give pointer read permissions for hydratable nodes / other required pointers to client endpoint
 				if (Datex.Runtime.OPTIONS.PROTECT_POINTERS) {
 					if (requiredPointers && metadata.endpoint) {

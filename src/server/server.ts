@@ -387,9 +387,10 @@ export class Server {
             if (valid) {
                 const session = createSession(endpoint);
                 const headers = new Headers();
+                const url = new URL(requestEvent.request.url);
                 deleteCookie('datex-endpoint-validation', headers, port)
                 setCookieUIX('uix-session', session, undefined, headers, port)
-                headers.set("Location", requestEvent.request.url);
+                headers.set("Location", url.pathname+url.search);
                 await this.serveContent(requestEvent, "text/plain", "", undefined, 302, headers, false);
                 return false;
             }
@@ -415,7 +416,7 @@ export class Server {
         let endpoint: Datex.Endpoint|undefined;
             
         // session/endpoint handling:
-        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" || requestEvent.request.headers.get("Uix-Inline-Backend") == "true" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
+        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" || requestEvent.request.headers.get("UIX-Inline-Backend") == "true" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
 
             const port = new URL(requestEvent.request.url).port;
             const datexEndpointCookie = getCookie("datex-endpoint", requestEvent.request.headers, port);
@@ -454,9 +455,10 @@ export class Server {
                             // no valid new session, remove session cookie
                             else {
                                 const headers = new Headers();
+                                const url = new URL(requestEvent.request.url);
                                 deleteCookie('datex-endpoint-validation', headers, port)
                                 deleteCookie('uix-session', headers, port)
-                                headers.set("Location", requestEvent.request.url);
+                                headers.set("Location", url.pathname+url.search);
                                 await this.serveContent(requestEvent, "text/plain", "", undefined, 302, headers, false);
                                 return;
                             }

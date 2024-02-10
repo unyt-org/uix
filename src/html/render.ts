@@ -667,6 +667,7 @@ export async function generateHTMLPage({
 		// files += `\nDatex.MessageLogger.enable();`
 
 		if (app.options?.experimentalFeatures.includes("protect-pointers")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
+		if (app.options?.experimentalFeatures.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
 
 		// set app info
 

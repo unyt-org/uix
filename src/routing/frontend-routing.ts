@@ -63,7 +63,8 @@ export namespace Routing {
 
 		// no content for path found after initial loading
 		if (!frontend_available && !backend_available) {
-			displayError("No content", `Route resolved to null on the ${backend_entrypoint?'backend':''}${(backend_entrypoint&&frontend_entrypoint?' and ': '')}${frontend_entrypoint?'frontend':''}`)
+			if (!backend_entrypoint && !frontend_entrypoint) displayError("No entrypoint", `No backend or frontend entrypoint (default export) available.`)
+			else displayError("No content", `Route resolved to null on the ${backend_entrypoint?'backend':''}${(backend_entrypoint&&frontend_entrypoint?' and ': '')}${frontend_entrypoint?'frontend':''}`)
 		}
 	}
 

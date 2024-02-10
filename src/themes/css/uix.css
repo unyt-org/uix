@@ -407,6 +407,16 @@
   input[type="radio"] {
 	border-radius: 100%;
   }
+
+  input:invalid:focus {
+	outline: 2px solid var(--red);
+	outline-offset: -2px;
+  }
+
+  input:invalid {
+	border-color: transparent;
+	/* border-color: var(--red); */
+  }
   
   input[type="checkbox"]:checked,
   input[type="radio"]:checked {

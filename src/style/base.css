@@ -12,7 +12,8 @@ light-root, uix-fragment, uix-placeholder, frontend-slot {
 
 frontend-slot > * {
     all: inherit;
-    display: initial;
+    display: revert;
+    display: revert-layer;
 }
 
 :root {

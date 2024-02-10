@@ -25,6 +25,7 @@ export type appOptions = {
 	import_map?: {imports:Record<string,string>} // prefer over import map path
 
 	experimentalFeatures?: string|string[]
+	debug_mode?: boolean // enable debug interfaces available on /@debug/...
 }
 
 export interface normalizedAppOptions extends appOptions {
@@ -61,6 +62,7 @@ export async function normalizeAppOptions(options:appOptions = {}, base_url?:str
 	n_options.meta = options.meta;
 
 	n_options.experimentalFeatures = options.experimentalFeatures ? (options.experimentalFeatures instanceof Array ? options.experimentalFeatures : [options.experimentalFeatures]) : [];
+	n_options.debug_mode = options.debug_mode ?? false;
 
 	// import map or import map path
 	if (options.import_map) n_options.import_map = new ImportMap(options.import_map);

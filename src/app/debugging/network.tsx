@@ -1,6 +1,9 @@
 import { DebugNetwork } from "./network-backend.ts";
 import { convertANSIToHTML } from "../../utils/ansi-to-html.ts";
 import { app } from "../app.ts";
+import { UIX } from "../../../uix.ts";
+
+UIX.Theme.useTheme("uix-dark");
 
 const endpoint = $$("")
 

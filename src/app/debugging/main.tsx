@@ -1,3 +1,7 @@
+import { UIX } from "../../../uix.ts";
+
+UIX.Theme.useTheme("uix-dark");
+
 (document as any).body.append(
 	<div style="padding: 15px;">
 		<h1>UIX Debugging Tools</h1>

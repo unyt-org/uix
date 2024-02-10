@@ -4,6 +4,8 @@ import { LOG_LEVEL } from "datex-core-legacy/utils/logger.ts";
 @endpoint export class DebugLogs {
 	@property static getLogs() {
 		
+		const timeout = 60; // 60 minutes
+
 		const stream = $$(new Datex.Stream<string|ArrayBuffer>());
 		Datex.Logger.logToStream(stream);
 
@@ -12,7 +14,7 @@ import { LOG_LEVEL } from "datex-core-legacy/utils/logger.ts";
 			// \u0004 is the EOT character
 			stream.write(new TextEncoder().encode("\n[Stream was closed after " + timeout + " minutes]\n\u0004").buffer);
 			stream.close();
-		}, 60 * 60 * 1000); // 60 minutes
+		}, timeout * 60 * 1000);
 
 		return stream;
 	}

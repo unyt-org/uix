@@ -174,6 +174,9 @@ export class FrontendManager extends HTMLProvider {
 	}
 
 	#BLANK_PAGE_URL = 'uix/base/blank.ts';
+	#LOGS_PAGE_URL = 'uix/app/debugging/logs.tsx';
+	#NETWORK_PAGE_URL = 'uix/app/debugging/network.tsx';
+	#DEBUG_LANDING_PAGE_URL = 'uix/app/debugging/main.tsx';
 
 	server!: Server
 	transpiler!: Transpiler
@@ -289,7 +292,7 @@ export class FrontendManager extends HTMLProvider {
 			}
 		});
 
-		this.server.path("/@uix/window", (req, path)=>this.handleNewHTML(req, path));
+		this.server.path("/@uix/window", (req, path)=>this.serveUIXPage(req, this.#BLANK_PAGE_URL));
 		if (this.app_options.installable || this.app_options.manifest) this.server.path("/@uix/manifest.json", (req, path)=>this.handleManifest(req, path));
 		this.server.path("/@uix/sw.js", (req, path)=>this.handleServiceWorker(req, path));
 		this.server.path("/@uix/sw.ts", (req, path)=>this.handleServiceWorker(req, path));
@@ -373,7 +376,20 @@ export class FrontendManager extends HTMLProvider {
 			
 		});
 
-		
+		// debug mode enabled
+		if (this.app_options.debug_mode) {
+			await import("./debugging/logs-backend.ts")
+			await import("./debugging/network-backend.ts")
+			this.server.path("/@debug/logs", (req) => this.serveUIXPage(req, this.#LOGS_PAGE_URL));
+			this.server.path("/@debug/network", (req) => this.serveUIXPage(req, this.#NETWORK_PAGE_URL));
+			this.server.path(/^\/@debug($|\/.*)/, (req) => this.serveUIXPage(req, this.#DEBUG_LANDING_PAGE_URL));
+		}
+	
+		else {
+			this.server.path(/^\/@debug($|\/.*)/, (req) => req.respondWith(this.server.getErrorResponse(500, "Debug mode not enabled")))
+		}
+
+
 		// handle datex-over-http
 		this.server.path(/^\/@uix\/datex\/?$/, async (req, path)=>{
 			try {
@@ -394,7 +410,7 @@ export class FrontendManager extends HTMLProvider {
 			}
 			catch (e) {
 				console.log(e)
-				req.respondWith(await this.server.getErrorResponse(500, e?.message ?? e?.toString()));
+				req.respondWith(this.server.getErrorResponse(500, e?.message ?? e?.toString()));
 			}
 		});
 
@@ -978,16 +994,17 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		}
 	}
 
-	// html page for new empty pages (includes blank.ts)
-	private async handleNewHTML(requestEvent: Deno.RequestEvent, _path:string) {
+	private async serveUIXPage(requestEvent: Deno.RequestEvent, scriptPath: string) {
 		await this.server.serveContent(requestEvent, "text/html", await generateHTMLPage({
 			provider: this,
 			prerendered_content: "",
 			render_method: RenderMethod.DYNAMIC,
-			js_files: [...this.#client_scripts, this.#BLANK_PAGE_URL],
+			js_files: [...this.#client_scripts, scriptPath],
 			static_js_files: this.#static_client_scripts,
 			global_css_files: ['uix/style/document.css'],
-			body_css_files: ['uix/style/body.css']
+			body_css_files: ['uix/style/body.css'],
+			color_scheme: "dark",
+			force_enable_scripts: true
 		}));
 	}
 

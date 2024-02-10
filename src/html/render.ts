@@ -617,7 +617,8 @@ export type HTMLPageOptions = {
 	open_graph_meta_tags?:OpenGraphInformation, 
 	lang?: string, 
 	livePointers?: string[],
-	includeImportMap?: boolean
+	includeImportMap?: boolean,
+	force_enable_scripts?: boolean
 }
 
 
@@ -633,6 +634,7 @@ export async function generateHTMLPage({
 	body_css_files, 
 	frontend_entrypoint, 
 	backend_entrypoint, 
+	force_enable_scripts,
 	open_graph_meta_tags, 
 	lang, 
 	livePointers,
@@ -651,7 +653,7 @@ export async function generateHTMLPage({
 	let metaScripts = ''
 
 	// use frontendRuntime if rendering DYNAMIC or HYDRATION, and entrypoints are loaded, otherwise just static content and standalone js
-	const useFrontendRuntime = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYBRID || render_method == RenderMethod.PREVIEW) && !!(frontend_entrypoint || backend_entrypoint || provider.live);
+	const useFrontendRuntime = (render_method == RenderMethod.DYNAMIC || render_method == RenderMethod.HYBRID || render_method == RenderMethod.PREVIEW) && !!(frontend_entrypoint || backend_entrypoint || provider.live || force_enable_scripts);
 
 	// js files
 	if (useFrontendRuntime) {

@@ -3,7 +3,8 @@ import { Context } from "./context.ts";
 export type filterFunction = (ctx: Context) => boolean|Promise<boolean>;
 export type filter = symbol & {readonly __tag: unique symbol};
 
-const filters = new WeakMap<filter, filterFunction>()
+// TODO: use WeakMap when supported in Firefox
+const filters = new Map<filter, filterFunction>()
 
 /**
  * Creates a new filter that can be used as a key for route maps

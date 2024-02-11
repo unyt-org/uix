@@ -5,6 +5,7 @@ import { unsafeHTML } from "../../html/unsafe-html.ts";
 
 const messageLoggerEnabled = $$(false);
 const verboseLogsEnabled = $$(false);
+const logFilter = $$("");
 
 const logsContainer = <div style="width:100%;overflow:scroll;"></div>
 const component = <div style="height:100vh;overflow: hidden;padding:20px;display: flex;flex-direction: column;">
@@ -17,6 +18,7 @@ const component = <div style="height:100vh;overflow: hidden;padding:20px;display
 			<input type="checkbox" checked={verboseLogsEnabled} style="margin: 0 5px;"/>
 			Enable Verbose Logs
 		</label>
+		<input type="text" value={logFilter} placeholder="Filter Logs" oninput={filterLogs} style="margin:0;"/>
 		<button style="margin-left: auto;border: none;margin-bottom: 0;background:var(--red)" onclick={()=>logsContainer.innerHTML=""}>Clear logs</button>
 		<button style="border: none;margin-bottom: 0;" onclick={()=>logsContainer.scrollTo(0, logsContainer.scrollHeight)}>Scroll to bottom</button>
 	</div>
@@ -36,6 +38,22 @@ effect(() => {
 	else DebugLogs.disableVerboseLogs.to(app.backend!)();
 });
 
+function filterLogs() {
+	if (!logFilter.val) {
+		logsContainer.childNodes.forEach((el: HTMLElement) => el.style.display = "flex");
+		return;
+	};
+
+	for (const child of logsContainer.children) {
+		if (child instanceof HTMLElement) {
+			if ((child.lastChild as Element).innerText?.toLowerCase().includes(logFilter.val.toLowerCase())) {
+				child.style.display = "flex";
+			}
+			else child.style.display = "none";
+		}
+	}
+}
+
 
 (document as any).body.appendChild(component);
 (document as any).body.style.margin = "0";
@@ -46,10 +64,14 @@ const reader = stream.getReader();
 
 while (true) {
 	const val = await reader.read();
-	const child = <span style="display:flex;gap:20px;">
+	const child = <span class="log-message" style="display:flex;gap:20px;font-family: Menlo,Monaco,'Courier New',monospace;">
 		<span style="color:var(--text-light);white-space: nowrap;">{new Date().toLocaleTimeString()}</span>
 		<span>{unsafeHTML(convertANSIToHTML(val.value as string))}</span>
 	</span>;
+
+	// filter logs
+	if (logFilter.val && !(child.lastChild as Element).innerText?.toLowerCase().includes(logFilter.val.toLowerCase())) child.style.display = "none";
+
 	const scrollDown = Math.abs(logsContainer.scrollHeight - logsContainer.scrollTop - logsContainer.clientHeight) < 1;
 	logsContainer.appendChild(child);
 	setTimeout(() => {

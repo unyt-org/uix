@@ -77,7 +77,9 @@ export namespace Routing {
 				if (content instanceof DocumentFragment) elements = [...content.children]
 				else if (content instanceof Array) elements = content;
 				else if (content instanceof Response) {
-					logger.error("Frontend entrypoint returned a Response object - this cannot be merged with the provided backend content");
+					// TODO:
+					await renderResponse(content)
+					logger.warn("Frontend entrypoint returned a Response object - this cannot be merged with the provided backend content");
 				}
 				else elements = [content];
 

@@ -2,6 +2,9 @@ import { DebugLogs } from "./logs-backend.ts";
 import { app } from "../app.ts"
 import { convertANSIToHTML } from "../../utils/ansi-to-html.ts";
 import { unsafeHTML } from "../../html/unsafe-html.ts";
+import { UIX } from "../../../uix.ts";
+
+UIX.Theme.useTheme("uix-dark");
 
 const messageLoggerEnabled = $$(false);
 const verboseLogsEnabled = $$(false);

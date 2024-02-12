@@ -1,8 +1,8 @@
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
 import { Path } from "../utils/path.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
-import { UIX } from "../../uix.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";
+import { version as UIX_VERSION } from "../utils/version.ts";
 
 export const command_line_options = new CommandLineOptions("UIX", "Fullstack Web Framework with DATEX Integration.\nVisit https://unyt.org/uix for more information", "../RUN.md");
 
@@ -40,7 +40,7 @@ const version = command_line_options.option("version", {type:"boolean", descript
 if (version) {
 	const DATEX_VERSION = (await import("datex-core-legacy/VERSION.ts")).default;
 
-	let log = `${ESCAPE_SEQUENCES.BOLD}${ESCAPE_SEQUENCES.UNYT_BLUE}UIX ${UIX.version == "beta" ? "beta" : "v" + UIX.version}${ESCAPE_SEQUENCES.RESET} (${new URL("../../", import.meta.url)})`;
+	let log = `${ESCAPE_SEQUENCES.BOLD}${ESCAPE_SEQUENCES.UNYT_BLUE}UIX ${UIX_VERSION == "beta" ? "beta" : "v" + UIX_VERSION}${ESCAPE_SEQUENCES.RESET} (${new URL("../../", import.meta.url)})`;
 	log += `\n\n${ESCAPE_SEQUENCES.BOLD}DATEX Core: ${ESCAPE_SEQUENCES.RESET} ${DATEX_VERSION == "beta" ? "beta" : "v" + DATEX_VERSION} (${import.meta.resolve("datex-core-legacy/")})`
 	log +=   `\n${ESCAPE_SEQUENCES.BOLD}Deno:       ${ESCAPE_SEQUENCES.RESET} ${Deno.version.deno}`
 	log +=   `\n${ESCAPE_SEQUENCES.BOLD}TypeScript: ${ESCAPE_SEQUENCES.RESET} ${Deno.version.typescript}`

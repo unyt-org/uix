@@ -5,6 +5,9 @@ import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 export async function getErrorReportingPreference() {
 	if (client_type !== "deno") return false;
 
+	// TODO: remove
+	return true;
+
 	const { allowAll, allowNone, stage } = await import("../app/args.ts");
 
 	if (stage !== "dev") return false;

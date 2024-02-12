@@ -3,7 +3,7 @@ import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { getThemeManager } from "./src/base/theme-manager.ts";
 import { UIX_COOKIE, setCookie } from "./src/session/cookies.ts";
 import { Path } from "./src/utils/path.ts";
-import { Datex } from "datex-core-legacy";
+import { Datex } from "datex-core-legacy/mod.ts";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 
 /**

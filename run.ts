@@ -25,9 +25,7 @@ import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
 import { isCIRunner } from "./src/utils/check-ci.ts";
-import { runParams } from "./src/runners/runner.ts";
-
-const logger = new Datex.Logger("UIX Runner");
+import { logger, runParams } from "./src/runners/runner.ts";
 
 // login flow
 if (login) await triggerLogin();
@@ -88,8 +86,8 @@ if (clear) {
 	}
 }
 
-Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR
-Datex.Logger.production_log_level = Datex.LOG_LEVEL.ERROR
+Datex.Logger.development_log_level = Datex.LOG_LEVEL.WARNING
+Datex.Logger.production_log_level = Datex.LOG_LEVEL.WARNING
 
 
 

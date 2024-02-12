@@ -2,7 +2,7 @@ import { clear } from "../app/args.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "../utils/path.ts";
-import { runParams } from "./runner.ts";
+import { logger, runParams } from "./runner.ts";
 
 
 export const CSI = '\u001b['
@@ -87,13 +87,18 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	catch {}
 	
 	let isClearingState = clear;
+	let stateCleared = false;
 	const args = [...Deno.args];
 
 	await run();
-
+	
 	async function run() {
-		Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
-		Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
+		await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
+		await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
+		if (stateCleared) {
+			stateCleared = false;
+			logger.warn("Cleared all eternal states on the backend");
+		}
 
 		process = Deno.run({
 			cmd: [
@@ -117,6 +122,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			await run();
 		}
 		else if (isClearingState) {
+			stateCleared = true;
 			isClearingState = false;
 			// restart without --clear
 			args.splice(args.indexOf("--clear"), 1);

@@ -2,6 +2,8 @@ import { Datex } from "datex-core-legacy/mod.ts";
 import { normalizedAppOptions } from "../app/options.ts";
 import { Path } from "../utils/path.ts";
 
+export const logger = new Datex.Logger("UIX Runner");
+
 /**
  * command line params + files
  */

@@ -381,12 +381,12 @@ export class Transpiler {
             // await this.transpileScopedCss(path, src_path)
         }
         catch (e) {
-            sendReport("uix-0002", {
-                path,
-                normal_pathname: path.normal_pathname,
-                formatted_pathname: path.pathname.replace(/^\/\w:/,""),
-                content: await path.getTextContent()
-            })
+            // sendReport("uix-0002", {
+            //     path,
+            //     normal_pathname: path.normal_pathname,
+            //     formatted_pathname: path.pathname.replace(/^\/\w:/,""),
+            //     content: await path.getTextContent()
+            // })
             if (e.message?.endsWith("memory access out of bounds")) logger.error("SCSS error ("+src_path.normal_pathname+"): memory access out of bounds (possible circular imports)");
             else logger.error("SCSS error ("+src_path.normal_pathname+"): " + e)
         }

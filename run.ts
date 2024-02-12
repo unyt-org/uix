@@ -79,7 +79,7 @@ if (clear) {
 	try {
 		await Deno.remove(ptr_cache_path, {recursive :true})
 		await Deno.mkdir(ptr_cache_path, {recursive: true})
-		logger.warn("Cleared eternal states on backend")
+		logger.warn("Cleared all eternal states on the backend")
 	}
 	catch (e) {
 		console.error(e)

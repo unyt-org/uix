@@ -402,6 +402,9 @@ export class Transpiler {
         const content = await Deno.readTextFile(src_path.normal_pathname);
         for (const dep of content.matchAll(/^\s*@use\s*("[^"]*"|'[^']*')/gm)) {
             const useSpecifier = dep[1].slice(1,-1);
+            if (useSpecifier.startsWith("sass:"))
+                continue;
+
             let import_path = new Path<Path.Protocol.File>(useSpecifier, src_path);
             if (!import_path.ext) import_path = import_path.getWithFileExtension("scss");
             if (!await this.getDistPath(import_path)?.fsExists()) {

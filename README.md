@@ -96,7 +96,7 @@ you can take a look at UIX DOM.
 ## Contributing
 
 We welcome every contribution!<br>
-Please take a look at the [development guidelines](./DEVELOP.md) and the unyt.org [contribution guidlines](https://github.com/unyt-org/.github-private/blob/main/CONTRIBUTING.md).
+Please take a look at the [development guidelines](./DEVELOP.md) and the unyt.org [contribution guidlines](https://github.com/unyt-org/.github/blob/main/CONTRIBUTING.md).
 
 ## Connect with us
 

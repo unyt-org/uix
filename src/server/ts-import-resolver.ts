@@ -1,4 +1,4 @@
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { ImportMap } from "../utils/importmap.ts";
@@ -21,7 +21,7 @@ type import_resolver_options = {
 
 export class TypescriptImportResolver {
 
-    private static general_import_regex = client_type === "deno" ? new RegExp(String.raw`(?<=^(?: *\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']`, 'gm') : null // /(?<=^(?: *\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']/gm
+    private static general_import_regex = client_type === "deno" ? new RegExp(String.raw`(?<=(?:^|;)(?: *\*\/ *)?)((?:import|export)\s*((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s*from\s*|import\s*)["']([^"']+)["']`, 'gm') : null // /(?<=^(?: *\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']/gm
 
 	readonly scope?: Path // root path for source files, locations outside have to be resolved with out of scope resolution
     readonly import_map_base_path?: Path // import map location

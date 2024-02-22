@@ -13,11 +13,11 @@ The most important point to take away is that you don't need to think about a da
 when building a UIX app - with eternal pointers, this is all been taken care of by UIX.
 
 ### Eternal modules
-In UIX, you can just write your application code as if the application runs forever and all your data is available in the application memory.
+In UIX, you can just write your application code as if the application runs forever and all your data is available in application memory.
 You need to store a list of user data? Just think about how you would normally do this in JavaScript:
 
 ```tsx
-// data.ts
+// file: data.ts
 interface UserData {
     name: string,
     email: string
@@ -27,7 +27,8 @@ export const users = new Set<UserData>()
 
 Now make the module containing the `users` Set eternal by using an `eternal.ts` file extension:
 ```tsx
-// data.eternal.ts
+// file: data.eternal.ts
+// The code stays the same:
 interface UserData {
     name: string,
     email: string
@@ -35,7 +36,7 @@ interface UserData {
 export const users = new Set<UserData>()
 ```
 
-The Set is now stored persistently and the current state is still available after a restart of the application.
+The exported `users` Set is now stored persistently and the current state is still available after a restart of the application.
 
 This works out of the box without any special functions or data types. For larger amounts of data, you can optimize this
 by using a special storage collection instead of a native `Set`:

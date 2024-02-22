@@ -36,7 +36,6 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	const config_params:string[] = [];
 
 	const cmd = [
-		"deno",
 		"run",
 		"-Aq"
 	];
@@ -63,7 +62,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		config_params.push("--import-map", options.import_map.path?.is_web ? options.import_map.path.toString() : options.import_map.path?.normal_pathname)
 	}
 
-	let process: Deno.Process;
+	let process: Deno.ChildProcess;
 
 	// explicitly kill child process to trigger SIG event on child process
 	// (required for saving state on exit)
@@ -72,7 +71,12 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			try {
 				process.kill();
 			}
-			catch {}
+			catch (e) {
+				console.error(e);
+			}
+		}
+		else {
+			logger.error("Cannot kill child process")
 		}
 	}, {capture: true});
 
@@ -81,10 +85,12 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 	try {
 		// not supported by WiNdoWs
-		await Deno.addSignalListener("SIGTERM", ()=>Deno.exit())
-		await Deno.addSignalListener("SIGQUIT", ()=>Deno.exit())
+		Deno.addSignalListener("SIGTERM", ()=>Deno.exit())
+		Deno.addSignalListener("SIGQUIT", ()=>Deno.exit())
 	}
-	catch {}
+	catch {
+		/* ignore */
+	}
 	
 	let isClearingState = clear;
 	let stateCleared = false;
@@ -100,8 +106,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			logger.warn("Cleared all eternal states on the backend");
 		}
 
-		process = Deno.run({
-			cmd: [
+		const command = new Deno.Command(Deno.execPath(), {
+			args: [
 				...cmd,
 				...config_params,
 				run_script_abs_url,
@@ -109,7 +115,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				...args,
 			]
 		})
-
+		process = command.spawn();
 
 		// detach, continues in background
 		// TODO: fix child process does not keep running correctly
@@ -117,7 +123,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			console.log(`UIX App running in background (PID ${process.pid})`);
 			Deno.exit(0);
 		}
-		const exitStatus = await process.status();
+		const exitStatus = await process.output();
 		if (exitStatus.code == 42) {
 			await run();
 		}

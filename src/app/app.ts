@@ -23,9 +23,12 @@ import { UIX_COOKIE, deleteCookie } from "../session/cookies.ts";
 import { UIX } from "../../uix.ts";
 import { formatEndpointURL } from "datex-core-legacy/utils/format-endpoint-url.ts";
 
+import wasm_init, {init_runtime } from "datex-core-legacy/wasm/adapter/pkg/datex_wasm.js";
+
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
 
 type version_change_handler = (version:string, prev_version:string)=>void|Promise<void>;
+
 
 // options passed in via command line arguments
 let stage: string|undefined
@@ -312,6 +315,12 @@ globalThis.reset = app.reset;
 if (app.stage !== "dev") {
 	// don't expose native error stack traces via DATEX
 	Datex.Runtime.OPTIONS.NATIVE_ERROR_STACK_TRACES = false
+}
+
+// load DATEX WASM / Decompiler, only in backend per default
+if (client_type === "deno") {
+	await wasm_init();
+	init_runtime();
 }
 
 bindingOptions.mapFileURL = (url) => {

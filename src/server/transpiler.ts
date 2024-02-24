@@ -630,7 +630,8 @@ export class Transpiler {
     private async minifyJS(source: string) {
         const {minify} = await import("npm:terser");
         const minifiedSource = await minify(source, {
-            module: true
+            module: true,
+            keep_classnames: true
         });
         if (minifiedSource.code == undefined) {
             logger.error("could not minify js");

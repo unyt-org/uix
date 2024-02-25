@@ -9,8 +9,8 @@ export const tailwindcss = {
 		UIX.cacheDir.getChildPath("tailwind-styles.css")
 	],
 	async onRegister() {
-		const { app } = await import("../app/app.ts");
-		const { watch, watch_backend, live } = await import("../app/args.ts");
+		const { app } = await import("../app/app.ts#lazy");
+		const { watch, watch_backend, live } = await import("../app/args.ts#lazy");
 
 		const logger = new Logger("tailwindcss")
 		const cmd = "tailwindcss"

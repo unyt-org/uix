@@ -4,7 +4,7 @@ import { BROADCAST, Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
 import { getSharedDataPointer } from "../session/shared-data.ts";
-import { datex_meta } from "datex-core-legacy/utils/global_types.ts";
+import type { datex_meta } from "datex-core-legacy/utils/global_types.ts";
 
 // TODO: remove params, use ctx.searchParams instead
 export type RequestData = {address:string|null}

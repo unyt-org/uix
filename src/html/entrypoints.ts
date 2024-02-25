@@ -6,7 +6,6 @@ import { RenderPreset, RenderMethod } from "../base/render-methods.ts";
 import { FileHandle, KEEP_CONTENT } from "./entrypoint-providers.tsx";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { filter } from "../routing/route-filter.ts";
-import { Element } from "../uix-dom/dom/mod.ts";
 
 
 declare global {

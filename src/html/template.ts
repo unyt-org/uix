@@ -4,7 +4,7 @@ import { IS_TEMPLATE, SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../ui
 import { Component } from "../components/Component.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
-import type { Element, Node, HTMLElement, HTMLTemplateElement, CSSStyleSheet } from "../uix-dom/dom/mod.ts";
+import type { Element, Node, HTMLElement, HTMLTemplateElement } from "../uix-dom/dom/mod.ts";
 import { defaultOptions } from "../base/decorators.ts";
 
 /**

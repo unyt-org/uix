@@ -71,9 +71,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			try {
 				process.kill();
 			}
-			catch (e) {
-				console.error(e);
-			}
+			catch {/* ignore */}
 		}
 		else {
 			logger.error("Cannot kill child process")

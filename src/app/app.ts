@@ -35,7 +35,7 @@ let stage: string|undefined
 let http_over_datex: boolean|undefined
 let enable_datex_cli: boolean|undefined;
 if (client_type === "deno") {
-	({ stage, http_over_datex, enable_datex_cli } = (await import("./args.ts")))
+	({ stage, http_over_datex, enable_datex_cli } = (await import("./args.ts#lazy")))
 }
 
 // enable DATEX CLI
@@ -241,7 +241,7 @@ class App {
 	}
 
 	public async start(options:appOptions = {}, originalBaseURL?:string|URL) {
-		const { startApp } = await import("./start-app.ts");
+		const { startApp } = await import("./start-app.ts#lazy");
 		const {nOptions, baseURL, defaultServer, frontends} = await startApp(this, options, originalBaseURL)
 		this.options = nOptions;
 		this.defaultServer = defaultServer;

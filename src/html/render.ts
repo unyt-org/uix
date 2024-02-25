@@ -11,18 +11,18 @@ import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
-import { Element, HTMLFormElement } from "../uix-dom/dom/mod.ts";
-import { blobToBase64 } from "../uix-dom/datex-bindings/blob-to-base64.ts";
+import type { Element } from "../uix-dom/dom/mod.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { UIX } from "../../uix.ts";
 import { serializeJSValue } from "../utils/serialize-js.ts";
 import { Component } from "../components/Component.ts";
 import { DX_VALUE } from "datex-core-legacy/runtime/constants.ts";
+import { resolveDependencies } from "./dependency-resolver.ts"
 
 let stage:string|undefined = '?'
 
 if (client_type === "deno") {
-	({ stage } = (await import("../app/args.ts")))
+	({ stage } = (await import("../app/args.ts#lazy")))
 }
 
 type injectScriptData = {declare:Record<string,string>, init:string[]};
@@ -426,7 +426,7 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 			try {
 				// with convertJSONInput
 				if (value && typeof value == "object") {
-					companionSource += `const {createStaticObject} = await import("uix/standalone/create-static-object.ts");\n`
+					companionSource += `const {createStaticObject} = await import("uix/standalone/create-static-object.ts#lazy");\n`
 					companionSource += `const ${varName} = createStaticObject(${serializeJSValue(value)});\n`
 				}
 				else {
@@ -623,8 +623,6 @@ export type HTMLPageOptions = {
 	force_enable_scripts?: boolean
 }
 
-
-const modulePreloadUrls = []// [...new Set(["https://dev.cdn.unyt.org/uix1/src/style/document.css","https://dev.cdn.unyt.org/uix1/src/themes/css/uix.css","https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css","http://localhost/@uix/src/frontend/entrypoint.css","https://dev.cdn.unyt.org/uix1/src/style/base.css","https://dev.cdn.unyt.org/unyt_core/datex.ts","https://dev.cdn.unyt.org/unyt_core/assets/skeleton_light.svg","https://dev.cdn.unyt.org/unyt_core/mod.ts","https://dev.cdn.unyt.org/unyt_core/init.ts","https://dev.cdn.unyt.org/unyt_core/network/blockchain_adapter.ts","https://dev.cdn.unyt.org/unyt_core/runtime/runtime.ts","https://dev.cdn.unyt.org/unyt_core/datex_all.ts","https://dev.cdn.unyt.org/unyt_core/js_adapter/legacy_decorators.ts","https://dev.cdn.unyt.org/unyt_core/datex_short.ts","https://dev.cdn.unyt.org/unyt_core/runtime/pointers.ts","https://dev.cdn.unyt.org/unyt_core/types/addressing.ts","https://dev.cdn.unyt.org/unyt_core/utils/constants.ts","https://dev.cdn.unyt.org/unyt_core/storage/storage.ts","https://dev.cdn.unyt.org/unyt_core/utils/global_values.ts","https://dev.cdn.unyt.org/unyt_core/storage/storage-locations/indexed-db.ts","https://dev.cdn.unyt.org/unyt_core/storage/storage-locations/local-storage.ts","https://dev.cdn.unyt.org/unyt_core/storage/storage-locations/deno-kv.ts","https://dev.cdn.unyt.org/unyt_core/utils/eternals.ts","https://dev.cdn.unyt.org/unyt_core/runtime/constants.ts","https://dev.cdn.unyt.org/unyt_core/utils/logger.ts","https://dev.cdn.unyt.org/unyt_core/utils/message_logger.ts","https://dev.cdn.unyt.org/unyt_core/utils/path.ts","https://dev.cdn.unyt.org/unyt_core/network/communication-hub.ts","https://dev.cdn.unyt.org/unyt_core/network/communication-interfaces/local-loopback-interface.ts","https://dev.cdn.unyt.org/unyt_core/runtime/crypto.ts","https://dev.cdn.unyt.org/unyt_core/utils/error-reporting.ts","https://dev.cdn.unyt.org/unyt_core/js_adapter/js_class_adapter.ts","https://dev.cdn.unyt.org/unyt_core/utils/global_types.ts","https://dev.cdn.unyt.org/unyt_core/utils/observers.ts","https://dev.cdn.unyt.org/unyt_core/utils/utils.ts","https://dev.cdn.unyt.org/unyt_core/utils/local_files.ts","https://dev.cdn.unyt.org/unyt_core/compiler/binary_codes.ts","https://dev.cdn.unyt.org/unyt_core/compiler/compiler.ts","https://dev.cdn.unyt.org/unyt_core/compiler/protocol_types.ts","https://dev.cdn.unyt.org/unyt_core/compiler/unit_codes.ts","https://dev.cdn.unyt.org/unyt_core/network/supranet.ts","https://dev.cdn.unyt.org/unyt_core/network/network_utils.ts","https://dev.cdn.unyt.org/unyt_core/network/unyt.ts","https://dev.cdn.unyt.org/unyt_core/runtime/io_handler.ts","https://dev.cdn.unyt.org/unyt_core/runtime/js_interface.ts","https://dev.cdn.unyt.org/unyt_core/runtime/performance_measure.ts","https://dev.cdn.unyt.org/unyt_core/runtime/cli.ts","https://dev.cdn.unyt.org/unyt_core/runtime/cache_path.ts","https://dev.cdn.unyt.org/unyt_core/types/abstract_types.ts","https://dev.cdn.unyt.org/unyt_core/types/assertion.ts","https://dev.cdn.unyt.org/unyt_core/types/logic.ts","https://dev.cdn.unyt.org/unyt_core/types/error_codes.ts","https://dev.cdn.unyt.org/unyt_core/types/errors.ts","https://dev.cdn.unyt.org/unyt_core/types/function.ts","https://dev.cdn.unyt.org/unyt_core/types/iterator.ts","https://dev.cdn.unyt.org/unyt_core/types/deferred.ts","https://dev.cdn.unyt.org/unyt_core/types/markdown.ts","https://dev.cdn.unyt.org/unyt_core/types/native_types.ts","https://dev.cdn.unyt.org/unyt_core/types/object.ts","https://dev.cdn.unyt.org/unyt_core/types/scope.ts","https://dev.cdn.unyt.org/unyt_core/types/stream.ts","https://dev.cdn.unyt.org/unyt_core/types/task.ts","https://dev.cdn.unyt.org/unyt_core/types/tuple.ts","https://dev.cdn.unyt.org/unyt_core/types/type.ts","https://dev.cdn.unyt.org/unyt_core/types/quantity.ts","https://dev.cdn.unyt.org/unyt_core/types/time.ts","https://dev.cdn.unyt.org/unyt_core/types/storage-map.ts","https://dev.cdn.unyt.org/unyt_core/types/storage-set.ts","https://dev.cdn.unyt.org/unyt_core/types/struct.ts","https://dev.cdn.unyt.org/unyt_core/utils/polyfills.ts","https://dev.cdn.unyt.org/unyt_core/utils/promises.ts","https://dev.cdn.unyt.org/unyt_core/network/datex-http-channel.ts","https://dev.cdn.unyt.org/unyt_core/utils/caller_metadata.ts","https://dev.cdn.unyt.org/unyt_core/network/communication-interface.ts","https://dev.cdn.unyt.org/unyt_core/lib/localforage/localforage.js","https://dev.cdn.unyt.org/unyt_core/storage/storage-locations/local-storage-compat.ts","https://dev.cdn.unyt.org/unyt_core/wasm/adapter/pkg/datex_wasm.js","https://dev.cdn.unyt.org/unyt_core/utils/ansi_compat.ts","https://dev.cdn.unyt.org/unyt_core/utils/normalize-path.ts","https://dev.cdn.unyt.org/unyt_core/lib/marked.js","https://dev.cdn.unyt.org/unyt_core/utils/sha256.ts","https://dev.cdn.unyt.org/unyt_core/types/function-utils.ts","https://dev.cdn.unyt.org/unyt_core/lib/localforage/drivers/indexeddb.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/drivers/websql.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/drivers/localstorage.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/serializer.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/promise.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/executeCallback.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/executeTwoCallbacks.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/includes.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/isArray.js","https://dev.cdn.unyt.org/unyt_core/utils/match.ts","https://dev.cdn.unyt.org/unyt_core/utils/auto_map.ts","https://dev.cdn.unyt.org/unyt_core/types/reactive-methods/map.ts","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/createBlob.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/isLocalStorageValid.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/normalizeKey.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/getCallback.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/isWebSQLValid.js","https://dev.cdn.unyt.org/unyt_core/runtime/endpoint_config.ts","https://dev.cdn.unyt.org/unyt_core/network/communication-interfaces/websocket-client-interface.ts","https://dev.cdn.unyt.org/unyt_core/functions.ts","https://dev.cdn.unyt.org/unyt_core/runtime/display.ts","https://dev.cdn.unyt.org/unyt_core/runtime/lazy-pointer.ts","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/isIndexedDBValid.js","https://dev.cdn.unyt.org/unyt_core/lib/localforage/utils/idb.js","https://dev.cdn.unyt.org/unyt_core/utils/cookies.ts","https://dev.cdn.unyt.org/unyt_core/network/communication-interfaces/websocket-interface.ts","https://dev.cdn.unyt.org/unyt_core/utils/debug-cookie.ts","https://dev.cdn.unyt.org/unyt_core/utils/iterable-handler.ts","https://dev.cdn.unyt.org/unyt_core/utils/persistent-listeners.ts","https://dev.cdn.unyt.org/unyt_core/utils/iterable-weak-set.ts","https://dev.cdn.unyt.org/unyt_core/utils/weak-action.ts","https://dev.cdn.unyt.org/unyt_core/utils/iterable-weak-map.ts","https://dev.cdn.unyt.org/unyt_core/utils/isolated-scope.ts","https://dev.cdn.unyt.org/unyt_core/types/js-function.ts","https://dev.cdn.unyt.org/unyt_core/runtime/debugger.ts","https://dev.cdn.unyt.org/unyt_core/types/reactive-methods/array.ts","https://dev.cdn.unyt.org/unyt_core/compiler/tokens_regex.ts","https://dev.cdn.unyt.org/unyt_core/utils/volatile-map.ts","https://dev.cdn.unyt.org/unyt_core/VERSION.ts","https://dev.cdn.unyt.org/uix1/src/routing/frontend-routing.ts","https://dev.cdn.unyt.org/uix1/src/utils/path.ts","https://dev.cdn.unyt.org/uix1/src/routing/rendering.ts","https://dev.cdn.unyt.org/uix1/src/html/entrypoint-providers.tsx","https://dev.cdn.unyt.org/uix1/src/html/errors.tsx","https://dev.cdn.unyt.org/uix1/src/app/dom-context.ts","https://dev.cdn.unyt.org/uix1/src/hydration/partial-hydration.ts","https://dev.cdn.unyt.org/uix1/src/routing/context.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/dom/shadow_dom_selector.ts","https://dev.cdn.unyt.org/uix1/src/utils/css-style-compat.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/datex-bindings/mod.ts","https://dev.cdn.unyt.org/uix1/src/jsx-runtime/jsx.ts","https://dev.cdn.unyt.org/uix1/src/app/app.ts","https://dev.cdn.unyt.org/uix1/uix-short.ts","https://dev.cdn.unyt.org/uix1/src/html/http-error.ts","https://dev.cdn.unyt.org/uix1/src/html/http-status.ts","https://dev.cdn.unyt.org/uix1/uix.ts","https://dev.cdn.unyt.org/unyt_core/types/storage_map.ts","https://dev.cdn.unyt.org/uix1/src/session/cookies.ts","https://dev.cdn.unyt.org/uix1/src/session/shared-data.ts","https://dev.cdn.unyt.org/uix1/src/utils/ansi-to-html.ts","https://dev.cdn.unyt.org/uix1/src/lib/cookie/cookie.ts","https://dev.cdn.unyt.org/uix1/src/app/convert-to-web-path.ts","https://dev.cdn.unyt.org/uix1/src/utils/serialize-js.ts","https://dev.cdn.unyt.org/uix1/src/routing/route-filter.ts","https://dev.cdn.unyt.org/uix1/src/html/render.ts","https://dev.cdn.unyt.org/uix1/src/base/render-methods.ts","https://dev.cdn.unyt.org/uix1/src/components/Component.ts","https://dev.cdn.unyt.org/uix1/src/utils/global-values.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/datex-bindings/type-definitions.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/datex-bindings/dom-utils.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/jsx/mod.ts","https://dev.cdn.unyt.org/uix1/src/html/template-strings.ts","https://dev.cdn.unyt.org/uix1/src/utils/css-template-strings.ts","https://dev.cdn.unyt.org/uix1/src/base/decorators.ts","https://dev.cdn.unyt.org/uix1/src/html/template.ts","https://dev.cdn.unyt.org/uix1/src/html/style.ts","https://dev.cdn.unyt.org/uix1/src/utils/window-apis.ts","https://dev.cdn.unyt.org/uix1/src/html/unsafe-html.ts","https://dev.cdn.unyt.org/uix1/src/base/theme-manager.ts","https://dev.cdn.unyt.org/uix1/src/utils/version.ts","https://dev.cdn.unyt.org/uix1/src/utils/importmap.ts","https://dev.cdn.unyt.org/uix1/src/sw/sw-installer.ts","https://dev.cdn.unyt.org/uix1/src/app/app-data.ts","https://dev.cdn.unyt.org/uix1/src/base/uix-datex-module.ts","https://dev.cdn.unyt.org/uix1/src/base/init.ts","https://dev.cdn.unyt.org/unyt_core/utils/format-endpoint-url.ts","https://dev.cdn.unyt.org/uix1/src/app/default-domain.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/jsx/fragment.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/jsx/parser.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/jsx/jsx-definitions.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/html-template-strings/html_template_strings.ts","https://dev.cdn.unyt.org/uix1/src/app/app-data-standalone.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/datex-bindings/dom-datex-types.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/datex-bindings/transform-wrapper.ts","https://dev.cdn.unyt.org/uix1/src/session/frontend.ts","https://dev.cdn.unyt.org/uix1/src/html/light-root.ts","https://dev.cdn.unyt.org/uix1/src/utils/error-reporting-preference.ts","https://dev.cdn.unyt.org/uix1/src/themes/uix-light.ts","https://dev.cdn.unyt.org/uix1/src/themes/uix-dark.ts","https://dev.cdn.unyt.org/uix1/src/themes/uix-light-plain.ts","https://dev.cdn.unyt.org/uix1/src/themes/uix-dark-plain.ts","https://dev.cdn.unyt.org/unyt_core/utils/indent.ts","https://dev.cdn.unyt.org/uix1/src/standalone/bound_content_properties.ts","https://dev.cdn.unyt.org/uix1/src/app/datex-over-http.ts","https://dev.cdn.unyt.org/uix1/src/uix-dom/attributes.ts","https://dev.cdn.unyt.org/uix1/src/standalone/scroll_container.ts","https://dev.cdn.unyt.org/uix1/src/base/open-graph.ts","https://dev.cdn.unyt.org/uix1/src/utils/css-scoping.ts","https://dev.cdn.unyt.org/uix1/src/utils/files.ts","https://dev.cdn.unyt.org/uix1/VERSION.ts","https://dev.cdn.unyt.org/uix1/src/app/client-scripts/default.ts","http://localhost/.dx","http://localhost/.dx","https://unyt.cc/nodes.dx","https://unyt.cc/nodes.dx","ws://localhost/","http://localhost/@uix/src/frontend/entrypoint.ts","http://localhost/@uix/src/frontend/entrypoint.ts","http://localhost/@uix/src/common/page.tsx","http://localhost/@uix/src/backend/entrypoint.ts","http://localhost/@uix/src/backend/data.ts","http://localhost/@uix/src/backend/entrypoint.ts"])]
 export async function generateHTMLPage({
 	provider, 
 	prerendered_content, 
@@ -652,6 +650,15 @@ export async function generateHTMLPage({
 	body_css_files ??= []
 	includeImportMap ??= true;
 
+	const modulePreloadUrls = new Set<string>();
+	const addPreloadUrl = async (url:string|URL) => {
+		url = provider.resolveForBackend(url);
+		console.log("add preload " + url);
+		(await resolveDependencies(url)).forEach(dep => modulePreloadUrls.add(dep));
+		modulePreloadUrls.add(url.toString());
+	}
+
+
 	let files = '';
 	let metaScripts = ''
 
@@ -674,27 +681,35 @@ export async function generateHTMLPage({
 		if (app.options?.experimentalFeatures.includes("protect-pointers")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
 		if (app.options?.experimentalFeatures.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
 
+
 		// set app info
 
 		for (const file of js_files) {
-			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file).toString()}");`
+			if (file) {
+				const path = provider.resolveImport(file).toString();
+				files += indent(4) `\nawait import("${path}");`;
+				await addPreloadUrl(file);
+			}
 		}
 
 		// hydrate
 		if (prerendered_content && render_method == RenderMethod.HYBRID) {
-			files += indent(4) `\nimport {hydrate} from "uix/hydration/hydrate.ts"; hydrate();`
+			files += indent(4) `\nimport {hydrate} from "uix/hydration/hydrate.ts"; hydrate();`;
+			await addPreloadUrl("uix/hydration/hydrate.ts");
 		}
 
 
 		// load frontend entrypoint first
 		if (frontend_entrypoint) {
 			files += indent(4) `\n\nconst _frontend_entrypoint = await datex.get("${provider.resolveImport(frontend_entrypoint).toString()}");`
+			await addPreloadUrl(frontend_entrypoint);
 		}
 
 		// hydration with backend content after ssr
 		if (backend_entrypoint) {
 			// load default export of ts module or dx export
 			files += indent(4) `\n\nconst _backend_entrypoint = await datex.get("${provider.resolveImport(backend_entrypoint).toString()}");let backend_entrypoint;\nif (_backend_entrypoint.default) backend_entrypoint = _backend_entrypoint.default\nelse if (_backend_entrypoint && Object.getPrototypeOf(_backend_entrypoint) != null) backend_entrypoint = _backend_entrypoint;`
+			await addPreloadUrl(backend_entrypoint);
 		}
 		// alternative: frontend rendering
 		if (frontend_entrypoint) {
@@ -715,6 +730,11 @@ export async function generateHTMLPage({
 			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal})`
 
 		files += '\n</script>\n'
+
+		// preload default modules
+		await addPreloadUrl("uix/routing/frontend-routing.ts");
+		await addPreloadUrl("datex-core-legacy");
+		modulePreloadUrls.add("/.dx")
 	}
 
 	// inject UIX app metadata and static js files
@@ -795,6 +815,8 @@ export async function generateHTMLPage({
 		}
 	}
 
+	console.log("preload", [...modulePreloadUrls])
+
 	// TODO: fix open_graph_meta_tags?.getMetaTags()
 	return indent `<!DOCTYPE html>
 		<html lang="${lang}" style="color-scheme:${color_scheme}">
@@ -805,8 +827,9 @@ export async function generateHTMLPage({
 				<meta name="color-scheme" content="${color_scheme}"/>
 				<meta name="theme-color"/>	
 				${metaScripts}
-				${modulePreloadUrls.map(url => 
-					url.endsWith(".ts")||url.endsWith(".js")||url.endsWith(".tsx")||url.endsWith(".jsx") ? 
+				${[...modulePreloadUrls].map(_url => {
+					const url = convertToWebPath(_url);
+					return url.endsWith(".ts")||url.endsWith(".js")||url.endsWith(".tsx")||url.endsWith(".jsx") ? 
 						`<link rel="modulepreload" href="${url}">` : 
 						`<link rel="preload" href="${url}" ${
 							url.endsWith(".css")||url.endsWith(".scss") ? "" : "crossorigin"
@@ -816,7 +839,7 @@ export async function generateHTMLPage({
 							url.endsWith(".wasm")||url.endsWith(".dx") ? "fetch" : 
 							"script"
 						}">`
-					).join("\n")}
+				}).join("\n")}
 				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
 				${custom_meta}
 				${favicon}

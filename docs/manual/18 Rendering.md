@@ -21,10 +21,11 @@ The following URLs are excluded from module preloading per default:
  * Deno.land modules (starting with `https://deno.land/`)
  * URLs explicitly marked as lazy with (ending with `#lazy`, e.g. `import "./my-module.ts#lazy"`)
 
+Module preloading can be disabled by setting `preload_dependencies: false` in the `app.dx` configuration file.
 
 # Transpilation and Minification
 
 UIX transpiles and minifies each TypeScript module individually.
 Modules are not bundled.
 
-You can disable minification by setting `minify_js: false` in the `app.dx` configuration file
+You can disable minification by setting `minify_js: false` in the `app.dx` configuration file.

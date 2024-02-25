@@ -19,7 +19,6 @@ export async function resolveDependencies(file: Path|string, tree:string[] = [])
 	if (cachedDependencies.has(file.toString())) return cachedDependencies.get(file.toString())!;
 
 	// don't recurse if we've already seen this file
-	// if (allPaths.has(file.toString())) return paths;
 	if (exists) return paths;
 
 	tree.push(file.toString());
@@ -28,7 +27,6 @@ export async function resolveDependencies(file: Path|string, tree:string[] = [])
 		const content = await file.getTextContent()
 		const imports = content.matchAll(importRegex)
 		const promises = [];
-
 
 		for (const [_, pre, path1, path2, path3] of imports) {
 			const path = path1 ?? path2 ?? path3;
@@ -51,8 +49,7 @@ export async function resolveDependencies(file: Path|string, tree:string[] = [])
 		return paths;
 	}
 	// i/o error might occur if the path is invalid
-	catch (e) {
-		console.error(file.toString()+":", e)
+	catch {
 		cachedDependencies.set(file.toString(), paths);
 		return paths;
 	}

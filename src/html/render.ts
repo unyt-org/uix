@@ -620,7 +620,8 @@ export type HTMLPageOptions = {
 	lang?: string, 
 	livePointers?: string[],
 	includeImportMap?: boolean,
-	force_enable_scripts?: boolean
+	force_enable_scripts?: boolean,
+	preloadDependencies?: boolean
 }
 
 export async function generateHTMLPage({
@@ -639,7 +640,8 @@ export async function generateHTMLPage({
 	open_graph_meta_tags, 
 	lang, 
 	livePointers,
-	includeImportMap
+	includeImportMap,
+	preloadDependencies
 }: HTMLPageOptions) {
 
 	lang ??= "en"
@@ -649,12 +651,15 @@ export async function generateHTMLPage({
 	global_css_files ??= []
 	body_css_files ??= []
 	includeImportMap ??= true;
+	preloadDependencies ??= true;
 
 	const modulePreloadUrls = new Set<string>();
 	const addPreloadUrl = async (url:string|URL) => {
-		url = provider.resolveForBackend(url);
-		(await resolveDependencies(url)).forEach(dep => modulePreloadUrls.add(dep));
-		modulePreloadUrls.add(url.toString());
+		if (preloadDependencies) {
+			url = provider.resolveForBackend(url);
+			(await resolveDependencies(url)).forEach(dep => modulePreloadUrls.add(dep));
+			modulePreloadUrls.add(url.toString());
+		}
 	}
 
 
@@ -733,7 +738,7 @@ export async function generateHTMLPage({
 		// preload default modules
 		await addPreloadUrl("uix/routing/frontend-routing.ts");
 		await addPreloadUrl("datex-core-legacy");
-		modulePreloadUrls.add("/.dx")
+		if (preloadDependencies) modulePreloadUrls.add("/.dx")
 	}
 
 	// inject UIX app metadata and static js files
@@ -824,19 +829,21 @@ export async function generateHTMLPage({
 				<meta name="color-scheme" content="${color_scheme}"/>
 				<meta name="theme-color"/>	
 				${metaScripts}
-				${[...modulePreloadUrls].map(_url => {
-					const url = convertToWebPath(_url);
-					return url.endsWith(".ts")||url.endsWith(".js")||url.endsWith(".tsx")||url.endsWith(".jsx") ? 
-						`<link rel="modulepreload" href="${url}">` : 
-						`<link rel="preload" href="${url}" ${
-							url.endsWith(".css")||url.endsWith(".scss") ? "" : "crossorigin"
-						} as="${
-							url.endsWith(".css")||url.endsWith(".scss") ? "style" : 
-							url.endsWith(".woff2") ? "font" : 
-							url.endsWith(".wasm")||url.endsWith(".dx") ? "fetch" : 
-							"script"
-						}">`
-				}).join("\n")}
+				${preloadDependencies ?
+					[...modulePreloadUrls].map(_url => {
+						const url = convertToWebPath(_url);
+						return url.endsWith(".ts")||url.endsWith(".js")||url.endsWith(".tsx")||url.endsWith(".jsx") ? 
+							`<link rel="modulepreload" href="${url}">` : 
+							`<link rel="preload" href="${url}" ${
+								url.endsWith(".css")||url.endsWith(".scss") ? "" : "crossorigin"
+							} as="${
+								url.endsWith(".css")||url.endsWith(".scss") ? "style" : 
+								url.endsWith(".woff2") ? "font" : 
+								url.endsWith(".wasm")||url.endsWith(".dx") ? "fetch" : 
+								"script"
+							}">`
+					}).join("\n") : ""
+				}
 				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
 				${custom_meta}
 				${favicon}

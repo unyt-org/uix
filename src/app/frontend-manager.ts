@@ -981,7 +981,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 						backend_entrypoint: this.#backend?.web_entrypoint,
 						open_graph_meta_tags,
 						livePointers: liveNodePointers,
-						includeImportMap: !isInlineRendered
+						includeImportMap: !isInlineRendered,
+						preloadDependencies: this.app_options.preload_dependencies
 					}),
 					undefined, status_code, combinedHeaders
 				);
@@ -1005,7 +1006,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 			global_css_files: ['uix/style/document.css'],
 			body_css_files: ['uix/style/body.css'],
 			color_scheme: "dark",
-			force_enable_scripts: true
+			force_enable_scripts: true,
+			preloadDependencies: this.app_options.preload_dependencies
 		}));
 	}
 

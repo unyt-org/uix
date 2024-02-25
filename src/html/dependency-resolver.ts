@@ -4,16 +4,16 @@ const importRegex = /(?<=(?:^|;)(?: *\*\/ *)?)((?:import|export)\s*(?:(?:[A-Za-z
 const importTypeRegex = /(import|export) type.*/;
 
 const cachedDependencies = new Map<string, Set<string>>();
-const trees = new Map<string, string[][]>();
+const dependencyTrees = new Map<string, string[][]>();
 
 export async function resolveDependencies(file: Path|string, tree:string[] = []) {
 	if (typeof file === 'string') file = new Path(file);
 	const paths = new Set<string>();
 
-	const exists = trees.has(file.toString());
+	const exists = dependencyTrees.has(file.toString());
 
-	if (!trees.has(file.toString())) trees.set(file.toString(), []);
-	trees.get(file.toString())!.push([...tree]);
+	if (!dependencyTrees.has(file.toString())) dependencyTrees.set(file.toString(), []);
+	dependencyTrees.get(file.toString())!.push([...tree]);
 
 	// cached
 	if (cachedDependencies.has(file.toString())) return cachedDependencies.get(file.toString())!;
@@ -33,14 +33,12 @@ export async function resolveDependencies(file: Path|string, tree:string[] = [])
 		for (const [_, pre, path1, path2, path3] of imports) {
 			const path = path1 ?? path2 ?? path3;
 			if (pre?.match(importTypeRegex) || path.endsWith("#lazy") || path.startsWith("https://deno.land/") || path.startsWith("npm:")) {
-				// console.log("skipped lazy import: " + path)
 				continue;
 			}
 			const normalizedPath = path.startsWith('./') || path.startsWith('../') ? new Path(path, file).toString() : path;
 			const resolvedPath = import.meta.resolve(normalizedPath);
 
 			promises.push(resolveDependencies(resolvedPath, [...tree]));
-			// console.log("   + " + resolvedPath)
 			paths.add(resolvedPath);
 		}
 		for (const childPaths of await Promise.all(promises)) {

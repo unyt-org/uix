@@ -653,7 +653,6 @@ export async function generateHTMLPage({
 	const modulePreloadUrls = new Set<string>();
 	const addPreloadUrl = async (url:string|URL) => {
 		url = provider.resolveForBackend(url);
-		console.log("add preload " + url);
 		(await resolveDependencies(url)).forEach(dep => modulePreloadUrls.add(dep));
 		modulePreloadUrls.add(url.toString());
 	}
@@ -814,8 +813,6 @@ export async function generateHTMLPage({
 			custom_meta += `<meta name="${domUtils.escapeHtml(key)}" content="${domUtils.escapeHtml(value)}"/>\n`
 		}
 	}
-
-	console.log("preload", [...modulePreloadUrls])
 
 	// TODO: fix open_graph_meta_tags?.getMetaTags()
 	return indent `<!DOCTYPE html>

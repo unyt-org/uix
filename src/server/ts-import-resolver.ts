@@ -21,7 +21,8 @@ type import_resolver_options = {
 
 export class TypescriptImportResolver {
 
-    private static general_import_regex = client_type === "deno" ? new RegExp(String.raw`(?<=(?:^|;)(?: *\*\/ *)?)((?:import|export)\s*((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s*from\s*|import\s*)["']([^"']+)["']`, 'gm') : null // /(?<=^(?: *\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']/gm
+    static general_import_regex = /(?<=(?:^|;)(?: *\*\/ *)?)((?:import|export)\s*((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s*from\s*|import\s*)["']([^"']+)["']/gm
+    // client_type === "deno" ? new RegExp(String.raw`(?<=(?:^|;)(?: *\*\/ *)?)((?:import|export)\s*((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s*from\s*|import\s*)["']([^"']+)["']`, 'gm') : null // /(?<=^(?: *\*\/ *)?)((?:import|export)\s+((?:[A-Za-z0-9_$,{}* ]|["'](?:[^"']+)["'])*)\s+from\s+|import\s+)["']([^"']+)["']/gm
 
 	readonly scope?: Path // root path for source files, locations outside have to be resolved with out of scope resolution
     readonly import_map_base_path?: Path // import map location
@@ -138,7 +139,6 @@ export class TypescriptImportResolver {
             const rel_import_path = is_prefix ? null : this.resolveImportSpecifier(specifier)
             const abs_import_path = is_prefix ? null : new Path(rel_import_path!, reference_path);
             
-
             // workaround: ignore 'node:x' paths
             if (abs_import_path?.toString().startsWith("node:")) return match;
 

@@ -312,7 +312,6 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		const form = opts?.forms?.at(-1);
 
 		if (datexUpdateType == "onsubmit" && !form) {
-			console.log("no form", el)
 			throw new Error(`Invalid datex-update="onsubmit", no form found`)
 		}
 
@@ -838,7 +837,7 @@ export async function generateHTMLPage({
 								url.endsWith(".css")||url.endsWith(".scss") ? "" : "crossorigin"
 							} as="${
 								url.endsWith(".css")||url.endsWith(".scss") ? "style" : 
-								url.endsWith(".woff2") ? "font" : 
+								url.endsWith(".woff2")||url.endsWith(".ttf") ? "font" : 
 								url.endsWith(".wasm")||url.endsWith(".dx") ? "fetch" : 
 								"script"
 							}">`

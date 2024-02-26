@@ -837,7 +837,7 @@ export async function generateHTMLPage({
 								url.endsWith(".css")||url.endsWith(".scss") ? "" : "crossorigin"
 							} as="${
 								url.endsWith(".css")||url.endsWith(".scss") ? "style" : 
-								url.endsWith(".woff2")||url.endsWith(".ttf") ? "font" : 
+								url.endsWith(".woff2")||url.endsWith(".woff")||url.endsWith(".ttf") ? "font" : 
 								"fetch"
 							}">`
 					}).join("\n") : ""

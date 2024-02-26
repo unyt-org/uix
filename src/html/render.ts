@@ -838,8 +838,7 @@ export async function generateHTMLPage({
 							} as="${
 								url.endsWith(".css")||url.endsWith(".scss") ? "style" : 
 								url.endsWith(".woff2")||url.endsWith(".ttf") ? "font" : 
-								url.endsWith(".wasm")||url.endsWith(".dx") ? "fetch" : 
-								"script"
+								"fetch"
 							}">`
 					}).join("\n") : ""
 				}

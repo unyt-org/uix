@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-async-promise-executor
-import { constructor, Datex, property, replicator, template, get} from "datex-core-legacy"
+import { Datex, property, get} from "datex-core-legacy"
 import { logger } from "../utils/global-values.ts"
 import { Class, Logger, METADATA, ValueError } from "datex-core-legacy/datex_all.ts"
 import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, ORIGIN_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
@@ -29,15 +29,9 @@ export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child
 export type standalonePropertyData = {type:'prop'}
 export type standaloneProperties = Record<string, (standaloneContentPropertyData | standalonePropertyData) & {init?:propInit }>;
 
-// deno-lint-ignore no-namespace
-export namespace Component {
-    export interface Options {
-        title?: string
-    }
-}
 
 // @template("uix:component") 
-export abstract class Component<O = Component.Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
+export abstract class Component<O extends Record<string, unknown> = Record<string,never>, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -49,7 +43,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     ]
     
 
-    static DEFAULT_OPTIONS:Component.Options = {};
+    static DEFAULT_OPTIONS = {};
     static CLONE_OPTION_KEYS: Set<string> // list of all default option keys that need to be cloned when options are initialized (non-primitive options)
 
     // guessing module stylesheets, get added to normal stylesheets array after successful fetch
@@ -680,7 +674,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     }
 
     // default constructor
-    @constructor async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
+    async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
         // options already handled in constructor
 
         // handle default component options (class, ...)
@@ -706,7 +700,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     }
 
     // called when created from saved state
-    @replicator async replicate() {
+    async replicate() {
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
         // make sure static component data (e.g. datex module imports) is loaded
         await (<typeof Component>this.constructor).init();
@@ -775,7 +769,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 } 
                 // string
                 catch {
-                    options[<keyof typeof options>name] = <Datex.RefOrValue<O & Component.Options[keyof O & Component.Options]>> this.attributes[i].value;
+                    options[<keyof typeof options>name] = <Datex.RefOrValue<O>> this.attributes[i].value;
                 }
             }
         }
@@ -1083,7 +1077,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         const initial_route = !this.route_initialized;
         this.route_initialized = true;
 
-        const child = await (<Component<O & Component.Options, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
+        const child = await (<Component<O, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
 
         if (child == false) return []; // route not valid
         else if (typeof (<any>child)?.focus == "function") {
@@ -1135,10 +1129,10 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         super.remove();
     }
 
-    public observeOption(key:keyof O & Component.Options, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
+    public observeOption(key:keyof O, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
         Datex.Ref.observeAndInit(this.options.$$[key as keyof typeof this.options.$$], handler, this);
     }
-    public observeOptions(keys:(keyof O & Component.Options)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
+    public observeOptions(keys:(keyof O)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
         for (const key of keys) this.observeOption(key, handler);
     }
 

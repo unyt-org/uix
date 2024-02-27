@@ -1,5 +1,5 @@
-import { scope, expose } from "datex-core-legacy";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { datex } from "datex-core-legacy/mod.ts";
 
 const stage = client_type == "deno" ? (await import("../app/args.ts#lazy")).stage : "TODO!";
 
@@ -11,8 +11,8 @@ const stageTransformFunction = await datex`
 	);
 `
 
-@scope("uix") class UIXDatexModule {
-    @expose static LANG = "en";
-	@expose static stage = stageTransformFunction
-	@expose static currentStage = stage
+@endpoint class uix {
+    @property static LANG = "en";
+	@property static stage = stageTransformFunction
+	@property static currentStage = stage
 }

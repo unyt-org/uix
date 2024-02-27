@@ -26,6 +26,8 @@ export type appOptions = {
 
 	experimentalFeatures?: string|string[]
 	debug_mode?: boolean // enable debug interfaces available on /@debug/...
+	minify_js?: boolean // minify transpiled javascript modules, default: true
+	preload_dependencies?: boolean // automatically preload all ts module dependencies, default: true
 }
 
 export interface normalizedAppOptions extends appOptions {
@@ -63,6 +65,8 @@ export async function normalizeAppOptions(options:appOptions = {}, base_url?:str
 
 	n_options.experimentalFeatures = options.experimentalFeatures ? (options.experimentalFeatures instanceof Array ? options.experimentalFeatures : [options.experimentalFeatures]) : [];
 	n_options.debug_mode = options.debug_mode ?? false;
+	n_options.minify_js = options.minify_js ?? true;
+	n_options.preload_dependencies = options.preload_dependencies ?? true;
 
 	// import map or import map path
 	if (options.import_map) n_options.import_map = new ImportMap(options.import_map);

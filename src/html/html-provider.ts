@@ -34,6 +34,16 @@ export class HTMLProvider {
 		else return resolved
 	}
 
+	/**
+	 * Resolves uix:// paths to file urls, resolves import specifiers to absolute url strings
+	 * @param path
+	 */
+	resolveForBackend(path:string|URL):string {
+		path = path.toString();
+		if (path.startsWith("uix://")) path = new Path("." + path.replace("uix:///@uix/src",""), this.base_path).toString();
+		return import.meta.resolve(path)
+	}
+
 	getRelativeImportMap() {
 		const import_map = {imports: {...this.app_options.import_map.static_imports}};
 

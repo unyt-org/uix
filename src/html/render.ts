@@ -11,18 +11,18 @@ import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
-import { Element, HTMLFormElement } from "../uix-dom/dom/mod.ts";
-import { blobToBase64 } from "../uix-dom/datex-bindings/blob-to-base64.ts";
+import type { Element } from "../uix-dom/dom/mod.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { UIX } from "../../uix.ts";
 import { serializeJSValue } from "../utils/serialize-js.ts";
 import { Component } from "../components/Component.ts";
 import { DX_VALUE } from "datex-core-legacy/runtime/constants.ts";
+import { resolveDependencies } from "./dependency-resolver.ts"
 
 let stage:string|undefined = '?'
 
 if (client_type === "deno") {
-	({ stage } = (await import("../app/args.ts")))
+	({ stage } = (await import("../app/args.ts#lazy")))
 }
 
 type injectScriptData = {declare:Record<string,string>, init:string[]};
@@ -204,10 +204,6 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 	if (opts && datexUpdateType) {
 		opts.datex_update_type?.pop()
 	}
-	// pop last form
-	if (el instanceof domContext.HTMLFormElement) {
-		opts.forms?.pop()
-	}
 
 
 	// TODO: only workaround
@@ -365,6 +361,11 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		if (hasScriptContent) opts._injectedJsData.init.push(script);
 	}
 
+	// pop last form
+	if (el instanceof domContext.HTMLFormElement) {
+		opts?.forms?.pop()
+	}
+
 	if (selfClosingTags.has(tag)) return `<${tag} ${attrs.join(" ")}/>`;
 	else return `<${tag} ${attrs.join(" ")}>${inner}</${tag}>`
 	// const outer = el.cloneNode().outerHTML;
@@ -424,7 +425,7 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 			try {
 				// with convertJSONInput
 				if (value && typeof value == "object") {
-					companionSource += `const {createStaticObject} = await import("uix/standalone/create-static-object.ts");\n`
+					companionSource += `const {createStaticObject} = await import("uix/standalone/create-static-object.ts#lazy");\n`
 					companionSource += `const ${varName} = createStaticObject(${serializeJSValue(value)});\n`
 				}
 				else {
@@ -618,9 +619,9 @@ export type HTMLPageOptions = {
 	lang?: string, 
 	livePointers?: string[],
 	includeImportMap?: boolean,
-	force_enable_scripts?: boolean
+	force_enable_scripts?: boolean,
+	preloadDependencies?: boolean
 }
-
 
 export async function generateHTMLPage({
 	provider, 
@@ -638,7 +639,8 @@ export async function generateHTMLPage({
 	open_graph_meta_tags, 
 	lang, 
 	livePointers,
-	includeImportMap
+	includeImportMap,
+	preloadDependencies
 }: HTMLPageOptions) {
 
 	lang ??= "en"
@@ -648,6 +650,17 @@ export async function generateHTMLPage({
 	global_css_files ??= []
 	body_css_files ??= []
 	includeImportMap ??= true;
+	preloadDependencies ??= true;
+
+	const modulePreloadUrls = new Set<string>();
+	const addPreloadUrl = async (url:string|URL) => {
+		if (preloadDependencies) {
+			url = provider.resolveForBackend(url);
+			(await resolveDependencies(url)).forEach(dep => modulePreloadUrls.add(dep));
+			modulePreloadUrls.add(url.toString());
+		}
+	}
+
 
 	let files = '';
 	let metaScripts = ''
@@ -671,27 +684,35 @@ export async function generateHTMLPage({
 		if (app.options?.experimentalFeatures.includes("protect-pointers")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
 		if (app.options?.experimentalFeatures.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
 
+
 		// set app info
 
 		for (const file of js_files) {
-			if (file) files += indent(4) `\nawait import("${provider.resolveImport(file).toString()}");`
+			if (file) {
+				const path = provider.resolveImport(file).toString();
+				files += indent(4) `\nawait import("${path}");`;
+				await addPreloadUrl(file);
+			}
 		}
 
 		// hydrate
 		if (prerendered_content && render_method == RenderMethod.HYBRID) {
-			files += indent(4) `\nimport {hydrate} from "uix/hydration/hydrate.ts"; hydrate();`
+			files += indent(4) `\nimport {hydrate} from "uix/hydration/hydrate.ts"; hydrate();`;
+			await addPreloadUrl("uix/hydration/hydrate.ts");
 		}
 
 
 		// load frontend entrypoint first
 		if (frontend_entrypoint) {
 			files += indent(4) `\n\nconst _frontend_entrypoint = await datex.get("${provider.resolveImport(frontend_entrypoint).toString()}");`
+			await addPreloadUrl(frontend_entrypoint);
 		}
 
 		// hydration with backend content after ssr
 		if (backend_entrypoint) {
 			// load default export of ts module or dx export
 			files += indent(4) `\n\nconst _backend_entrypoint = await datex.get("${provider.resolveImport(backend_entrypoint).toString()}");let backend_entrypoint;\nif (_backend_entrypoint.default) backend_entrypoint = _backend_entrypoint.default\nelse if (_backend_entrypoint && Object.getPrototypeOf(_backend_entrypoint) != null) backend_entrypoint = _backend_entrypoint;`
+			await addPreloadUrl(backend_entrypoint);
 		}
 		// alternative: frontend rendering
 		if (frontend_entrypoint) {
@@ -712,6 +733,11 @@ export async function generateHTMLPage({
 			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal})`
 
 		files += '\n</script>\n'
+
+		// preload default modules
+		await addPreloadUrl("uix/routing/frontend-routing.ts");
+		await addPreloadUrl("datex-core-legacy");
+		if (preloadDependencies) modulePreloadUrls.add("/.dx")
 	}
 
 	// inject UIX app metadata and static js files
@@ -801,12 +827,26 @@ export async function generateHTMLPage({
 				<meta name="view-transition" content="same-origin"/>
 				<meta name="color-scheme" content="${color_scheme}"/>
 				<meta name="theme-color"/>	
+				${metaScripts}
+				${preloadDependencies ?
+					[...modulePreloadUrls].map(_url => {
+						const url = convertToWebPath(_url);
+						return url.endsWith(".ts")||url.endsWith(".js")||url.endsWith(".tsx")||url.endsWith(".jsx") ? 
+							`<link rel="modulepreload" href="${url}">` : 
+							`<link rel="preload" href="${url}" ${
+								url.endsWith(".css")||url.endsWith(".scss") ? "" : "crossorigin"
+							} as="${
+								url.endsWith(".css")||url.endsWith(".scss") ? "style" : 
+								url.endsWith(".woff2")||url.endsWith(".woff")||url.endsWith(".ttf") ? "font" : 
+								"fetch"
+							}">`
+					}).join("\n") : ""
+				}
 				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
 				${custom_meta}
 				${favicon}
 				${provider.app_options.installable||provider.app_options.manifest ? `<link rel="manifest" href="/@uix/manifest.json">` : ''}
 				${provider.app_options.installable||provider.app_options.manifest ? `<script async src="https://cdn.jsdelivr.net/npm/pwacompat" crossorigin="anonymous"></script>` : ''}
-				${metaScripts}
 				${global_style}
 				${files}
 				${prerendered_content instanceof Array ? prerendered_content[0] : ''}

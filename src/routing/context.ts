@@ -4,7 +4,7 @@ import { BROADCAST, Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
 import { getSharedDataPointer } from "../session/shared-data.ts";
-import { datex_meta } from "datex-core-legacy/utils/global_types.ts";
+import type { datex_meta } from "datex-core-legacy/utils/global_types.ts";
 
 // TODO: remove params, use ctx.searchParams instead
 export type RequestData = {address:string|null}
@@ -94,11 +94,45 @@ export class Context
 	 * This data is separated for each endpoint session and is only accessible from the backend 
 	 */
 	async getPrivateData(): Promise<CustomPrivateData> {
-		if (client_type == "browser") throw new Error("Private data is only accessible from the backend");
-		if (this.endpoint == BROADCAST) throw new Error("Cannot get private data for UIX context, no session found");
-		if (!await privateData.has(this.endpoint)) await privateData.set(this.endpoint, {});
-		return (await privateData.get(this.endpoint))! as CustomPrivateData;
+		// TODO: don't use main endpoint, only as workaround for now because of unpredicatable endpoint instance switching
+		const endpoint = this.endpoint.main;
+		this.validateEndpointForPrivateData(endpoint);
+		if (!await privateData.has(endpoint)) {
+			await privateData.set(endpoint, {})
+		};
+		return (await privateData.get(endpoint))! as CustomPrivateData;
 	}
+
+	/**
+	 * Returns a private data record, containing arbitrary key-value pairs.
+	 * If no data record exists for the endpoint session, null is returned.
+	 * Use getPrivateData() to automatically create a new data record if none exists.
+	 */
+	async getPrivateDataWeak() {
+		const endpoint = this.endpoint.main;
+		this.validateEndpointForPrivateData(endpoint);
+		return ((await privateData.get(endpoint)) ?? null) as CustomPrivateData|null;
+	}
+
+	/**
+	 * Clears the private data for the endpoint session
+	 */
+	async clearPrivateData() {
+		// TODO: don't use main endpoint, only as workaround for now because of unpredicatable endpoint instance switching
+		const endpoint = this.endpoint.main;
+		this.validateEndpointForPrivateData(endpoint);
+		await privateData.delete(endpoint);
+	}
+
+	/**
+	 * Throws an error if private endpoint data cannot be accessed
+	 * @param endpoint 
+	 */
+	private validateEndpointForPrivateData(endpoint: Datex.Endpoint) {
+		if (client_type == "browser") throw new Error("Private data is only accessible from the backend");
+		if (endpoint == BROADCAST) throw new Error("Cannot get private data for UIX context, no session found");
+	}
+
 
 	[Symbol.dispose]() {
 		console.log("disposing context", this.#disposeCallbacks);
@@ -133,20 +167,74 @@ export class Context
 	 */
 	static async getPrivateData(meta: datex_meta): Promise<PrivateData>
 	static async getPrivateData(endpoint_or_meta: Datex.Endpoint|datex_meta) {
-		let endpoint: Datex.Endpoint;
-		// return private data for endpoint
-		if (endpoint_or_meta instanceof Datex.Endpoint) {
-			endpoint = endpoint_or_meta;
-		}
-		// return private data for verified caller endpoint
-		else {
-			if (!endpoint_or_meta.signed || endpoint_or_meta.local) throw new Error("Cannot get private data for unverified endpoint");
-			else endpoint = endpoint_or_meta.sender;
-		}
+		let endpoint = this.getEndpoint(endpoint_or_meta);
+
+		// TODO: don't use main endpoint, only as workaround for now because of unpredicatable endpoint instance switching
+		endpoint = endpoint.main;
 
 		if (!await privateData.has(endpoint)) await privateData.set(endpoint, {});
 		return (await privateData.get(endpoint))! as PrivateData;
 	}
+
+	/**
+	 * Gets the context-bound private data for an endpoint.
+	 * If no data record exists for the endpoint, null is returned.
+	 */
+	static async getPrivateDataWeak(endpoint: Datex.Endpoint): Promise<PrivateData|null>
+	/**
+	 * Gets the context-bound private data. This can be used inside normal functions
+	 * that are called from remote endpoints but do not have access to the UIX context object.
+	 */
+	static async getPrivateDataWeak(meta: datex_meta): Promise<PrivateData|null>
+	static async getPrivateDataWeak(endpoint_or_meta: Datex.Endpoint|datex_meta) {
+		let endpoint = this.getEndpoint(endpoint_or_meta);
+		// TODO: don't use main endpoint, only as workaround for now because of unpredicatable endpoint instance switching
+		endpoint = endpoint.main;
+
+		return ((await privateData.get(endpoint)) ?? null) as PrivateData|null;
+	}
+
+	/**
+	 * Clears the private data for an endpoint.
+	 * 
+	 * Example:
+	 * ```ts
+	 * const endpoint = f('@example')
+	 * Context.clearPrivateData(endpoint);
+	 * ```
+	 */
+	static async clearPrivateData(endpoint: Datex.Endpoint): Promise<void>
+	/**
+	 * Clears the private data for the verified caller endpoint.
+	 * 
+	 * Example:
+	 * ```ts
+	 * // backend/functions.ts
+	 * export function doBackendStuff() {
+	 *    Context.clearPrivateData(datex.meta);
+	 * 	  // ..
+	 * }
+	 * ```
+	 */
+	static async clearPrivateData(meta: datex_meta): Promise<void>
+	static async clearPrivateData(endpoint_or_meta: Datex.Endpoint|datex_meta) {
+		let endpoint = this.getEndpoint(endpoint_or_meta);
+
+		// TODO: don't use main endpoint, only as workaround for now because of unpredicatable endpoint instance switching
+		endpoint = endpoint.main;
+		await privateData.delete(endpoint);
+	}
+
+
+	private static getEndpoint(endpoint_or_meta: Datex.Endpoint|datex_meta) {
+		if (endpoint_or_meta instanceof Datex.Endpoint) return endpoint_or_meta;
+		else {
+			if (!endpoint_or_meta.signed || endpoint_or_meta.local) throw new Error("Cannot get private data for unverified endpoint");
+			else return endpoint_or_meta.sender;
+		}
+	}
+
+
 }
 
 export class ContextBuilder {

@@ -1,6 +1,5 @@
 import { Datex } from "datex-core-legacy";
 import type { Element, Node } from "../uix-dom/dom/mod.ts";
-import { Component } from "../components/Component.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 
 /**

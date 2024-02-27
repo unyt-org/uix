@@ -365,8 +365,9 @@ export namespace Routing {
 
 		// listen for history changes
 
+		// TODO: reenable, currently only works in chrome and has some issues with hydration
 		// @ts-ignore
-		if (globalThis.navigation) {
+		if (false && globalThis.navigation) {
 			// @ts-ignore
 			globalThis.navigation?.addEventListener("navigate", (e:any)=>{
 				

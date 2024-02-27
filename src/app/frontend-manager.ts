@@ -23,7 +23,6 @@ import { Entrypoint, raw_content } from "../html/entrypoints.ts";
 import { createErrorHTML } from "../html/errors.tsx";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { domUtils } from "./dom-context.ts";
-import { Element } from "../uix-dom/dom/mod.ts";
 import { getLiveNodes } from "../hydration/partial.ts";
 import { UIX } from "../../uix.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
@@ -90,6 +89,7 @@ export class FrontendManager extends HTMLProvider {
 		this.transpiler = new Transpiler(this.scope, {
 			sourceMap: app.stage == "dev",
 			watch: this.#watch,
+			minifyJS: this.app_options.minify_js,
 			import_resolver: this.import_resolver,
 			on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined
 		});
@@ -107,6 +107,7 @@ export class FrontendManager extends HTMLProvider {
 				sourceMap: app.stage == "dev",
 				dist_parent_dir: this.transpiler.tmp_dir,
 				watch: this.#watch,
+				minifyJS: this.app_options.minify_js,
 				import_resolver:  new TypescriptImportResolver(new Path(common_dir), {
 					import_map: this.app_options.import_map,
 					import_map_base_path: this.#base_path,
@@ -980,7 +981,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 						backend_entrypoint: this.#backend?.web_entrypoint,
 						open_graph_meta_tags,
 						livePointers: liveNodePointers,
-						includeImportMap: !isInlineRendered
+						includeImportMap: !isInlineRendered,
+						preloadDependencies: this.app_options.preload_dependencies
 					}),
 					undefined, status_code, combinedHeaders
 				);
@@ -1004,7 +1006,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 			global_css_files: ['uix/style/document.css'],
 			body_css_files: ['uix/style/body.css'],
 			color_scheme: "dark",
-			force_enable_scripts: true
+			force_enable_scripts: true,
+			preloadDependencies: this.app_options.preload_dependencies
 		}));
 	}
 

@@ -5,6 +5,7 @@ import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { getTransformWrapper } from "../uix-dom/datex-bindings/transform-wrapper.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { Decorators } from "datex-core-legacy/datex_all.ts";
 
 /**
  * @defaultOptions to define component default options
@@ -13,7 +14,7 @@ export function defaultOptions<T extends Record<string, unknown>>(defaultOptions
 	const url = getCallerFile(); // TODO: called even if _init_module set
 	return handleClassDecoratorWithArgs([defaultOptions], ([defaultOptions], value, context) => {
 		console.log("@defaultOptions",defaultOptions, value,context)
-		return _defaultOptions(url, value as unknown as ComponentClass, defaultOptions)
+		return initDefaultOptions(url, value as unknown as ComponentClass, defaultOptions)
 	})
 }
 
@@ -24,7 +25,7 @@ type ComponentClass =
 
 const transformWrapper = getTransformWrapper(domUtils, domContext)
 
-function _defaultOptions<T extends Record<string, unknown>>(url:string, componentClass: ComponentClass, defaultOptions?:Partial<Datex.DatexObjectPartialInit<T>>) {
+export function initDefaultOptions<T extends Record<string, unknown>>(url:string, componentClass: ComponentClass, defaultOptions?:Partial<Datex.DatexObjectPartialInit<T>>) {
 	url = Object.hasOwn(componentClass, "_init_module") ?
 		componentClass._init_module :
 		url;
@@ -102,7 +103,7 @@ function _defaultOptions<T extends Record<string, unknown>>(url:string, componen
 		domContext.customElements.define("uix-" + name, componentClass as typeof HTMLElement)
 		return new_class
 	}
-	else throw new Error("Invalid @defaultOptions - class must extend or Component")
+	else throw new Error("Invalid @defaultOptions - class must extend Component")
 }
 
 /**
@@ -130,8 +131,7 @@ export function id(id?:string): (value: undefined, context: ClassFieldDecoratorC
 export function id(value: undefined, context: ClassFieldDecoratorContext): void
 export function id(id:string|undefined, context?: ClassFieldDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([id], context, ([id], context) => {
-		console.log("set @id", id??context.name)
-		context.metadata[ID_PROPS] = id ?? context.name;
+		Decorators.setMetadata(context, ID_PROPS, id ?? context.name);
 	})
 }
 
@@ -141,8 +141,7 @@ export function content(id?:string): (value: undefined, context: ClassFieldDecor
 export function content(value: undefined, context: ClassFieldDecoratorContext): void
 export function content(id:string|undefined, context?: ClassFieldDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([id], context, ([id], context) => {
-		console.log("set @content", id??context.name)
-		context.metadata[CONTENT_PROPS] = id ?? context.name;
+		Decorators.setMetadata(context, CONTENT_PROPS, id ?? context.name);
 	})
 }
 
@@ -152,8 +151,7 @@ export function layout(id?:string): (value: undefined, context: ClassFieldDecora
 export function layout(value: undefined, context: ClassFieldDecoratorContext): void
 export function layout(id:string|undefined, context?: ClassFieldDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([id], context, ([id], context) => {
-		console.log("set @layout", id??context.name)
-		context.metadata[LAYOUT_PROPS] = id ?? context.name;
+		Decorators.setMetadata(context, LAYOUT_PROPS, id ?? context.name);
 	})
 }
 
@@ -163,8 +161,7 @@ export function child(id?:string): (value: undefined, context: ClassFieldDecorat
 export function child(value: undefined, context: ClassFieldDecoratorContext): void
 export function child(id:string|undefined, context?: ClassFieldDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([id], context, ([id], context) => {
-		console.log("set @child", id??context.name)
-		context.metadata[CHILD_PROPS] = id ?? context.name;
+		Decorators.setMetadata(context, CHILD_PROPS, id ?? context.name);
 	})
 }
 
@@ -174,15 +171,14 @@ export function include(value: undefined, context: ClassFieldDecoratorContext): 
 export function include(value: undefined|string, context?: ClassFieldDecoratorContext|string) {
 	return handleClassFieldDecoratorWithOptionalArgs([value, context as string], context as ClassFieldDecoratorContext, 
 		([resource, export_name], context) => {
-			console.log("set @include", resource, export_name, context.name)
-			context.metadata[IMPORT_PROPS] = [resource, export_name??context.name];
+			Decorators.setMetadata(context, IMPORT_PROPS, [resource, export_name??context.name]);
 		}
 	)
 }
 
 /** \@frontend decorator to declare methods that always run on the frontend */
 export function frontend(_value: undefined, context: ClassFieldDecoratorContext|ClassMethodDecoratorContext) {
-	context.metadata[STANDALONE_PROPS] = context.name;
+	Decorators.setMetadata(context, STANDALONE_PROPS, context.name);
 }
 
 
@@ -192,9 +188,8 @@ export function bindOrigin(value: undefined, context: ClassFieldDecoratorContext
 export function bindOrigin(options:{datex:boolean}|undefined, context?: ClassFieldDecoratorContext|ClassMethodDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([options], context as ClassFieldDecoratorContext, 
 		([options], context:ClassFieldDecoratorContext|ClassMethodDecoratorContext) => {
-			console.log("set @bindOrigin", options, context.name)
-			context.metadata[STANDALONE_PROPS] = context.name;
-			context.metadata[ORIGIN_PROPS] = options ?? {datex:false};
+			Decorators.setMetadata(context, STANDALONE_PROPS, context.name);
+			Decorators.setMetadata(context, ORIGIN_PROPS, options ?? {datex:false});
 		}
 	)
 }

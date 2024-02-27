@@ -576,7 +576,7 @@ export class Transpiler {
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
-        const {transformSync} = await import("npm:@swc/core");
+        const {transformSync} = await import("npm:@swc/core@^1.4.2");
 
         const experimentalPlugins = useJusix ? {
             plugins: [
@@ -596,15 +596,14 @@ export class Transpiler {
 
                     },
                     transform: {
-                        legacyDecorator: true,
-                        decoratorMetadata: true,
+                        decoratorVersion: "2022-03",
                         react: {
                             runtime: "automatic",
                             importSource: "uix",
                             throwIfNamespace: false
                         }
                     },
-                    target: "es2022",
+                    target: "esnext",
                     keepClassNames: true,
                     externalHelpers: false,
                     experimental: experimentalPlugins

@@ -5,8 +5,9 @@ import { Component } from "../components/Component.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import type { Element, Node, HTMLElement, HTMLTemplateElement } from "../uix-dom/dom/mod.ts";
-import { defaultOptions } from "../base/decorators.ts";
+import { defaultOptions, initDefaultOptions } from "../base/decorators.ts";
 import type { Class } from "datex-core-legacy/utils/global_types.ts";
+import { METADATA } from "datex-core-legacy/js_adapter/js_class_adapter.ts";
 
 /**
  * cloneNode(true), but also clones shadow roots.
@@ -171,7 +172,9 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 		// decorator
 		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			const decoratedClass = defaultOptions(propsOrClass)
+			// workaround: immediately set metadata for class
+			(propsOrClass as any)[METADATA] = context.metadata;
+			const decoratedClass = initDefaultOptions(module, propsOrClass)
 			decoratedClass.template = generator
 			return decoratedClass
 		}
@@ -190,11 +193,13 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 		}
 	}
 	else if (templateOrGenerator) {
-		generator = function(maybeClass:any) {
+		generator = function(maybeClass:any, context?:ClassDecoratorContext) {
 			// decorator
 			if (Component.isPrototypeOf(maybeClass)) {
 				maybeClass._init_module = module;
-				const decoratedClass = defaultOptions(maybeClass)
+				// workaround: immediately set metadata for class
+				(maybeClass as any)[METADATA] = context.metadata;
+				const decoratedClass = initDefaultOptions(module, maybeClass)
 				decoratedClass.template = generator
 				return decoratedClass
 			}
@@ -204,11 +209,13 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 			}
 		}
 	}
-	else generator = function(maybeClass:any) {
+	else generator = function(maybeClass:any, context?:ClassDecoratorContext) {
 		// decorator
 		if (Component.isPrototypeOf(maybeClass)) {
 			maybeClass._init_module = module;
-			return defaultOptions(maybeClass)
+			// workaround: immediately set metadata for class
+			(maybeClass as any)[METADATA] = context.metadata;
+			return initDefaultOptions(module, maybeClass)
 		}
 		// jsx
 		else {
@@ -260,7 +267,7 @@ export function blankTemplate<
 		// decorator
 		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			const decoratedClass = defaultOptions(propsOrClass)
+			const decoratedClass = initDefaultOptions(module, propsOrClass)
 			decoratedClass.template = generator
 			decoratedClass[SET_DEFAULT_CHILDREN] = false;
 			return decoratedClass

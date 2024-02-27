@@ -20,7 +20,13 @@ import type { HTMLElement } from "../uix-dom/dom/mod.ts";
  * ```
  * @param styleGenerator 
  */
-export function style<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(styleGenerator:jsxInputGenerator<CSSStyleSheet, Options, never, false, false, Context>):jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function style<
+	Options extends Record<string, any> = {}, 
+	Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], 
+	Context extends typeof HTMLElement = typeof HTMLElement
+>(
+	styleGenerator:jsxInputGenerator<CSSStyleSheet, Options, never, false, false, InstanceType<Context>>
+): jsxInputGenerator<CSSStyleSheet, Options, Children>&((cl: Context, context: ClassDecoratorContext<Context>)=>any)
 
 /**
  * \@style decorator
@@ -37,7 +43,7 @@ export function style<Options extends Record<string, any> = {}, Children = JSX.c
  * ```
  * @param styleGenerator 
  */
-export function style(style:CSSStyleSheet):((cl:typeof HTMLElement)=>any)
+export function style(style:CSSStyleSheet):((cl:typeof HTMLElement, context: ClassDecoratorContext)=>any)
 
 /**
  * \@style decorator

@@ -17,7 +17,7 @@ import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../app/datex
 import type { DynamicCSSStyleSheet } from "../utils/css-template-strings.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts"
 import { jsxInputGenerator } from "../html/template.ts";
-import { bindObserver, domContext, domUtils } from "../app/dom-context.ts";
+import { domContext, domUtils } from "../app/dom-context.ts";
 import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
@@ -29,9 +29,11 @@ export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child
 export type standalonePropertyData = {type:'prop'}
 export type standaloneProperties = Record<string, (standaloneContentPropertyData | standalonePropertyData) & {init?:propInit }>;
 
+// deno-lint-ignore no-empty-interface
+interface Options {}
 
 // @template("uix:component") 
-export abstract class Component<O extends Record<string, unknown> = Record<string,never>, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
+export abstract class Component<O extends Options = Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -191,17 +193,15 @@ export abstract class Component<O extends Record<string, unknown> = Record<strin
     private static standalone_class_code = new Map<typeof Component,string>();
 
     private static loadStandaloneProps() {
-        const scope = this.prototype;
-
         if (this.standalone_loaded.has(this)) return;
         this.standalone_loaded.add(this);
 
         this.standaloneMethods = {};
         this.standaloneProperties = {};
 
-        const parentProps = (Object.getPrototypeOf(this).prototype)?.[METADATA]?.[STANDALONE_PROPS]?.public;
-        const props:Record<string, string> = scope[METADATA]?.[STANDALONE_PROPS]?.public;
-        const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
+        const parentProps = (Object.getPrototypeOf(this))?.[METADATA]?.[STANDALONE_PROPS]?.public;
+        const props:Record<string, string> = this[METADATA]?.[STANDALONE_PROPS]?.public;
+        const originProps:Record<string, propInit> = this[METADATA]?.[ORIGIN_PROPS]?.public;
 
         if (!props) return;
         // workaround: [STANDALONE_PROPS] from parent isn't overriden, just ignore
@@ -209,14 +209,13 @@ export abstract class Component<O extends Record<string, unknown> = Record<strin
 
         for (const name of Object.values(props)) {
             // prototype has methods
-            // console.log(">>>", originProps?.[name], typeof originProps?.[name], name, "<--")
-            if (scope[<keyof typeof scope>name]) {
+            if ((this.prototype as any)[name]) {
                 // also bound to origin
                 if (originProps?.[name]) {
                     this.addStandaloneProperty(name, originProps?.[name]);
-                } else this.addStandaloneMethod(name, scope[<keyof typeof scope>name]);
+                } else this.addStandaloneMethod(name, (this.prototype as any)[name]);
             }
-            // otherwise, instace property
+            // otherwise, instance property
             else this.addStandaloneProperty(name, originProps?.[name]);
         }
     }
@@ -240,8 +239,8 @@ export abstract class Component<O extends Record<string, unknown> = Record<strin
     // add instance properties that are loaded in standalone mode
     protected static standaloneProperties:standaloneProperties = {};
     protected static addStandaloneProperty(name: string, init?:propInit) {
-        if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+        if (name in (this[METADATA]?.[ID_PROPS]?.public??{})) {
+            const id = this[METADATA]?.[ID_PROPS]?.public[name];
             // // extract initializer from class source code
             // const classCode = this.toString().replace(/.*{/, '');
             // const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
@@ -251,16 +250,16 @@ export abstract class Component<O extends Record<string, unknown> = Record<strin
             // }
             this.standaloneProperties[name] = {type:'id', id, init};
         }
-        else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+        else if (name in (this[METADATA]?.[CONTENT_PROPS]?.public??{})) {
+            const id = this[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'content', id, init};
         }
-        else if (name in (this.prototype[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+        else if (name in (this[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
+            const id = this[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'layout', id, init};
         }
-        else if (name in (this.prototype[METADATA]?.[CHILD_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[CHILD_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+        else if (name in (this[METADATA]?.[CHILD_PROPS]?.public??{})) {
+            const id = this[METADATA]?.[CHILD_PROPS]?.public[name] ?? this[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'child', id, init};
         }
         // normal property
@@ -622,12 +621,12 @@ export abstract class Component<O extends Record<string, unknown> = Record<strin
 
     private handleIdProps(constructed=false){
 
-        const id_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[ID_PROPS]?.public;
-        const content_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[CONTENT_PROPS]?.public;
-        const layout_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[LAYOUT_PROPS]?.public;
+        const id_props:Record<string,string> = (this.constructor as any)[METADATA]?.[ID_PROPS]?.public;
+        const content_props:Record<string,string> = (this.constructor as any)[METADATA]?.[CONTENT_PROPS]?.public;
+        const layout_props:Record<string,string> = (this.constructor as any)[METADATA]?.[LAYOUT_PROPS]?.public;
         // only add children when constructing component, otherwise they are added twice
-        const child_props:Record<string,string> = constructed ? Object.getPrototypeOf(this)[METADATA]?.[CHILD_PROPS]?.public : undefined;
-		bindContentProperties(this, id_props, content_props, layout_props, child_props);
+        const child_props:Record<string,string> = constructed ? (this.constructor as any)[METADATA]?.[CHILD_PROPS]?.public : undefined;
+        bindContentProperties(this, id_props, content_props, layout_props, child_props);
     }
 
 
@@ -860,20 +859,19 @@ export abstract class Component<O extends Record<string, unknown> = Record<strin
     public getStandaloneInit() {
         let js_code = '';
  
-        console
         js_code += `const self = querySelector("[uix-ptr='${this.getAttribute("uix-ptr")}']");\n`
         js_code += `bindPrototype(self, globalThis.UIX_Standalone.${this.constructor.name});\n`
 
-        const scope = this.constructor.prototype;
-        const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
+        const scope = this.constructor as any;
+        const originProps:Record<string, propInit>|undefined = scope[METADATA]?.[ORIGIN_PROPS]?.public;
 
         // init props with current values
         for (const [name, data] of Object.entries((this.constructor as typeof Component).standaloneProperties)) {
             // check if prop is method
             if (typeof this[<keyof this>name] === "function") {
-                if (originProps[name] && !(this[<keyof typeof this>name] as any)[BOUND_TO_ORIGIN]) {
+                if (originProps?.[name] && !(this[<keyof this>name] as any)[BOUND_TO_ORIGIN]) {
                     // @ts-ignore $
-                    this[<keyof typeof this>name] = bindToOrigin(this[<keyof typeof this>name], this, null, originProps[name].datex);
+                    this[<keyof this>name] = bindToOrigin(this[<keyof this>name], this, null, originProps[name].datex);
                 }
                 js_code += `self["${name}"] = ${Component.getStandaloneMethodContentWithMappedImports(this[<keyof this>name] as Function)};\n`;
             }

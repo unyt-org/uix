@@ -177,7 +177,7 @@ export function include(value: undefined|string, context?: ClassFieldDecoratorCo
 }
 
 /** \@frontend decorator to declare methods that always run on the frontend */
-export function frontend(_value: undefined, context: ClassFieldDecoratorContext|ClassMethodDecoratorContext) {
+export function frontend(_value: undefined|((...args:any[])=>any), context: ClassFieldDecoratorContext|ClassMethodDecoratorContext) {
 	Decorators.setMetadata(context, STANDALONE_PROPS, context.name);
 }
 

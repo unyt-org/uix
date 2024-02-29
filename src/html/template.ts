@@ -173,7 +173,7 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
 			// workaround: immediately set metadata for class
-			(propsOrClass as any)[METADATA] = context.metadata;
+			if (context) (propsOrClass as any)[METADATA] = context.metadata;
 			const decoratedClass = initDefaultOptions(module, propsOrClass)
 			decoratedClass.template = generator
 			return decoratedClass
@@ -198,7 +198,7 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 			if (Component.isPrototypeOf(maybeClass)) {
 				maybeClass._init_module = module;
 				// workaround: immediately set metadata for class
-				(maybeClass as any)[METADATA] = context.metadata;
+				if (context) (maybeClass as any)[METADATA] = context.metadata;
 				const decoratedClass = initDefaultOptions(module, maybeClass)
 				decoratedClass.template = generator
 				return decoratedClass
@@ -214,7 +214,7 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 		if (Component.isPrototypeOf(maybeClass)) {
 			maybeClass._init_module = module;
 			// workaround: immediately set metadata for class
-			(maybeClass as any)[METADATA] = context.metadata;
+			if (context) (maybeClass as any)[METADATA] = context.metadata;
 			return initDefaultOptions(module, maybeClass)
 		}
 		// jsx

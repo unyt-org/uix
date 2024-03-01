@@ -90,8 +90,6 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 	try {
 		let loaded = false;
 
-		await Datex.MessageLogger.enable()
-
 		setTimeout(()=>{
 			if (!loaded) {
 				logger.error('❌ Timeout ' + stageEndpoint + (Object.keys(customDomains).length ? ` (${Object.keys(customDomains).map(domain=>`https://${domain}`).join(", ")})` : '') +" on " + requiredLocation);
@@ -126,8 +124,6 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 			)
 		`
 		// console.log("");
-		logger.error(container)
-
 
 		// observe container status and exit
 		const handler = async (status: ContainerStatus) => {

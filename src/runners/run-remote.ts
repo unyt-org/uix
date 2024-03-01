@@ -108,8 +108,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 		env.push(`UIX_VERSION=0.1`)
 
 		const container = await datex<any> `
-			use ContainerManager from ${requiredLocation};
-			ContainerManager.createUIXAppContainer(
+			${requiredLocation}.ContainerManager.createUIXAppContainer(
 				${repo.origin}, 
 				${repo.branch}, 
 				${stageEndpoint},

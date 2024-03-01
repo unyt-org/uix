@@ -11,6 +11,8 @@ import { getDirType } from "./utils.ts";
 import { WebSocketServerInterface } from "datex-core-legacy/network/communication-interfaces/websocket-server-interface.ts"
 import { HTTPServerInterface } from "datex-core-legacy/network/communication-interfaces/http-server-interface.ts"
 import { communicationHub } from "datex-core-legacy/network/communication-hub.ts";
+import { resolveDependencies } from "../html/dependency-resolver.ts";
+import { resolve } from "https://deno.land/std@0.172.0/path/win32.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -166,6 +168,9 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 		const {HTTP} = await import("./http-over-datex.ts")
 		HTTP.setServer(server);
 	}
+
+	// preload dependencies
+	resolveDependencies(import.meta.resolve("datex-core-legacy"))
 	
 	return {
 		defaultServer: server,

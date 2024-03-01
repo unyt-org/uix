@@ -1,4 +1,4 @@
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 const logger = new Logger("UIX Import Map");
 
@@ -46,21 +46,24 @@ export class ImportMap {
 	#readonly = true;
 	#json: {imports:Record<string,string>, scopes?:Record<string,Record<string,string>>};
 	#path?: Path;
+	#originalPath?: Path
 
 
 	#temporary_imports = new Set<string>;
 
 	get readonly() {return this.#readonly}
 	get path() {return this.#path}
+	get originalPath() {return this.#originalPath??this.#path}
 
 	static async fromPath(path:string|URL) {
 		const map = JSON.parse(<string>await new Path(path).getTextContent());
 		return new ImportMap(map, path);
 	}
 
-	constructor(map:{imports:Record<string,string>}, path?:string|URL, resetOnUnload = false) {
+	constructor(map:{imports:Record<string,string>}, path?:string|URL, resetOnUnload = false, originalPath?:Path) {
 		this.#json = map;
 		this.#path = path ? new Path(path) : undefined;
+		this.#originalPath = originalPath;
 		this.#readonly = !this.#path || this.#path.is_web;
 
 		this.clearEntriesForExtension(".dx.d.ts"); // remove temporarily created dx.d.ts entries from previous sessions
@@ -208,7 +211,7 @@ export class ImportMap {
 			}
 			mappedImports[key] = value;
 		}
-		return new ImportMap({imports:mappedImports}, newImportMapLocation, resetOnUnload);
+		return new ImportMap({imports:mappedImports}, newImportMapLocation, resetOnUnload, this.originalPath);
 	}
 }
 

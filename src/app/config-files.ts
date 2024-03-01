@@ -1,10 +1,11 @@
 // no explicit imports, should also work without import maps...
 import {getExistingFile} from "../utils/file-utils.ts";
 import { command_line_options } from "../app/args.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { Datex } from "datex-core-legacy/mod.ts";
 import type { AppPlugin } from "./app-plugin.ts";
 import { logger } from "../utils/global-values.ts";
+import { normalizedAppOptions } from "./options.ts";
 
 const default_importmap = "https://dev.cdn.unyt.org/importmap.json";
 const arg_import_map_string = command_line_options.option("import-map", {type:"string", description: "Import map path"});
@@ -15,10 +16,27 @@ const arg_import_map = (arg_import_map_string?.startsWith("http://")||arg_import
 		undefined
 	)
 
+export async function applyPlugins(plugins: AppPlugin[], rootPath:Path, appOptions: normalizedAppOptions) {
+	const config_path = getExistingFile(rootPath, './app.dx', './app.json');
+
+	if (!config_path) throw "Could not find an app.dx or app.json config file in " + new Path(rootPath).normal_pathname
+
+	// handle plugins (only if in dev environment, not on host, TODO: better solution)
+	if (plugins?.length && !Deno.env.has("UIX_HOST_ENDPOINT")) {
+		const pluginData = await datex.get<Record<string,any>>(config_path, undefined, undefined, plugins.map(p=>p.name));
+		for (const plugin of plugins) {
+			if (pluginData[plugin.name]) {
+				logger.debug(`using plugin "${plugin.name}"`);
+				await plugin.apply(pluginData[plugin.name], rootPath, appOptions)
+			}
+		}
+	}
+}
+
 /**
  * get combined config of app.dx and deno.json and command line args
  */
-export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
+export async function getAppOptions(root_path:URL) {
 	const config_path = getExistingFile(root_path, './app.dx', './app.json');
 	let config:Record<string,unknown> = {}
 	
@@ -29,18 +47,6 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 			throw "Invalid config file"
 		}
 		config = Object.fromEntries(Datex.DatexObject.entries(<Record<string, unknown>>raw_config));
-
-		// handle plugins (only if in dev environment, not on host, TODO: better solution)
-		if (plugins?.length && !Deno.env.has("UIX_HOST_ENDPOINT")) {
-			const pluginData = await datex.get<Record<string,any>>(config_path, undefined, undefined, plugins.map(p=>p.name));
-			for (const plugin of plugins) {
-				if (pluginData[plugin.name]) {
-					logger.debug(`using plugin "${plugin.name}"`);
-					await plugin.apply(pluginData[plugin.name])
-				}
-			}
-		}
-
 	}
 	else throw "Could not find an app.dx or app.json config file in " + new Path(root_path).normal_pathname
 
@@ -69,7 +75,6 @@ export async function getAppOptions(root_path:URL, plugins?: AppPlugin[]) {
 			}
 		} catch {}
 	} 
-
 
 	if (!config.import_map && !config.import_map_path) config.import_map_path = default_importmap;
 	// if (config.import_map) throw "embeded import maps are not yet supported for uix apps";

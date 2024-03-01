@@ -119,7 +119,10 @@ export default class GitDeployPlugin implements AppPlugin {
 				steps: [
 					{
 						name: 'Checkout Repo',
-						uses: 'actions/checkout@v3'
+						uses: 'actions/checkout@v3',
+						with: {
+							submodules: 'recursive'
+						}
 					},
 					{
 						name: 'Setup Deno',

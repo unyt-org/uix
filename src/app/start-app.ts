@@ -69,7 +69,9 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 	// also override endpoint default
 	if (backend_with_default_export) {
 		Datex.Runtime.endpoint_entrypoint = backend_with_default_export.entrypointProxy;
-		backend_with_default_export.content_provider[Datex.DX_SOURCE] = Datex.Runtime.endpoint.toString(); // use @@local::#entrypoint as dx source
+		const content_provider = backend_with_default_export.content_provider;
+		if ((content_provider && typeof content_provider == "object") || typeof content_provider == "function")
+			(content_provider as any)[Datex.DX_SOURCE] = Datex.Runtime.endpoint.toString(); // use @@local::#entrypoint as dx source
 	}
 
 	let server:Server|undefined

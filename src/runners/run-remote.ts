@@ -157,6 +157,7 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 	}
 
 	catch (e) {
+		console.error(e)
 		logFailure(stageEndpoint, requiredLocation, customDomains, e.message)
 	}
 

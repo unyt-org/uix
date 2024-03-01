@@ -108,9 +108,10 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
             }
         }
 
+        // inherit
+        this.virtualDatexPrototype = Object.create(this.virtualDatexPrototype)
 
         await this.loadDatexImports(this, valid_dx_files, dx_file_values);
-        await this.loadDatexImports(this.prototype, valid_dx_files, dx_file_values);
 
         this._dx_loaded_resolve?.();
     }
@@ -126,12 +127,14 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         }
     }
 
+    // used as workaround to simulate prototype inheritence of datex properties bound with @include
+    private static virtualDatexPrototype:Record<string,unknown> = {}
+
     private static async loadDatexImports(target:Component|typeof Component, valid_dx_files:string[], dx_file_values:Map<string,[any,Set<string>]>){
         const allowed_imports:Record<string,[string, string]> = target[METADATA]?.[IMPORT_PROPS]?.public
-
+        
         // try to resolve imports
         for (const [prop, [location, exprt]] of Object.entries(allowed_imports??{})) {
-
             // try to get from module dx files
             if (location == undefined) {
                 let found = false;
@@ -145,13 +148,13 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
                 for (const file_data of dx_file_values.values()) {
                     const file_val = file_data[0];
                     if (exprt == "*") {
-                        (<any>target)[prop] = file_val;
+                        this.virtualDatexPrototype[prop] = file_val;
                         found = true;
                         file_data[1].add(exprt); // remember that export was used
                         logger.debug(`using DATEX export '${exprt}' ${exprt!=prop?`as '${prop}' `:''}in '${this.name}'`);
                     }
                     else if (Datex.DatexObject.has(file_val, exprt)) {
-                        (<any>target)[prop] = Datex.DatexObject.get(file_val, exprt);
+                        this.virtualDatexPrototype[prop] = Datex.DatexObject.get(file_val, exprt);
                         found = true;
                         file_data[1].add(exprt); // remember that export was used
                         logger.debug(`using DATEX export '${exprt}' ${exprt!=prop?`as '${prop}' `:''}in '${this.name}'`);
@@ -388,6 +391,9 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
     /** wait until static (css) and dx module files loaded */
     public static async init() {
+        // init all parent components up the prototype chain (static super.init())
+        const parent = Object.getPrototypeOf(this)
+        if (parent !== Component) await Component.init.call(Object.getPrototypeOf(parent));
         await this.loadModuleDatexImports();
     }
 
@@ -687,8 +693,11 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
             return;
         }
 
+
         // make sure static component data (e.g. datex module imports) is loaded
         await (<typeof Component>this.constructor).init();
+        this.inheritDatexProperties();
+
         if (!this.reconstructed_from_dom) await this.loadTemplate();
         else this.logger.debug("Reconstructed from DOM, not creating new template content")
         this.loadDefaultStyle()
@@ -703,7 +712,8 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
         // make sure static component data (e.g. datex module imports) is loaded
         await (<typeof Component>this.constructor).init();
-        // this.loadTemplate();
+        this.inheritDatexProperties();
+
         this.loadDefaultStyle()
         await this.init();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
@@ -777,6 +787,13 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         this.options = assignDefaultPrototype(default_options, options, clone_option_keys);
     }
 
+    /**
+     * bind datex properties from virtualDatexPrototype to this instance
+     */
+    private inheritDatexProperties() {
+        Object.assign(this, (<typeof Component>this.constructor).virtualDatexPrototype);
+    }
+
 
     // init for base element (and every element)
     protected async init(constructed = false) {
@@ -798,7 +815,6 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
             // TODO: required? should probably not be called per default
             // bindObserver(this)
         })
-
 
         this.onCreateLayout?.(); // custom layout extensions
 

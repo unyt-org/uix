@@ -632,7 +632,7 @@ export class Transpiler {
 
     private applySWCFixes(source: string) {
         // fix computedKey
-        if (!source.includes("var _computedKey")) source = source.replace(/^_computedKey = /gm, 'var _computedKey = ')
+        if (!source.match(/^var _computedKey\d*/gm)) source = source.replace(/^(_computedKey\d*) = /gm, 'var $1 = ')
         return source;
     }
 

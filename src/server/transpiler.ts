@@ -10,11 +10,7 @@ const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
 const sass = client_type === "deno" ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
 
-import { transformSync } from "npm:@swc/core@1.3.101";
 
-console.log("imported everything in transpiler")
-// TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
-// const {transformSync} = client_type === "deno" ? await import("npm:@swc/core@1.3.101") : {transformSync:undefined};
 
 const logger = new Datex.Logger("transpiler");
 
@@ -583,7 +579,8 @@ export class Transpiler {
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
-
+        // TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
+        const {transformSync} = await import("npm:@swc/core@^1.4.2");
         const experimentalPlugins = useJusix ? {
             plugins: [
                 ["jusix", {}]
@@ -592,7 +589,10 @@ export class Transpiler {
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
-            const transpiled = transformSync!(await Deno.readTextFile(ts_dist_path.normal_pathname), {
+            console.log("fileread")
+            const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
+            console.log("transformstart")
+            const transpiled = transformSync!(file, {
                 jsc: {
                     parser: {
                         tsx: !!ts_dist_path.hasFileExtension("tsx"),
@@ -615,6 +615,8 @@ export class Transpiler {
                     experimental: experimentalPlugins
                 }
             }).code
+            console.log("tansformend")
+
             if (transpiled != undefined) {
                 await Deno.writeTextFile(js_dist_path.normal_pathname, 
                     this.#options.minifyJS ? 

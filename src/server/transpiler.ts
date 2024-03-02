@@ -10,7 +10,8 @@ const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
 const sass = client_type === "deno" ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
 
-
+// TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
+const {transformSync} = client_type === "deno" ? await import("npm:@swc/core@1.3.101") : {transformSync:undefined};
 
 const logger = new Datex.Logger("transpiler");
 
@@ -579,8 +580,6 @@ export class Transpiler {
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
-        // TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
-        const {transformSync} = await import("npm:@swc/core@1.3.100");
 
         const experimentalPlugins = useJusix ? {
             plugins: [

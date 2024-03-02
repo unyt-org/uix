@@ -589,7 +589,9 @@ export class Transpiler {
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
+            console.log("reading file: " + ts_dist_path.normal_pathname)
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
+            console.log("transpiling: " + ts_dist_path.normal_pathname)
             const transpiled = (await transform(file, {
                 jsc: {
                     parser: {
@@ -613,6 +615,7 @@ export class Transpiler {
                     experimental: experimentalPlugins
                 }
             })).code
+            console.log("transpiled: " + ts_dist_path.normal_pathname)
 
             if (transpiled != undefined) {
                 await Deno.writeTextFile(js_dist_path.normal_pathname, 

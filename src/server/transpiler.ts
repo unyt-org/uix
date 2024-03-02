@@ -611,15 +611,20 @@ export class Transpiler {
                     target: "esnext",
                     keepClassNames: true,
                     externalHelpers: false,
-                    experimental: experimentalPlugins
+                    experimental: experimentalPlugins,
+                    minify: this.#options.minifyJS ? 
+                        {
+                            module: true,
+                            keep_classnames: true
+                        }: 
+                        undefined
                 }
             })).code
 
             if (transpiled != undefined) {
-                await Deno.writeTextFile(js_dist_path.normal_pathname, 
-                    this.#options.minifyJS ? 
-                        await this.minifyJS(this.applySWCFixes(transpiled)) : 
-                        this.applySWCFixes(transpiled)
+                await Deno.writeTextFile(
+                    js_dist_path.normal_pathname, 
+                    this.applySWCFixes(transpiled)
                 );
             }
             else throw "unknown error"

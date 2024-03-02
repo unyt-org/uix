@@ -1,11 +1,11 @@
-import { Datex } from "datex-core-legacy/mod.ts";
+import { Datex, handleClassDecoratorWithOptionalArgs } from "datex-core-legacy/mod.ts";
 import { handleClassDecoratorWithArgs, handleClassFieldDecoratorWithOptionalArgs } from "datex-core-legacy/js_adapter/decorators.ts";
 import { getCloneKeys, Component } from "../components/Component.ts";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { getTransformWrapper } from "../uix-dom/datex-bindings/transform-wrapper.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { Decorators } from "datex-core-legacy/datex_all.ts";
+import { Class, Decorators } from "datex-core-legacy/datex_all.ts";
 
 /**
  * @defaultOptions to define component default options
@@ -58,6 +58,8 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
 		// create template class for component
 		const new_class = Datex.createTemplateClass(componentClass, datex_type, true) as ComponentClass;
 
+		// Object.defineProperty(componentClass, Datex.DX_TYPE, {set:(v)=>{console.log("set",v,new Error().stack)}, get:()=>datex_type});
+
 		componentClass[Datex.DX_TYPE] = datex_type;
 
 		const html_interface = Datex.Type.get('html').interface_config!;
@@ -74,7 +76,8 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
             const pointer = Datex.Pointer.getByValue(value)
             for (const key of datex_type.visible_children){
 				if (!html_serialized.p) html_serialized.p = {};
-                html_serialized.p[key] = pointer?.shadow_object ? pointer.shadow_object[key]/*keep references*/ : value[key];
+
+				html_serialized.p[key] = pointer?.shadow_object ? pointer.shadow_object[key]/*keep references*/ : value[key];
             }
 
 			return html_serialized;
@@ -176,9 +179,45 @@ export function include(value: undefined|string, context?: ClassFieldDecoratorCo
 	)
 }
 
-/** \@frontend decorator to declare methods that always run on the frontend */
-export function frontend(_value: undefined|((...args:any[])=>any), context: ClassFieldDecoratorContext|ClassMethodDecoratorContext) {
-	Decorators.setMetadata(context, STANDALONE_PROPS, context.name);
+type frontendClassDecoratorOptions = {
+	inheritedFields?: string[]
+}
+
+/** 
+ * \@frontend 
+ * Exposes all methods of the class to the frontend context.
+ */
+export function frontend(value: Class, context: ClassDecoratorContext): void
+/** 
+ * \@frontend 
+ * Exposes all methods of the class to the frontend context.
+ * Optionally inherited properties and methods that should be exposed to the frontend can be specified.
+ */
+export function frontend(options: frontendClassDecoratorOptions): (value: Class, context: ClassDecoratorContext) => void
+/** 
+ * \@frontend 
+ * Exposes the property or method to the frontend context.
+ */
+export function frontend(_value: undefined|((...args:any[])=>any), context: ClassFieldDecoratorContext|ClassMethodDecoratorContext): void
+export function frontend(_value: undefined|Class|((...args:any[])=>any)|frontendClassDecoratorOptions, context?: ClassDecoratorContext|ClassFieldDecoratorContext|ClassMethodDecoratorContext): any {
+	// class decorator
+	if (!context || context.kind == "class") {
+		return handleClassDecoratorWithOptionalArgs(
+			[_value as frontendClassDecoratorOptions], 
+			_value as Class, 
+			context as ClassDecoratorContext, 
+			([options], value, context) => {
+				for (const prop of [...Object.getOwnPropertyNames(value.prototype), ...options.inheritedFields??[]]) {
+					if (prop == "constructor") continue;
+					Decorators.setMetadata({...(context as unknown as ClassFieldDecoratorContext), kind:"field",name:prop}, STANDALONE_PROPS, prop);
+				}
+			}
+		)
+	}
+	// field/method decorator
+	else {
+		Decorators.setMetadata(context!, STANDALONE_PROPS, context!.name);
+	}
 }
 
 

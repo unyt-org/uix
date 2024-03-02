@@ -23,6 +23,7 @@ import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { app } from "../app/app.ts";
 import { fileExists } from "../utils/files.ts";
+import { DISPOSE_BOUND_PROTOTYPE } from "../standalone/get_prototype_properties.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -804,17 +805,10 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         const loaders = []
         for (const url of (<typeof Component>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
     
-        Datex.Pointer.onPointerForValueCreated(this, () => {
-            const pointer = Datex.Pointer.getByValue(this)!
-            if (!this.hasAttribute("uix-ptr")) this.setAttribute("uix-ptr", pointer.id);
-
-            if (this.is_skeleton && UIX.context == "frontend") {
-                this.logger.debug("hybrid initialization")
-                this.onDisplay?.();
-            }
-            // TODO: required? should probably not be called per default
-            // bindObserver(this)
-        })
+        let standaloneOnDisplayWasTriggered = false
+        if ((this as any)[DISPOSE_BOUND_PROTOTYPE]) {
+            standaloneOnDisplayWasTriggered = (this as any)[DISPOSE_BOUND_PROTOTYPE]();
+        }
 
         this.onCreateLayout?.(); // custom layout extensions
 
@@ -823,6 +817,18 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
    
         // @standlone props only relevant for backend
         if (UIX.context == "backend") this.loadStandaloneProps();
+
+        Datex.Pointer.onPointerForValueCreated(this, () => {
+            const pointer = Datex.Pointer.getByValue(this)!
+            if (!this.hasAttribute("uix-ptr")) this.setAttribute("uix-ptr", pointer.id);
+
+            if (this.is_skeleton && UIX.context == "frontend") {
+                this.logger.debug("hybrid initialization")
+                if (!standaloneOnDisplayWasTriggered) this.onDisplay?.();
+            }
+            // TODO: required? should probably not be called per default
+            // bindObserver(this)
+        })
 
         if (constructed) await this.onConstruct?.();
         // this.bindOriginMethods();

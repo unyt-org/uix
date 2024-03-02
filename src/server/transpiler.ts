@@ -580,7 +580,7 @@ export class Transpiler {
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
         // TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
-        const {transformSync} = await import("npm:@swc/core@^1.4.2");
+        const {transform} = await import("npm:@swc/core@^1.4.2");
         const experimentalPlugins = useJusix ? {
             plugins: [
                 ["jusix", {}]
@@ -589,10 +589,8 @@ export class Transpiler {
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
-            console.log("fileread " + ts_dist_path.normal_pathname)
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
-            console.log("transformstart " + ts_dist_path.normal_pathname)
-            const transpiled = transformSync!(file, {
+            const transpiled = (await transform(file, {
                 jsc: {
                     parser: {
                         tsx: !!ts_dist_path.hasFileExtension("tsx"),
@@ -614,8 +612,7 @@ export class Transpiler {
                     externalHelpers: false,
                     experimental: experimentalPlugins
                 }
-            }).code
-            console.log("tansformend " + ts_dist_path.normal_pathname)
+            })).code
 
             if (transpiled != undefined) {
                 await Deno.writeTextFile(js_dist_path.normal_pathname, 
@@ -633,6 +630,23 @@ export class Transpiler {
        
         return js_dist_path;
     }
+
+    /** only transforms one at a time */
+    // private transformQueue = new Map<string, (res:string)=>void>()
+    // private transformQueued(source: string) {
+    //     return new Promise<string>((resolve)=>{
+    //         this.transformQueue.set(source, resolve);
+    //         // transform next
+    //         if (this.transformQueue.size == 1) {
+    //             // iterate over copy of map, because transformQueue might be modified during iteration
+    //             for (const [source, resolve] of [...this.transformQueue]) {
+    //                 this.transformQueue.delete(source);
+    //                 resolve(this.transform(source));
+    //                 break;
+    //             }
+    //         }
+    //     })
+    // }
 
     private applySWCFixes(source: string) {
         // fix computedKey

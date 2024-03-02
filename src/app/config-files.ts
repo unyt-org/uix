@@ -22,7 +22,7 @@ export async function applyPlugins(plugins: AppPlugin[], rootPath:Path, appOptio
 	if (!config_path) throw "Could not find an app.dx or app.json config file in " + new Path(rootPath).normal_pathname
 
 	// handle plugins (only if in dev environment, not on host, TODO: better solution)
-	if (plugins?.length && !Deno.env.has("UIX_HOST_ENDPOINT")) {
+	if (plugins?.length && !Deno.env.get("UIX_HOST_ENDPOINT")) {
 		const pluginData = await datex.get<Record<string,any>>(config_path, undefined, undefined, plugins.map(p=>p.name));
 		for (const plugin of plugins) {
 			if (pluginData[plugin.name]) {

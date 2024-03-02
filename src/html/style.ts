@@ -56,7 +56,7 @@ export function style(style:CSSStyleSheet):((cl:typeof HTMLElement, context: Cla
  * ```
  * @param styleGenerator 
  */
-export function style(file:string|URL):((cl:typeof HTMLElement)=>any)
+export function style(file:string|URL):((cl:typeof HTMLElement, context: ClassDecoratorContext)=>any)
 
 
 export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGenerator<CSSStyleSheet, any, any, any>) {

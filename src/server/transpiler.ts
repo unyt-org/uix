@@ -579,7 +579,6 @@ export class Transpiler {
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
-        // TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
         const {transform} = await import("npm:@swc/core@^1.4.2");
 
         const experimentalPlugins = useJusix ? {
@@ -590,6 +589,12 @@ export class Transpiler {
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
+
+            // workaround: select decorators based on uix/datex version
+            let decoratorVersion = "2022-03";
+            const pathname = ts_dist_path.normal_pathname;
+            if (pathname.match(/\/uix-0\.(0|1)\.\d+\//)||pathname.match(/\/datex-core-js-legacy-0\.0\.\d+\//)) decoratorVersion = "2021-12";
+
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
             const transpiled = (await transform(file, {
                 jsc: {
@@ -601,7 +606,7 @@ export class Transpiler {
 
                     },
                     transform: {
-                        decoratorVersion: "2022-03",
+                        decoratorVersion,
                         react: {
                             runtime: "automatic",
                             importSource: "uix",

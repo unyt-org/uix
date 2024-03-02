@@ -580,7 +580,7 @@ export class Transpiler {
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
         // TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
-        const {transform} = await import("npm:@swc/core@^1.4.2");
+        const {transformSync} = await import("npm:@swc/core@1.3.100");
         const experimentalPlugins = useJusix ? {
             plugins: [
                 ["jusix", {}]

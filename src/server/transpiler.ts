@@ -592,7 +592,7 @@ export class Transpiler {
             console.log("reading file: " + this.#src_dir.toString() + " - " + ts_dist_path.normal_pathname)
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
             console.log("transpiling: " + ts_dist_path.normal_pathname)
-            const transpiled = (await transform(file, {
+            const transpiled = transformSync(file, {
                 jsc: {
                     parser: {
                         tsx: !!ts_dist_path.hasFileExtension("tsx"),
@@ -614,7 +614,7 @@ export class Transpiler {
                     externalHelpers: false,
                     experimental: experimentalPlugins
                 }
-            })).code
+            }).code
             console.log("transpiled: " + ts_dist_path.normal_pathname)
 
             if (transpiled != undefined) {

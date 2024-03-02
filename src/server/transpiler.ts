@@ -589,7 +589,7 @@ export class Transpiler {
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
         try {
-            console.log("reading file: " + ts_dist_path.normal_pathname)
+            console.log("reading file: " + ts_dist_path.normal_pathname, {scope:this.#src_dir.toString(), tmp:this.tmp_dir.normal_pathname, dist:this.dist_dir.normal_pathname})
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
             console.log("transpiling: " + ts_dist_path.normal_pathname)
             const transpiled = (await transform(file, {

@@ -632,8 +632,7 @@ export class Transpiler {
 
     private applySWCFixes(source: string) {
         // fix computedKey
-        return source
-            .replace(/^_computedKey = /gm, 'let _computedKey = ')
+        if (!source.includes("var _computedKey")) source = source.replace(/^_computedKey = /gm, 'var _computedKey = ')
     }
 
     private async minifyJS(source: string) {

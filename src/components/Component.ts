@@ -569,10 +569,11 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
                 logger.error("cannot construct UIX element from DOM because DATEX type could not be found ("+this.constructor.name+")")
                 return;
             }
+            this.reconstructed_from_dom = true;
+
             // ignore if currently hydrating static element
             if (this.hasAttribute("uix-static") || this.hasAttribute("uix-dry")) {
                 this.is_skeleton = true;
-                this.reconstructed_from_dom = true;
                 logger.debug("hydrating component " + classType);
                 // throw error if option properties are access during class instance member initialization (can't know options at this point)
                 this.options = new Proxy({}, {
@@ -582,7 +583,6 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
                 })
             }
             else {
-                this.reconstructed_from_dom = true;
                 // logger.debug("creating " + this.constructor[Datex.DX_TYPE] + " component from DOM");
                 return (<Datex.Type>classType).construct(this, [], true, true);
             }

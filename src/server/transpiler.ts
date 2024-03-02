@@ -170,7 +170,7 @@ export class Transpiler {
      */
     public async transpileDir(dir: Path.File) {
         const promises = []
-        const maxParallel = 1;
+        const maxParallel = 100;
         for await (const e of walk!(dir, {includeDirs: false, exts: this.#transpile_exts.map(x=>'.'+x)})) {
             promises.push(this.updateFile(new Path(e.path), true, true));
             if (promises.length >= maxParallel) {
@@ -580,9 +580,8 @@ export class Transpiler {
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
         // TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
-        
-        await sleep(1000000);
-        const {transformSync} = await import("npm:@swc/core@1.3.100");
+        const {transform} = await import("npm:@swc/core@^1.4.2");
+
         const experimentalPlugins = useJusix ? {
             plugins: [
                 ["jusix", {}]
@@ -594,7 +593,7 @@ export class Transpiler {
             console.log("reading file: " + this.#src_dir.toString() + " - " + ts_dist_path.normal_pathname)
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
             console.log("transpiling: " + ts_dist_path.normal_pathname)
-            const transpiled = transformSync(file, {
+            const transpiled = (await transform(file, {
                 jsc: {
                     parser: {
                         tsx: !!ts_dist_path.hasFileExtension("tsx"),
@@ -616,7 +615,7 @@ export class Transpiler {
                     externalHelpers: false,
                     experimental: experimentalPlugins
                 }
-            }).code
+            })).code
             console.log("transpiled: " + ts_dist_path.normal_pathname)
 
             if (transpiled != undefined) {
@@ -635,23 +634,6 @@ export class Transpiler {
        
         return js_dist_path;
     }
-
-    /** only transforms one at a time */
-    // private transformQueue = new Map<string, (res:string)=>void>()
-    // private transformQueued(source: string) {
-    //     return new Promise<string>((resolve)=>{
-    //         this.transformQueue.set(source, resolve);
-    //         // transform next
-    //         if (this.transformQueue.size == 1) {
-    //             // iterate over copy of map, because transformQueue might be modified during iteration
-    //             for (const [source, resolve] of [...this.transformQueue]) {
-    //                 this.transformQueue.delete(source);
-    //                 resolve(this.transform(source));
-    //                 break;
-    //             }
-    //         }
-    //     })
-    // }
 
     private applySWCFixes(source: string) {
         // fix computedKey

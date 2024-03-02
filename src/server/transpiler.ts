@@ -629,7 +629,7 @@ export class Transpiler {
             if (transpiled != undefined) {
                 await Deno.writeTextFile(
                     js_dist_path.normal_pathname, 
-                    this.applySWCFixes(transpiled)
+                    transpiled
                 );
             }
             else throw "unknown error"
@@ -640,12 +640,6 @@ export class Transpiler {
         }
        
         return js_dist_path;
-    }
-
-    private applySWCFixes(source: string) {
-        // fix computedKey
-        // if (!source.match(/^var _computedKey\d*/gm)) source = source.replace(/^(_computedKey\d*) = /gm, 'var $1 = ')
-        return source;
     }
 
     private async minifyJS(source: string) {

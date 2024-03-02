@@ -545,9 +545,8 @@ export class Transpiler {
 
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
-        return app.options?.experimentalFeatures.includes('embedded-reactivity') ?
-            this.transpileToJSSWC(ts_dist_path, true):
-            this.transpileToJSSWC(ts_dist_path, false)
+        // return this.transpileToJSDenoEmit(ts_dist_path)
+        return this.transpileToJSSWC(ts_dist_path, app.options?.experimentalFeatures.includes('embedded-reactivity'));
     }
   
     private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
@@ -565,7 +564,11 @@ export class Transpiler {
                 inlineSources: !!this.#options.sourceMap,
                 ...jsxOptions
             });
-            if (transpiled != undefined) await Deno.writeTextFile(js_dist_path.normal_pathname, transpiled);
+            if (transpiled != undefined) await Deno.writeTextFile(js_dist_path.normal_pathname, 
+                this.#options.minifyJS ? 
+                    await this.minifyJS(transpiled) : 
+                    transpiled
+                );
             else throw "unknown error"
         }
         catch (e) {
@@ -576,7 +579,8 @@ export class Transpiler {
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
-        const {transformSync} = await import("npm:@swc/core@^1.4.2");
+        // TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
+        const {transformSync} = await import("npm:@swc/core@1.3.100");
 
         const experimentalPlugins = useJusix ? {
             plugins: [

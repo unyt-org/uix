@@ -616,8 +616,8 @@ export class Transpiler {
             if (transpiled != undefined) {
                 await Deno.writeTextFile(js_dist_path.normal_pathname, 
                     this.#options.minifyJS ? 
-                        await this.minifyJS(transpiled) : 
-                        transpiled
+                        await this.minifyJS(this.applySWCFixes(transpiled)) : 
+                        this.applySWCFixes(transpiled)
                 );
             }
             else throw "unknown error"
@@ -628,6 +628,12 @@ export class Transpiler {
         }
        
         return js_dist_path;
+    }
+
+    private applySWCFixes(source: string) {
+        // fix computedKey
+        return source
+            .replace(/^_computedKey = /gm, 'let _computedKey = ')
     }
 
     private async minifyJS(source: string) {

@@ -580,7 +580,7 @@ export class Transpiler {
 
     private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
         // TODO: investigate/bug report: later versions lead to Segfault in docker containers with deno 1.41
-        const {transformSync} = await import("npm:@swc/core@1.3.100");
+        const {transformSync} = await import("npm:@swc/core@1.3.107");
 
         const experimentalPlugins = useJusix ? {
             plugins: [
@@ -632,7 +632,7 @@ export class Transpiler {
 
     private applySWCFixes(source: string) {
         // fix computedKey
-        if (!source.match(/^var _computedKey\d*/gm)) source = source.replace(/^(_computedKey\d*) = /gm, 'var $1 = ')
+        // if (!source.match(/^var _computedKey\d*/gm)) source = source.replace(/^(_computedKey\d*) = /gm, 'var $1 = ')
         return source;
     }
 

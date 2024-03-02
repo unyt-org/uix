@@ -170,7 +170,7 @@ export class Transpiler {
      */
     public async transpileDir(dir: Path.File) {
         const promises = []
-        const maxParallel = 100;
+        const maxParallel = 1;
         for await (const e of walk!(dir, {includeDirs: false, exts: this.#transpile_exts.map(x=>'.'+x)})) {
             promises.push(this.updateFile(new Path(e.path), true, true));
             if (promises.length >= maxParallel) {

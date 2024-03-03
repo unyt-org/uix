@@ -76,8 +76,7 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
             const pointer = Datex.Pointer.getByValue(value)
             for (const key of datex_type.visible_children){
 				if (!html_serialized.p) html_serialized.p = {};
-
-				html_serialized.p[key] = pointer?.shadow_object ? pointer.shadow_object[key]/*keep references*/ : value[key];
+				html_serialized.p[key] = pointer?.shadow_object?.[key] ?? value[key];
             }
 
 			return html_serialized;
@@ -187,19 +186,19 @@ type frontendClassDecoratorOptions = {
  * \@frontend 
  * Exposes all methods of the class to the frontend context.
  */
-export function frontend(value: Class, context: ClassDecoratorContext): void
+export function standalone(value: Class, context: ClassDecoratorContext): void
 /** 
  * \@frontend 
  * Exposes all methods of the class to the frontend context.
  * Optionally inherited properties and methods that should be exposed to the frontend can be specified.
  */
-export function frontend(options: frontendClassDecoratorOptions): (value: Class, context: ClassDecoratorContext) => void
+export function standalone(options: frontendClassDecoratorOptions): (value: Class, context: ClassDecoratorContext) => void
 /** 
  * \@frontend 
  * Exposes the property or method to the frontend context.
  */
-export function frontend(_value: undefined|((...args:any[])=>any), context: ClassFieldDecoratorContext|ClassMethodDecoratorContext): void
-export function frontend(_value: undefined|Class|((...args:any[])=>any)|frontendClassDecoratorOptions, context?: ClassDecoratorContext|ClassFieldDecoratorContext|ClassMethodDecoratorContext): any {
+export function standalone(_value: undefined|((...args:any[])=>any), context: ClassFieldDecoratorContext|ClassMethodDecoratorContext): void
+export function standalone(_value: undefined|Class|((...args:any[])=>any)|frontendClassDecoratorOptions, context?: ClassDecoratorContext|ClassFieldDecoratorContext|ClassMethodDecoratorContext): any {
 	// class decorator
 	if (!context || context.kind == "class") {
 		return handleClassDecoratorWithOptionalArgs(
@@ -219,6 +218,8 @@ export function frontend(_value: undefined|Class|((...args:any[])=>any)|frontend
 		Decorators.setMetadata(context!, STANDALONE_PROPS, context!.name);
 	}
 }
+
+// TODO: @frontend decorator for functions (equivalent to :frontend attributes)
 
 
 /** @bindOrigin to declare methods that work in a standlone context, but are executed in the original context */

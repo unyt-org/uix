@@ -214,7 +214,7 @@ export function incrementCounter() {
 Nevertheless, there are some constraints you should keep in mind:
  1) Variables that are accessed with `use()` are readonly - they cannot be reassigned. The values are immutable per default. This restriction does not apply to pointer values: if you need mutable values, use pointers.
  2) All values accessed with `use()` must be DATEX-compatible
- 3) `use()` declarations for a context without a loaded DATEX runtime (this is the case when using `renderBackend`) must be called with the `"no-datex"` flag: `use("no-datex", ...)`.<br>
+ 3) `use()` declarations for a context without a loaded DATEX runtime (this is the case when using `renderBackend`) must be called with the `"standalone"` flag: `use("standalone, ...)`.<br>
   With this flag, additional restrictions apply to `use()` declarations:
     * Pointer values are also immutable
     * Only JSON-compatible values and functions are supported as dependency values and as arguments/return values of functions that were injected as dependencies.
@@ -268,7 +268,7 @@ In this case, we have a full DATEX runtime on the client and are not restricted 
 
 If we want to achieve the same thing using `renderBackend`, we need to modify or code to only use JSON-compatible values.
 To allow the event handler function to run in a context without a DATEX Runtime leading to the restrictions just mentioned,
-we need to add the `"no-datex"` flag to the `use()` declaration: 
+we need to add the `"standalone"` flag to the `use()` declaration: 
 
 
 ```tsx
@@ -286,7 +286,7 @@ function getData(name: string, count: number) {
 export default renderBackend(
     <div>
         <button onclick:frontend={async () => {
-            use ("no-datex", getData); // enable access to getData in the frontend context (browser client)
+            use ("standalone", getData); // enable access to getData in the frontend context (browser client)
             const data = await getData("alex", 99999999); // call getData() on backend and get result
             document.getElementById("data").innerText = data.map["data"]; // update dom element content
         }}>Load Data</button>
@@ -296,7 +296,7 @@ export default renderBackend(
 ```
 
 > [!NOTE]
-> The `"no-datex"` flag can also be set when rendering with `renderHybrid`. In this case, the
+> The `"standalone"` flag can also be set when rendering with `renderHybrid`. In this case, the
 > event handler function is already activated before the DATEX Runtime is fully initialized, 
 > leading to faster
 > initial response times.

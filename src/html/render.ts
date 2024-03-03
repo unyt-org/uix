@@ -299,7 +299,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 					}
 					catch (e) {
 						// if skip datex functions enabled, this function is just ignored and later activated via DATEX
-						// (throws if "no-datex" is not set)
+						// (throws if "standalone" is not set)
 						if (!opts?.allowIgnoreDatexFunctions) throw e;
 					}
 				}
@@ -388,8 +388,8 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 	const dependencies = listenerFn instanceof JSTransferableFunction ? listenerFn.deps : {};
 
 	const keys = listenerFn instanceof JSTransferableFunction ? Object.keys(listenerFn.deps) : null;
-	if (listenerFn instanceof JSTransferableFunction && keys!.length && !(keys!.length == 1 && keys![0] === "this") && !listenerFn.flags?.includes("no-datex")) {
-		throw new Error('use() declaration must have a "no-datex" flag because the context has no DATEX runtime: use("no-datex")')
+	if (listenerFn instanceof JSTransferableFunction && keys!.length && !(keys!.length == 1 && keys![0] === "this") && !listenerFn.flags?.includes("standalone")) {
+		throw new Error('use() declaration must have a "standalone" flag because the context has no DATEX runtime: use("standalone")')
 	}
 
 	let hasContext = false;

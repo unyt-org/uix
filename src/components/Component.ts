@@ -24,6 +24,8 @@ import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { app } from "../app/app.ts";
 import { fileExists } from "../utils/files.ts";
 import { DISPOSE_BOUND_PROTOTYPE } from "../standalone/get_prototype_properties.ts";
+import { getDeclaredExternalVariables, getDeclaredExternalVariablesAsync } from "datex-core-legacy/types/function-utils.ts";
+import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
@@ -196,22 +198,24 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     private static standalone_loaded = new Set<typeof Component>();
     private static standalone_class_code = new Map<typeof Component,string>();
 
-    private static loadStandaloneProps() {
+    private static async loadStandaloneProps() {
         if (this.standalone_loaded.has(this)) return;
         this.standalone_loaded.add(this);
 
         this.standaloneMethods = {};
         this.standaloneProperties = {};
 
-        const parentProps = (Object.getPrototypeOf(this))?.[METADATA]?.[STANDALONE_PROPS]?.public;
         const props:Record<string, string> = this[METADATA]?.[STANDALONE_PROPS]?.public;
         const originProps:Record<string, propInit> = this[METADATA]?.[ORIGIN_PROPS]?.public;
+        const idProps:Record<string,string> = this[METADATA]?.[ID_PROPS]?.public;
+        const layoutProps:Record<string,string> = this[METADATA]?.[LAYOUT_PROPS]?.public;
+        const contentProps:Record<string,string> = this[METADATA]?.[CONTENT_PROPS]?.public;
+        const childProps:Record<string,string> = this[METADATA]?.[CHILD_PROPS]?.public;
 
-        if (!props) return;
-        // workaround: [STANDALONE_PROPS] from parent isn't overriden, just ignore
-        if (parentProps === props) return;
-
-        for (const name of Object.values(props)) {
+        const allStandaloneProps = {...props, ...idProps, ...layoutProps, ...contentProps, ...childProps};
+        
+        // TODO: required? workaround: if [STANDALONE_PROPS] from parent isn't overriden, skip this:
+        for (const name of Object.values(allStandaloneProps)) {
             // prototype has methods
             if ((this.prototype as any)[name]) {
                 // also bound to origin
@@ -221,6 +225,27 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
             }
             // otherwise, instance property
             else this.addStandaloneProperty(name, originProps?.[name]);
+        }
+      
+        const type = Datex.Type.getClassDatexType(this as any)!
+
+        // check if prototype methods include use() statement
+        for (const name of Object.getOwnPropertyNames(this.prototype)) {
+            if (name == "constructor") continue;
+            const method = (this.prototype as any)[name];
+            const useDeclaration = JSTransferableFunction.functionIsAsync(method) ? await getDeclaredExternalVariablesAsync(method) : getDeclaredExternalVariables(method);
+            // just standalone, no external variables
+            if (useDeclaration.flags?.includes("standalone") && !Object.keys(useDeclaration.vars).length) {
+                this.addStandaloneMethod(name, method);
+            }
+            // (standalone) transferable function
+            else if (Object.keys(useDeclaration.vars).length) {
+                (this.prototype as any)[name] = $$(JSTransferableFunction.create(method, undefined, useDeclaration)); 
+                if (useDeclaration.flags?.includes("standalone")) this.addStandaloneMethod(name, (this.prototype as any)[name]);
+                // also override type template to add overridden transferable function as datex property
+                type.template[name] = Datex.Type.js.TransferableFunction;
+                type.setTemplate(type.template);
+            }
         }
     }
 
@@ -287,6 +312,10 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         js_code += this.getStandaloneConstructor();
         for (const [_name, content] of Object.entries(this.standaloneMethods)) {
             js_code += this.getStandaloneMethodContentWithMappedImports(content) + '\n';
+            if (content instanceof JSTransferableFunction && content.deps) {
+                // TODO:
+                throw new Error("Injecting variable with use('standalone') is currently not supported for component methods.")
+            }
         }
         js_code += '}'
 
@@ -312,8 +341,13 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
             return `${g1}("${convertToWebPath(absImport)}")`
         })
+        // transferable funciton
+        if (method instanceof JSTransferableFunction) 
+            return content.replace(/^(async )?function/, '');
+        
         if (name)
             return content.replace("function", name);
+
         return content;
     }
 
@@ -816,7 +850,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         this.handleIdProps(constructed);
    
         // @standlone props only relevant for backend
-        if (UIX.context == "backend") this.loadStandaloneProps();
+        if (UIX.context == "backend") await this.loadStandaloneProps();
 
         Datex.Pointer.onPointerForValueCreated(this, () => {
             const pointer = Datex.Pointer.getByValue(this)!
@@ -840,10 +874,10 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     }
 
     // load standalone props recursively, including all parent classes
-    private loadStandaloneProps() {
+    private async loadStandaloneProps() {
         let clss = <any>this.constructor;
         do {
-            (<typeof Component>clss).loadStandaloneProps();
+            await (<typeof Component>clss).loadStandaloneProps();
         } while ((clss=Object.getPrototypeOf(Object.getPrototypeOf(clss))) && clss != domContext.HTMLElement && clss != domContext.Element && clss != Object); //  prototype chain, skip proxies inbetween
     }
 

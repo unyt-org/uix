@@ -1,4 +1,4 @@
-import { Path } from "../utils/path.ts"; 
+import { Path } from "datex-core-legacy/utils/path.ts"; 
 import { Datex } from "datex-core-legacy";
 import { TypescriptImportResolver } from "./ts-import-resolver.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
@@ -33,8 +33,9 @@ export type transpiler_options = {
     import_resolver?: TypescriptImportResolver,
     dist_parent_dir?: Path.File, // parent dir for dist dirs
     dist_dir?: Path.File, // use different path for dist (default: generated tmp dir)
-    sourceMap?: boolean // generate inline source maps when transpiling ts,
+    sourceMaps?: boolean // generate inline source maps when transpiling ts,
     minifyJS?: boolean // minify js files after transpiling
+    basePath?: Path.File
 }
 
 type transpiler_options_all = Required<transpiler_options>;
@@ -88,7 +89,7 @@ export class Transpiler {
 
     // returns true if the file has to be transpiled 
     isTranspiledFile(path:Path) {
-        return path.hasFileExtension(...this.#transpile_exts) && !path.hasFileExtension('d.ts')
+        return (path.hasFileExtension(...this.#transpile_exts, 'map')) && !path.hasFileExtension('d.ts')
     }
 
     // returns true if the tranpiled file has the same name as the src file (e.g. x.css -> x.css)
@@ -351,7 +352,7 @@ export class Transpiler {
     }
 
     protected async transpileTS(dist_path:Path.File, src_path:Path.File) {
-        const js_dist_path = await this.transpileToJS(dist_path)
+        const js_dist_path = await this.transpileToJS(dist_path, src_path)
         if (this.import_resolver) {
             await this.import_resolver.resolveImports(dist_path, src_path, true); // resolve imports in ts, no side effects (don't update referenced module files)
             await this.import_resolver.resolveImports(js_dist_path, src_path)
@@ -525,7 +526,7 @@ export class Transpiler {
         if (dist_path_js && await dist_path_js.fsExists()) await Deno.remove(dist_path_js)
     }
 
-    private transpileToJS(ts_dist_path: Path.File) {
+    private transpileToJS(ts_dist_path: Path.File, src_path: Path.File) {
 
 
         // check if corresponding ts file exists
@@ -546,7 +547,7 @@ export class Transpiler {
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
         // return this.transpileToJSDenoEmit(ts_dist_path)
-        return this.transpileToJSSWC(ts_dist_path, app.options?.experimentalFeatures.includes('embedded-reactivity'));
+        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.experimentalFeatures.includes('embedded-reactivity'));
     }
   
     private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
@@ -560,8 +561,8 @@ export class Transpiler {
             } as const : null;
             // TODO: remove jsxAutomatic:true, currently only because of caching problems
             const transpiled = await transpile(await Deno.readTextFile(ts_dist_path.normal_pathname), {
-                inlineSourceMap: !!this.#options.sourceMap, 
-                inlineSources: !!this.#options.sourceMap,
+                inlineSourceMap: !!this.#options.sourceMaps, 
+                inlineSources: !!this.#options.sourceMaps,
                 ...jsxOptions
             });
             if (transpiled != undefined) await Deno.writeTextFile(js_dist_path.normal_pathname, 
@@ -578,7 +579,7 @@ export class Transpiler {
         return js_dist_path;
     }
 
-    private async transpileToJSSWC(ts_dist_path: Path.File, useJusix = false) {
+    private async transpileToJSSWC(ts_dist_path: Path.File, src_path: Path.File, useJusix = false) {
         const {transform} = await import("npm:@swc/core@^1.4.2");
 
         const experimentalPlugins = useJusix ? {
@@ -596,7 +597,8 @@ export class Transpiler {
             if (pathname.match(/\/uix-0\.(0|1)\.\d+\//)||pathname.match(/\/datex-core-js-legacy-0\.0\.\d+\//)) decoratorVersion = "2021-12";
 
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
-            const transpiled = (await transform(file, {
+            let {code: transpiled, map} = await transform(file, {
+                sourceMaps: !!this.#options.sourceMaps,
                 jsc: {
                     parser: {
                         tsx: !!ts_dist_path.hasFileExtension("tsx"),
@@ -617,19 +619,31 @@ export class Transpiler {
                     keepClassNames: true,
                     externalHelpers: false,
                     experimental: experimentalPlugins,
-                    minify: this.#options.minifyJS ? 
+                    minify: (this.#options.minifyJS && this.#options.sourceMaps) ? 
                         {
                             module: true,
                             keep_classnames: true
                         }: 
                         undefined
                 }
-            })).code
+            });
+            if (map) {
+                transpiled = transpiled + `\n//# sourceMappingURL=./${ts_dist_path.filename}.map`;
+                const jsonMap = JSON.parse(map);
+                if (this.#options.basePath) jsonMap.sourceRoot = src_path.parent_dir.getAsRelativeFrom(this.#options.basePath).replace(/^\.\//, '/').replace(/\/[^/]+\/@uix\/src/,'');
+                jsonMap.file = src_path.filename;
+                jsonMap.sources[0] = src_path.filename;
+                await Deno.writeTextFile(
+                    ts_dist_path.normal_pathname + ".map", 
+                    JSON.stringify(jsonMap)
+                );
+            }
 
             if (transpiled != undefined) {
+                const minifyOptimized = this.#options.minifyJS && !this.#options.sourceMaps
                 await Deno.writeTextFile(
                     js_dist_path.normal_pathname, 
-                    transpiled
+                    minifyOptimized ? await this.minifyJS(transpiled) : transpiled
                 );
             }
             else throw "unknown error"

@@ -4,7 +4,7 @@ import { TypescriptImportResolver } from "../server/ts-import-resolver.ts";
 import { $$, Datex } from "datex-core-legacy";
 import { Server, requestMetadata } from "../server/server.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "./app.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { BackendManager } from "./backend-manager.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file-utils.ts";
 import { logger } from "../utils/global-values.ts";
@@ -87,11 +87,12 @@ export class FrontendManager extends HTMLProvider {
 
 	initFrontendDir(){
 		this.transpiler = new Transpiler(this.scope, {
-			sourceMap: app.stage == "dev",
+			sourceMaps: this.app_options.source_maps ?? app.stage == "dev",
 			watch: this.#watch,
 			minifyJS: this.app_options.minify_js,
 			import_resolver: this.import_resolver,
-			on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined
+			on_file_update: this.#watch ? ()=>this.handleFrontendReload() : undefined,
+			basePath: this.#base_path
 		});
 	}
 
@@ -104,7 +105,7 @@ export class FrontendManager extends HTMLProvider {
 	intCommonDirs() {
 		for (const common_dir of this.app_options.common) {
 			const transpiler = new Transpiler(new Path(common_dir), {
-				sourceMap: app.stage == "dev",
+				sourceMaps: this.app_options.source_maps ?? app.stage == "dev",
 				dist_parent_dir: this.transpiler.tmp_dir,
 				watch: this.#watch,
 				minifyJS: this.app_options.minify_js,
@@ -118,7 +119,8 @@ export class FrontendManager extends HTMLProvider {
 						this.#backend?.handleUpdate("common");
 					}
 					this.handleFrontendReload();
-				} : undefined
+				} : undefined,
+				basePath: this.#base_path
 			})
 			this.#common_transpilers.set(common_dir.toString(), [transpiler, this.srcPrefix + new Path(common_dir).name + '/'])
 
@@ -190,7 +192,7 @@ export class FrontendManager extends HTMLProvider {
 
 
 	#backend?: BackendManager
-	#base_path!:Path
+	#base_path!:Path.File
 	#web_path!: Path
 	#entrypoint?: Path
 

@@ -622,8 +622,15 @@ export class Transpiler {
                     minify: (this.#options.minifyJS && this.#options.sourceMaps) ? 
                         {
                             module: true,
-                            keep_classnames: true
-                        }: 
+                            compress: {
+                                unused: true
+                            },
+                            mangle: {
+                                toplevel: true,
+                                keep_classnames: true,
+                                keep_fnames: false
+                            }
+                        } : 
                         undefined
                 }
             });

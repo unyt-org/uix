@@ -29,3 +29,8 @@ UIX transpiles and minifies each TypeScript module individually.
 Modules are not bundled.
 
 You can disable minification by setting `minify_js: false` in the `app.dx` configuration file.
+
+# Source Maps
+
+Source maps are enabled for the `dev` stage per default and disabled for other stages.
+You can explicitly enable or disable source maps by setting the `source_maps` configuration option in the `app.dx` file.

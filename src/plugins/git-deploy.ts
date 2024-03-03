@@ -4,13 +4,17 @@ import { GitRepo } from "../utils/git.ts";
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
 import { Datex } from "datex-core-legacy/mod.ts";
 import { isCIRunner } from "../utils/check-ci.ts";
+import { normalizedAppOptions } from "../app/options.ts";
+import { app } from "../app/app.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
+import { getInferredRunPaths } from "../app/options.ts";
 
 const logger = new Logger("Git Deploy Plugin");
 
 export default class GitDeployPlugin implements AppPlugin {
 	name = "git_deploy"
 
-	async apply(data: Record<string, unknown>) {
+	async apply(data: Record<string, unknown>, rootPath: Path.File, appOptions: normalizedAppOptions) {
 
 		// don't update CI workflows from inside a CI runner
 		if (isCIRunner()) {
@@ -28,7 +32,7 @@ export default class GitDeployPlugin implements AppPlugin {
 		const workflowDir = await gitRepo.initWorkflowDirectory();
 
 		// TODO: also support gitlab
-		const workflows = this.generateGithubWorkflows(data);
+		const workflows = this.generateGithubWorkflows(data, rootPath, appOptions);
 
 		// first delete all old uix-deploy.yml files
 		for await (const entry of Deno.readDir(workflowDir.normal_pathname)) {
@@ -43,8 +47,10 @@ export default class GitDeployPlugin implements AppPlugin {
 
 	}
 
-	generateGithubWorkflows(data: Record<string, unknown>) {
+	generateGithubWorkflows(data: Record<string, unknown>, rootPath: Path.File, appOptions: normalizedAppOptions) {
 		const workflows: Record<string,string> = {}
+
+		const {importMapPath, uixRunPath} = getInferredRunPaths(appOptions.import_map, rootPath)
 
 		for (let [stage, config] of Object.entries(data)) {
 			config = Object.fromEntries(Datex.DatexObject.entries(config));
@@ -55,10 +61,10 @@ export default class GitDeployPlugin implements AppPlugin {
 			const tests = config.tests ?? true;
 
 			const useDevCDN = config.useDevCDN;
-			const importmapPath = useDevCDN ? "https://dev.cdn.unyt.org/importmap.json" : "https://cdn.unyt.org/importmap.json"
-			const importmapPathUIX = useDevCDN ? "https://dev.cdn.unyt.org/uix1/importmap.dev.json" : "https://cdn.unyt.org/uix/importmap.json"
+			const importmapPath = useDevCDN ? "https://dev.cdn.unyt.org/importmap.json" : (importMapPath??"https://cdn.unyt.org/importmap.json")
+			const importmapPathUIX = useDevCDN ? "https://dev.cdn.unyt.org/uix1/importmap.dev.json" : (importMapPath??"https://cdn.unyt.org/importmap.json")
 			const testRunPath = useDevCDN ? "https://dev.cdn.unyt.org/unyt_tests/run.ts" : "https://cdn.unyt.org/unyt-tests/run.ts"
-			const uixRunPath = useDevCDN ? "https://dev.cdn.unyt.org/uix1/run.ts" : "https://cdn.unyt.org/uix/run.ts"
+			const uixRunnerPath = useDevCDN ? "https://dev.cdn.unyt.org/uix1/run.ts" : (uixRunPath??"https://cdn.unyt.org/uix/run.ts")
 
 			if (branch && branch !== "*") {
 				on = {
@@ -90,10 +96,7 @@ export default class GitDeployPlugin implements AppPlugin {
 					},
 					{
 						name: 'Setup Deno',
-						uses: 'denoland/setup-deno@v1',
-						with: {
-							'deno-version': '1.39.4'
-						}
+						uses: 'denoland/setup-deno@v1'
 					},
 					{
 						name: 'Run Tests',
@@ -116,18 +119,18 @@ export default class GitDeployPlugin implements AppPlugin {
 				steps: [
 					{
 						name: 'Checkout Repo',
-						uses: 'actions/checkout@v3'
-					},
-					{
-						name: 'Setup Deno',
-						uses: 'denoland/setup-deno@v1',
+						uses: 'actions/checkout@v3',
 						with: {
-							'deno-version': '1.39.4'
+							submodules: 'recursive'
 						}
 					},
 					{
+						name: 'Setup Deno',
+						uses: 'denoland/setup-deno@v1'
+					},
+					{
 						name: 'Deploy UIX App',
-						run: `deno run --importmap ${importmapPathUIX} -Aqr ${uixRunPath} --stage ${stage} --detach` + (args ? ' ' + args.join(" ") : '') + (env_strings ? ' ' + env_strings.join(" ") : '')
+						run: `deno run --importmap ${importmapPathUIX} -Aqr ${uixRunnerPath} --stage ${stage} --detach` + (args ? ' ' + args.join(" ") : '') + (env_strings ? ' ' + env_strings.join(" ") : '')
 					}
 				]
 			}

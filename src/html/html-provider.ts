@@ -41,7 +41,7 @@ export class HTMLProvider {
 	resolveForBackend(path:string|URL):string {
 		path = path.toString();
 		if (path.startsWith("uix://")) path = new Path("." + path.replace("uix:///@uix/src",""), this.base_path).toString();
-		return import.meta.resolve(path)
+		return Path.pathIsURL(path) ? path.toString() : import.meta.resolve(path)
 	}
 
 	getRelativeImportMap() {

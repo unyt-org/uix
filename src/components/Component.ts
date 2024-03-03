@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-async-promise-executor
-import { constructor, Datex, property, replicator, template, get} from "datex-core-legacy"
+import { Datex, property, get} from "datex-core-legacy"
 import { logger } from "../utils/global-values.ts"
 import { Class, Logger, METADATA, ValueError } from "datex-core-legacy/datex_all.ts"
 import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, ORIGIN_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
@@ -17,27 +17,24 @@ import { BOUND_TO_ORIGIN, bindToOrigin, getValueInitializer } from "../app/datex
 import type { DynamicCSSStyleSheet } from "../utils/css-template-strings.ts";
 import { addCSSScopeSelector } from "../utils/css-scoping.ts"
 import { jsxInputGenerator } from "../html/template.ts";
-import { bindObserver, domContext, domUtils } from "../app/dom-context.ts";
+import { domContext, domUtils } from "../app/dom-context.ts";
 import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { app } from "../app/app.ts";
 import { fileExists } from "../utils/files.ts";
+import { DISPOSE_BOUND_PROTOTYPE } from "../standalone/get_prototype_properties.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
 export type standalonePropertyData = {type:'prop'}
 export type standaloneProperties = Record<string, (standaloneContentPropertyData | standalonePropertyData) & {init?:propInit }>;
 
-// deno-lint-ignore no-namespace
-export namespace Component {
-    export interface Options {
-        title?: string
-    }
-}
+// deno-lint-ignore no-empty-interface
+interface Options {}
 
 // @template("uix:component") 
-export abstract class Component<O = Component.Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
+export abstract class Component<O extends Options = Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -49,7 +46,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     ]
     
 
-    static DEFAULT_OPTIONS:Component.Options = {};
+    static DEFAULT_OPTIONS = {};
     static CLONE_OPTION_KEYS: Set<string> // list of all default option keys that need to be cloned when options are initialized (non-primitive options)
 
     // guessing module stylesheets, get added to normal stylesheets array after successful fetch
@@ -112,9 +109,10 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             }
         }
 
+        // inherit
+        this.virtualDatexPrototype = Object.create(this.virtualDatexPrototype)
 
         await this.loadDatexImports(this, valid_dx_files, dx_file_values);
-        await this.loadDatexImports(this.prototype, valid_dx_files, dx_file_values);
 
         this._dx_loaded_resolve?.();
     }
@@ -130,12 +128,14 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         }
     }
 
+    // used as workaround to simulate prototype inheritence of datex properties bound with @include
+    private static virtualDatexPrototype:Record<string,unknown> = {}
+
     private static async loadDatexImports(target:Component|typeof Component, valid_dx_files:string[], dx_file_values:Map<string,[any,Set<string>]>){
         const allowed_imports:Record<string,[string, string]> = target[METADATA]?.[IMPORT_PROPS]?.public
-
+        
         // try to resolve imports
         for (const [prop, [location, exprt]] of Object.entries(allowed_imports??{})) {
-
             // try to get from module dx files
             if (location == undefined) {
                 let found = false;
@@ -149,13 +149,13 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 for (const file_data of dx_file_values.values()) {
                     const file_val = file_data[0];
                     if (exprt == "*") {
-                        (<any>target)[prop] = file_val;
+                        this.virtualDatexPrototype[prop] = file_val;
                         found = true;
                         file_data[1].add(exprt); // remember that export was used
                         logger.debug(`using DATEX export '${exprt}' ${exprt!=prop?`as '${prop}' `:''}in '${this.name}'`);
                     }
                     else if (Datex.DatexObject.has(file_val, exprt)) {
-                        (<any>target)[prop] = Datex.DatexObject.get(file_val, exprt);
+                        this.virtualDatexPrototype[prop] = Datex.DatexObject.get(file_val, exprt);
                         found = true;
                         file_data[1].add(exprt); // remember that export was used
                         logger.debug(`using DATEX export '${exprt}' ${exprt!=prop?`as '${prop}' `:''}in '${this.name}'`);
@@ -197,17 +197,15 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     private static standalone_class_code = new Map<typeof Component,string>();
 
     private static loadStandaloneProps() {
-        const scope = this.prototype;
-
         if (this.standalone_loaded.has(this)) return;
         this.standalone_loaded.add(this);
 
         this.standaloneMethods = {};
         this.standaloneProperties = {};
 
-        const parentProps = (Object.getPrototypeOf(this).prototype)?.[METADATA]?.[STANDALONE_PROPS]?.public;
-        const props:Record<string, string> = scope[METADATA]?.[STANDALONE_PROPS]?.public;
-        const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
+        const parentProps = (Object.getPrototypeOf(this))?.[METADATA]?.[STANDALONE_PROPS]?.public;
+        const props:Record<string, string> = this[METADATA]?.[STANDALONE_PROPS]?.public;
+        const originProps:Record<string, propInit> = this[METADATA]?.[ORIGIN_PROPS]?.public;
 
         if (!props) return;
         // workaround: [STANDALONE_PROPS] from parent isn't overriden, just ignore
@@ -215,14 +213,13 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
 
         for (const name of Object.values(props)) {
             // prototype has methods
-            // console.log(">>>", originProps?.[name], typeof originProps?.[name], name, "<--")
-            if (scope[<keyof typeof scope>name]) {
+            if ((this.prototype as any)[name]) {
                 // also bound to origin
                 if (originProps?.[name]) {
                     this.addStandaloneProperty(name, originProps?.[name]);
-                } else this.addStandaloneMethod(name, scope[<keyof typeof scope>name]);
+                } else this.addStandaloneMethod(name, (this.prototype as any)[name]);
             }
-            // otherwise, instace property
+            // otherwise, instance property
             else this.addStandaloneProperty(name, originProps?.[name]);
         }
     }
@@ -246,8 +243,8 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     // add instance properties that are loaded in standalone mode
     protected static standaloneProperties:standaloneProperties = {};
     protected static addStandaloneProperty(name: string, init?:propInit) {
-        if (name in (this.prototype[METADATA]?.[ID_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+        if (name in (this[METADATA]?.[ID_PROPS]?.public??{})) {
+            const id = this[METADATA]?.[ID_PROPS]?.public[name];
             // // extract initializer from class source code
             // const classCode = this.toString().replace(/.*{/, '');
             // const propertyCode = classCode.match(new RegExp(String.raw`\b${name}\s*=\s*([^;]*)\;`))?.[1];
@@ -257,16 +254,16 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             // }
             this.standaloneProperties[name] = {type:'id', id, init};
         }
-        else if (name in (this.prototype[METADATA]?.[CONTENT_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+        else if (name in (this[METADATA]?.[CONTENT_PROPS]?.public??{})) {
+            const id = this[METADATA]?.[CONTENT_PROPS]?.public[name] ?? this[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'content', id, init};
         }
-        else if (name in (this.prototype[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+        else if (name in (this[METADATA]?.[LAYOUT_PROPS]?.public??{})) {
+            const id = this[METADATA]?.[LAYOUT_PROPS]?.public[name] ?? this[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'layout', id, init};
         }
-        else if (name in (this.prototype[METADATA]?.[CHILD_PROPS]?.public??{})) {
-            const id = this.prototype[METADATA]?.[CHILD_PROPS]?.public[name] ?? this.prototype[METADATA]?.[ID_PROPS]?.public[name];
+        else if (name in (this[METADATA]?.[CHILD_PROPS]?.public??{})) {
+            const id = this[METADATA]?.[CHILD_PROPS]?.public[name] ?? this[METADATA]?.[ID_PROPS]?.public[name];
             this.standaloneProperties[name] = {type:'child', id, init};
         }
         // normal property
@@ -395,6 +392,9 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
 
     /** wait until static (css) and dx module files loaded */
     public static async init() {
+        // init all parent components up the prototype chain (static super.init())
+        const parent = Object.getPrototypeOf(this)
+        if (parent !== Component) await Component.init.call(Object.getPrototypeOf(parent));
         await this.loadModuleDatexImports();
     }
 
@@ -570,10 +570,11 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 logger.error("cannot construct UIX element from DOM because DATEX type could not be found ("+this.constructor.name+")")
                 return;
             }
+            this.reconstructed_from_dom = true;
+
             // ignore if currently hydrating static element
             if (this.hasAttribute("uix-static") || this.hasAttribute("uix-dry")) {
                 this.is_skeleton = true;
-                this.reconstructed_from_dom = true;
                 logger.debug("hydrating component " + classType);
                 // throw error if option properties are access during class instance member initialization (can't know options at this point)
                 this.options = new Proxy({}, {
@@ -583,7 +584,6 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 })
             }
             else {
-                this.reconstructed_from_dom = true;
                 // logger.debug("creating " + this.constructor[Datex.DX_TYPE] + " component from DOM");
                 return (<Datex.Type>classType).construct(this, [], true, true);
             }
@@ -628,12 +628,12 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
 
     private handleIdProps(constructed=false){
 
-        const id_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[ID_PROPS]?.public;
-        const content_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[CONTENT_PROPS]?.public;
-        const layout_props:Record<string,string> = Object.getPrototypeOf(this)[METADATA]?.[LAYOUT_PROPS]?.public;
+        const id_props:Record<string,string> = (this.constructor as any)[METADATA]?.[ID_PROPS]?.public;
+        const content_props:Record<string,string> = (this.constructor as any)[METADATA]?.[CONTENT_PROPS]?.public;
+        const layout_props:Record<string,string> = (this.constructor as any)[METADATA]?.[LAYOUT_PROPS]?.public;
         // only add children when constructing component, otherwise they are added twice
-        const child_props:Record<string,string> = constructed ? Object.getPrototypeOf(this)[METADATA]?.[CHILD_PROPS]?.public : undefined;
-		bindContentProperties(this, id_props, content_props, layout_props, child_props);
+        const child_props:Record<string,string> = constructed ? (this.constructor as any)[METADATA]?.[CHILD_PROPS]?.public : undefined;
+        bindContentProperties(this, id_props, content_props, layout_props, child_props);
     }
 
 
@@ -680,7 +680,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     }
 
     // default constructor
-    @constructor async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
+    async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
         // options already handled in constructor
 
         // handle default component options (class, ...)
@@ -694,8 +694,11 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
             return;
         }
 
+
         // make sure static component data (e.g. datex module imports) is loaded
         await (<typeof Component>this.constructor).init();
+        this.inheritDatexProperties();
+
         if (!this.reconstructed_from_dom) await this.loadTemplate();
         else this.logger.debug("Reconstructed from DOM, not creating new template content")
         this.loadDefaultStyle()
@@ -706,11 +709,12 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     }
 
     // called when created from saved state
-    @replicator async replicate() {
+    async replicate() {
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
         // make sure static component data (e.g. datex module imports) is loaded
         await (<typeof Component>this.constructor).init();
-        // this.loadTemplate();
+        this.inheritDatexProperties();
+
         this.loadDefaultStyle()
         await this.init();
         this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
@@ -775,13 +779,20 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
                 } 
                 // string
                 catch {
-                    options[<keyof typeof options>name] = <Datex.RefOrValue<O & Component.Options[keyof O & Component.Options]>> this.attributes[i].value;
+                    options[<keyof typeof options>name] = <Datex.RefOrValue<O>> this.attributes[i].value;
                 }
             }
         }
 
         // assign default options as prototype
         this.options = assignDefaultPrototype(default_options, options, clone_option_keys);
+    }
+
+    /**
+     * bind datex properties from virtualDatexPrototype to this instance
+     */
+    private inheritDatexProperties() {
+        Object.assign(this, (<typeof Component>this.constructor).virtualDatexPrototype);
     }
 
 
@@ -794,18 +805,10 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         const loaders = []
         for (const url of (<typeof Component>this.constructor).stylesheets??[]) loaders.push(this.addStyleSheet(url));
     
-        Datex.Pointer.onPointerForValueCreated(this, () => {
-            const pointer = Datex.Pointer.getByValue(this)!
-            if (!this.hasAttribute("uix-ptr")) this.setAttribute("uix-ptr", pointer.id);
-
-            if (this.is_skeleton && UIX.context == "frontend") {
-                this.logger.debug("hybrid initialization")
-                this.onDisplay?.();
-            }
-            // TODO: required? should probably not be called per default
-            // bindObserver(this)
-        })
-
+        let standaloneOnDisplayWasTriggered = false
+        if ((this as any)[DISPOSE_BOUND_PROTOTYPE]) {
+            standaloneOnDisplayWasTriggered = (this as any)[DISPOSE_BOUND_PROTOTYPE]();
+        }
 
         this.onCreateLayout?.(); // custom layout extensions
 
@@ -814,6 +817,18 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
    
         // @standlone props only relevant for backend
         if (UIX.context == "backend") this.loadStandaloneProps();
+
+        Datex.Pointer.onPointerForValueCreated(this, () => {
+            const pointer = Datex.Pointer.getByValue(this)!
+            if (!this.hasAttribute("uix-ptr")) this.setAttribute("uix-ptr", pointer.id);
+
+            if (this.is_skeleton && UIX.context == "frontend") {
+                this.logger.debug("hybrid initialization")
+                if (!standaloneOnDisplayWasTriggered) this.onDisplay?.();
+            }
+            // TODO: required? should probably not be called per default
+            // bindObserver(this)
+        })
 
         if (constructed) await this.onConstruct?.();
         // this.bindOriginMethods();
@@ -866,20 +881,19 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
     public getStandaloneInit() {
         let js_code = '';
  
-        console
         js_code += `const self = querySelector("[uix-ptr='${this.getAttribute("uix-ptr")}']");\n`
         js_code += `bindPrototype(self, globalThis.UIX_Standalone.${this.constructor.name});\n`
 
-        const scope = this.constructor.prototype;
-        const originProps:Record<string, propInit> = scope[METADATA]?.[ORIGIN_PROPS]?.public;
+        const scope = this.constructor as any;
+        const originProps:Record<string, propInit>|undefined = scope[METADATA]?.[ORIGIN_PROPS]?.public;
 
         // init props with current values
         for (const [name, data] of Object.entries((this.constructor as typeof Component).standaloneProperties)) {
             // check if prop is method
             if (typeof this[<keyof this>name] === "function") {
-                if (originProps[name] && !(this[<keyof typeof this>name] as any)[BOUND_TO_ORIGIN]) {
+                if (originProps?.[name] && !(this[<keyof this>name] as any)[BOUND_TO_ORIGIN]) {
                     // @ts-ignore $
-                    this[<keyof typeof this>name] = bindToOrigin(this[<keyof typeof this>name], this, null, originProps[name].datex);
+                    this[<keyof this>name] = bindToOrigin(this[<keyof this>name], this, null, originProps[name].datex);
                 }
                 js_code += `self["${name}"] = ${Component.getStandaloneMethodContentWithMappedImports(this[<keyof this>name] as Function)};\n`;
             }
@@ -1083,7 +1097,7 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         const initial_route = !this.route_initialized;
         this.route_initialized = true;
 
-        const child = await (<Component<O & Component.Options, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
+        const child = await (<Component<O, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
 
         if (child == false) return []; // route not valid
         else if (typeof (<any>child)?.focus == "function") {
@@ -1135,10 +1149,10 @@ export abstract class Component<O = Component.Options, ChildElement = JSX.single
         super.remove();
     }
 
-    public observeOption(key:keyof O & Component.Options, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
+    public observeOption(key:keyof O, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
         Datex.Ref.observeAndInit(this.options.$$[key as keyof typeof this.options.$$], handler, this);
     }
-    public observeOptions(keys:(keyof O & Component.Options)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
+    public observeOptions(keys:(keyof O)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
         for (const key of keys) this.observeOption(key, handler);
     }
 

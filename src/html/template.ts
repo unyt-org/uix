@@ -5,7 +5,9 @@ import { Component } from "../components/Component.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import type { Element, Node, HTMLElement, HTMLTemplateElement } from "../uix-dom/dom/mod.ts";
-import { defaultOptions } from "../base/decorators.ts";
+import { defaultOptions, initDefaultOptions } from "../base/decorators.ts";
+import type { Class } from "datex-core-legacy/utils/global_types.ts";
+import { METADATA } from "datex-core-legacy/js_adapter/js_class_adapter.ts";
 
 /**
  * cloneNode(true), but also clones shadow roots.
@@ -72,15 +74,29 @@ type Props<Options extends Record<string,unknown>, Children, handleAllProps = tr
 		) : unknown
 )
 
+
 type ObjectWithCollapsedValues<O extends Record<string, unknown>> = {
 	[K in keyof O]: O[K] extends Datex.RefOrValue<infer T> ? T : O[K]
 }
 
-export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Children, handleAllProps = true, optionalChildren = true, Context = unknown> =
+export type jsxInputGenerator<
+	Return, 
+	Options extends Record<string,unknown>, 
+	Children, 
+	handleAllProps = true, 
+	optionalChildren = true, 
+	Context extends HTMLElement = HTMLElement
+> =
 	(
 		this: Context,
-		props: Props<Options, Children, handleAllProps, optionalChildren>,
-		propsValues: ObjectWithCollapsedValues<Props<Options, Children, handleAllProps, optionalChildren>>
+		props: Props<
+			// inferred options:
+			Context extends {options:unknown} ? Omit<(Context)['options'], '$'|'$$'> : Options
+			, Children, handleAllProps, optionalChildren>,
+		propsValues: ObjectWithCollapsedValues<Props<
+			// inferred options:
+			Context extends {options:unknown} ? Omit<(Context)['options'], '$'|'$$'> : Options
+			, Children, handleAllProps, optionalChildren>>
 	) => Return;
 
 
@@ -90,7 +106,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Ch
  * Custom Attributes can be handled in the generator
  * @example
  * ```tsx
- * const CustomComponent = UIX.template<{color:string}>(({color}) => <div class='class1 class2' style={{color}}></div>)
+ * const CustomComponent = template<{color:string}>(({color}) => <div class='class1 class2' style={{color}}></div>)
  * // create:
  * const comp = <CustomComponent id="c1" color="green"/>
  * ```
@@ -99,7 +115,7 @@ export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Ch
  * Children are appended to the <slot> element inside the root:
  * @example
  * ```tsx
- * const CustomComponent2 = UIX.template<{color:string}>(({color}) => 
+ * const CustomComponent2 = template<{color:string}>(({color}) => 
  * 	<div shadow-root>
  * 	    Custom content before children
  * 		<slot/>
@@ -115,19 +131,27 @@ export type jsxInputGenerator<Return, Options extends Record<string,unknown>, Ch
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], Context = unknown>(elementGenerator:jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, never, false, false, Context>):jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<
+	Options extends Record<string, unknown> = Record<string,never>,
+	Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], 
+	Context extends typeof HTMLElement = typeof HTMLElement
+> (
+	elementGenerator: jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, never, false, false, InstanceType<Context>>
+):
+	jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl: Context, context: ClassDecoratorContext<Context>)=>any)
+
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * Default HTML Attributes defined in JSX are also set for the root element.
  * @example
  * ```tsx
- * const CustomComponent = UIX.template(<div class='class1 class2'></div>)
+ * const CustomComponent = template(<div class='class1 class2'></div>)
  * // create:
  * const comp = <CustomComponent id="c1"/>
  * ```
  * @param elementGenerator 
  */
-export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:JSX.Element):jsxInputGenerator<JSX.Element, Options, Children>&((cl:typeof HTMLElement)=>any)
+export function template<Options extends Record<string, any> = {}, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(element:JSX.Element):jsxInputGenerator<JSX.Element, Options, Children>&((cl: Class, context: ClassDecoratorContext)=>any)
 
 /**
  * Empty template for component
@@ -138,7 +162,7 @@ export function template<Options extends Record<string, any> = {}, Children = JS
  * ```
  * @param elementGenerator 
  */
-export function template():jsxInputGenerator<JSX.Element, Record<string, never>, never>&((cl:typeof HTMLElement)=>any)
+export function template():jsxInputGenerator<JSX.Element, Record<string, never>, never>&((cl: Class, context: ClassDecoratorContext)=>any)
 
 
 export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.Element|Promise<JSX.Element>, any, any, any>) {
@@ -148,7 +172,9 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 		// decorator
 		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			const decoratedClass = defaultOptions(propsOrClass)
+			// workaround: immediately set metadata for class
+			if (context) (propsOrClass as any)[METADATA] = context.metadata;
+			const decoratedClass = initDefaultOptions(module, propsOrClass)
 			decoratedClass.template = generator
 			return decoratedClass
 		}
@@ -167,11 +193,13 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 		}
 	}
 	else if (templateOrGenerator) {
-		generator = function(maybeClass:any) {
+		generator = function(maybeClass:any, context?:ClassDecoratorContext) {
 			// decorator
 			if (Component.isPrototypeOf(maybeClass)) {
 				maybeClass._init_module = module;
-				const decoratedClass = defaultOptions(maybeClass)
+				// workaround: immediately set metadata for class
+				if (context) (maybeClass as any)[METADATA] = context.metadata;
+				const decoratedClass = initDefaultOptions(module, maybeClass)
 				decoratedClass.template = generator
 				return decoratedClass
 			}
@@ -181,11 +209,13 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 			}
 		}
 	}
-	else generator = function(maybeClass:any) {
+	else generator = function(maybeClass:any, context?:ClassDecoratorContext) {
 		// decorator
 		if (Component.isPrototypeOf(maybeClass)) {
 			maybeClass._init_module = module;
-			return defaultOptions(maybeClass)
+			// workaround: immediately set metadata for class
+			if (context) (maybeClass as any)[METADATA] = context.metadata;
+			return initDefaultOptions(module, maybeClass)
 		}
 		// jsx
 		else {
@@ -204,15 +234,15 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * 
- * UIX.template should be used instead of this function when possible. 
+ * `template` should be used instead of this function when possible. 
  * 
- * In contrast to UIX.template, children defined in JSX are not automatically appended to the root element of the template,
+ * In contrast to `template`, children defined in JSX are not automatically appended to the root element of the template,
  * and HTML Attributes defined in JSX are also not automatically set for the root element.
  * 
  * All attributes and the children are available in the props argument of the generator function.
  * @example
  * ```tsx
- * const CustomComponent = UIX.blankTemplate<{color:string}>(({color, style, id, children}) => <div id={id} style={style}><h1>Header</h1>{...children}</div>)
+ * const CustomComponent = blankTemplate<{color:string}>(({color, style, id, children}) => <div id={id} style={style}><h1>Header</h1>{...children}</div>)
  * // create:
  * const comp = (
  * <CustomComponent id="c1">
@@ -223,7 +253,13 @@ export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.
  * ```
  * @param elementGenerator 
  */
-export function blankTemplate<Options extends Record<string, any>, Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[]>(elementGenerator:jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children extends any[] ? Children : Children[], true, false>):jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl:typeof HTMLElement)=>any) {
+export function blankTemplate<
+	Options extends Record<string, any>,
+	Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], 
+	Context extends typeof HTMLElement = typeof HTMLElement
+> (
+	elementGenerator: jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children extends any[] ? Children : Children[], true, false, InstanceType<Context>>
+): jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl: Context, context: ClassDecoratorContext<Context>)=>any) {
 	const module = getCallerFile();
 
 	function generator(propsOrClass:any) {
@@ -231,7 +267,7 @@ export function blankTemplate<Options extends Record<string, any>, Children = JS
 		// decorator
 		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
-			const decoratedClass = defaultOptions(propsOrClass)
+			const decoratedClass = initDefaultOptions(module, propsOrClass)
 			decoratedClass.template = generator
 			decoratedClass[SET_DEFAULT_CHILDREN] = false;
 			return decoratedClass

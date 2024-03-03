@@ -254,7 +254,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 	else attrs.push("uix-static");
 
 	// inject event listeners
-	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithUIXAttributes>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.PSEUDO_ATTR_BINDINGS])) {
+	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithUIXAttributes>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.ATTR_BINDINGS])) {
 		let context: HTMLElement|undefined;
 		let parent: Element|null = el;
 		let hasScriptContent = false; // indicates whether the generated script actually contains relevant content, not just skeleton code
@@ -315,7 +315,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 			throw new Error(`Invalid datex-update="onsubmit", no form found`)
 		}
 
-		for (const [attr, ptr] of (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.PSEUDO_ATTR_BINDINGS] ?? []) {
+		for (const [attr, ptr] of (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.ATTR_BINDINGS] ?? []) {
 
 			opts?.requiredPointers?.add(ptr);
 			
@@ -484,7 +484,7 @@ const isNormalFunction = (fnSrc:string) => {
 function isLiveNode(node: Node) {
 	// hybrid components are always live (TODO: not for backend-only components)
 	if (node instanceof Component) return true;
-	if (node[DOMUtils.PSEUDO_ATTR_BINDINGS]?.size) return true;
+	if (node[DOMUtils.ATTR_BINDINGS]?.size) return true;
 	if (node[DOMUtils.EVENT_LISTENERS]?.size) return true;
 	// uix-placeholder are always live
 	if (node instanceof domContext.Element && node.tagName?.toLowerCase() == "uix-placeholder") return true;

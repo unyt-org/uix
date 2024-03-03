@@ -13,7 +13,7 @@ export type runParams = {
     inspect: string | undefined;
     unstable: boolean | undefined;
 	detach: boolean | undefined;
-    deno_config_path: string | URL | null;
+    deno_config_path: URL | null;
 }
 
 export type runOptions = {

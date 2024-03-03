@@ -1,8 +1,8 @@
-import { normalizedAppOptions } from "../app/options.ts";
+import { getInferredRunPaths, normalizedAppOptions } from "../app/options.ts";
 import { stage, env, watch, clear } from "../app/args.ts";
 import { ESCAPE_SEQUENCES, verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { runParams } from "./runner.ts";
 import { logger } from "../utils/global-values.ts";
 import { gitToken } from "../app/args.ts";
@@ -30,7 +30,7 @@ function onlyDenoFileChanges(fileOutput: string) {
  * Run UIX app on a remote host
  * Currently using git for file sync with remote
  */
-export async function runRemote(params: runParams, root_path: URL, options: normalizedAppOptions, backend: URL, requiredLocation: Datex.Endpoint, stageEndpoint: Datex.Endpoint, customDomains: Record<string,number|null> = {}, volumes:URL[] = []) {
+export async function runRemote(params: runParams, root_path: Path.File, options: normalizedAppOptions, backend: URL, requiredLocation: Datex.Endpoint, stageEndpoint: Datex.Endpoint, customDomains: Record<string,number|null> = {}, volumes:URL[] = []) {
 	const logger = new Datex.Logger();
 
 	const repo = await GitRepo.get();
@@ -103,13 +103,14 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 			const relativeVolumePath = new Path(volume).getAsRelativeFrom(repoRoot)
 			normalizedVolumes.push(relativeVolumePath)
 		}
-	
+
+		const {importMapPath, uixRunPath} = getInferredRunPaths(options.import_map, root_path)
+		
 		// tell docker host to use uix v.0.1
 		env.push(`UIX_VERSION=0.1`)
 
 		const container = await datex<any> `
-			use ContainerManager from ${requiredLocation};
-			ContainerManager.createUIXAppContainer(
+			${requiredLocation}.ContainerManager.createUIXAppContainer(
 				${repo.origin}, 
 				${repo.branch}, 
 				${stageEndpoint},
@@ -118,12 +119,11 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 				${env},
 				${args},
 				${normalizedVolumes},
-				${gitToken ?? Deno.env.get("GITHUB_TOKEN")}
+				${gitToken ?? Deno.env.get("GITHUB_TOKEN")},
+				${{importMapPath, uixRunPath}}
 			)
 		`
 		// console.log("");
-		// logger.error(container)
-
 
 		// observe container status and exit
 		const handler = async (status: ContainerStatus) => {
@@ -155,6 +155,7 @@ export async function runRemote(params: runParams, root_path: URL, options: norm
 	}
 
 	catch (e) {
+		console.error(e)
 		logFailure(stageEndpoint, requiredLocation, customDomains, e.message)
 	}
 

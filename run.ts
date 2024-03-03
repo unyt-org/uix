@@ -4,7 +4,6 @@
 
 import { Datex, datex } from "datex-core-legacy/no_init.ts"; // required by getAppConfig
 import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppConfig
-
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
 import { clear, command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live } from "./src/app/args.ts";
@@ -22,10 +21,13 @@ import { getDXConfigData } from "./src/app/dx-config-parser.ts";
 import { Path } from "./src/utils/path.ts";
 import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 
+import "./src/base/uix-datex-module.ts"
+
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
 import { isCIRunner } from "./src/utils/check-ci.ts";
 import { logger, runParams } from "./src/runners/runner.ts";
+import { applyPlugins } from "./src/app/config-files.ts";
 
 // login flow
 if (login) await triggerLogin();
@@ -144,30 +146,16 @@ async function loadPlugins() {
 	return plugins;
 }
 
-/**
- * Mock #public.uix
- */
-async function mockUIX() {
 
-	await datex`
-		#public.uix = {
-			stage: function (options) (
-				options.${stage} default @@local
-			)
-		}
-	`
-}
-await mockUIX();
 // find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
 const plugins = await loadPlugins();
 const runners = [new LocalDockerRunner()];
-const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(rootPath, plugins), rootPath);
+const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(rootPath), rootPath);
 if (!options.import_map) throw new Error("Could not find importmap");
-
 options.import_map = await createProxyImports(options, new_base_url, params.deno_config_path!);
 
-// make sure UIX mock is not overridden
-await mockUIX();
+await applyPlugins(plugins, rootPath, options)
+
 
 await runBackends(options);
 

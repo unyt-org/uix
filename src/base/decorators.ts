@@ -203,11 +203,11 @@ export function frontend(_value: undefined|Class|((...args:any[])=>any)|frontend
 	// class decorator
 	if (!context || context.kind == "class") {
 		return handleClassDecoratorWithOptionalArgs(
-			[_value as frontendClassDecoratorOptions], 
+			[_value as frontendClassDecoratorOptions|undefined], 
 			_value as Class, 
 			context as ClassDecoratorContext, 
 			([options], value, context) => {
-				for (const prop of [...Object.getOwnPropertyNames(value.prototype), ...options.inheritedFields??[]]) {
+				for (const prop of [...Object.getOwnPropertyNames(value.prototype), ...options?.inheritedFields??[]]) {
 					if (prop == "constructor") continue;
 					Decorators.setMetadata({...(context as unknown as ClassFieldDecoratorContext), kind:"field",name:prop}, STANDALONE_PROPS, prop);
 				}

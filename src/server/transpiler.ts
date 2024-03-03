@@ -594,7 +594,12 @@ export class Transpiler {
             // workaround: select decorators based on uix/datex version
             let decoratorVersion = "2022-03";
             const pathname = ts_dist_path.normal_pathname;
-            if (pathname.match(/\/uix-0\.(0|1)\.\d+\//)||pathname.match(/\/datex-core-js-legacy-0\.0\.\d+\//)) decoratorVersion = "2021-12";
+            if (
+                pathname.match(/\/uix-0\.(0|1)\.\d+\//)||
+                pathname.match(/\/datex-core-js-legacy-0\.0\.\d+\//)||
+                pathname.match(/\/uix-components-0\.0\.\d+\//)||
+                pathname.match(/\/uix-components-new-0\.0\.\d+\//)
+            ) decoratorVersion = "2021-12";
 
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
             let {code: transpiled, map} = await transform(file, {

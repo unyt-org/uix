@@ -97,7 +97,7 @@ export default class GitDeployPlugin implements AppPlugin {
 					},
 					{
 						name: 'Run Tests',
-						run: 'deno run -Aq --config --import-map '+importmapPath+' '+testRunPath+' -s --reportfile testreport.xml'
+						run: 'deno run -Aq --import-map '+importmapPath+' '+testRunPath+' -s --reportfile testreport.xml'
 					},
 					{
 						name: 'Publish Test Report',

@@ -174,11 +174,11 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
                 try {
                     const res = await get(location, undefined, this._module);
                     if (exprt == "*") {
-                        (<any>target)[prop] = res;
+                        this.virtualDatexPrototype[prop] = res;
                     }
                     else {
                         if (Datex.DatexObject.has(<Record<string | symbol, unknown>>res, exprt)) { 
-                            (<any>target)[prop] = Datex.DatexObject.get(<Record<string | symbol, unknown>>res, exprt);
+                            this.virtualDatexPrototype[prop] = Datex.DatexObject.get(<Record<string | symbol, unknown>>res, exprt);
                         }
                         else err = new Error(`Could not load export '${exprt}' for component class '${this.name}': Not exported from location '${location}'`)
                     }
@@ -215,7 +215,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         const allStandaloneProps = {...props, ...idProps, ...layoutProps, ...contentProps, ...childProps};
         
         // TODO: required? workaround: if [STANDALONE_PROPS] from parent isn't overriden, skip this:
-        for (const name of Object.values(allStandaloneProps)) {
+        for (const name of Object.keys(allStandaloneProps)) {
             // prototype has methods
             if ((this.prototype as any)[name]) {
                 // also bound to origin

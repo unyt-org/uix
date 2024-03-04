@@ -55,10 +55,10 @@ export default class GitDeployPlugin implements AppPlugin {
 			const tests = config.tests ?? true;
 
 			const useDevCDN = config.useDevCDN;
-			const importmapPath = useDevCDN ? "https://dev.cdn.unyt.org/importmap.json" : "https://cdn.unyt.org/importmap.json"
-			const importmapPathUIX = useDevCDN ? "https://dev.cdn.unyt.org/uix1/importmap.dev.json" : "https://cdn.unyt.org/uix/importmap.json"
+			const importmapPath = useDevCDN ? "https://dev.cdn.unyt.org/importmap.json" : "https://dev.cdn.unyt.org/importmap_compat.json"
+			const importmapPathUIX = useDevCDN ? "https://dev.cdn.unyt.org/uix1/importmap.dev.json" : "https://dev.cdn.unyt.org/importmap_compat.json"
 			const testRunPath = useDevCDN ? "https://dev.cdn.unyt.org/unyt_tests/run.ts" : "https://cdn.unyt.org/unyt-tests/run.ts"
-			const uixRunPath = useDevCDN ? "https://dev.cdn.unyt.org/uix1/run.ts" : "https://cdn.unyt.org/uix/run.ts"
+			const uixRunPath = useDevCDN ? "https://dev.cdn.unyt.org/uix1/run.ts" : "https://cdn.unyt.org/uix@0.1.x/run.ts"
 
 			if (branch && branch !== "*") {
 				on = {
@@ -97,7 +97,7 @@ export default class GitDeployPlugin implements AppPlugin {
 					},
 					{
 						name: 'Run Tests',
-						run: 'deno run -Aq --import-map '+importmapPath+' '+testRunPath+' -s --reportfile testreport.xml'
+						run: 'deno run -Aq --config --import-map '+importmapPath+' '+testRunPath+' -s --reportfile testreport.xml'
 					},
 					{
 						name: 'Publish Test Report',
@@ -127,7 +127,7 @@ export default class GitDeployPlugin implements AppPlugin {
 					},
 					{
 						name: 'Deploy UIX App',
-						run: `deno run --importmap ${importmapPathUIX} -Aqr ${uixRunPath} --stage ${stage} --detach` + (args ? ' ' + args.join(" ") : '') + (env_strings ? ' ' + env_strings.join(" ") : '')
+						run: `deno run --config --importmap ${importmapPathUIX} -Aqr ${uixRunPath} --stage ${stage} --detach` + (args ? ' ' + args.join(" ") : '') + (env_strings ? ' ' + env_strings.join(" ") : '')
 					}
 				]
 			}

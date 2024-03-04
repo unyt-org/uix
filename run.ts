@@ -27,6 +27,8 @@ import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskFor
 import { isCIRunner } from "./src/utils/check-ci.ts";
 import { logger, runParams } from "./src/runners/runner.ts";
 
+logger.warn("Warning: This is not the latest version of UIX. It only supports Deno < v1.39. Consider migrating your project to UIX v0.2.");
+
 // login flow
 if (login) await triggerLogin();
 // init

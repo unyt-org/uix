@@ -127,7 +127,7 @@ export default class GitDeployPlugin implements AppPlugin {
 					},
 					{
 						name: 'Deploy UIX App',
-						run: `deno run --config --importmap ${importmapPathUIX} -Aqr ${uixRunPath} --stage ${stage} --detach` + (args ? ' ' + args.join(" ") : '') + (env_strings ? ' ' + env_strings.join(" ") : '')
+						run: `deno run --importmap ${importmapPathUIX} -Aqr ${uixRunPath} --stage ${stage} --detach` + (args ? ' ' + args.join(" ") : '') + (env_strings ? ' ' + env_strings.join(" ") : '')
 					}
 				]
 			}

@@ -46,7 +46,7 @@ const comp3 = <CustomComponentWithSlots id='c1'>
 ```
 
 
-
+<!-- 
 ## The `@content` decorator
 
 The `@content` decorator adds a child to the `slot#content` element and visually has the same effect as using the `@child` decorator.
@@ -62,4 +62,4 @@ class ParentComponent extends UIX.ShadowDOMComponent {
 }
 
 export default <ParentComponent/>
-```
+``` -->

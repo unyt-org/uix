@@ -359,6 +359,10 @@ export namespace Routing {
 	let frontendRoutingEnabled = false;
 
 	function enableFrontendRouting() {
+
+		// TODO: fix
+		return;
+
 		if (frontendRoutingEnabled) return;
 		frontendRoutingEnabled = true;
 		logger.debug("frontend routing enabled");

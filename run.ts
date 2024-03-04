@@ -21,7 +21,7 @@ import { getDXConfigData } from "./src/app/dx-config-parser.ts";
 import { Path } from "./src/utils/path.ts";
 import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 
-import "./src/base/uix-datex-module.ts"
+import { addUIXNamespace } from "./src/base/uix-datex-module.ts"
 
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
@@ -65,16 +65,21 @@ if (stage === "dev") {
 
 // version update?
 let forceUpdate = false;
-
+const updatePromises = []
 if (await handleAutoUpdate(new Path(import.meta.url).parent_dir, "UIX")) {
-	await updateCache(import.meta.resolve("./run.ts"))
-	await updateCache(import.meta.resolve("./src/app/start.ts"))
+	updatePromises.push(
+		updateCache(import.meta.resolve("./run.ts")),
+		updateCache(import.meta.resolve("./src/app/start.ts")),
+		updateCache("https://cdn.unyt.org/uix/run.ts")
+	)
 	forceUpdate = true
 }
 if (await handleAutoUpdate(new Path(import.meta.resolve("datex-core-legacy")).parent_dir, "DATEX Core")) {
-	await updateCache(import.meta.resolve("datex-core-legacy/datex.ts"))
+	updatePromises.push(updateCache(import.meta.resolve("datex-core-legacy/datex.ts")))
 	forceUpdate = true
 }
+
+await Promise.all(updatePromises)
 
 
 if (clear) {
@@ -146,6 +151,7 @@ async function loadPlugins() {
 	return plugins;
 }
 
+await addUIXNamespace();
 
 // find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
 const plugins = await loadPlugins();
@@ -155,7 +161,6 @@ if (!options.import_map) throw new Error("Could not find importmap");
 options.import_map = await createProxyImports(options, new_base_url, params.deno_config_path!);
 
 await applyPlugins(plugins, rootPath, options)
-
 
 await runBackends(options);
 
@@ -172,7 +177,6 @@ async function runBackends(options: normalizedAppOptions) {
 		
 		try {
 			const {requiredLocation, stageEndpoint, domains, volumes, instances} = await getDXConfigData(backend, options);
-
 			// TODO better comparison between UIX_HOST_ENDPOINT (with possible instance) and requiredLocation
 			const isRemote = requiredLocation && requiredLocation !== Datex.LOCAL_ENDPOINT && !Deno.env.get("UIX_HOST_ENDPOINT")?.startsWith(requiredLocation?.toString());
 

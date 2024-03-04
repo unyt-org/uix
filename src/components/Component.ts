@@ -216,8 +216,9 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         
         // TODO: required? workaround: if [STANDALONE_PROPS] from parent isn't overriden, skip this:
         for (const name of Object.keys(allStandaloneProps)) {
-            // prototype has methods
-            if ((this.prototype as any)[name]) {
+            const desc = Object.getOwnPropertyDescriptor(this.prototype, name)
+            // is method
+            if (!desc?.get && !desc?.set && (this.prototype as any)[name]) {
                 // also bound to origin
                 if (originProps?.[name]) {
                     this.addStandaloneProperty(name, originProps?.[name]);
@@ -231,6 +232,8 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
         // check if prototype methods include use() statement
         for (const name of Object.getOwnPropertyNames(this.prototype)) {
+            const desc = Object.getOwnPropertyDescriptor(this.prototype, name)
+            if (desc?.get || desc?.set) continue;
             if (name == "constructor") continue;
             const method = (this.prototype as any)[name];
             const useDeclaration = JSTransferableFunction.functionIsAsync(method) ? await getDeclaredExternalVariablesAsync(method) : getDeclaredExternalVariables(method);

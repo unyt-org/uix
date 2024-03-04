@@ -2,7 +2,6 @@ import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
 import { Path } from "../utils/path.ts";
 import { clear, stage, watch } from "../app/args.ts";
 import { createHash } from "https://deno.land/std@0.91.0/hash/mod.ts";
-// import { Datex } from "datex-core-legacy/no_init.ts";
 import { UIXRunner, runOptions } from "./runner.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
 import { OutputMode, exec } from "https://deno.land/x/exec@0.0.5/mod.ts";

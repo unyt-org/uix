@@ -204,7 +204,7 @@ const comp2 =
 
 
 Component children are part of the component state and are restored when the component is recreated.
-
+<!-- 
 ## Defining the internal component layout
 
 Internal component content can be added and modified at any stage of the component lifecycle.
@@ -232,9 +232,9 @@ export default
         <div>Child 1</div>
         <div>Child 2</div>
     </ParentComponent>
-```
+``` -->
 
-### The `@id` decorator
+## The `@id` decorator
 To access elements defined in the template layout consider assigning an unique id attribute to the corresponding elements:
 
 ```tsx
@@ -252,7 +252,7 @@ class MyApp extends Component {
     @id declare myInput: HTMLInputElement;
 }
 ```
-
+<!-- 
 ### The `@child` decorator
 
 Children can also be directly bound to a component with the `@child` decorator:
@@ -269,7 +269,7 @@ const parent =
     <ParentComponent>
         <div>Child 3</div>
     </ParentComponent>
-```
+``` -->
 
 ## Component lifecycle
 

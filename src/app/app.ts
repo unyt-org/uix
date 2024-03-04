@@ -1,4 +1,4 @@
-import { Datex, f } from "datex-core-legacy";
+import { Datex, f } from "datex-core-legacy/mod.ts";
 
 import type { FrontendManager  } from "./frontend-manager.ts";
 import { Path } from "../utils/path.ts";

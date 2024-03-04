@@ -1,5 +1,4 @@
 // deno-lint-ignore-file no-control-regex
-import { Datex } from "datex-core-legacy";
 import { HTML } from "./src/html/template-strings.ts";
 import { SCSS } from "./src/utils/css-template-strings.ts";
 

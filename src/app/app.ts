@@ -13,7 +13,7 @@ import { logger } from "../utils/global-values.ts";
 import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
 import { getInjectedAppData, getInjectedImportmap } from "./app-data.ts";
 
-import "../base/uix-datex-module.ts"
+import { addUIXNamespace } from "../base/uix-datex-module.ts"
 import "../../uix-short.ts"
 
 import "../base/init.ts"
@@ -28,6 +28,8 @@ import wasm_init, {init_runtime } from "datex-core-legacy/wasm/adapter/pkg/datex
 export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 'entrypoint.tsx']
 
 type version_change_handler = (version:string, prev_version:string)=>void|Promise<void>;
+
+await addUIXNamespace();
 
 
 // options passed in via command line arguments

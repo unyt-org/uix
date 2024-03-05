@@ -1,6 +1,6 @@
 import { Datex } from "datex-core-legacy/mod.ts";
 import { normalizedAppOptions } from "../app/options.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 export const logger = new Datex.Logger("UIX Runner");
 
@@ -18,7 +18,7 @@ export type runParams = {
 
 export type runOptions = {
 	params: runParams,
-	baseURL: URL,
+	baseURL: Path.File,
 	options: normalizedAppOptions,
 	backend: Path,
 	endpoint?: Datex.Endpoint,

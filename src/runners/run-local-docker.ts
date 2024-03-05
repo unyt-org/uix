@@ -83,7 +83,7 @@ export default class LocalDockerRunner implements UIXRunner {
 	generateDockerComposeFile({baseURL, endpoint, domains, params, options}: runOptions, deploymentDir: Path) {
 		if (!endpoint) throw new Error("Missing in endpoint for stage '" + stage + "' ('"+this.name+"' runner)");
 
-		const name = endpoint.toString().replace(/[^A-Za-z0-9_-]/g,'').toLowerCase()
+		const name = endpoint.name + (endpoint.name.endsWith(stage) ? '' : (stage ? '-' + stage : ''))
 		const traefikLabels = new Set()
 		let i = 0;
 		for (const [host, port] of Object.entries(domains)) {

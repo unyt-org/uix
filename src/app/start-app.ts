@@ -17,7 +17,7 @@ import { resolve } from "https://deno.land/std@0.172.0/path/win32.ts";
 const logger = new Datex.Logger("UIX App");
 
 /**
- * Start the UIX app on the backendase_url 
+ * Start the UIX app on the backend
  */
 export async function startApp(app: {domains:string[], hostDomains: string[], options?:normalizedAppOptions, base_url?: URL}, options:appOptions = {}, original_base_url?:string|URL) {
 

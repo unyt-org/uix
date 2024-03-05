@@ -31,7 +31,6 @@ type version_change_handler = (version:string, prev_version:string)=>void|Promis
 
 await addUIXNamespace();
 
-
 // options passed in via command line arguments
 let stage: string|undefined
 let http_over_datex: boolean|undefined

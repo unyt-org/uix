@@ -5,7 +5,6 @@ const stage = client_type == "deno" ? (await import("../app/args.ts#lazy")).stag
 
 // Can't use @endpoint class here, because endpoint is only initialized after #public.uix is required in .dx config
 export async function addUIXNamespace() {
-
 	await datex`
 		#public.uix = {
 			LANG: "en",

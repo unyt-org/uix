@@ -69,7 +69,7 @@ export function renderDynamic<T extends html_content_or_generator>(content:T): R
  * @param content_generator 
  * @returns 
  */
-export function renderFrontend(content_generator:() => JSX.singleChild, placeholder?: html_content): JSX.singleChild {
+export function renderFrontend(content_generator:() => JSX.singleChild|Promise<JSX.singleChild>, placeholder?: html_content): JSX.singleChild {
 	if (UIX.context == "frontend") {
 		return content_generator()
 	}

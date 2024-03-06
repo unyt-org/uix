@@ -12,10 +12,11 @@ logger.debug("enabled");
 		this.server = server;
 	}
 
-	@property static request(request: any/*Request*/) {
+	@property static async request(requestObj: any/*Request*/) {
 
 		// @ts-ignore clone headers (TODO: required why?)
-		request.headers = new Headers(request.headers);
+		requestObj.headers = new Headers(requestObj.headers);
+		const request = new Request(requestObj.url, requestObj)
 
 		return new Promise(resolve => {
 			const conn: Deno.Conn = {} as Deno.Conn;

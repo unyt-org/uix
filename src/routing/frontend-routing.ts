@@ -352,7 +352,7 @@ export namespace Routing {
 			// }
 		}
 
-		if (changed) logger.success `new route: ${getCurrentRouteFromURL().routename??"/"}`;
+		// if (changed) logger.success `new route: ${getCurrentRouteFromURL().routename??"/"}`;
 
 	}
 

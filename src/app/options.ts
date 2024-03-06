@@ -24,7 +24,7 @@ export type appOptions = {
 	import_map_path?: string|URL, // custom importmap for the frontend
 	import_map?: {imports:Record<string,string>} // prefer over import map path
 
-	experimentalFeatures?: string|string[]
+	experimental_features?: string|string[]
 	debug_mode?: boolean // enable debug interfaces available on /@debug/...
 	minify_js?: boolean // minify transpiled javascript modules, default: true
 	preload_dependencies?: boolean // automatically preload all ts module dependencies, default: true
@@ -42,7 +42,7 @@ export interface normalizedAppOptions extends appOptions {
 	import_map_path: never
 	import_map: ImportMap,
 
-	experimentalFeatures: string[]
+	experimental_features: string[]
 }
 export async function normalizeAppOptions(options:appOptions = {}, baseURL?:string|URL): Promise<[normalizedAppOptions, Path.File]> {
 	const n_options = <normalizedAppOptions> {};
@@ -64,7 +64,7 @@ export async function normalizeAppOptions(options:appOptions = {}, baseURL?:stri
 	n_options.manifest = options.manifest;
 	n_options.meta = options.meta;
 
-	n_options.experimentalFeatures = options.experimentalFeatures ? (options.experimentalFeatures instanceof Array ? options.experimentalFeatures : [options.experimentalFeatures]) : [];
+	n_options.experimental_features = options.experimental_features ? (options.experimental_features instanceof Array ? options.experimental_features : [options.experimental_features]) : [];
 	n_options.debug_mode = options.debug_mode ?? false;
 	n_options.minify_js = options.minify_js ?? true;
 	n_options.preload_dependencies = options.preload_dependencies ?? true;

@@ -12,7 +12,6 @@ import { Context, ContextGenerator } from "./context.ts";
 import { Component } from "../components/Component.ts";
 import { logger } from "../utils/global-values.ts";
 import { domContext } from "../app/dom-context.ts";
-import type { DocumentFragment, Element } from "../uix-dom/dom/mod.ts";
 import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { FileHandle } from "../html/entrypoint-providers.tsx";

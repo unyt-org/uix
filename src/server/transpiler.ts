@@ -547,7 +547,7 @@ export class Transpiler {
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
         // return this.transpileToJSDenoEmit(ts_dist_path)
-        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.experimentalFeatures.includes('embedded-reactivity'));
+        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.experimental_features.includes('embedded-reactivity'));
     }
   
     private async transpileToJSDenoEmit(ts_dist_path:Path.File) {

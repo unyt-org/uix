@@ -1,5 +1,3 @@
-import type { Element, Node } from "../uix-dom/dom/mod.ts";
-
 @sync("uix:PartialHydration") export class PartialHydration {
 	@property nodes!: Node[]
 

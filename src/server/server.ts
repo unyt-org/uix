@@ -14,7 +14,7 @@
 
 // ---
 import { Datex } from "datex-core-legacy";
-import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
+import { getCallerDir, getCallerInfo } from "datex-core-legacy/utils/caller_metadata.ts";
 import { Cookie, setCookie, getCookies } from "../lib/cookie/cookie.ts";
 
 import { Path } from "../utils/path.ts";
@@ -352,7 +352,7 @@ export class Server {
     }
 
     private tryListen(port: number) {
-        return enable_tls ? Deno.listenTls({ port, key: defaultKey, cert: defaultCert }) :  Deno.listen({ port });
+        return enable_tls ? Deno.listenTls({ port, key: defaultKey, cert: defaultCert }) : Deno.listen({ port });
     }
 
     public setConnectionHandler(handler:connectionHandler){
@@ -517,7 +517,10 @@ export class Server {
                     else break;
                 } 
             } 
-            catch {this.sendError(requestEvent)}
+            catch (e) {
+                console.error(e);
+                this.sendError(requestEvent)
+            }
         }
 
         // handle default

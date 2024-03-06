@@ -4,8 +4,7 @@ import { IS_TEMPLATE, SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../ui
 import { Component } from "../components/Component.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
-import type { Element, Node, HTMLElement, HTMLTemplateElement } from "../uix-dom/dom/mod.ts";
-import { defaultOptions, initDefaultOptions } from "../base/decorators.ts";
+import { initDefaultOptions } from "../base/decorators.ts";
 import type { Class } from "datex-core-legacy/utils/global_types.ts";
 import { METADATA } from "datex-core-legacy/js_adapter/js_class_adapter.ts";
 

@@ -11,7 +11,6 @@ import { logger } from "../utils/global-values.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
-import type { Element } from "../uix-dom/dom/mod.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { UIX } from "../../uix.ts";
 import { serializeJSValue } from "../utils/serialize-js.ts";
@@ -681,8 +680,8 @@ export async function generateHTMLPage({
 
 		// files += `\nDatex.MessageLogger.enable();`
 
-		if (app.options?.experimentalFeatures.includes("protect-pointers")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
-		if (app.options?.experimentalFeatures.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
+		if (app.options?.experimental_features.includes("protect-pointers")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
+		if (app.options?.experimental_features.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
 
 
 		// set app info

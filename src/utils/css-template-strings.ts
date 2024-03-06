@@ -3,7 +3,6 @@ import type { primitive } from "datex-core-legacy/datex_all.ts";
 import { domContext, domUtils } from "../app/dom-context.ts";
 import { logger } from "./global-values.ts";
 import { always } from "datex-core-legacy";
-import type { CSSStyleDeclaration, CSSStyleRule, CSSStyleSheet, Document, Element, HTMLElement, Node, ShadowRoot } from "../uix-dom/dom/mod.ts";
 
 
 const LOCAL_VAR_PREFIX = '--uix-local-value-'

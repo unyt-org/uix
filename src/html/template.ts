@@ -261,8 +261,7 @@ export function blankTemplate<
 ): jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl: Context, context: ClassDecoratorContext<Context>)=>any) {
 	const module = getCallerFile();
 
-	function generator(propsOrClass:any) {
-
+	function generator(propsOrClass:any, context?:any) {
 		// decorator
 		if (Component.isPrototypeOf(propsOrClass)) {
 			propsOrClass._init_module = module;
@@ -279,7 +278,8 @@ export function blankTemplate<
 				},
 			});
 	
-			return elementGenerator(propsOrClass, collapsedPropsProxy);
+			if (context && elementGenerator.call) return elementGenerator.call(context, propsOrClass, collapsedPropsProxy)
+			else return elementGenerator(propsOrClass, collapsedPropsProxy);
 		}
 
 	}

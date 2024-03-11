@@ -155,7 +155,6 @@ export class Transpiler {
 
         if (this.#options.watch) this.activateFileWatcher();
         addEventListener("unload", ()=>this.close())
-        addEventListener("unhandledrejection", ()=>this.close())
 
         return this;
     }

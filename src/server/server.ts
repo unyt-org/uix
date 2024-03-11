@@ -518,7 +518,7 @@ export class Server {
                 } 
             } 
             catch (e) {
-                console.error(e);
+                if (!(e instanceof Deno.errors.Http)) console.error(e);
                 this.sendError(requestEvent)
             }
         }

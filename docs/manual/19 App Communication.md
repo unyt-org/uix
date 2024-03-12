@@ -21,7 +21,7 @@ If the UIX backend is not accessible via a public IP address, static data can st
 
 ![](./res/communication/static-http-over-datex.svg)
 
-# Transfering data via DATEX
+# Transferring data via DATEX
 
 Most data in a UIX app can also be directly transfered via DATEX (Some resources can currently only be transfered via HTTP, e.g. CSS files our JavaScript modules).
 DATEX is especially useful for dynamic (reactive) data, but can also be used to transfer static data.

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 444 243" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g id="Artboard1" transform="matrix(0.291903,0,0,0.55004,-26.6063,-146.442)">
+        <rect x="91.148" y="266.24" width="1520.4" height="439.988" style="fill:none;"/>
+        <g id="legend" transform="matrix(3.42579,0,0,1.81805,-4715.78,-1262.52)">
+            <g id="desc">
+                <g id="legend1" serif:id="legend">
+                    <g transform="matrix(1.05074,0,0,1.41518,-65.7593,-414.04)">
+                        <path d="M1799.37,909.149C1799.37,904.115 1793.87,900.029 1787.09,900.029L1429.34,900.029C1422.56,900.029 1417.06,904.115 1417.06,909.149L1417.06,1037.66C1417.06,1042.69 1422.56,1046.78 1429.34,1046.78L1787.09,1046.78C1793.87,1046.78 1799.37,1042.69 1799.37,1037.66L1799.37,909.149Z" style="fill:rgb(28,28,28);"/>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-119.487,49.0199)">
+                        <g transform="matrix(17,0,0,17,1888.92,935.674)">
+                        </g>
+                        <text x="1587.25px" y="935.674px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:17px;fill:rgb(252,252,252);">W<tspan x="1602.99px 1612.45px " y="935.674px 935.674px ">eb</tspan>Socket server supporting DA<tspan x="1855.86px 1866.24px " y="935.674px 935.674px ">TE</tspan>X</text>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-119.568,21.0045)">
+                        <g transform="matrix(17,0,0,17,1882.27,935.674)">
+                        </g>
+                        <text x="1587.25px" y="935.674px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:17px;fill:rgb(252,252,252);">W<tspan x="1602.99px 1612.45px " y="935.674px 935.674px ">eb</tspan>Socket client supporting DA<tspan x="1849.21px 1859.59px " y="935.674px 935.674px ">TE</tspan>X</text>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-119.487,-43.6804)">
+                        <g transform="matrix(17,0,0,17,1687.1,935.674)">
+                        </g>
+                        <text x="1587.25px" y="935.674px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:17px;fill:rgb(252,252,252);">HTTP<tspan x="1631.33px 1636.05px " y="935.674px 935.674px "> s</tspan>erver</text>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-118.709,-17.8764)">
+                        <g transform="matrix(17,0,0,17,1680.45,935.674)">
+                        </g>
+                        <text x="1587.25px" y="935.674px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:17px;fill:rgb(252,252,252);">HTTP<tspan x="1631.33px 1636.05px " y="935.674px 935.674px "> c</tspan>lient</text>
+                    </g>
+                    <g transform="matrix(0.772191,0,0,0.772191,775.59,520.7)">
+                        <circle cx="870.172" cy="505.825" r="9.723" style="fill:rgb(0,168,255);"/>
+                    </g>
+                    <g transform="matrix(0.772191,0,0,0.772191,775.392,561.379)">
+                        <circle cx="870.172" cy="505.825" r="9.723" style="fill:rgb(56,192,107);"/>
+                    </g>
+                    <g transform="matrix(1,0,0,1,364.735,562.586)">
+                        <rect x="1074.78" y="407.483" width="16.799" height="16.799" style="fill:rgb(56,192,107);"/>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-119.879,77.386)">
+                        <g transform="matrix(17,0,0,17,1918.28,935.674)">
+                        </g>
+                        <text x="1587.25px" y="935.674px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:17px;fill:rgb(252,252,252);">W<tspan x="1602.99px 1612.45px " y="935.674px 935.674px ">eb</tspan>Socket server acting as DA<tspan x="1840.79px 1851.18px " y="935.674px 935.674px ">TE</tspan>X relay</text>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-119.879,114.128)">
+                        <g transform="matrix(17,0,0,17,1720.47,935.674)">
+                        </g>
+                        <text x="1587.25px" y="935.674px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:17px;fill:rgb(252,252,252);">T<tspan x="1596.7px 1603.32px " y="935.674px 935.674px ">ra</tspan>nsferred data</text>
+                    </g>
+                    <g transform="matrix(0.882285,0,0,0.882285,492.241,640.771)">
+                        <rect x="1074.78" y="407.483" width="16.799" height="16.799" style="fill:none;stroke:rgb(56,192,107);stroke-width:3.4px;"/>
+                    </g>
+                    <g transform="matrix(1,0,0,1,364.048,469.688)">
+                        <rect x="1074.78" y="407.483" width="16.799" height="16.799" style="fill:rgb(0,168,255);"/>
+                    </g>
+                    <g transform="matrix(0.252762,0,0,0.788262,1229.24,686.379)">
+                        <path d="M903.944,449.362C903.944,446.255 896.076,443.732 886.385,443.732L851.268,443.732C841.577,443.732 833.709,446.255 833.709,449.362L833.709,460.898C833.709,464.006 841.577,466.529 851.268,466.529L886.385,466.529C896.076,466.529 903.944,464.006 903.944,460.898L903.944,449.362Z" style="fill:rgb(183,183,183);"/>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-58.0309,4.50433)">
+                        <g transform="matrix(19.8502,0,0,19.8502,1512.07,1046.38)">
+                        </g>
+                        <text x="1501.03px" y="1046.38px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:19.85px;fill:rgb(44,44,44);">a</text>
+                    </g>
+                </g>
+            </g>
+        </g>
+        <g id="scenario-9" serif:id="scenario 9">
+        </g>
+    </g>
+</svg>

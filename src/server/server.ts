@@ -33,6 +33,7 @@ import { arrayBufferToBase64, base64ToArrayBuffer } from "datex-core-legacy/util
 import { Crypto } from "datex-core-legacy/runtime/crypto.ts";
 import { Target } from "datex-core-legacy/datex_all.ts";
 import { createSession, validateSession } from "../session/backend.ts";
+import { isSafariClient } from "../utils/safari.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -382,14 +383,16 @@ export class Server {
             const validation = base64ToArrayBuffer(datexEndpointValidationCookie)
             const endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
 
+
             const valid = await Crypto.verify(nonce, validation, endpoint);
 
             if (valid) {
                 const session = createSession(endpoint);
                 const headers = new Headers();
                 const url = new URL(requestEvent.request.url);
+                const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
                 deleteCookie('datex-endpoint-validation', headers, port)
-                setCookieUIX('uix-session', session, undefined, headers, port)
+                setCookieUIX('uix-session', session, undefined, headers, port, isSafariLocalhost)
                 headers.set("Location", url.pathname+url.search);
                 await this.serveContent(requestEvent, "text/plain", "", undefined, 302, headers, false);
                 return false;
@@ -406,7 +409,8 @@ export class Server {
         
         let normalized_path:string|false = this.normalizeURL(requestEvent.request);
         let handled:boolean|void|string = false;
-        
+        const url = new URL(requestEvent.request.url);
+
         // error parsing url (TODO: this should not happen)
         if (normalized_path == false) {
             this.sendError(requestEvent, 500);
@@ -414,11 +418,12 @@ export class Server {
         }
 
         let endpoint: Datex.Endpoint|undefined;
-            
+
+        
         // session/endpoint handling:
         if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" || requestEvent.request.headers.get("UIX-Inline-Backend") == "true" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
 
-            const port = new URL(requestEvent.request.url).port;
+            const port = url.port;
             const datexEndpointCookie = getCookie("datex-endpoint", requestEvent.request.headers, port);
             const datexEndpointValidationCookie = getCookie("datex-endpoint-validation", requestEvent.request.headers, port);
             const datexEndpointNonceCookie = getCookie("datex-endpoint-nonce", requestEvent.request.headers, port);
@@ -483,7 +488,9 @@ export class Server {
                     if (!handleRequest) return;
                 }
                 
-                // else: has no validated session or datex-endpoint-validation
+                else {
+                    logger.warn("no valid session for " + datexEndpointCookie)
+                }
             }
             
             // has no datex-endpoint -> init
@@ -496,7 +503,8 @@ export class Server {
                     <script type="module" src="${uixURL}"></script>
                 `
                 const headers = new Headers();
-                setCookieUIX('datex-endpoint-nonce', this.getNonce(), undefined, headers, port)
+                const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
+                setCookieUIX('datex-endpoint-nonce', this.getNonce(), undefined, headers, port, isSafariLocalhost)
 
                 await this.serveContent(requestEvent, "text/html", html, undefined, 300, headers, false);
                 return;
@@ -609,7 +617,7 @@ export class Server {
         // Use the request pathname as filepath
         let url = new Path(request.url);
         const isBrowser = Server.isBrowserClient(request);
-        const isSafari = Server.isSafariClient(request);
+        const isSafari = isSafariClient(request);
 
         // extract row:col:contentType
         const [newUrl, newNormalizedPath, lineNumber, colNumber, contentType] = this.getFileSuffix(url, normalizedPath);

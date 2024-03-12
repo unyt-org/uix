@@ -1,5 +1,5 @@
 import { StorageMap } from "datex-core-legacy/types/storage_map.ts";
-import { Datex, f, template } from "datex-core-legacy";
+import { Datex, f } from "datex-core-legacy";
 import { BROADCAST, Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
@@ -82,8 +82,12 @@ export class Context
 			return getSharedData() as Promise<CustomSharedData>;
 		}
 		else {
+			const { isSafariClient } = await import("../utils/safari.ts#lazy");
+
 			if (!this.request) throw new Error("Cannot get shared data from UIX Context with request object");
-			const {sharedData} = await getSharedDataPointer(this.request.headers, this.responseHeaders, new URL(this.request.url).port);
+			const url = new URL(this.request.url);
+			const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(this.request);
+			const {sharedData} = await getSharedDataPointer(this.request.headers, this.responseHeaders, url.port, isSafariLocalhost);
 			if (sharedData[Symbol.dispose]) this.#disposeCallbacks.add(sharedData[Symbol.dispose]!)
 			return sharedData as CustomSharedData;
 		}

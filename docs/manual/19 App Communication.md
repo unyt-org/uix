@@ -39,6 +39,7 @@ When using [hybrid rendering](./07%20Rendering%20Methods.md#hybrid-rendering), s
 DATEX is used to communicate with third-party endpoints or between client endpoints in the same app.
 
 This can be achieved by communicating via a public endpoint relay server:
+
 ![](./res/communication/third-party-endpoint.svg)
 ![](./res/communication/end-to-end-relay.svg)
 

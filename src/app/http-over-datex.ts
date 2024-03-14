@@ -25,7 +25,7 @@ logger.debug("enabled");
 				respondWith: async (r: Response | PromiseLike<Response>) => {
 					r = await r;
 					resolve({
-						body: await this.streamToBuffer(r.body),
+						body: (await this.streamToBuffer(r.body))?.buffer,
   						bodyUsed: r.bodyUsed,
 						headers: Object.fromEntries((r.headers as any).entries()),
 						ok: r.ok,

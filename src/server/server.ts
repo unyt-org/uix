@@ -34,6 +34,7 @@ import { Crypto } from "datex-core-legacy/runtime/crypto.ts";
 import { Target } from "datex-core-legacy/datex_all.ts";
 import { createSession, validateSession } from "../session/backend.ts";
 import { isSafariClient } from "../utils/safari.ts";
+import {SourceMapConsumer} from "npm:source-map"
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -721,6 +722,30 @@ export class Server {
 
             if (!filepath || !await filepath?.fsExists()) return this.getErrorResponse(404, "Not found");
             
+            const consumer = await this.getSourceMapConsumer(filepath);
+
+            let line = lineNumber;
+            let col = colNumber;
+
+            if (consumer) {
+                // use original source as file
+                let sourcePath = filepath.getWithFileExtension("ts");
+                if (!await sourcePath.fsExists()) sourcePath = filepath.getWithFileExtension("tsx");
+
+                // original source was found
+                if (await sourcePath.fsExists()) {
+                    filepath = sourcePath
+                    if (line) {
+                        const pos = consumer.originalPositionFor({line, column: col??0});
+                        line = pos.line;
+                        col = pos.column;
+                    }
+                }
+                else {
+                    logger.error("Found source map, but no original source file for " + filepath)
+                }
+            }
+        
             const content = await Deno.readTextFile(filepath.normal_pathname);
             const highlighted = await highlightText!(content.replace(/\/\/\# sourceMappingURL=.*$/, ""), langsByExtension[filepath.ext as keyof typeof langsByExtension]);
             const html = `<!DOCTYPE html><html>
@@ -749,11 +774,11 @@ export class Server {
                             position: relative;
                         }
 
-                        ${lineNumber!==undefined ? `
-                        .shj-numbers :nth-child(${lineNumber}):before {
+                        ${line!==undefined ? `
+                        .shj-numbers :nth-child(${line}):before {
                             color: white;
                         }
-                        .shj-numbers :nth-child(${lineNumber}):after {
+                        .shj-numbers :nth-child(${line}):after {
                             content: 'x';
                             user-select: none;
                             pointer-events: none;
@@ -768,9 +793,9 @@ export class Server {
                         `: ''}
                     </style>
                     ${highlighted}
-                    ${lineNumber!==undefined ? `
+                    ${line!==undefined ? `
                     <script>
-                        document.querySelector('.shj-numbers :nth-child(${lineNumber})').scrollIntoView({behavior:'instant', block:'center'})
+                        document.querySelector('.shj-numbers :nth-child(${line})').scrollIntoView({behavior:'instant', block:'center'})
                     </script>
                     `: ''}
                 </body>
@@ -790,6 +815,22 @@ export class Server {
         }
 
         return response;
+    }
+
+    async getSourceMapConsumer(jsFilepath: Path.File) {
+        // try to get source map
+        let sourceMap = null;
+        let mapFile = jsFilepath.getWithFileExtension('ts.map');
+        if (await mapFile.fsExists()) {
+            sourceMap = JSON.parse(await Deno.readTextFile(mapFile.normal_pathname));
+        }
+        else {
+            mapFile = jsFilepath.getWithFileExtension('tsx.map');
+            if (await mapFile.fsExists()) {
+                sourceMap = JSON.parse(await Deno.readTextFile(mapFile.normal_pathname));
+            }
+        }
+        if (sourceMap) return new SourceMapConsumer(sourceMap);
     }
 
 

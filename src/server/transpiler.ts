@@ -627,7 +627,8 @@ export class Transpiler {
                         {
                             module: true,
                             compress: {
-                                unused: true
+                                unused: true,
+                                drop_debugger: false
                             },
                             mangle: {
                                 toplevel: true,
@@ -671,7 +672,11 @@ export class Transpiler {
         const {minify} = await import("npm:terser");
         const minifiedSource = await minify(source, {
             module: true,
-            keep_classnames: true
+            keep_classnames: true,
+            compress: {
+                unused: true,
+                drop_debugger: false
+            },
         });
         if (minifiedSource.code == undefined) {
             logger.error("could not minify js");

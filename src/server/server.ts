@@ -420,9 +420,19 @@ export class Server {
 
         let endpoint: Datex.Endpoint|undefined;
 
-        
         // session/endpoint handling:
-        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" || requestEvent.request.headers.get("UIX-Inline-Backend") == "true" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
+        if (
+            (this as any)._uix_init && 
+            Server.isBrowserClient(requestEvent.request) && 
+            (  
+                requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" ||
+                requestEvent.request.headers.get("UIX-Inline-Backend") == "true" ||
+                // workaround for SAfAri without sec-fest-dest header
+                !requestEvent.request.headers.has("Sec-Fetch-Site")
+                /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/
+            ) && 
+            requestEvent.request.headers.get("connection")!="Upgrade"
+        ) {
 
             const port = url.port;
             const datexEndpointCookie = getCookie("datex-endpoint", requestEvent.request.headers, port);
@@ -722,7 +732,7 @@ export class Server {
 
             if (!filepath || !await filepath?.fsExists()) return this.getErrorResponse(404, "Not found");
             
-            const consumer = await this.getSourceMapConsumer(filepath);
+            const consumer = contentType !== "source" && await this.getSourceMapConsumer(filepath);
 
             let line = lineNumber;
             let col = colNumber;

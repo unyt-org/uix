@@ -238,7 +238,7 @@ class App {
 		if (!this.#hostDomains) {
 			this.#hostDomains = globalThis.Deno?.env.get("UIX_HOST_DOMAINS")?.split(",").filter(v=>!!v) ?? [];
 		}
-		return this.#hostDomains!;
+		return this.#hostDomains;
 	}
 
 	public async start(options:appOptions = {}, originalBaseURL?:string|URL) {

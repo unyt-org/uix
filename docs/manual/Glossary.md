@@ -25,7 +25,7 @@ UIX app with `--http-over-datex=false`.
 
 Allows an HTTP client with a [verified endpoint session](#verified-endpoint-session) to send DATEX messages over HTTP.
 This can be done without an active DATEX runtime on the client.
-DATEX-over-HTTP only supports JSON as input and output.
+DATEX-over-HTTP only supports JSON values as input and output.
 
 Pointer synchronization and DATEX messages sent from the server are also not suppported 
 when using DATEX-over-HTTP.

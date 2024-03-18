@@ -1,13 +1,13 @@
 import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { clear, stage, watch } from "../app/args.ts";
 import { createHash } from "https://deno.land/std@0.91.0/hash/mod.ts";
-// import { Datex } from "datex-core-legacy/no_init.ts";
 import { UIXRunner, runOptions } from "./runner.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
 import { OutputMode, exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
 
 import { verboseArg } from "datex-core-legacy/utils/logger.ts"
+import { getInferredRunPaths } from "../app/options.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 
@@ -34,17 +34,18 @@ export default class LocalDockerRunner implements UIXRunner {
 		await execCommand(`docker network inspect ${network} &>/dev/null || docker network create ${network}`)
 
 		// first make sure container is not already running
-		await new Deno.Command("docker-compose", {
+		await new Deno.Command("docker", {
 			args: [
+				"compose",
 				"-f",
 				filePath.normal_pathname,
 				"down"
 			]
 		}).output();
 
-		const output = await new Deno.Command("docker-compose", {
+		const output = await new Deno.Command("docker", {
 			args: [
-				// "compose",
+				"compose",
 				"-f",
 				filePath.normal_pathname,
 				"up",
@@ -79,10 +80,10 @@ export default class LocalDockerRunner implements UIXRunner {
 
 	}
 
-	generateDockerComposeFile({baseURL, endpoint, domains, params}: runOptions, deploymentDir: Path) {
+	generateDockerComposeFile({baseURL, endpoint, domains, params, options}: runOptions, deploymentDir: Path) {
 		if (!endpoint) throw new Error("Missing in endpoint for stage '" + stage + "' ('"+this.name+"' runner)");
 
-		const name = endpoint.toString().replace(/[^A-Za-z0-9_-]/g,'').toLowerCase()
+		const name = endpoint.name + (endpoint.name.endsWith(stage) ? '' : (stage ? '-' + stage : ''))
 		const traefikLabels = new Set()
 		let i = 0;
 		for (const [host, port] of Object.entries(domains)) {
@@ -91,6 +92,8 @@ export default class LocalDockerRunner implements UIXRunner {
 
 		const dxCacheVolumeName = name.replace(/[^a-zA-Z0-9_.-]/g, '-') + '-datex-cache'
 		const localStorage = name.replace(/[^a-zA-Z0-9_.-]/g, '-') + '-localstorage'
+
+		const {importMapPath, uixRunPath} = getInferredRunPaths(options.import_map, baseURL)
 
 		// TODO: generic arg sanitisation (also for run-remote)
 		// TODO: inject args dynamically? not in docker compose file
@@ -134,7 +137,7 @@ export default class LocalDockerRunner implements UIXRunner {
 					
 					entrypoint: "/bin/sh",
 					// keep dev.cdn for now to allow supranet relays to start without cdn running
-    				command: `-c "deno run --import-map https://dev.cdn.unyt.org/uix1/importmap.dev.json -Aqr https://dev.cdn.unyt.org/uix1/run.ts -r --port 80 --stage ${stage} --cache-path /datex-cache ${args.join(" ")}"`,
+    				command: `-c "deno run --import-map ${importMapPath??'https://cdn.unyt.org/importmap.json'} -Aqr ${uixRunPath??'https://cdn.unyt.org/uix/run.ts'} -r --port 80 --stage ${stage} --cache-path /datex-cache ${args.join(" ")}"`,
 		
 					restart: "always"
 				}

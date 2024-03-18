@@ -7,7 +7,10 @@
 	"compilerOptions": {
 		"jsx": "react-jsx",
 		"jsxImportSource": "uix",
-		"lib": ["deno.window"]
+		"lib": [
+			"deno.window",
+			"dom"
+		]
 	},
 	"tasks": {
 		"expose-uix": "deno run --import-map importmap.json -Aq --reload https://dev.cdn.unyt.org/uix/server/standalone-file-server.ts --import-map importmap.dev.json -w --port 4242",

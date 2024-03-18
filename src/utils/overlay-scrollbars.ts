@@ -1,4 +1,3 @@
-import type { HTMLElement, HTMLDivElement } from "../uix-dom/dom/mod.ts";
 import { querySelectorAll } from "../uix-dom/dom/shadow_dom_selector.ts";
 
 

@@ -1,12 +1,11 @@
 // deno-lint-ignore-file no-control-regex
-import { Datex } from "datex-core-legacy";
 import { HTML } from "./src/html/template-strings.ts";
 import { SCSS } from "./src/utils/css-template-strings.ts";
 
 
 /** make decorators global */
 import { bindToOrigin } from "./src/app/datex-over-http.ts";
-import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, frontend as _frontend} from "./src/base/decorators.ts";
+import { content as _content, bindOrigin as _bindOrigin, id as _id, layout as _layout, child as _child, use as _use, NoResources as _NoResources, standalone as _standalone} from "./src/base/decorators.ts";
 import { domUtils } from "./src/app/dom-context.ts";
 import { template as _template, blankTemplate as _blankTemplate } from "./src/html/template.ts";
 import { style as _style } from "./src/html/style.ts";
@@ -18,13 +17,12 @@ import "./src/utils/window-apis.ts";
 export {unsafeHTML} from "./src/html/unsafe-html.ts";
 
 declare global {
-	const ref: typeof _content;
 	const id: typeof _id;
 	const layout: typeof _layout;
 	const content: typeof _content;
 	const value: typeof _child;
 	const NoResources: typeof _NoResources;
-	const frontend: typeof _frontend;
+	const standalone: typeof _standalone;
 	const bindOrigin: typeof _bindOrigin;
 	const template: typeof _template;
 	const blankTemplate: typeof _blankTemplate;
@@ -42,7 +40,7 @@ globalThis.layout = _layout;
 // @ts-ignore global
 globalThis.NoResources = _NoResources;
 // @ts-ignore global
-globalThis.frontend = _frontend;
+globalThis.standalone = _standalone;
 // @ts-ignore global
 globalThis.bindOrigin = _bindOrigin;
 // @ts-ignore global

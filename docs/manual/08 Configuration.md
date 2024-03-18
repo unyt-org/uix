@@ -38,7 +38,7 @@ The following options provide some general information or behaviour of the app.
 * `installable`: *(boolean)* - The app can be installed as standalone web app
 * `meta`: *(Record<string,string>)* - Custom `<meta>` tags (name and content) that are added to the HTML head on each page
 * `manifest`: *Record<string,any>* - Custom web manifest options that override the defaults set by UIX
-* `experimentalFeatures`: *string[]* - List of [experimental UIX features](#experimental-features) that should be enabled
+* `experimental_features`: *string[]* - List of [experimental UIX features](#experimental-features) that should be enabled
 
 <!--
 * `installable`: *(boolean)* - The app can be installed as standalone web app

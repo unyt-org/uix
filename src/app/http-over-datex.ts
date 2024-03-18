@@ -12,10 +12,11 @@ logger.debug("enabled");
 		this.server = server;
 	}
 
-	@property static request(request: any/*Request*/) {
+	@property static async request(requestObj: any/*Request*/) {
 
 		// @ts-ignore clone headers (TODO: required why?)
-		request.headers = new Headers(request.headers);
+		requestObj.headers = new Headers(requestObj.headers);
+		const request = new Request(requestObj.url, requestObj)
 
 		return new Promise(resolve => {
 			const conn: Deno.Conn = {} as Deno.Conn;
@@ -24,7 +25,7 @@ logger.debug("enabled");
 				respondWith: async (r: Response | PromiseLike<Response>) => {
 					r = await r;
 					resolve({
-						body: await this.streamToBuffer(r.body),
+						body: (await this.streamToBuffer(r.body))?.buffer,
   						bodyUsed: r.bodyUsed,
 						headers: Object.fromEntries((r.headers as any).entries()),
 						ok: r.ok,

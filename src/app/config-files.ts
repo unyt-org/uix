@@ -60,6 +60,12 @@ export async function getAppOptions(root_path:URL) {
 		try {
 			const deno = JSON.parse(await Deno.readTextFile(new Path(deno_path).normal_pathname));
 
+			// error if using experimental decorators
+			if (deno.compilerOptions?.experimentalDecorators) {
+				logger.error("UIX uses ECMAScript Decorators, but you have the legacy experimental decorators enabled. Please remove the 'experimentalDecorators' option from your deno.json config.");
+				Deno.exit(1)
+			}
+
 			// imports
 			if (deno.imports) {
 				//config.import_map = {imports:deno.imports};

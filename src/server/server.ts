@@ -14,7 +14,7 @@
 
 // ---
 import { Datex } from "datex-core-legacy";
-import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
+import { getCallerDir, getCallerInfo } from "datex-core-legacy/utils/caller_metadata.ts";
 import { Cookie, setCookie, getCookies } from "../lib/cookie/cookie.ts";
 
 import { Path } from "../utils/path.ts";
@@ -33,6 +33,8 @@ import { arrayBufferToBase64, base64ToArrayBuffer } from "datex-core-legacy/util
 import { Crypto } from "datex-core-legacy/runtime/crypto.ts";
 import { Target } from "datex-core-legacy/datex_all.ts";
 import { createSession, validateSession } from "../session/backend.ts";
+import { isSafariClient } from "../utils/safari.ts";
+import {SourceMapConsumer} from "npm:source-map"
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -352,7 +354,7 @@ export class Server {
     }
 
     private tryListen(port: number) {
-        return enable_tls ? Deno.listenTls({ port, key: defaultKey, cert: defaultCert }) :  Deno.listen({ port });
+        return enable_tls ? Deno.listenTls({ port, key: defaultKey, cert: defaultCert }) : Deno.listen({ port });
     }
 
     public setConnectionHandler(handler:connectionHandler){
@@ -382,14 +384,16 @@ export class Server {
             const validation = base64ToArrayBuffer(datexEndpointValidationCookie)
             const endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
 
+
             const valid = await Crypto.verify(nonce, validation, endpoint);
 
             if (valid) {
                 const session = createSession(endpoint);
                 const headers = new Headers();
                 const url = new URL(requestEvent.request.url);
+                const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
                 deleteCookie('datex-endpoint-validation', headers, port)
-                setCookieUIX('uix-session', session, undefined, headers, port)
+                setCookieUIX('uix-session', session, undefined, headers, port, isSafariLocalhost)
                 headers.set("Location", url.pathname+url.search);
                 await this.serveContent(requestEvent, "text/plain", "", undefined, 302, headers, false);
                 return false;
@@ -406,7 +410,8 @@ export class Server {
         
         let normalized_path:string|false = this.normalizeURL(requestEvent.request);
         let handled:boolean|void|string = false;
-        
+        const url = new URL(requestEvent.request.url);
+
         // error parsing url (TODO: this should not happen)
         if (normalized_path == false) {
             this.sendError(requestEvent, 500);
@@ -414,11 +419,22 @@ export class Server {
         }
 
         let endpoint: Datex.Endpoint|undefined;
-            
-        // session/endpoint handling:
-        if ((this as any)._uix_init && Server.isBrowserClient(requestEvent.request) && (requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" || requestEvent.request.headers.get("UIX-Inline-Backend") == "true" /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/) && requestEvent.request.headers.get("connection")!="Upgrade") {
 
-            const port = new URL(requestEvent.request.url).port;
+        // session/endpoint handling:
+        if (
+            (this as any)._uix_init && 
+            Server.isBrowserClient(requestEvent.request) && 
+            (  
+                requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" ||
+                requestEvent.request.headers.get("UIX-Inline-Backend") == "true" ||
+                // workaround for SAfAri without sec-fest-dest header
+                !requestEvent.request.headers.has("Sec-Fetch-Site")
+                /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/
+            ) && 
+            requestEvent.request.headers.get("connection")!="Upgrade"
+        ) {
+
+            const port = url.port;
             const datexEndpointCookie = getCookie("datex-endpoint", requestEvent.request.headers, port);
             const datexEndpointValidationCookie = getCookie("datex-endpoint-validation", requestEvent.request.headers, port);
             const datexEndpointNonceCookie = getCookie("datex-endpoint-nonce", requestEvent.request.headers, port);
@@ -483,7 +499,9 @@ export class Server {
                     if (!handleRequest) return;
                 }
                 
-                // else: has no validated session or datex-endpoint-validation
+                else {
+                    logger.warn("no valid session for " + datexEndpointCookie)
+                }
             }
             
             // has no datex-endpoint -> init
@@ -496,7 +514,8 @@ export class Server {
                     <script type="module" src="${uixURL}"></script>
                 `
                 const headers = new Headers();
-                setCookieUIX('datex-endpoint-nonce', this.getNonce(), undefined, headers, port)
+                const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
+                setCookieUIX('datex-endpoint-nonce', this.getNonce(), undefined, headers, port, isSafariLocalhost)
 
                 await this.serveContent(requestEvent, "text/html", html, undefined, 300, headers, false);
                 return;
@@ -517,7 +536,10 @@ export class Server {
                     else break;
                 } 
             } 
-            catch {this.sendError(requestEvent)}
+            catch (e) {
+                if (!(e instanceof Deno.errors.Http)) console.error(e);
+                this.sendError(requestEvent)
+            }
         }
 
         // handle default
@@ -606,7 +628,7 @@ export class Server {
         // Use the request pathname as filepath
         let url = new Path(request.url);
         const isBrowser = Server.isBrowserClient(request);
-        const isSafari = Server.isSafariClient(request);
+        const isSafari = isSafariClient(request);
 
         // extract row:col:contentType
         const [newUrl, newNormalizedPath, lineNumber, colNumber, contentType] = this.getFileSuffix(url, normalizedPath);
@@ -710,6 +732,30 @@ export class Server {
 
             if (!filepath || !await filepath?.fsExists()) return this.getErrorResponse(404, "Not found");
             
+            const consumer = contentType !== "source" && await this.getSourceMapConsumer(filepath);
+
+            let line = lineNumber;
+            let col = colNumber;
+
+            if (consumer) {
+                // use original source as file
+                let sourcePath = filepath.getWithFileExtension("ts");
+                if (!await sourcePath.fsExists()) sourcePath = filepath.getWithFileExtension("tsx");
+
+                // original source was found
+                if (await sourcePath.fsExists()) {
+                    filepath = sourcePath
+                    if (line) {
+                        const pos = consumer.originalPositionFor({line, column: col??0});
+                        line = pos.line;
+                        col = pos.column;
+                    }
+                }
+                else {
+                    logger.error("Found source map, but no original source file for " + filepath)
+                }
+            }
+        
             const content = await Deno.readTextFile(filepath.normal_pathname);
             const highlighted = await highlightText!(content.replace(/\/\/\# sourceMappingURL=.*$/, ""), langsByExtension[filepath.ext as keyof typeof langsByExtension]);
             const html = `<!DOCTYPE html><html>
@@ -738,11 +784,11 @@ export class Server {
                             position: relative;
                         }
 
-                        ${lineNumber!==undefined ? `
-                        .shj-numbers :nth-child(${lineNumber}):before {
+                        ${line!==undefined ? `
+                        .shj-numbers :nth-child(${line}):before {
                             color: white;
                         }
-                        .shj-numbers :nth-child(${lineNumber}):after {
+                        .shj-numbers :nth-child(${line}):after {
                             content: 'x';
                             user-select: none;
                             pointer-events: none;
@@ -757,9 +803,9 @@ export class Server {
                         `: ''}
                     </style>
                     ${highlighted}
-                    ${lineNumber!==undefined ? `
+                    ${line!==undefined ? `
                     <script>
-                        document.querySelector('.shj-numbers :nth-child(${lineNumber})').scrollIntoView({behavior:'instant', block:'center'})
+                        document.querySelector('.shj-numbers :nth-child(${line})').scrollIntoView({behavior:'instant', block:'center'})
                     </script>
                     `: ''}
                 </body>
@@ -779,6 +825,22 @@ export class Server {
         }
 
         return response;
+    }
+
+    async getSourceMapConsumer(jsFilepath: Path.File) {
+        // try to get source map
+        let sourceMap = null;
+        let mapFile = jsFilepath.getWithFileExtension('ts.map');
+        if (await mapFile.fsExists()) {
+            sourceMap = JSON.parse(await Deno.readTextFile(mapFile.normal_pathname));
+        }
+        else {
+            mapFile = jsFilepath.getWithFileExtension('tsx.map');
+            if (await mapFile.fsExists()) {
+                sourceMap = JSON.parse(await Deno.readTextFile(mapFile.normal_pathname));
+            }
+        }
+        if (sourceMap) return new SourceMapConsumer(sourceMap);
     }
 
 

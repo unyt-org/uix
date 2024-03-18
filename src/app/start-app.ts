@@ -17,7 +17,7 @@ import { resolve } from "https://deno.land/std@0.172.0/path/win32.ts";
 const logger = new Datex.Logger("UIX App");
 
 /**
- * Start the UIX app on the backendase_url 
+ * Start the UIX app on the backend
  */
 export async function startApp(app: {domains:string[], hostDomains: string[], options?:normalizedAppOptions, base_url?: URL}, options:appOptions = {}, original_base_url?:string|URL) {
 
@@ -37,8 +37,8 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 
 
 	// enable experimental features
-	if (app.options?.experimentalFeatures.includes("protect-pointers")) Datex.Runtime.OPTIONS.PROTECT_POINTERS = true;
-	if (app.options?.experimentalFeatures.includes("indirect-references")) Datex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;
+	if (app.options?.experimental_features.includes("protect-pointers")) Datex.Runtime.OPTIONS.PROTECT_POINTERS = true;
+	if (app.options?.experimental_features.includes("indirect-references")) Datex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;
 
 	// for unyt log
 	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") && Deno.env.get("UIX_HOST_ENDPOINT")!.startsWith("@") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, dynamicData: app})
@@ -126,18 +126,32 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 
 		server.path("/.dx", async (req) => {
 			const host = req.request.headers.get("x-forwarded-host");
+			const isHttpOverDatex = req.request.headers.get("x-http-over-datex") == "yes" 	
+			const isDirect = host && app.hostDomains.includes(host);
+
+			// contradictory - is http over datex, but should be direct http
+			if (isHttpOverDatex && isDirect) {
+				logger.warn("Received an HTTP-over-DATEX request, but should use a direct HTTP connection via " + host);
+			}
+
 			// direct web socket connection not suppported for unyt.app with HTTP-over-DATEX, don't send .dx
-			if (!(
+			if (
 				host?.endsWith(".unyt.app") // is a unyt.app subdomain
-				&& !app.hostDomains.includes(host) // can be assumed use HTTP-over-DATEX
-			)) {
+				&& (
+					isHttpOverDatex || // is HTTP-over-DATEX
+					!isDirect // can be assumed use HTTP-over-DATEX
+				)  
+			) {
+				return false
+			}
+
+			else {
 				await req.respondWith(server!.getContentResponse(
 					"text/datex",
 					dxFile
 				))
 				return true;
-			}			
-			return false;
+			}
 		})
 	}
 

@@ -352,13 +352,17 @@ export namespace Routing {
 			// }
 		}
 
-		if (changed) logger.success `new route: ${getCurrentRouteFromURL().routename??"/"}`;
+		// if (changed) logger.success `new route: ${getCurrentRouteFromURL().routename??"/"}`;
 
 	}
 
 	let frontendRoutingEnabled = false;
 
 	function enableFrontendRouting() {
+
+		// TODO: fix
+		return;
+
 		if (frontendRoutingEnabled) return;
 		frontendRoutingEnabled = true;
 		logger.debug("frontend routing enabled");

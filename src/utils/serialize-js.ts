@@ -17,7 +17,7 @@ export function serializeJSValue(val:any):string {
 	}
 
 	// is object and has prototype
-	else if (typeof val == "object" && !(val instanceof Array) && Object.getPrototypeOf(val) !== Object.prototype) {
+	else if (val !== null && typeof val == "object" && !(val instanceof Array) && Object.getPrototypeOf(val) !== Object.prototype) {
 		const proto = serializeJSValue(Object.getPrototypeOf(val));
 		serialized = `{"__proto__":${proto}, ${serialized.slice(1)}`
 	}

@@ -1,4 +1,4 @@
-import { Datex, f } from "datex-core-legacy";
+import { Datex, f } from "datex-core-legacy/mod.ts";
 
 import type { FrontendManager  } from "./frontend-manager.ts";
 import { Path } from "../utils/path.ts";
@@ -13,7 +13,7 @@ import { logger } from "../utils/global-values.ts";
 import { endpoint_config } from "datex-core-legacy/runtime/endpoint_config.ts";
 import { getInjectedAppData, getInjectedImportmap } from "./app-data.ts";
 
-import "../base/uix-datex-module.ts"
+import { addUIXNamespace } from "../base/uix-datex-module.ts"
 import "../../uix-short.ts"
 
 import "../base/init.ts"
@@ -29,6 +29,7 @@ export const ALLOWED_ENTRYPOINT_FILE_NAMES = ['entrypoint.dx', 'entrypoint.ts', 
 
 type version_change_handler = (version:string, prev_version:string)=>void|Promise<void>;
 
+await addUIXNamespace();
 
 // options passed in via command line arguments
 let stage: string|undefined
@@ -237,7 +238,7 @@ class App {
 		if (!this.#hostDomains) {
 			this.#hostDomains = globalThis.Deno?.env.get("UIX_HOST_DOMAINS")?.split(",").filter(v=>!!v) ?? [];
 		}
-		return this.#hostDomains!;
+		return this.#hostDomains;
 	}
 
 	public async start(options:appOptions = {}, originalBaseURL?:string|URL) {
@@ -250,7 +251,7 @@ class App {
 
 		// log enabled experimental features
 		const allowedFeatures = ['embedded-reactivity', 'protect-pointers', 'indirect-references'];
-		for (const feature of this.options.experimentalFeatures) {
+		for (const feature of this.options.experimental_features) {
 			if (allowedFeatures.includes(feature)) logger.info(`experimental feature "${feature}" enabled`)
 			else logger.error(`unknown experimental feature "${feature}"`)
 		}

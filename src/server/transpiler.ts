@@ -155,7 +155,6 @@ export class Transpiler {
 
         if (this.#options.watch) this.activateFileWatcher();
         addEventListener("unload", ()=>this.close())
-        addEventListener("unhandledrejection", ()=>this.close())
 
         return this;
     }
@@ -547,7 +546,7 @@ export class Transpiler {
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
         // return this.transpileToJSDenoEmit(ts_dist_path)
-        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.experimentalFeatures.includes('embedded-reactivity'));
+        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.experimental_features.includes('embedded-reactivity'));
     }
   
     private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
@@ -628,7 +627,8 @@ export class Transpiler {
                         {
                             module: true,
                             compress: {
-                                unused: true
+                                unused: true,
+                                drop_debugger: false
                             },
                             mangle: {
                                 toplevel: true,
@@ -672,7 +672,11 @@ export class Transpiler {
         const {minify} = await import("npm:terser");
         const minifiedSource = await minify(source, {
             module: true,
-            keep_classnames: true
+            keep_classnames: true,
+            compress: {
+                unused: true,
+                drop_debugger: false
+            },
         });
         if (minifiedSource.code == undefined) {
             logger.error("could not minify js");

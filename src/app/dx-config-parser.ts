@@ -44,7 +44,7 @@ export async function getDXConfigData(backend: Path, options:normalizedAppOption
 	let volumes: URL[]|undefined
 	let instances = 1;
 	const domains:Record<string, number|null> = {}; // domain name -> internal port
-	
+
 	if (backendDxFile.fs_exists) {
 		let backendDomains: string[]|undefined;
 		({requiredLocation, stageEndpoint, domains: backendDomains, volumes, instances} = await readDXConfigData(backendDxFile))

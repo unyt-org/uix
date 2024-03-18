@@ -12,7 +12,6 @@ import { Context, ContextGenerator } from "./context.ts";
 import { Component } from "../components/Component.ts";
 import { logger } from "../utils/global-values.ts";
 import { domContext } from "../app/dom-context.ts";
-import type { DocumentFragment, Element } from "../uix-dom/dom/mod.ts";
 import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { FileHandle } from "../html/entrypoint-providers.tsx";
@@ -36,7 +35,7 @@ if (!globalThis.URLPattern) {
 export async function createSnapshot<T extends Element|DocumentFragment>(content:T, render_method = RenderMethod.HYBRID):Promise<T> {
 	await preloadElementOnBackend(content);
 	// @ts-ignore
-	content[CACHED_CONTENT] = getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, injectStandaloneComponents:render_method!=RenderMethod.STATIC&&render_method!=RenderMethod.HYBRID, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
+	content[CACHED_CONTENT] = getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC, injectStandaloneComponents:render_method!=RenderMethod.STATIC, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
 	return content;
 }
 

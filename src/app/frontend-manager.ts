@@ -29,6 +29,7 @@ import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
 import { observeElementforSSE } from "./sse-observer.ts";
 import { eternalExts, getEternalModuleProxyPath } from "./module-mapping.ts";
 import { rootPath } from "./args.ts";
+import { isSafariClient } from "../utils/safari.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -865,10 +866,12 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 
 	private async handleRequest(requestEvent: Deno.RequestEvent, path:string, conn:Deno.Conn, metadata:requestMetadata, entrypoint = this.#backend?.content_provider, recursiveError = true) {
 		const url = new Path(requestEvent.request.url);
+
 		const pathAndQueryParameters = url.normal_pathname + url.search;
 		const lang = ContextBuilder.getRequestLanguage(requestEvent.request);
 
 		const port = new URL(requestEvent.request.url).port;
+		const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
 
 		const isInlineRendered = requestEvent.request.headers.get("UIX-Inline-Backend") == "true"
 
@@ -916,11 +919,11 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				if (mode && mode !== "dark" && mode !== "light") {
 					logger.warn(`Invalid color mode set on frontend, using "${UIX.Theme.mode}" as a fallback`);
 					mode = UIX.Theme.mode
-					setCookie(UIX_COOKIE.initialColorMode, mode, undefined, combinedHeaders, port);
+					setCookie(UIX_COOKIE.initialColorMode, mode, undefined, combinedHeaders, port, isSafariLocalhost);
 				}
 				else if (!mode) {
 					mode = UIX.Theme.mode
-					setCookie(UIX_COOKIE.initialColorMode, mode, undefined, combinedHeaders, port);
+					setCookie(UIX_COOKIE.initialColorMode, mode, undefined, combinedHeaders, port, isSafariLocalhost);
 				}
 
 				// select matching light theme for mode
@@ -930,14 +933,14 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				// fall back to default dark theme
 				if (!currentDarkThemeCSS) {
 					if (themeDark) logger.warn(`Theme "${themeDark}" is not registered on the backend, using "${UIX.Theme.defaultDarkTheme}" as a fallback`);
-					setCookie(UIX_COOKIE.themeDark, UIX.Theme.defaultDarkTheme, undefined, combinedHeaders, port);
+					setCookie(UIX_COOKIE.themeDark, UIX.Theme.defaultDarkTheme, undefined, combinedHeaders, port, isSafariLocalhost);
 					themeDark = UIX.Theme.defaultDarkTheme
 				}
 
 				// fall back to default light theme
 				if (!currentLightThemeCSS) {
 					if (themeLight) logger.warn(`Theme "${themeLight}" is not registered on the backend, using "${UIX.Theme.defaultLightTheme}" as a fallback`);
-					setCookie(UIX_COOKIE.themeLight, UIX.Theme.defaultLightTheme, undefined, combinedHeaders, port);
+					setCookie(UIX_COOKIE.themeLight, UIX.Theme.defaultLightTheme, undefined, combinedHeaders, port, isSafariLocalhost);
 					themeLight = UIX.Theme.defaultLightTheme
 				}
 

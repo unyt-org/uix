@@ -4,7 +4,7 @@ import { UIX_COOKIE, deleteCookie, getCookie, setCookie } from "./cookies.ts";
 // @ts-ignore
 Symbol.dispose ??= Symbol.for("Symbol.dispose")
 
-export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:Headers, port?: string) {
+export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:Headers, port?: string, isSafariLocalhost = false) {
 	let cookieSharedData: Record<string, unknown> & {[Symbol.dispose]?:()=>void}
 
 	const cookie = getCookie(UIX_COOKIE.sharedData, readHeaders, port);
@@ -29,7 +29,7 @@ export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:H
 	cookieSharedData[Symbol.dispose] = () => Datex.Ref.unobserve(cookieSharedData, update)
 	const update = async () => {
 		console.debug("updating shared data cookie: \n" + Datex.Runtime.valueToDatexStringExperimental({...cookieSharedData}, true, true));
-		setCookie(UIX_COOKIE.sharedData, await Datex.Compiler.encodeValueBase64Async({...cookieSharedData}, undefined, undefined, false, true), undefined, writeHeaders, port)
+		setCookie(UIX_COOKIE.sharedData, await Datex.Compiler.encodeValueBase64Async({...cookieSharedData}, undefined, undefined, false, true), undefined, writeHeaders, port, isSafariLocalhost)
 	};
 	Datex.Ref.observe(cookieSharedData, update)
 

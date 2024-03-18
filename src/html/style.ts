@@ -1,9 +1,6 @@
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { Component } from "../components/Component.ts";
 import { jsxInputGenerator } from "./template.ts";
-import type { CSSStyleSheet } from "../uix-dom/dom/mod.ts";
-import type { HTMLElement } from "../uix-dom/dom/mod.ts";
-
 
 /**
  * \@style decorator

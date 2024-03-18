@@ -23,7 +23,7 @@ export const UIX_COOKIE = {
 } as const;
 export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];
 
-const isSafari = (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+const browserIsSafariLocalhost = window.location?.hostname == "localhost" && (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
 
 export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string) {
 
@@ -34,7 +34,7 @@ export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?
     else document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
 }
 
-export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:number, headers?: Headers, port?:string) {
+export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:number, headers?: Headers, port?:string, isSafariLocalhost = false) {
 
 	port ??= portPrefix
 	if (port) name += "/" + port;
@@ -52,7 +52,7 @@ export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:numb
 			name,
 			value,
 			sameSite: "None",
-			secure: true,
+			secure: !isSafariLocalhost,
 			path: '/',
 			expires: expiryDate
 		})
@@ -61,7 +61,7 @@ export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:numb
 	else {
 		const expires = "expires=" + expiryDate.toUTCString() + ";";
 		// SameSite none leads to errors (in combination with Secure/Not secure)
-		document.cookie = name + "=" + value + "; " + expires + " path=/; SameSite=None;" + (isSafari ? "" :" Secure;")
+		document.cookie = name + "=" + value + "; " + expires + " path=/; SameSite=None;" + (browserIsSafariLocalhost ? "" :" Secure;")
 	}
 	
 }

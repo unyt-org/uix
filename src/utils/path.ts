@@ -76,7 +76,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 
 		// absolute url
 		if (path instanceof URL) return path;
-		else if (typeof path == "string" && path.match(/^[A-Za-z0-9]+\:/)) return new URL(path);
+		else if (typeof path == "string" && path.match(/^[A-Za-z]+\:/)) return new URL(path);
 
 		// string, string []
 		if (path instanceof Array) path = './'+path.join('/').replace(/^\//,''); // join, make relative and remove duplicate / at beginning

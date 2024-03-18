@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 1508 316" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g id="Artboard1" transform="matrix(0.991555,0,0,0.716849,-90.3779,-190.854)">
+        <rect x="91.148" y="266.24" width="1520.4" height="439.988" style="fill:none;"/>
+        <clipPath id="_clip1">
+            <rect x="91.148" y="266.24" width="1520.4" height="439.988"/>
+        </clipPath>
+        <g clip-path="url(#_clip1)">
+            <g transform="matrix(1.01458,0,0,1.4086,-11.4568,-186.52)">
+                <rect x="-9.667" y="-2.892" width="1940.56" height="1089.13" style="fill:rgb(21,21,21);"/>
+            </g>
+            <g id="legend" transform="matrix(1.00852,0,0,1.39499,73.0113,-184.031)">
+                <g id="desc">
+                    <g id="legend1" serif:id="legend">
+                    </g>
+                </g>
+            </g>
+            <g id="scenario-1" serif:id="scenario 1" transform="matrix(1.00852,0,0,1.39499,-0.627362,-174.672)">
+                <g id="example.org" transform="matrix(0.791988,0,0,0.791988,488.105,53.6242)">
+                    <g transform="matrix(4.57565,0,0,2.3133,294.967,-137.195)">
+                        <path d="M221.345,256.293C221.345,250.276 218.875,245.392 215.834,245.392L131.609,245.392C128.567,245.392 126.098,250.276 126.098,256.293L126.098,329.737C126.098,335.754 128.567,340.639 131.609,340.639L215.834,340.639C218.875,340.639 221.345,335.754 221.345,329.737L221.345,256.293Z" style="fill:rgb(65,71,80);"/>
+                    </g>
+                    <g transform="matrix(0.590363,0,0,0.590363,375.547,185.622)">
+                        <g transform="matrix(43.317,0,0,43.317,1091.7,485.171)">
+                        </g>
+                        <text x="876.086px" y="485.171px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:43.317px;fill:rgb(13,192,107);">@example</text>
+                    </g>
+                    <g>
+                        <g transform="matrix(0.590363,0,0,0.590363,376.224,227.667)">
+                            <g transform="matrix(43.317,0,0,43.317,1275.63,485.171)">
+                            </g>
+                            <text x="876.086px" y="485.171px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:43.317px;fill:rgb(0,168,255);">https://example.org</text>
+                        </g>
+                        <g transform="matrix(1.26265,0,0,1.26265,-497.289,-61.9853)">
+                            <rect x="1074.78" y="407.483" width="16.799" height="16.799" style="fill:rgb(56,192,107);"/>
+                        </g>
+                        <g transform="matrix(1.26265,0,0,1.26265,-497.289,-21.0697)">
+                            <rect x="1074.78" y="407.483" width="16.799" height="16.799" style="fill:rgb(0,168,255);"/>
+                        </g>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-19.4945,-0.838146)">
+                        <g transform="matrix(25.5728,0,0,25.5728,1308.17,594.361)">
+                        </g>
+                        <text x="913.16px" y="594.361px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:25.573px;fill:rgb(235,255,246);">Example-App Backend Endpoint</text>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-19.4945,29.7086)">
+                        <g transform="matrix(25.5728,0,0,25.5728,1181.72,594.361)">
+                        </g>
+                        <text x="913.16px" y="594.361px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:25.573px;fill:rgb(176,176,176);">(Server with public IP)</text>
+                    </g>
+                </g>
+                <g transform="matrix(1,0,0,1,-4.30421,31.7329)">
+                    <g transform="matrix(1.17251,0,0,1,-143.825,0)">
+                        <path d="M903.944,449.431C903.944,446.286 901.766,443.732 899.083,443.732L838.57,443.732C835.887,443.732 833.709,446.286 833.709,449.431L833.709,460.83C833.709,463.975 835.887,466.529 838.57,466.529L899.083,466.529C901.766,466.529 903.944,463.975 903.944,460.83L903.944,449.431Z" style="fill:rgb(183,183,183);"/>
+                    </g>
+                    <g transform="matrix(0.698515,0,0,0.698515,253.581,135.279)">
+                        <g transform="matrix(21.5836,0,0,21.5836,941.721,464.242)">
+                        </g>
+                        <text x="839.789px" y="464.242px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:21.584px;fill:rgb(45,45,45);">page.html</text>
+                    </g>
+                </g>
+                <g transform="matrix(1,0,0,1,0,38.3065)">
+                    <path d="M513.58,415.054C513.58,415.054 1079.43,414.629 1176.7,414.82" style="fill:none;stroke:rgb(0,168,255);stroke-width:4px;"/>
+                </g>
+                <g transform="matrix(0.185576,0,0,0.515874,707.9,235.067)">
+                    <path d="M887.537,428.805L887.537,445.187L757.505,423.345L887.537,401.503L887.537,417.884L887.537,417.884L887.537,428.805L887.537,428.805Z" style="fill:rgb(0,168,255);"/>
+                </g>
+                <g id="max" transform="matrix(0.772191,0,0,0.772191,-498.262,58.4464)">
+                    <g transform="matrix(4.80962,0,0,2.3133,243.18,-137.195)">
+                        <path d="M221.345,256.572C221.345,250.402 218.935,245.392 215.967,245.392L131.476,245.392C128.508,245.392 126.098,250.402 126.098,256.572L126.098,329.458C126.098,335.629 128.508,340.639 131.476,340.639L215.967,340.639C218.935,340.639 221.345,335.629 221.345,329.458L221.345,256.572Z" style="fill:rgb(65,71,80);"/>
+                    </g>
+                    <g transform="matrix(1,0,0,1,436.074,6.00524)">
+                        <circle cx="870.172" cy="505.825" r="9.723" style="fill:rgb(0,168,255);"/>
+                    </g>
+                    <g transform="matrix(1,0,0,1,219.951,0)">
+                        <g transform="matrix(1,0,0,1,217.004,-42.9365)">
+                            <circle cx="870.172" cy="505.825" r="9.723" style="fill:rgb(56,192,107);"/>
+                        </g>
+                        <g transform="matrix(0.590363,0,0,0.590363,363.895,182.427)">
+                            <g transform="matrix(43.317,0,0,43.317,1190.43,485.171)">
+                            </g>
+                            <text x="876.086px" y="485.171px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:43.317px;fill:rgb(13,192,107);">@max.example</text>
+                        </g>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-42.0139,-0.838146)">
+                        <g transform="matrix(25.5728,0,0,25.5728,1333.69,594.361)">
+                        </g>
+                        <text x="913.16px" y="594.361px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:25.573px;fill:rgb(235,255,246);">Example-App Frontend Endpoint 1</text>
+                    </g>
+                    <g transform="matrix(1,0,0,1,-42.0139,29.7086)">
+                        <g transform="matrix(25.5728,0,0,25.5728,1110.66,594.361)">
+                        </g>
+                        <text x="913.16px" y="594.361px" style="font-family:'Helvetica-Bold', 'Helvetica';font-weight:700;font-size:25.573px;fill:rgb(176,176,176);">(Browser Client)</text>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

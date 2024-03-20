@@ -619,7 +619,8 @@ export type HTMLPageOptions = {
 	livePointers?: string[],
 	includeImportMap?: boolean,
 	force_enable_scripts?: boolean,
-	preloadDependencies?: boolean
+	preloadDependencies?: boolean,
+	appColors?: {light?: string, dark?: string}
 }
 
 export async function generateHTMLPage({
@@ -639,7 +640,8 @@ export async function generateHTMLPage({
 	lang, 
 	livePointers,
 	includeImportMap,
-	preloadDependencies
+	preloadDependencies,
+	appColors
 }: HTMLPageOptions) {
 
 	lang ??= "en"
@@ -817,7 +819,12 @@ export async function generateHTMLPage({
 		}
 	}
 
+	// TODO: custom color-scheme inheritance not yet implemented (just in firefox)
+	// ${appColors?.light ? `<meta name="theme-color" media="(prefers-color-scheme: light)" content="${appColors.light}"/>` : ""}
+	// ${appColors?.dark ? `<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${appColors.dark}"/>` : ""}
+	
 	// TODO: fix open_graph_meta_tags?.getMetaTags()
+	
 	return indent `<!DOCTYPE html>
 		<html lang="${lang}" style="color-scheme:${color_scheme}">
 			<head>
@@ -825,7 +832,7 @@ export async function generateHTMLPage({
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 				<meta name="view-transition" content="same-origin"/>
 				<meta name="color-scheme" content="${color_scheme}"/>
-				<meta name="theme-color"/>	
+				<meta name="theme-color"${appColors?.[color_scheme] ? ` content="${appColors[color_scheme]}"` : ''}/>
 				${metaScripts}
 				${preloadDependencies ?
 					[...modulePreloadUrls].map(_url => {

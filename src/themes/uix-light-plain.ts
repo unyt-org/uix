@@ -27,5 +27,6 @@ export const uixLightPlain = {
 		'light-blue': '#3097db',
 		'orange': '#ea5e2b',
 		'yellow': '#ebb626'
-	}
+	},
+	appColor: '#fff'
 } satisfies Theme;

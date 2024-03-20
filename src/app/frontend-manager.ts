@@ -913,7 +913,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 
 				let themeDark = getCookie(UIX_COOKIE.themeDark, requestEvent.request.headers, port)
 				let themeLight = getCookie(UIX_COOKIE.themeLight, requestEvent.request.headers, port)
-				let mode = getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers, port) || getCookie(UIX_COOKIE.initialColorMode, requestEvent.request.headers, port) as "dark"|"light"
+				let mode = (getCookie(UIX_COOKIE.colorMode, requestEvent.request.headers, port) || getCookie(UIX_COOKIE.initialColorMode, requestEvent.request.headers, port)) as "dark"|"light"
 
 				// no mode cookie or invalid, set server default (uix-initial-color-mode)
 				if (mode && mode !== "dark" && mode !== "light") {
@@ -949,7 +949,9 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 				// get stylesheets for theme
 				const currentThemeCSS = preferredThemeName ? UIX.Theme.getThemeCSS(preferredThemeName, true) : undefined;
 				const currentThemeStylesSheets = UIX.Theme.getThemeStylesheets(preferredThemeName) ?? [];
-				
+				const currentDarkThemeAppColor = UIX.Theme.getTheme(themeDark!)?.appColor;
+				const currentLightThemeAppColor = UIX.Theme.getTheme(themeLight!)?.appColor;
+
 				// get live pointer ids for sse observer
 				let liveNodePointers:string[]|undefined = undefined;
 				if (contentElement && render_method === RenderMethod.BACKEND) {
@@ -993,7 +995,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 						open_graph_meta_tags,
 						livePointers: liveNodePointers,
 						includeImportMap: !isInlineRendered,
-						preloadDependencies: this.app_options.preload_dependencies
+						preloadDependencies: this.app_options.preload_dependencies,
+						appColors: {dark: currentDarkThemeAppColor, light: currentLightThemeAppColor}
 					}),
 					undefined, status_code, combinedHeaders
 				);

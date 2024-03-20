@@ -12,13 +12,41 @@ import { uixDarkPlain } from "../themes/uix-dark-plain.ts";
 const logger = new Logger("uix theme");
 
 export interface Theme {
+	/**
+	 * Unique name for the theme
+	 */
 	name: string,
+	/**
+	 * Mode of the theme, if not set, the theme is used for both dark and light mode
+	 */
 	mode?: "light" | "dark",
+	/**
+	 * Css variables for the theme
+	 */
 	values?: Record<string, string>,
+	/**
+	 * List of stylesheets to use when theme is activated
+	 */
 	stylesheets?: Readonly<(URL|string)[]>,
+	/**
+	 * Scripts that are executed when theme is activated
+	 */
 	scripts?: Readonly<(URL|string)[]>,
+	/**
+	 * Color used as theme-color when the theme is active
+	 */
+	appColor?: string,
+	/**
+	 * Called when theme is activated
+	 */
 	onActivate?: () => void|Promise<void>,
+	/**
+	 * Called when theme is deactivated
+	 */
 	onDeactivate?: () => void|Promise<void>
+	/**
+	 * Called when theme is registered
+	 */
 	onRegister?: () => void|Promise<void>
 }
 
@@ -330,6 +358,11 @@ class ThemeManager  {
 			this.#updateCustomStylesheets(this.#normalizeThemeStylesheets(theme))
 		}
 		else this.#clearCustomStyleSheets();
+
+		// theme-color (TODO: only workaround until meta media query is supported in all browsers)
+		if (theme.appColor) {
+			if (client_type === "browser") document.querySelector("meta[name=theme-color]")?.setAttribute("content", theme.appColor);
+		}
 
 		if (theme.onActivate) {
 			try {

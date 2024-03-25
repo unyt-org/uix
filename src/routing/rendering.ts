@@ -231,8 +231,10 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 		let urlPattern:URLPattern;
 		// url with http - match with base origin
 		if (potential_route_key.startsWith("http://") || potential_route_key.startsWith("https://")) {
-			urlPattern = new URLPattern(potential_route_key);
-			matchWith = new Path(entrypointData.route!.routename, globalThis.location?.href??'http:///unknown')
+			// avoid confusion with http and https, allow both
+			const normalizedRouteKey = potential_route_key.replace(/^https?/, "http{s}?");
+			urlPattern = new URLPattern(normalizedRouteKey);
+			matchWith = entrypointData.context.request?.url ? new Path(entrypointData.context.request?.url) : new Path(entrypointData.route!.routename, globalThis.location?.href??'http:///unknown')
 		}
 		// just match a generic route
 		else {

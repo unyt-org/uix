@@ -78,6 +78,7 @@ Feel free to browse a collection of UIX projects on [uix.unyt.org/templates](htt
 * [Tic-Tac-Toe](https://github.com/unyt-org/example-tic-tac-toe)
 * [Weather App](https://github.com/unyt-org/example-weather-app)
 * [Artwall](https://github.com/unyt-org/example-artwall)
+* [Video Call](https://github.com/unyt-org/example-video-call)
 
 ## Browsers support
 

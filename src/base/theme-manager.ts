@@ -1,6 +1,5 @@
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
-import type { CSSStyleSheet } from "../uix-dom/dom/deno-dom/src/css/CSSStylesheet.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { Path } from "../utils/path.ts";
@@ -61,7 +60,7 @@ class ThemeManager  {
 	#values:{[key:string]:string} = {}
 
 	#auto_mode = true
-	#current_mode?: "dark"|"light"
+	#current_mode!: "dark"|"light"
 	#current_theme!: string
 	#waiting_theme?: string;
 
@@ -81,9 +80,9 @@ class ThemeManager  {
 
 	get stylesheet() {return this.#global_style_sheet}
 
-	get mode() {return this.#current_mode}
+	get mode() {return this.#current_mode} // important!: never reference this.mode inside ThemeManager, getter might be overridden
 	set mode(name: "dark"|"light") {this.setMode(name)}
-	get theme() {return this.#current_theme}
+	get theme() {return this.#current_theme} // important!: never reference this.theme inside ThemeManager, getter might be overridden
 	set theme(name: string) {this.setTheme(name)}
 
 	get defaultDarkTheme() {return this.#default_dark_theme.name}
@@ -346,6 +345,7 @@ class ThemeManager  {
 
 		this.updateCurrentThemeStyle()
 
+		const modeChanged = this.#current_mode != (theme.mode ?? "light");
 		this.#current_mode = theme.mode ?? "light"; // only now trigger Theme.mode observers
 		// css global color scheme
 		if (client_type === "browser") {
@@ -373,8 +373,9 @@ class ThemeManager  {
 			}
 		}
 
-		// call them change listeners
-		for (const observer of this.mode_change_observers) observer(theme.mode);
+		// call theme/mode change listeners
+		if (modeChanged) for (const observer of this.mode_change_observers) observer(this.#current_mode);
+		for (const observer of this.theme_change_observers) observer(this.#current_theme);
 	}
 
 	#normalizeThemeStylesheets(theme: Theme) {
@@ -387,7 +388,7 @@ class ThemeManager  {
 
 	#clearCustomStyleSheets(exclude?: Set<string>) {
 		if (client_type == "browser") {
-			for (const link of document.head.querySelectorAll('link.custom-theme')) {
+			for (const link of document.head.querySelectorAll('link.custom-theme') as unknown as HTMLElement[]) {
 				if (exclude?.has(link.href)) continue;
 				link.remove();
 			}
@@ -494,7 +495,7 @@ class ThemeManager  {
 		if (!("name" in override)) throw new Error("Name required");
 
 		const overrideValues = override.values ?? {};
-		override.values = Object.create(theme.values);
+		override.values = Object.create(theme.values??{});
 		for (const [key, value] of Object.entries(overrideValues)) {
 			override.values![key] = value;
 		}
@@ -508,6 +509,11 @@ class ThemeManager  {
 		this.mode_change_observers.add(observer);
 	}
 
+	private theme_change_observers = new Set<Function>();
+	onThemeChange(observer:(theme:string)=>void) {
+		this.theme_change_observers.add(observer);
+	}
+
 }
 
 let themeManager:ThemeManager|undefined;
@@ -516,3 +522,5 @@ export function getThemeManager() {
 	if (!themeManager) themeManager = new ThemeManager();
 	return themeManager;
 }
+
+export type ThemeManagerType = ThemeManager;

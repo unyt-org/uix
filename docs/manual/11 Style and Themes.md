@@ -4,13 +4,18 @@
 
 To apply css styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
 
+> [!NOTE]
+> Although SCSS is supported nativelyby UIX, we recommend using CSS files rather than SCSS files.
+> Modern CSS supported in all major browsers includes most features that are provided by SCSS.
+> SCSS support might be completely removed from UIX in the future.
+
 The styles declared in this file are automatically adopted for all instances of the component and are not exposed
 to other components.
 
 You can use the `:host` selector to access the component root element (also when not using a shadow dom).
 
 If you need to apply styles to elements outside of a component,
-you can define general global styles in an `entrypoint.(s)css` file next to the `entrypoint.ts` file.
+you can define general global styles in an `entrypoint.css` file next to the `entrypoint.ts` file.
 
 ## Inline styles
 

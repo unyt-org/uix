@@ -85,7 +85,7 @@ UIX Fragments do not face the reusablity issues of normal DocumentFragments, but
 </div>
 ```
 
-```scss
+```css
 div > h1 {
     // this does not work
 }

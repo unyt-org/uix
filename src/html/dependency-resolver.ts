@@ -147,6 +147,7 @@ export function getDependencyTree(file: Path|string, visitedNodes:Set<string> = 
 	return Object.fromEntries([...cachedDependencies.get(file)!].map(p => {
 		let pKey = p;
 		// prefix replacements
+		console.log("file", pKey, prefixMappings)
 		for (const [prefix, replacement] of prefixMappings) {
 			if (pKey.startsWith(prefix)) {
 				pKey = replacement + pKey.slice(prefix.length);

@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-control-regex
 import { HTML } from "./src/html/template-strings.ts";
-import { SCSS } from "./src/utils/css-template-strings.ts";
+import { SCSS, Css } from "./src/utils/css-template-strings.ts";
 
 
 /** make decorators global */
@@ -55,6 +55,8 @@ globalThis.style = _style;
 globalThis.HTML = HTML;
 // @ts-ignore global HTML
 globalThis.SCSS = SCSS;
+// @ts-ignore global HTML
+globalThis.Css = Css;
 
 
 /**
@@ -63,11 +65,16 @@ globalThis.SCSS = SCSS;
 
 const _HTML = HTML;
 const _SCSS = SCSS;
+const _Css = Css;
 
 declare global {
 
 	const HTML: typeof _HTML;
+	/**
+	 * @deprecated, use Css
+	 */
 	const SCSS: typeof _SCSS;
+	const Css: typeof _Css;
 
 	// interface CallableFunction {
 	// 	bindToOrigin<T, A extends unknown[], R>(this: (this: T, ...args: A) => R, context?:any): (...args: A)=>Promise<Awaited<Promise<R>>>;

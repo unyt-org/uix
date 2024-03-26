@@ -20,7 +20,7 @@ export interface DynamicCSSStyleSheet extends CSSStyleSheet {
  * @param template css template string
  * @returns 
  */
-export function SCSS(template:TemplateStringsArray|string, ...params:cssParam[]): DynamicCSSStyleSheet {
+export function Css(template:TemplateStringsArray|string, ...params:cssParam[]): DynamicCSSStyleSheet {
 	const isTemplate = (template as TemplateStringsArray)?.raw instanceof Array && template instanceof Array;
 	// non template value - convert to HTML node
 	if (!isTemplate) {
@@ -104,6 +104,8 @@ export function SCSS(template:TemplateStringsArray|string, ...params:cssParam[])
 	}
 	
 }
+
+export const SCSS = Css;
 
 function* elementsDynamicProperties(elements: Iterable<Element>, cssVarsBySelector: Map<string, Set<string>>) {
 	// find all nodes that where added in mutation

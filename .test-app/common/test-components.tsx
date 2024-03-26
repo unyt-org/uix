@@ -214,7 +214,7 @@ const TemplateWithOptions = template<{image:HTMLImageElement, x: number, map: Ma
 	)
 })
 
-@style(SCSS`
+@style(Css`
 	:host {
 		background: green;
 	}
@@ -230,7 +230,7 @@ export class ComponentWithOptions extends Component<{image?:HTMLImageElement, x:
 
 @style("./style1.css")
 
-@style(SCSS`
+@style(Css`
 	div {
 		background: green;
 		color: #eee;
@@ -241,7 +241,7 @@ export class ComponentWithOptions extends Component<{image?:HTMLImageElement, x:
 	}
 `)
 
-@style(SCSS`
+@style(Css`
 	* {
 		font-family: sans-serif;
 	}

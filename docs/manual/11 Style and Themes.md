@@ -35,7 +35,7 @@ class MyComponent extends Component {
 ```
 
 The `@style` decorator accepts a `CSSStylesheet` as a parameter.
-The best way to create this stylesheet is using the `SCSS` template function.
+The best way to create this stylesheet is using the `Css` template function.
 
 
 ## Element-scoped styles
@@ -76,9 +76,9 @@ Element-scoped styles can also be used inside function components, which do not 
 > This feature only works in browsers that support the experimental [`@scope` block](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope#browser_compatibility).
 
 
-### The `SCSS` template function
+### The `Css` template function
 
-The `SCSS` function creates a `CSSStylesheet` from any valid (s)css string (@import directives are not allowed).
+The `Css` function creates a `CSSStylesheet` from any valid css string (@import directives are not allowed).
 Additionally, it supports reactive properties:
 
 ```ts

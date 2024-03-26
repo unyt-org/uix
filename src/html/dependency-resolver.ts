@@ -69,11 +69,11 @@ async function resolveDependenciesFromDependencyFile(file: Path) {
 	return allDeps;
 }
 
-function resolveFileMap(tree: Tree, allDeps: Set<string>, rootPath: Path) {
+function resolveFileMap(tree: Exclude<Tree, null>, allDeps: Set<string>, rootPath: Path) {
 	const topLevelDeps = new Set<string>();
 	for (const [key, value] of Object.entries(tree)) {
 		const keyFile = Path.pathIsURL(key) ? 
-			new Path(key) :
+			key :
 			key.startsWith('./') || key.startsWith('../') ?
 				new Path(key, rootPath):
 				import.meta.resolve(key);
@@ -147,7 +147,6 @@ export function getDependencyTree(file: Path|string, visitedNodes:Set<string> = 
 	return Object.fromEntries([...cachedDependencies.get(file)!].map(p => {
 		let pKey = p;
 		// prefix replacements
-		console.log("file", pKey, prefixMappings)
 		for (const [prefix, replacement] of prefixMappings) {
 			if (pKey.startsWith(prefix)) {
 				pKey = replacement + pKey.slice(prefix.length);

@@ -37,8 +37,8 @@ export async function resolveDependencies(file: Path|string, appOptions: normali
 			const response = await fetch(file.toString());
 			// has X-Module-Dependencies header
 			if (response.headers.get("X-Module-Dependencies") == "true") {
-				console.log("has x-module-dependencies header")
-				return await resolveDependenciesFromDependencyFile(file, appOptions, tree, FrontendManager);
+				console.log(file + " has x-module-dependencies header")
+				return await resolveDependenciesFromDependencyFile(file);
 			}
 			// http file without X-Module-Dependencies header
 			else return await resolveDependenciesFromSource(file, await response.text(), appOptions, tree, FrontendManager);
@@ -60,10 +60,29 @@ export async function resolveDependencies(file: Path|string, appOptions: normali
 	}
 }
 
-async function resolveDependenciesFromDependencyFile(file: Path, appOptions: normalizedAppOptions, tree: string[] = [], FrontendManager: any) {
-	const depsFile = await (await fetch(file.getWithFileExtension(file.ext + '.dependencies'))).json()
-	console.log("deps", depsFile)
+async function resolveDependenciesFromDependencyFile(file: Path) {
+	const depsTree = await (await fetch(file.getWithFileExtension(file.ext + '.dependencies'))).json()
+
+	const allDeps = new Set<string>();
+	resolveFileMap(depsTree, allDeps, file);
+
+	return allDeps;
 }
+
+function resolveFileMap(tree: Tree, allDeps: Set<string>, rootPath: Path) {
+	const topLevelDeps = new Set<string>();
+	for (const [key, value] of Object.entries(tree)) {
+		const keyFile = new Path(key, rootPath);
+		topLevelDeps.add(keyFile.toString());
+		allDeps.add(keyFile.toString());
+		if (value) {
+			const deps = resolveFileMap(value, allDeps, rootPath);
+			cachedDependencies.set(keyFile.toString(), deps);
+		}
+	}
+	return topLevelDeps;
+}
+
 
 
 async function resolveDependenciesFromSource(file: Path, source:string|undefined, appOptions: normalizedAppOptions, tree: string[] = [], FrontendManager: any) {

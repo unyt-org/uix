@@ -6,7 +6,7 @@ import { Datex, datex } from "datex-core-legacy/no_init.ts"; // required by getA
 import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppConfig
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
-import { clear, command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live } from "./src/app/args.ts";
+import { command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live } from "./src/app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
@@ -16,7 +16,6 @@ import { triggerLogin } from "./src/utils/login.ts";
 import { initBaseProject } from "./src/utils/init-base-project.ts";
 import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
 import { createProxyImports } from "./src/app/module-mapping.ts";
-import { ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { getDXConfigData } from "./src/app/dx-config-parser.ts";
 import { Path } from "./src/utils/path.ts";
 import { handleAutoUpdate, updateCache } from "./auto-update.ts";
@@ -80,18 +79,6 @@ if (await handleAutoUpdate(new Path(import.meta.resolve("datex-core-legacy")).pa
 }
 
 await Promise.all(updatePromises)
-
-
-if (clear) {
-	try {
-		await Deno.remove(ptr_cache_path, {recursive :true})
-		await Deno.mkdir(ptr_cache_path, {recursive: true})
-		logger.warn("Cleared all eternal states on the backend")
-	}
-	catch (e) {
-		console.error(e)
-	}
-}
 
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.WARNING
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.WARNING

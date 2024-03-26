@@ -22,7 +22,7 @@ you can define general global styles in an `entrypoint.css` file next to the `en
 Another way to add css rules to a component is to use inline styles with the `@style` decorator:
 
 ```ts
-@style(SCSS `
+@style(css `
   div {
     background: red;
     font-size: 2em;
@@ -35,7 +35,7 @@ class MyComponent extends Component {
 ```
 
 The `@style` decorator accepts a `CSSStylesheet` as a parameter.
-The best way to create this stylesheet is using the `Css` template function.
+The best way to create this stylesheet is using the `css` template function.
 
 
 ## Element-scoped styles
@@ -76,14 +76,14 @@ Element-scoped styles can also be used inside function components, which do not 
 > This feature only works in browsers that support the experimental [`@scope` block](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope#browser_compatibility).
 
 
-### The `Css` template function
+### The `css` template function
 
-The `Css` function creates a `CSSStylesheet` from any valid css string (@import directives are not allowed).
+The `css` function creates a `CSSStylesheet` from any valid css string (@import directives are not allowed).
 Additionally, it supports reactive properties:
 
 ```ts
 const fontSize: Datex.Ref<string> = $$("10px")
-const stylesheet: CSSStylesheet = SCSS `
+const stylesheet: CSSStylesheet = css `
   h1.big {
     font-size: ${fontSize};
     color: ${it => it.myColor};

@@ -37,7 +37,7 @@ export const clear = command_line_options.option("clear", {type:"boolean", descr
 // persistent transpile cache path
 const transpileCachePathURL = command_line_options.option("transpile-cache-path", {type:"URL", description: "Path to store transpiled file persistently"});
 export const transpileCachePath = transpileCachePathURL ? Path.File(transpileCachePathURL) : undefined;
-
+console.log("transpiel cache path", transpileCachePath);
 // print uix version
 const version = command_line_options.option("version", {type:"boolean", description: "Get the version of your UIX installation"});
 

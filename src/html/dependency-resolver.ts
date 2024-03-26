@@ -72,7 +72,12 @@ async function resolveDependenciesFromDependencyFile(file: Path) {
 function resolveFileMap(tree: Tree, allDeps: Set<string>, rootPath: Path) {
 	const topLevelDeps = new Set<string>();
 	for (const [key, value] of Object.entries(tree)) {
-		const keyFile = new Path(key, rootPath);
+		const keyFile = Path.pathIsURL(key) ? 
+			new Path(key) :
+			key.startsWith('./') || key.startsWith('../') ?
+				new Path(key, rootPath):
+				import.meta.resolve(key);
+		
 		topLevelDeps.add(keyFile.toString());
 		allDeps.add(keyFile.toString());
 		if (value) {
@@ -119,7 +124,14 @@ async function resolveDependenciesFromSource(file: Path, source:string|undefined
 }
 
 
-type Tree = {[key:string]:Tree|null};
+type Tree = {[key:string]:Tree} | null;
+
+/**
+ * Custom prefix mappings
+ * Full file path -> custom prefix
+ * e.g. "file://libs/datex-core-legacy/*" -> "datex-core-legacy/*"
+ */
+export const prefixMappings = new Map<string,string>()
 
 /**
  * Returns a list of dependencies for a given file, if available
@@ -133,7 +145,16 @@ export function getDependencyTree(file: Path|string, visitedNodes:Set<string> = 
 	if (!cachedDependencies.has(file)) return null
 
 	return Object.fromEntries([...cachedDependencies.get(file)!].map(p => {
-		const pKey = p.startsWith('file://') ? new Path(p).getAsRelativeFrom(root).toString() : p;
+		let pKey = p;
+		// prefix replacements
+		for (const [prefix, replacement] of prefixMappings) {
+			if (pKey.startsWith(prefix)) {
+				pKey = replacement + pKey.slice(prefix.length);
+				break;
+			}
+		}
+		pKey = pKey.startsWith('file://') ? new Path(pKey).getAsRelativeFrom(root).toString() : pKey;
+
 		if (visitedNodes.has(p)) return [pKey, null];
 		return [pKey, getDependencyTree(p, visitedNodes, root)];
 	}));

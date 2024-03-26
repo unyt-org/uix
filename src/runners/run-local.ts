@@ -16,18 +16,18 @@ export const CTRLSEQ = {
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
 
-	if (clear) {
-		try {
-			await Deno.remove(ptr_cache_path, {recursive :true})
-			await Deno.mkdir(ptr_cache_path, {recursive: true})
-			logger.warn("Cleared all eternal states on the backend")
-		}
-		catch (e) {
-			console.error(e)
-		}
-	}
+	// TODO: is this still required? Does not work with docker restart clear
+	// if (clear) {
+	// 	try {
+	// 		await Deno.remove(ptr_cache_path, {recursive :true})
+	// 		await Deno.mkdir(ptr_cache_path, {recursive: true})
+	// 		logger.warn("Cleared all eternal states on the backend")
+	// 	}
+	// 	catch (e) {
+	// 		console.error(e)
+	// 	}
+	// }
 	
-
 	const run_script_url = "app/start.ts"
 	const run_script_import_map_entry = options.import_map.imports['uix/'] + run_script_url;
 	const run_script_abs_url = 

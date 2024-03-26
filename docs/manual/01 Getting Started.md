@@ -33,12 +33,12 @@ This is why UIX ships with integrated features such as:
 
 ### CLI Installation
 
-To install uix, you need to install [Deno](https://docs.deno.com/runtime/manual/getting_started/installation) first.
+To install UIX, you first need to install [Deno](https://docs.deno.com/runtime/manual/getting_started/installation).
 
 > [!WARNING]
 > UIX is only supported for Deno versions > 1.40.0
 
-#### Linux / MacOS
+<!-- #### Linux / MacOS
 
 ```bash
 $ curl -s https://cdn.unyt.org/uix/install.sh | sh
@@ -52,9 +52,9 @@ $ brew tap unyt-org/uix
 $ brew install uix
 ```
 
-#### Windows / other systems
+#### Windows / other systems -->
 
-Installation via `deno install`:
+Now, you can install UIX with `deno install`:
 
 ```bash
 $ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts

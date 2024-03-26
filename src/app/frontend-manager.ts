@@ -116,6 +116,7 @@ export class FrontendManager extends HTMLProvider {
 				sourceMaps: this.app_options.source_maps ?? app.stage == "dev",
 				dependencyMaps: this.app_options.dependency_maps,
 				dist_parent_dir: this.transpiler.tmp_dir,
+				hasPersistentCachePath: !!transpileCachePath, // this.transpiler has persistent cache path, is inherited for this transpiler
 				watch: this.#watch,
 				minifyJS: this.app_options.minify_js,
 				import_resolver:  new TypescriptImportResolver(new Path(common_dir), {

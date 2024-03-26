@@ -39,6 +39,7 @@ export type transpiler_options = {
     minifyJS?: boolean // minify js files after transpiling
     basePath?: Path.File,
     persistentCachePath?: Path.File // path to store transpiled files persistently
+    hasPersistentCachePath?: boolean // if true, the current path is treated as persistent, but not overridden (useful when path is implicitly set with dist_parent_dir)
 }
 
 type transpiler_options_all = Required<transpiler_options>;
@@ -51,7 +52,6 @@ type file_update_handler = (file:Path.File)=>void
 export class Transpiler {
 
     private TMP_DIR_PREFIX = "transpiler_cache_";
-    private TRANSPILED_DIR_EXT = "transpiled.web";
 
     #options!: transpiler_options_all
     #transpile_exts!: string[]
@@ -83,7 +83,7 @@ export class Transpiler {
     get dist_dir(){
         if (this.#options.dist_dir) return this.#options.dist_dir; // custom dist dir
         if (!this.#dist_dir) {
-            this.#dist_dir = Path.dir(this.src_dir.name, this.tmp_dir).getWithFileExtension(this.TRANSPILED_DIR_EXT);
+            this.#dist_dir = Path.dir(this.src_dir.name, this.tmp_dir);
             this.#dist_dir.fsCreateIfNotExists();
         }
         return this.#dist_dir;
@@ -182,12 +182,16 @@ export class Transpiler {
             }
         }
         await Promise.all(promises)
+        if (this.#skippedStaticFilesCount) {
+            logger.info("skipped "+this.#skippedStaticFilesCount+" static files")
+            this.#skippedStaticFilesCount = 0;
+        }
     }
 
     // stop, remove tmp dir
     public close() {
         this.stopFileWatcher()
-        if (this.#tmp_dir && !this.#options.persistentCachePath) {
+        if (this.#tmp_dir && !this.#options.persistentCachePath && !this.#options.hasPersistentCachePath) {
             logger.debug("removing cache directory: " + this.#tmp_dir);
             try {Deno.removeSync(this.#tmp_dir, {recursive:true})} catch {} 
         }
@@ -301,8 +305,50 @@ export class Transpiler {
 
     // list of non-transpilable files that still should be synced to the transpile directory (e.g. css files required by scss)
     #forceCopySrcFiles = new Set<string>()
+    #staticDirs = new Set<string>()
+    #skippedStaticFilesCount = 0;
+
+    /**
+     * Check recursively is directory is marked as static (.static file in directory or parent directory)
+     */
+    async #isStatic(srcDir: Path<Path.Protocol.File, true>): Promise<boolean> {
+        if (this.#staticDirs.has(srcDir.toString())) return true;
+
+        if (await srcDir.getChildPath("./.static").fsExists()) {
+            this.#staticDirs.add(srcDir.toString());
+            return true;
+        }
+        else {
+            const parentDir = srcDir.parent_dir as Path<Path.Protocol.File, true>;
+            // go up 1 directory if parent directory is part of transpiler scope
+            if (parentDir && parentDir.isChildOf(this.#src_dir)) {
+                const isStatic = await this.#isStatic(srcDir.parent_dir as Path<Path.Protocol.File, true>);
+                if (isStatic) this.#staticDirs.add(srcDir.toString());
+                return isStatic;
+            }
+            else return false;           
+        }
+    }
+
+    /**
+     * Check if directory is marked as static and already exists in custom transpile cache directory
+     */
+    async #isStaticAndExists(filePath: Path.File): Promise<boolean> {
+        const srcDir = filePath.parent_dir as Path<Path.Protocol.File, true>;
+        const distFile = filePath.getWithChangedParent(this.src_dir, this.dist_dir)
+        return await this.#isStatic(srcDir) && await distFile.fsExists();
+    }
 
     async updateFile(src_path:Path.File|string, _transpile_only_if_not_exists = false, silent_update = false, force_copy = false) {
+        
+        // skip update if directory is marked static and already exists in custom transpile cache directory
+        if (this.#options.persistentCachePath || this.#options.hasPersistentCachePath) {
+            if (await this.#isStaticAndExists(new Path(src_path))) {
+                this.#skippedStaticFilesCount++;
+                return;
+            }
+        }
+        
         const p = this.resolveRelativeSrcPath(src_path);
         if (!p) return;
         src_path = p;

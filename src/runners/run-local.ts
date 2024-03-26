@@ -1,3 +1,4 @@
+import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { clear } from "../app/args.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
@@ -90,8 +91,10 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		/* ignore */
 	}
 	
+	// handle clear state when live reloading
 	let isClearingState = clear;
 	let stateCleared = false;
+	
 	const args = [...Deno.args];
 
 	await run();
@@ -99,9 +102,25 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	async function run() {
 		await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
 		await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
+		
 		if (stateCleared) {
 			stateCleared = false;
 			logger.warn("Cleared all eternal states on the backend");
+		}
+
+		// handle clear state when deployed in docker
+		// prevent clearing again when the docker container restarts
+		if (Deno.env.has("UIX_HOST_ENDPOINT") && args.includes("--clear")) {
+			const clearIndicatorPath = new Path("./uix-state-cleared", cache_path);
+			if (clearIndicatorPath.fs_exists) {
+				console.log("State was already cleared, skipping --clear")
+				args.splice(args.indexOf("--clear"), 1);
+				isClearingState = true;
+			}
+			else {
+				Deno.mkdirSync(cache_path, {recursive: true});
+				Deno.writeTextFileSync(clearIndicatorPath.normal_pathname, "");
+			}
 		}
 
 		const command = new Deno.Command(Deno.execPath(), {

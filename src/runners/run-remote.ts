@@ -1,5 +1,5 @@
 import { getInferredRunPaths, normalizedAppOptions } from "../app/options.ts";
-import { stage, env, watch, clear } from "../app/args.ts";
+import { stage, env, watch, clear, transpileCachePathRaw } from "../app/args.ts";
 import { ESCAPE_SEQUENCES, verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
@@ -76,6 +76,7 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 	if (watch) args.push("--watch");
 	if (verboseArg) args.push("--verbose");
 	if (clear) args.push("--clear");
+	if (transpileCachePathRaw) args.push(`--transpile-cache-path=${transpileCachePathRaw}`);
 
 	// don't log internal verbose messages
 	Datex.Logger.development_log_level = Datex.LOG_LEVEL.ERROR

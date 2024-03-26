@@ -1,4 +1,4 @@
-import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
+import { CommandLineOptions } from "datex-core-legacy/utils/command-line-args/main.ts"
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";

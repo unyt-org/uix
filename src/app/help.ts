@@ -1,4 +1,4 @@
 // TODO:?
-import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
+import { CommandLineOptions } from "datex-core-legacy/utils/command-line-args/main.ts";
 
 CommandLineOptions.setStaticHelp("")

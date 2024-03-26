@@ -14,7 +14,7 @@ import GitDeployPlugin from "./src/plugins/git-deploy.ts";
 import LocalDockerRunner from "./src/runners/run-local-docker.ts";
 import { triggerLogin } from "./src/utils/login.ts";
 import { initBaseProject } from "./src/utils/init-base-project.ts";
-import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts";
+import { CommandLineOptions } from "datex-core-legacy/utils/command-line-args/main.ts";
 import { createProxyImports } from "./src/app/module-mapping.ts";
 import { getDXConfigData } from "./src/app/dx-config-parser.ts";
 import { Path } from "./src/utils/path.ts";

@@ -3,7 +3,7 @@ import { Server } from "./server.ts";
 import { TypescriptImportResolver } from "./ts-import-resolver.ts";
 import { Transpiler } from "./transpiler.ts";
 
-import { CommandLineOptions } from "https://dev.cdn.unyt.org/command-line-args/main.ts"
+import { CommandLineOptions } from "datex-core-legacy/utils/command-line-args/main.ts"
 export const options = new CommandLineOptions("UIX File Server", "Simple static file server with integrated typescript support");
 
 

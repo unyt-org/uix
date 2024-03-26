@@ -16,11 +16,11 @@ export interface DynamicCSSStyleSheet extends CSSStyleSheet {
 }
 
 /**
- * Define reactive (S)CSS style sheets with JS template strings
+ * Define reactive css style sheets with JS template strings
  * @param template css template string
  * @returns 
  */
-export function Css(template:TemplateStringsArray|string, ...params:cssParam[]): DynamicCSSStyleSheet {
+export function css(template:TemplateStringsArray|string, ...params:cssParam[]): DynamicCSSStyleSheet {
 	const isTemplate = (template as TemplateStringsArray)?.raw instanceof Array && template instanceof Array;
 	// non template value - convert to HTML node
 	if (!isTemplate) {
@@ -105,7 +105,7 @@ export function Css(template:TemplateStringsArray|string, ...params:cssParam[]):
 	
 }
 
-export const SCSS = Css;
+export const SCSS = css;
 
 function* elementsDynamicProperties(elements: Iterable<Element>, cssVarsBySelector: Map<string, Set<string>>) {
 	// find all nodes that where added in mutation

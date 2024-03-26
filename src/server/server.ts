@@ -35,6 +35,7 @@ import { Target } from "datex-core-legacy/datex_all.ts";
 import { createSession, validateSession } from "../session/backend.ts";
 import { isSafariClient } from "../utils/safari.ts";
 import {SourceMapConsumer} from "npm:source-map"
+import { hasDependencyList } from "../html/dependency-resolver.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -149,8 +150,9 @@ type server_options = {
     transpilers?: {[path:string]: Transpiler}, // use transpiler for specific web path, if set, ts files are transpiled, and the js content is returned to the browser (+ virtual files can be added). The transpilers for the first matching path in the list is used. 
     resolve_index_html?: boolean, // resolve / path to index.html, default: false
     request_proxies?: RequestProxy[] // request proxies are called for file requests that match their extensions which are requested directly from a browser session, not as a script import or deno import
-                                     // they can be used to provide a custom view for a file in the browser
+                                         // they can be used to provide a custom view for a file in the browser
     directory_indices?: boolean, // returns json directory listing for directory paths, default: true
+    provide_module_dependencies?: boolean // provide module dependencies for ts files via server, add X-Module-Dependencies header if dependencies are available
 }
 
 type directoryIndex = ({name:string, children?:directoryIndex}|string)[]
@@ -813,7 +815,7 @@ export class Server {
 
             return this.getContentResponse("text/html", html);
         }
-        const response = await serveFile(request, filepath.normal_pathname);
+        const response = await serveFile(request, filepath!.normal_pathname);
 
         if (this.#options.cors) {
             response.headers.set("Access-Control-Allow-Origin", "*");
@@ -822,6 +824,11 @@ export class Server {
         if (this.#options.default_headers) {
             for (const [name, value] of Object.entries(this.#options.default_headers))
             response.headers.set(name, value);
+        }
+
+        if (this.#options.provide_module_dependencies) {
+            const srcPath = this.#dir.getChildPath(normalizedPath);
+            if (hasDependencyList(srcPath)) response.headers.set("X-Module-Dependencies", "true");
         }
 
         return response;

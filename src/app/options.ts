@@ -29,6 +29,7 @@ export type appOptions = {
 	minify_js?: boolean // minify transpiled javascript modules, default: true
 	preload_dependencies?: boolean // automatically preload all ts module dependencies, default: true
 	source_maps?: boolean // generate source maps for transpiled javascript modules, default: false, true for dev stage
+	dependency_maps?: boolean // generate dependency maps for js modules, default: false
 }
 
 export interface normalizedAppOptions extends appOptions {
@@ -69,6 +70,7 @@ export async function normalizeAppOptions(options:appOptions = {}, baseURL?:stri
 	n_options.minify_js = options.minify_js ?? true;
 	n_options.preload_dependencies = options.preload_dependencies ?? true;
 	n_options.source_maps = options.source_maps;
+	n_options.dependency_maps = options.dependency_maps;
 
 	// import map or import map path
 	if (options.import_map) n_options.import_map = new ImportMap(options.import_map);

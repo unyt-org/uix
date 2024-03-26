@@ -5,6 +5,7 @@ import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { eternalExts, updateEternalFile } from "../app/module-mapping.ts";
 import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { getDependencyTree, loadDependencyList } from "../html/dependency-resolver.ts";
 
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
@@ -34,6 +35,7 @@ export type transpiler_options = {
     dist_parent_dir?: Path.File, // parent dir for dist dirs
     dist_dir?: Path.File, // use different path for dist (default: generated tmp dir)
     sourceMaps?: boolean // generate inline source maps when transpiling ts,
+    dependencyMaps?: boolean // generate module dependencies file
     minifyJS?: boolean // minify js files after transpiling
     basePath?: Path.File
 }
@@ -89,7 +91,7 @@ export class Transpiler {
 
     // returns true if the file has to be transpiled 
     isTranspiledFile(path:Path) {
-        return (path.hasFileExtension(...this.#transpile_exts, 'map')) && !path.hasFileExtension('d.ts')
+        return (path.hasFileExtension(...this.#transpile_exts, 'map', 'dependencies')) && !path.hasFileExtension('d.ts')
     }
 
     // returns true if the tranpiled file has the same name as the src file (e.g. x.css -> x.css)
@@ -648,6 +650,14 @@ export class Transpiler {
                 await Deno.writeTextFile(
                     ts_dist_path.normal_pathname + ".map", 
                     JSON.stringify(jsonMap)
+                );
+            }
+
+            if (this.#options.dependencyMaps) {
+                const dependencies = await loadDependencyList(src_path, app.options!);
+                await Deno.writeTextFile(
+                    ts_dist_path.normal_pathname + ".dependencies", 
+                    JSON.stringify(dependencies)
                 );
             }
 

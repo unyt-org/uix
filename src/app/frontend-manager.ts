@@ -94,6 +94,7 @@ export class FrontendManager extends HTMLProvider {
 	initFrontendDir(){
 		this.transpiler = new Transpiler(this.scope, {
 			sourceMaps: this.app_options.source_maps ?? app.stage == "dev",
+			dependencyMaps: this.app_options.dependency_maps,
 			watch: this.#watch,
 			minifyJS: this.app_options.minify_js,
 			import_resolver: this.import_resolver,
@@ -112,6 +113,7 @@ export class FrontendManager extends HTMLProvider {
 		for (const common_dir of this.app_options.common) {
 			const transpiler = new Transpiler(new Path(common_dir), {
 				sourceMaps: this.app_options.source_maps ?? app.stage == "dev",
+				dependencyMaps: this.app_options.dependency_maps,
 				dist_parent_dir: this.transpiler.tmp_dir,
 				watch: this.#watch,
 				minifyJS: this.app_options.minify_js,
@@ -146,6 +148,7 @@ export class FrontendManager extends HTMLProvider {
 
 		this.server = new Server(this.scope, {
 			resolve_index_html: false,
+			provide_module_dependencies: this.app_options.dependency_maps,
 			directory_indices: true,
 			cors: true,
 			transpilers

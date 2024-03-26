@@ -1,6 +1,6 @@
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { normalizedAppOptions } from "./options.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { walk } from "https://deno.land/std@0.177.0/fs/walk.ts";
 import { getEternalModule } from "./eternal-module-generator.ts";
 import type { ImportMap } from "../utils/importmap.ts";

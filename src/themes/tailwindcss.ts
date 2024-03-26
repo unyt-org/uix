@@ -1,6 +1,6 @@
 import { UIX } from "../../uix.ts";
 import type { Theme } from "../base/theme-manager.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 
 export const tailwindcss = {

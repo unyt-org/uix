@@ -4,7 +4,7 @@
  * index was found
  */
 
-import { Path } from "./path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 const directoryIndexFiles = new Map<string, object>();
 

@@ -1,5 +1,5 @@
 import type { TypescriptImportResolver } from "../server/ts-import-resolver.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 

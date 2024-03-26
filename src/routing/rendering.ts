@@ -1,4 +1,4 @@
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { Datex } from "datex-core-legacy";
 import {evaluateFilter, filter} from "./route-filter.ts";
 import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_generator } from "../html/entrypoints.ts"

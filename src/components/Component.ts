@@ -3,7 +3,7 @@ import { Datex, property, get} from "datex-core-legacy"
 import { logger } from "../utils/global-values.ts"
 import { Class, Logger, METADATA, ValueError } from "datex-core-legacy/datex_all.ts"
 import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, ORIGIN_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { RouteManager } from "../html/entrypoints.ts";
 import { Context } from "../routing/context.ts";
 import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../standalone/scroll_container.ts";

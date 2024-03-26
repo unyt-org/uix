@@ -1,6 +1,6 @@
 import { Datex,f } from "datex-core-legacy/mod.ts";
 import home_dir from "https://deno.land/x/dir@1.5.1/home_dir/mod.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 const logger = new Datex.Logger("Developer Login", true)
 export async function triggerLogin() {

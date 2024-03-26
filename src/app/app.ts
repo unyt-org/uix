@@ -1,7 +1,7 @@
 import { Datex, f } from "datex-core-legacy/mod.ts";
 
 import type { FrontendManager  } from "./frontend-manager.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import type { Server } from "../server/server.ts";
 

@@ -1,5 +1,5 @@
 import { UIX } from "../../uix.ts";
-import { Path } from "./path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 // fake CSSStyleDeclaration element with proxy to update css property names
 export class PlaceholderCSSStyleDeclaration extends Array /*implements CSSStyleDeclaration*/ {

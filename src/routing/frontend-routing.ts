@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-namespace
 
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { resolveEntrypointRoute,  refetchRoute } from "./rendering.ts";
 import { Datex } from "datex-core-legacy";
 import { Entrypoint, html_content_or_generator } from "../html/entrypoints.ts";

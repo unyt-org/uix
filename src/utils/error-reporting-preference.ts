@@ -1,5 +1,5 @@
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { Path } from "./path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 
 export async function getErrorReportingPreference() {

@@ -1,6 +1,6 @@
 import { Datex } from "datex-core-legacy";
 import { Context } from "../routing/context.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { HTTPStatus } from "./http-status.ts";
 import { RenderPreset, RenderMethod } from "../base/render-methods.ts";
 import { FileHandle, KEEP_CONTENT } from "./entrypoint-providers.tsx";

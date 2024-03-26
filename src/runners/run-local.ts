@@ -2,7 +2,7 @@ import { cache_path, ptr_cache_path } from "datex-core-legacy/runtime/cache_path
 import { clear } from "../app/args.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { logger, runParams } from "./runner.ts";
 
 

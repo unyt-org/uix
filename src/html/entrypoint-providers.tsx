@@ -2,7 +2,7 @@ import { Datex } from "datex-core-legacy";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { Context } from "../routing/context.ts";
 import { convertANSIToHTML } from "../utils/ansi-to-html.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { setCookie, Cookie } from "../lib/cookie/cookie.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "../app/app.ts";

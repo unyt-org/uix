@@ -1,5 +1,5 @@
 import { UIX } from "../../uix.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { app } from "./app.ts";
 import { getDefaultDomainPrefix } from "./default-domain.ts";
 

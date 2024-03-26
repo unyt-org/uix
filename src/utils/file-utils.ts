@@ -1,4 +1,4 @@
-import { Path } from "./path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 export function getExistingFile(root_path:URL, ...paths:(string|URL)[]):URL|null {
 	try {

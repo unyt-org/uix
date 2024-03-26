@@ -2,7 +2,7 @@ import { Datex } from "datex-core-legacy/mod.ts";
 import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
 import { Entrypoint } from "../html/entrypoints.ts";
 import { logger } from "../utils/global-values.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { Context } from "./context.ts";
 import { resolveEntrypointRoute } from "./rendering.ts";
 

@@ -5,7 +5,7 @@ import { http_over_datex, live, stage, watch, watch_backend } from "./args.ts";
 import { BackendManager } from "./backend-manager.ts";
 import { Server } from "../server/server.ts";
 import { FrontendManager } from "./frontend-manager.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
 import { getDirType } from "./utils.ts";
 import { WebSocketServerInterface } from "datex-core-legacy/network/communication-interfaces/websocket-server-interface.ts"

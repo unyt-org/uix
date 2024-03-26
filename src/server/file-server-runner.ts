@@ -1,4 +1,4 @@
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { Server } from "./server.ts";
 import { TypescriptImportResolver } from "./ts-import-resolver.ts";
 import { Transpiler } from "./transpiler.ts";

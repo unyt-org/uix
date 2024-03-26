@@ -2,7 +2,7 @@ import { Datex, datex } from "datex-core-legacy/no_init.ts"; // required by getA
 import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppConfig
 
 import type {Datex as DatexType} from "datex-core-legacy";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { normalizedAppOptions } from "../app/options.ts";
 import { formatEndpointURL } from "datex-core-legacy/utils/format-endpoint-url.ts";
 

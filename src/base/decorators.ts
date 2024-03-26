@@ -6,7 +6,7 @@ import { domContext, domUtils } from "../app/dom-context.ts";
 import { getTransformWrapper } from "../uix-dom/datex-bindings/transform-wrapper.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { Class, Decorators } from "datex-core-legacy/datex_all.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 /**
  * @defaultOptions to define component default options

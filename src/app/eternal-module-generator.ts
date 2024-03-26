@@ -1,5 +1,5 @@
 import { doc } from "https://deno.land/x/deno_doc@0.68.0/mod.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 export async function getEternalModule(filePath: Path, specifier: string) {
 	const tree = await doc(filePath.toString(), {

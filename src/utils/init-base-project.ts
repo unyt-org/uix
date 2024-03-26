@@ -1,6 +1,6 @@
 import { path, updateRootPath } from "../app/args.ts";
 import { logger } from "./global-values.ts";
-import { Path } from "./path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 export async function initBaseProject() {
 

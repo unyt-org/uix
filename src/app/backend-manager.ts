@@ -1,5 +1,5 @@
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "./app.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { logger } from "../utils/global-values.ts";

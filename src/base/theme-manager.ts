@@ -2,7 +2,7 @@ import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { uixLight } from "../themes/uix-light.ts";
 import { uixDark } from "../themes/uix-dark.ts";
 import { uixLightPlain } from "../themes/uix-light-plain.ts";

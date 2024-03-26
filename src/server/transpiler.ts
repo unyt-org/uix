@@ -137,7 +137,7 @@ export class Transpiler {
 	constructor(src_dir:Path.File|string, options:transpiler_options = {}) {
         src_dir = src_dir instanceof Path ? src_dir : new Path(src_dir, getCallerDir());
 
-        if (Datex.client_type !== "deno") throw new Error("tranpiler currently only supported in deno environments");
+        if (client_type !== "deno") throw new Error("tranpiler currently only supported in deno environments");
 
 		this.#src_dir = src_dir;
         this.setOptions(options);
@@ -187,7 +187,7 @@ export class Transpiler {
     // stop, remove tmp dir
     public close() {
         this.stopFileWatcher()
-        if (this.#tmp_dir) {
+        if (this.#tmp_dir && !this.#options.persistentCachePath) {
             logger.debug("removing cache directory: " + this.#tmp_dir);
             try {Deno.removeSync(this.#tmp_dir, {recursive:true})} catch {} 
         }

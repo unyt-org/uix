@@ -8,7 +8,7 @@ export async function getErrorReportingPreference() {
 	// TODO: remove
 	return true;
 
-	const { allowAll, allowNone, stage } = await import("../app/args.ts");
+	const { allowAll, allowNone, stage } = await import("../app/args.ts" /*lazy*/);
 
 	if (stage !== "dev") return false;
 
@@ -24,7 +24,8 @@ function getFile() {
 }
 
 export async function shouldAskForErrorReportingPreference() {
-	const { allowAll, allowNone, stage } = await import("../app/args.ts");
+	if (client_type !== "deno") return false;
+	const { allowAll, allowNone, stage } = await import("../app/args.ts" /*lazy*/);
 
 	return !getFile().fs_exists && !allowAll && !allowNone;
 }

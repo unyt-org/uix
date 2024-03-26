@@ -1,7 +1,7 @@
-import { Path } from "../utils/path.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
 import { normalizedAppOptions } from "./options.ts";
 
-export function getDirType(appOptions:normalizedAppOptions, path:Path) {	
+export function getDirType(appOptions: normalizedAppOptions, path:Path.File) {	
 	// backend path?
 	for (const backend of appOptions.backend) {
 		if (path.isChildOf(backend)) return 'backend'

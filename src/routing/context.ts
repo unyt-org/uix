@@ -82,7 +82,7 @@ export class Context
 			return getSharedData() as Promise<CustomSharedData>;
 		}
 		else {
-			const { isSafariClient } = await import("../utils/safari.ts#lazy");
+			const { isSafariClient } = await import("../utils/safari.ts" /*lazy*/);
 
 			if (!this.request) throw new Error("Cannot get shared data from UIX Context with request object");
 			const url = new URL(this.request.url);

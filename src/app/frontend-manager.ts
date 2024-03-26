@@ -42,6 +42,11 @@ export class FrontendManager extends HTMLProvider {
 
 	srcPrefixRegex = String.raw `\/@uix\/src\/`
 
+	/**
+	 * List of all backend modules that are currently exposed to the frontend
+	 */
+	static exposedBackendPaths = new Set<string>()
+
 	constructor(app_options:normalizedAppOptions, scope:URL, base_path:URL, backend?:BackendManager, watch = false, live = false) {
 
 		const scopePath = Path.File(scope);
@@ -591,6 +596,7 @@ export class FrontendManager extends HTMLProvider {
 
 	#update_backend_promise?: Promise<any>
 
+
 	private async updateBackendInterfaceFile(web_path:string, import_pseudo_path:Path.File, import_path:Path, module_path:Path, imports:Set<string>, ignore_export_failures:Set<string>|boolean = false) {
 
 		await this.#update_backend_promise;
@@ -643,6 +649,14 @@ export class FrontendManager extends HTMLProvider {
 		if (changed) {
 			this.createExposeExportsFile(web_path, import_pseudo_path, import_path, module_path, new_combined_imports, removed, ignorable_exports_after)
 		}
+
+		// delete if no imports for module
+		if (imports.size == 0) this.#backend_virtual_files.get(web_path)!.delete(module_path_string);
+		if (this.#backend_virtual_files.get(web_path)!.size == 0) this.#backend_virtual_files.delete(web_path);
+
+		// update exposed backend paths
+		if (this.#backend_virtual_files.has(web_path)) FrontendManager.exposedBackendPaths.add(import_path.toString());
+		else FrontendManager.exposedBackendPaths.delete(import_path.toString());
 
 		resolve_done?.();
 	}

@@ -20,7 +20,7 @@ import { FileHandle } from "../html/entrypoint-providers.tsx";
 // URLPattern polyfill
 // @ts-ignore
 if (!globalThis.URLPattern) { 
-	await import("../lib/urlpattern-polyfill/index.js#lazy");
+	await import("../lib/urlpattern-polyfill/index.js" /*lazy*/);
 }
 
 

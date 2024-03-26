@@ -19,9 +19,14 @@ The following URLs are excluded from module preloading per default:
  * URLs that are explicitely imported as type modules (`import type {} from "modules.ts"`)
  * NPM modules (identifiers starting with `npm:`, eg. `import x from "npm:..."`)
  * Deno.land modules (starting with `https://deno.land/`)
- * URLs explicitly marked as lazy with (ending with `#lazy`, e.g. `import "./my-module.ts#lazy"`)
 
-Module preloading can be disabled by setting `preload_dependencies: false` in the `app.dx` configuration file.
+In dynamic import statements, preloading can be disabled by adding a `/*lazy*/` comment after the module specifier:
+```ts
+const preloadedModule    = await import("./module-a.ts")
+const notPreloadedModule = await import("./module-b.ts" /*lazy*/)
+```
+
+Module preloading can be completely disabled by setting `preload_dependencies: false` in the `app.dx` configuration file.
 
 # Transpilation and Minification
 

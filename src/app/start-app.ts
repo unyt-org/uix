@@ -12,7 +12,6 @@ import { WebSocketServerInterface } from "datex-core-legacy/network/communicatio
 import { HTTPServerInterface } from "datex-core-legacy/network/communication-interfaces/http-server-interface.ts"
 import { communicationHub } from "datex-core-legacy/network/communication-hub.ts";
 import { resolveDependencies } from "../html/dependency-resolver.ts";
-import { resolve } from "https://deno.land/std@0.172.0/path/win32.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -186,7 +185,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 	}
 
 	// preload dependencies
-	resolveDependencies(import.meta.resolve("datex-core-legacy"))
+	resolveDependencies(import.meta.resolve("datex-core-legacy"), app.options!)
 	
 	return {
 		defaultServer: server,

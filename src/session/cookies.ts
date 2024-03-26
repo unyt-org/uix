@@ -31,7 +31,7 @@ export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?
 	if (port) name += "/" + port;
 
 	if (headers) deleteHeaderCookie!(headers, name)
-    else document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+    else document.cookie = name +'=; Path=/; SameSite=None; Expires=Thu, 01 Jan 1970 00:00:01 GMT;' + (browserIsSafariLocalhost ? "" :" Secure;")
 }
 
 export function setCookie(name: UIX_COOKIE | string, value:string, expDays?:number, headers?: Headers, port?:string, isSafariLocalhost = false) {

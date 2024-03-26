@@ -6,7 +6,7 @@ import type { DOMContext } from "../uix-dom/dom/DOMContext.ts";
 // mapFileURL can later be set
 export const bindingOptions:BindingOptions = {}
 
-export const domContext = (client_type == "browser" ? globalThis.window : await import("../uix-dom/dom/mod.ts#lazy")) as Window & typeof globalThis;
+export const domContext = (client_type == "browser" ? globalThis.window : await import("../uix-dom/dom/mod.ts" /*lazy*/)) as Window & typeof globalThis;
 export const {domUtils, bindObserver} = enableDatexBindings(domContext as unknown as DOMContext, bindingOptions)
 
 

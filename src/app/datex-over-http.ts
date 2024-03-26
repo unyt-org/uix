@@ -39,7 +39,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 	if (forceDatex) {
 		fn.toString = ()=>{
 			return `async ${name??'function'} (...args) {
-				const { callDatex } = await import("uix/standalone/call-compat.ts#lazy");
+				const { callDatex } = await import("uix/standalone/call-compat.ts" /*lazy*/);
 				return callDatex('${ptr.idString()}', args);
 			}`
 		}
@@ -47,7 +47,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 	else {
 		fn.toString = ()=>{
 			return `async ${name??'function'} (...args) {
-				const { callCompat } = await import("uix/standalone/call-compat.ts#lazy");
+				const { callCompat } = await import("uix/standalone/call-compat.ts" /*lazy*/);
 				return callCompat('${ptr.idString()}', args);
 			}`
 		}
@@ -79,7 +79,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
 	
 	if (forceDatex) {
 		return `await (async () => {
-			await import("datex-core-legacy#lazy");
+			await import("datex-core-legacy" /*lazy*/);
 			await Datex.Supranet.connect();
 			return datex('${ptr.idString()}');
 		})()
@@ -124,7 +124,7 @@ export function getValueUpdater(ref:Datex.Ref, forceDatex = false, keepAlive = f
 	if (forceDatex) {
 		if (keepAlive) throw new Error("Cannot use keepAlive=true with forceDatex=true")
 		return `async (val) => {
-			await import("datex-core-legacy#lazy");
+			await import("datex-core-legacy" /*lazy*/);
 			await Datex.Supranet.connect();
 			return datex('${ptrString}=?', [val]);
 		}

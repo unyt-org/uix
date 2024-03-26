@@ -21,7 +21,7 @@ import { resolveDependencies } from "./dependency-resolver.ts"
 let stage:string|undefined = '?'
 
 if (client_type === "deno") {
-	({ stage } = (await import("../app/args.ts#lazy")))
+	({ stage } = (await import("../app/args.ts" /*lazy*/)))
 }
 
 type injectScriptData = {declare:Record<string,string>, init:string[]};
@@ -424,7 +424,7 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 			try {
 				// with convertJSONInput
 				if (value && typeof value == "object") {
-					companionSource += `const {createStaticObject} = await import("uix/standalone/create-static-object.ts#lazy");\n`
+					companionSource += `const {createStaticObject} = await import("uix/standalone/create-static-object.ts" /*lazy*/);\n`
 					companionSource += `const ${varName} = createStaticObject(${serializeJSValue(value)});\n`
 				}
 				else {
@@ -656,8 +656,9 @@ export async function generateHTMLPage({
 	const modulePreloadUrls = new Set<string>();
 	const addPreloadUrl = async (url:string|URL) => {
 		if (preloadDependencies) {
+			if (!app.options) throw new Error("Missing app options")
 			url = provider.resolveForBackend(url);
-			(await resolveDependencies(url)).forEach(dep => modulePreloadUrls.add(dep));
+			(await resolveDependencies(url, app.options)).forEach(dep => modulePreloadUrls.add(dep));
 			modulePreloadUrls.add(url.toString());
 		}
 	}

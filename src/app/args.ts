@@ -34,6 +34,10 @@ export const gitToken = command_line_options.option("git-token", {type:"string",
 // clear
 export const clear = command_line_options.option("clear", {type:"boolean", description: "Clear all eternal states on the backend"});
 
+// persistent transpile cache path
+const transpileCachePathURL = command_line_options.option("transpile-cache-path", {type:"URL", description: "Path to store transpiled file persistently"});
+export const transpileCachePath = transpileCachePathURL ? Path.File(transpileCachePathURL) : undefined;
+
 // print uix version
 const version = command_line_options.option("version", {type:"boolean", description: "Get the version of your UIX installation"});
 

@@ -28,7 +28,7 @@ import { UIX } from "../../uix.ts";
 import { UIX_COOKIE, getCookie, setCookie } from "../session/cookies.ts";
 import { observeElementforSSE } from "./sse-observer.ts";
 import { eternalExts, getEternalModuleProxyPath } from "./module-mapping.ts";
-import { rootPath } from "./args.ts";
+import { rootPath, transpileCachePath } from "./args.ts";
 import { isSafariClient } from "../utils/safari.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
@@ -95,6 +95,7 @@ export class FrontendManager extends HTMLProvider {
 		this.transpiler = new Transpiler(this.scope, {
 			sourceMaps: this.app_options.source_maps ?? app.stage == "dev",
 			dependencyMaps: this.app_options.dependency_maps,
+			persistentCachePath: transpileCachePath,
 			watch: this.#watch,
 			minifyJS: this.app_options.minify_js,
 			import_resolver: this.import_resolver,
@@ -115,6 +116,7 @@ export class FrontendManager extends HTMLProvider {
 				sourceMaps: this.app_options.source_maps ?? app.stage == "dev",
 				dependencyMaps: this.app_options.dependency_maps,
 				dist_parent_dir: this.transpiler.tmp_dir,
+				persistentCachePath: transpileCachePath,
 				watch: this.#watch,
 				minifyJS: this.app_options.minify_js,
 				import_resolver:  new TypescriptImportResolver(new Path(common_dir), {

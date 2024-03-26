@@ -37,7 +37,8 @@ export type transpiler_options = {
     sourceMaps?: boolean // generate inline source maps when transpiling ts,
     dependencyMaps?: boolean // generate module dependencies file
     minifyJS?: boolean // minify js files after transpiling
-    basePath?: Path.File
+    basePath?: Path.File,
+    persistentCachePath?: Path.File // path to store transpiled files persistently
 }
 
 type transpiler_options_all = Required<transpiler_options>;
@@ -74,7 +75,7 @@ export class Transpiler {
     // /tmp/compile_cache_xy/
     get tmp_dir(){
         if (this.#options.dist_parent_dir) return this.#options.dist_parent_dir;
-        if (!this.#tmp_dir) this.#tmp_dir = Path.dir(Deno.makeTempDirSync({prefix: this.TMP_DIR_PREFIX}))
+        if (!this.#tmp_dir) this.#tmp_dir = Path.dir(this.#options.persistentCachePath ?? Deno.makeTempDirSync({prefix: this.TMP_DIR_PREFIX}))
         return this.#tmp_dir;
     }
 

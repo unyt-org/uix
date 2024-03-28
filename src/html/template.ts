@@ -165,8 +165,16 @@ export function template():jsxInputGenerator<JSX.Element, Record<string, never>,
 
 
 export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.Element|Promise<JSX.Element>, any, any, any>) {
-	let generator:any;
 	const module = getCallerFile();
+	return createTemplateGenerator(templateOrGenerator, module);
+}
+
+export function createTemplateGenerator(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.Element|Promise<JSX.Element>, any, any, any>, module?: string):jsxInputGenerator<JSX.Element, Record<string, never>, never>&((cl: Class, context: ClassDecoratorContext)=>any) {
+
+	let generator: Function;
+
+	module ??= getCallerFile();
+
 	if (typeof templateOrGenerator == "function") generator = function(propsOrClass:any, context?:any) {
 		// decorator
 		if (Component.isPrototypeOf(propsOrClass)) {

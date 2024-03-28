@@ -443,6 +443,7 @@ export class Server {
             const datexEndpointNew = getCookie("datex-endpoint-new", requestEvent.request.headers, port);
 
             const uixSessionCookie = getCookie("uix-session", requestEvent.request.headers, port);
+
             
             // has datex-endpoint
             if (datexEndpointCookie) {

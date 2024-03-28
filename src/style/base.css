@@ -10,6 +10,28 @@ light-root, uix-fragment, uix-placeholder, frontend-slot {
     display: contents;
 }
 
+uix-editable {
+    display: inline-block;
+}
+
+uix-editable[contenteditable]:focus {
+    outline: 3px dashed var(--text);
+    outline-offset: 24px;
+    position: relative;
+
+    &::after {
+        content: attr(data-placeholder);
+        width: 100vw;
+        height: 1000vh;
+        position: absolute;
+        left: calc(100% + 27px);
+        top: -500vh;
+        backdrop-filter: grayscale(100%);
+        /* background-color: red; */
+        z-index: 100000;
+    }
+}
+
 frontend-slot > * {
     all: inherit;
     display: revert;

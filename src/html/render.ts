@@ -34,6 +34,8 @@ type _renderOptions = {
 	lang?:string, 
 	allowIgnoreDatexFunctions?: boolean,
 	requiredPointers?: Set<any>,
+	plainHTML?: boolean, // if true, only plain html is returned, attributes like uix-ptr are not rendered
+	editMode?: boolean, // if true, editable content is enabled for editable elements
 	forceParentLive?: boolean // set by child nodes to indicate parent should be marked as hydratable
 }
 
@@ -88,7 +90,7 @@ function loadInitScript(component:(Element|ShadowRoot) & {getStandaloneInit?:()=
 }
 
 export function getInnerHTML(el:Element|ShadowRoot, opts?:_renderOptions, collectedStylesheets?:string[], standaloneContext = false) {
-	if (!opts?.includeShadowRoots) return el.innerHTML;
+	if (!opts?.includeShadowRoots && !opts?.plainHTML) return el.innerHTML;
 
 	let html = "";
 
@@ -214,6 +216,10 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];
+
+		if (opts?.plainHTML && attrib.name == "uix-ptr") continue;
+		if (!opts?.editMode && (attrib.name == "data-edit-location" || attrib.name == "data-edit-props")) continue;
+
 		let val:string;
 
 		const transformMap = opts?.lang && (el as any)[DOMUtils.ATTR_DX_VALUES]?.get(attrib.name)?.transformMap;
@@ -222,6 +228,12 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		}
 		else {
 			val = attrib.value;
+		}
+
+		// is a module identifier -> resolve - only for specific attributes:
+		// * src
+		if (attrib.name == "src" && val.match(/^[a-zA-Z0-9_]/)) {
+			val = import.meta.resolve(val);
 		}
 
 		// relative web path (@...)
@@ -243,14 +255,22 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		else if (el.checked !== false) attrs.push(`value="${domUtils.escapeHtml(el.checked?.toString()??"")}"`)
 	}
 
-	// hydratable
-	if (forceLive || isLiveNode(el)) {
-		if (opts?.requiredPointers) opts.requiredPointers.add(el);
-		attrs.push("uix-dry");
+	if (!opts?.plainHTML) {
+		// hydratable
+		if (forceLive || isLiveNode(el)) {
+			if (opts?.requiredPointers) opts.requiredPointers.add(el);
+			attrs.push("uix-dry");
+		}
+		
+		// just static
+		else attrs.push("uix-static");
 	}
-	
-	// just static
-	else attrs.push("uix-static");
+
+	// enable edit mode (TODO:)
+	if (opts?.editMode && el.hasAttribute("data-edit-location")) {
+		attrs.push("contenteditable");
+	}
+
 
 	// inject event listeners
 	if (dataPtr && opts?._injectedJsData && ((<DOMUtils.elWithUIXAttributes>el)[DOMUtils.EVENT_LISTENERS] || (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.ATTR_BINDINGS])) {
@@ -365,8 +385,8 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		opts?.forms?.pop()
 	}
 
-	if (selfClosingTags.has(tag)) return `<${tag} ${attrs.join(" ")}/>`;
-	else return `<${tag} ${attrs.join(" ")}>${inner}</${tag}>`
+	if (selfClosingTags.has(tag)) return `<${tag}${attrs.length ? ' ' + attrs.join(" ") : ''}/>`;
+	else return `<${tag}${attrs.length ? ' ' + attrs.join(" ") : ''}>${inner}</${tag}>`
 	// const outer = el.cloneNode().outerHTML;
 	// const start = outer.replace(/<\/[A-Za-z0-9-_ ]+>$/, '');
 	// const end = outer.match(/<\/[A-Za-z0-9-_ ]+>$/)?.[0] ?? ""; // might not have an end tag
@@ -495,6 +515,8 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{
 	injectStandaloneComponents?: boolean, 
 	allowIgnoreDatexFunctions?: boolean, 
 	lang?:string, 
+	plainHTML?: boolean,
+	editMode?: boolean
 	requiredPointers?: Set<any>
 }): [header_script:string, html_content:string] {
 

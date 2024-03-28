@@ -44,6 +44,8 @@ export class Context
 	> 
 {
 
+	static #sessionFlags = new WeakMap<Endpoint, Map<string, any>>()
+
 	request: Request
 	requestData: RequestData = {
 		address: null
@@ -137,6 +139,49 @@ export class Context
 		if (endpoint == BROADCAST) throw new Error("Cannot get private data for UIX context, no session found");
 	}
 
+	/**
+	 * Enables edit mode for the current session.
+	 * Allows the user to edit editableTemplate content directly on the website.
+	 */
+	enableEditMode() {
+		this.setSessionFlag("editMode");
+	}
+	/**
+	 * Disables edit mode for the current session.
+	 */
+	disableEditMode() {
+		this.removeSessionFlag("editMode");
+	}
+
+	/**
+	 * Returns the value of a session flag if it is set.
+	 * @param key session flag key
+	 */
+	getSessionFlag(key: string) {
+		if (!this.endpoint) throw new Error("Cannot set session flag without endpoint");
+		return Context.#sessionFlags.get(this.endpoint)?.get(key);
+	}
+
+	/**
+	 * Sets a session flag for the current session.
+	 * Important: Don't set the flag to false, use removeSessionFlag instead.
+	 * @param key session flag key
+	 * @param value optional session flag value, defaults: true
+	 */
+	setSessionFlag(key: string, value: any = true) {
+		if (!this.endpoint) throw new Error("Cannot set session flag without endpoint");
+		if (!Context.#sessionFlags.has(this.endpoint)) Context.#sessionFlags.set(this.endpoint, new Map());
+		Context.#sessionFlags.get(this.endpoint)!.set(key, value);
+	}
+
+	/**
+	 * Removes a session flag for the current session.
+	 * @param key session flag key
+	 */
+	removeSessionFlag(key: string) {
+		if (!this.endpoint) throw new Error("Cannot delete session flag without endpoint");
+		Context.#sessionFlags.get(this.endpoint)?.delete(key);
+	}
 
 	[Symbol.dispose]() {
 		console.log("disposing context", this.#disposeCallbacks);

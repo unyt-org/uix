@@ -41,15 +41,25 @@ export const UIX = {
 		})
 		
 		// redefine UIX.Theme.theme/mode getters to enable smart transforms / effects
+
+		const themeSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(themeManager), "theme")!.set!.bind(themeManager);
+		const modeSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(themeManager), "mode")!.set!.bind(themeManager);
+
 		Object.defineProperty(themeManager, "theme", {
 			get() {
 				return theme.val;
+			},
+			set(val: string) {
+				themeSetter(val);
 			}
 		}) 
 
 		Object.defineProperty(themeManager, "mode", {
 			get() {
 				return mode.val;
+			},
+			set(val: "dark"|"light") {
+				modeSetter(val);
 			}
 		}) 
 

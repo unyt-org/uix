@@ -131,7 +131,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				isClearingState = true;
 			}
 			// only set clear indicator when running in deployed environment
-			else if(Deno.env.has("UIX_HOST_ENDPOINT")) {
+			else if (Deno.env.has("UIX_HOST_ENDPOINT")) {
 				Deno.mkdirSync(cache_path, {recursive: true});
 				Deno.writeTextFileSync(clearIndicatorPath.normal_pathname, "");
 			}

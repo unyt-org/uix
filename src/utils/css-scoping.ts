@@ -5,6 +5,7 @@
  * @returns 
  */
 export function addCSSScopeSelector(css: string, scope: string) {
+	// TODO: not working with @keyframes
 	return `${scope} {\n${
 		'    ' + 
 		css

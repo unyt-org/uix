@@ -56,14 +56,14 @@ $ brew install uix
 Now, you can install UIX with `deno install`:
 
 ```bash
-$ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
+deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
 ```
 
 ## Creating a new UIX project
 
 You can create a new UIX project by running
 ```bash
-$ uix --init
+uix --init
 ```
 
 This creates a new base project (https://github.com/unyt-org/uix-base-project.git) in the current directory
@@ -79,7 +79,7 @@ To run your UIX app, make sure the [app.dx](./08%20Configuration.md#the-app-dx-f
 Execute the `uix` command in the root directory of your application (where the `app.dx` is located) to initialize and run the project.
 
 ```bash
-$ uix
+uix
 ```
 
 You can pass the following args to the UIX command line utility:
@@ -107,7 +107,7 @@ You can pass the following args to the UIX command line utility:
 
 To run your UIX project without installing the UIX CLI, you can alternatively run the following command in the project root directory:
 ```bash
-$ deno run -A --import-map https://cdn.unyt.org/importmap.json https://cdn.unyt.org/uix/run.ts
+deno run -A --import-map https://cdn.unyt.org/importmap.json https://cdn.unyt.org/uix/run.ts
 ```
 
 ## Architecture of a UIX Project

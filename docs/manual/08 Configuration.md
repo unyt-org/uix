@@ -80,7 +80,7 @@ UIX apps can be run in different **stages**. The names of the stages are not pre
 
 To run a UIX app in a specific stage, use the `--stage` options:
 ```bash
-$ uix --stage production
+uix --stage production
 ```
 
 Per default, running a UIX app in a different stage does not have any noticable effect.

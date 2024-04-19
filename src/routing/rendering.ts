@@ -132,7 +132,10 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 		returnValue = await entrypointData.entrypoint(entrypointData.context, (entrypointData.context).params);
 	}
 	// return error as response with HTTPStatus error 500
-	catch (e) {
+	catch (_e) {
+
+		// TODO: why is _e sometimes a Promise?
+		const e = await _e;
 		
 		if (e instanceof Error) {
 			hasError = true;
@@ -438,6 +441,15 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		if ((entrypointData.context as any)._responseHeaders) resolved.headers = (entrypointData.context as any)._responseHeaders;
 
 		resolved.loaded = true;
+	}
+
+	// transfer status code to response
+	if (resolved.content instanceof Response && resolved.status_code != resolved.content.status) {
+		// clone response with new status code
+		resolved.content = new Response((resolved.content as Response).body, {
+			...resolved.content,
+			status: resolved.status_code,
+		});
 	}
 
 	return resolved;

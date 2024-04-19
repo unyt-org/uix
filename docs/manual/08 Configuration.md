@@ -46,6 +46,8 @@ The following options provide some general information or behaviour of the app.
 * `expose_deno`: *(boolean)* - Experimental, allows access for the Deno namespace from frontend contexts
 -->
 
+
+
 ### Experimental Features
 
 Experimental features are subject to change and might be enabled by default in future versions of UIX.

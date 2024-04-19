@@ -11,6 +11,7 @@ import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts"
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
 import GitDeployPlugin from "./src/plugins/git-deploy.ts";
+import SQLStoragePlugin from "./src/plugins/sql-storage.ts";
 import LocalDockerRunner from "./src/runners/run-local-docker.ts";
 import { triggerLogin } from "./src/utils/login.ts";
 import { initBaseProject } from "./src/utils/init-base-project.ts";

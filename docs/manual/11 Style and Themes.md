@@ -161,10 +161,24 @@ but you can override the current mode:
 UIX.Theme.setMode('dark');
 ```
 
-### Observing mode changes
+### Observing theme and mode changes
 
-Changes between dark and light mode can be handled with `UIX.Theme.onModeChange`:
+UIX provides the reactive properties `UIX.Theme.$.theme` and `UIX.Theme.$.mode` to observe and handle theme and mode changes.
+These properties can be used in JSX to display different content or change styling for different themes and light or dark mode.
+
+DATEX `effects` and `always` statements get triggered on change:
 
 ```ts
-UIX.Theme.onModeChange(mode => console.log("mode changed to", mode);)
+effect(() => console.log(`Mode changed to ${UIX.Theme.$.mode}`));
+```
+
+
+```tsx
+<div>
+  { always(() =>
+    val(UIX.Theme.$.mode) == "dark" ?
+      "Dark mode" :
+      "Light mode"
+  ) }
+</div>
 ```

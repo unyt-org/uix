@@ -106,7 +106,7 @@ if (CommandLineOptions.collecting) await CommandLineOptions.capture()
  * Initialize plugins defined in plugins.dx + default UIX plugins
  */
 async function loadPlugins() {
-	const plugins = [new GitDeployPlugin()];
+	const plugins = [new GitDeployPlugin(), new SQLStoragePlugin()];
 
 	const pluginDx = getExistingFile(rootPath, './plugins.dx');
 	if (pluginDx) {
@@ -151,7 +151,6 @@ options.import_map = await createProxyImports(options, new_base_url, params.deno
 await applyPlugins(plugins, rootPath, options)
 
 await runBackends(options);
-
 
 async function runBackends(options: normalizedAppOptions) {
 

@@ -1,18 +1,26 @@
 # Getting Started with UIX
 
-UIX is an open-source full-stack framework for developing reactive web apps with *restorable and shared state*.
-UIX apps run on a [Deno](https://docs.deno.com/runtime/manual) backend and use state-of-the-art web technologies.
+## What is UIX?
 
-The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity and cross-device data exchange*.
-In contrast to frameworks like React, UIX provides *direct wiring* to the DOM for reactivity and does not need a virtual DOM.
+UIX is a state-of-the-art TypeScript framework for developing web apps.
+With UIX, you can write frontend and backend code in a single [Deno](https://docs.deno.com/runtime/manual) project.
+UIX abstracts away the complexity of communicating between servers and clients - there
+is no need to think about APIs, serialization, or data storage.
+Everything is connected.
 
-**Our core principles**
- * Full compatibility with web standards
- * Full compatibility with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org Supranet principles
- * Both backend and frontend code is written as ES6 TypeScript modules
- * No JavaScript bundlers
+The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity, restorable state and cross-device data exchange*.
 
-**Main features**
+UIX works out of the box with TypeScript and JSX and does not require any additional tooling or build steps.
+
+UIX encourages the use of standard web APIs wherever possible, and provides a simple
+and intuitive abstraction layer for more advanced features.
+
+> [!NOTE]
+> The [UIX Guide](./17%20Guide.md) explains the core features of UIX and how to use them in your project.
+
+
+## Main Features
+
  * [Cross-network reactivity](02%20Cross-Realm%20Imports.md#Reactivity)
  * [Server side rendering with partial hydration](07%20Rendering%20Methods.md)
  * [Hybrid backend/frontend routing](05%20Entrypoints%20and%20Routing.md)
@@ -30,12 +38,9 @@ This is why UIX ships with integrated features such as:
  * [Automated deployment](./13%20Deployment.md)
  * [Testing library](https://github.com/unyt-org/unyt-tests/)
 
-### CLI Installation
+## Installation
 
 To install UIX, you first need to install [Deno](https://docs.deno.com/runtime/manual/getting_started/installation).
-
-> [!WARNING]
-> UIX is only supported for Deno versions > 1.40.0
 
 <!-- #### Linux / MacOS
 
@@ -58,6 +63,9 @@ Now, you can install UIX with `deno install`:
 ```bash
 deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
 ```
+
+> [!WARNING]
+> UIX is only supported for Deno versions > 1.40.0
 
 ## Creating a new UIX project
 

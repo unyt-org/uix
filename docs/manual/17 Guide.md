@@ -5,8 +5,8 @@ We recommend that you read this guide before starting to develop a UIX applicati
 
 ## Storage
 
-In UIX, you normally don't need to think a lot about how and where to store data.
-UIX provides an abstraction layer that essentially treats in-memory data and persistent data the same way.
+In UIX, you don't need to think a lot about how and where to store data.
+UIX provides an abstraction layer that essentially treats persistent data the same way as in-memory data.
 
 The most important point to take away is that you don't need to think about a database architecture or serialization strategy
 when building a UIX app - with eternal pointers, this is all been taken care of by UIX.
@@ -53,7 +53,7 @@ data from storage into memory when required.
 
 ### Storage locations
 
-UIX provides multiple strategies for storing eternal data, such as in a key-value store, an SQL database, or local storage in the browser.
+Under the hood, UIX can use multiple strategies for storing eternal data, such as in a key-value store, an SQL database, or local storage in the browser.
 
 On the backend, eternal data is stored in a simple key-value database per default.
 As an alternative, you can use an SQL database, which is more suitable for larger data sets where you need to query data.
@@ -72,7 +72,8 @@ Just call a function that returns the age of a user:
 
 ```tsx
 // backend/age.ts
-const users = new Map<string, {age: number}>()
+const users = new Map<string, {age: number}>();
+
 export function getAgeOfUser(userName: string) {
     return users.get(userName)?.age
 }
@@ -82,9 +83,32 @@ And in the frontend, you can call this function as if it was a local function:
 
 ```tsx
 // frontend/age.ts
-import { getAgeOfUser } from "../backend/age.ts"
-console.log(getAgeOfUser("1234"))
+import { getAgeOfUser } from "backend/age.ts"
+console.log(await getAgeOfUser("1234"))
 ```
+
+Although you can retrieve individual object properties this way, the preferred
+way in UIX is to just share the whole user object and read the required properties directly
+on the frontend:
+
+```tsx
+// backend/age.ts
+const users = new Map<string, {age: number}>();
+
+export function getUser(userName: string) {
+    return users.get(userName)
+}
+```
+
+```tsx
+// frontend/age.ts
+import { getUser from "backend/age.ts"
+
+const userA = await getUser("1234");
+console.log(userA.age); // get age
+userA.age = 42 // set age (automatically synced across the network)
+```
+
 
 ## Reactivity
 

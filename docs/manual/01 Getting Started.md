@@ -16,7 +16,7 @@ UIX encourages the use of standard web APIs wherever possible, and provides a si
 and intuitive abstraction layer for more advanced features.
 
 > [!NOTE]
-> The [UIX Guide](./17%20Guide.md) explains the core features of UIX and how to use them in your project.
+> The [UIX Guide](./17%20Guide.md) gives a comprehensive overview for developers who are new to UIX.
 
 
 ## Main Features

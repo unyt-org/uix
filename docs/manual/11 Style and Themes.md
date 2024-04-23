@@ -5,9 +5,9 @@
 To apply css styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
 
 > [!NOTE]
-> Although SCSS is supported nativelyby UIX, we recommend using CSS files rather than SCSS files.
-> Modern CSS supported in all major browsers includes most features that are provided by SCSS.
-> SCSS support might be completely removed from UIX in the future.
+> Although SCSS is supported natively by UIX, we recommend using CSS files rather than SCSS files.
+> Modern CSS already includes most of the features that are provided by SCSS.
+> For this reason, CSS support might be completely removed from UIX in the future.
 
 The styles declared in this file are automatically adopted for all instances of the component and are not exposed
 to other components.

@@ -163,22 +163,23 @@ UIX.Theme.setMode('dark');
 
 ### Observing theme and mode changes
 
-UIX provides the reactive properties `UIX.Theme.$.theme` and `UIX.Theme.$.mode` to observe and handle theme and mode changes.
-These properties can be used in JSX to display different content or change styling for different themes and light or dark mode.
+For some use cases, it might be useful to change content or styling depending on the current theme or mode.
 
-DATEX `effects` and `always` statements get triggered on change:
+The `theme` and `mode` properties of `UIX.Theme` are bound to reactive pointers and can be used in combination
+with `effect` and `always` to react to changes:
 
 ```ts
-effect(() => console.log(`Mode changed to ${UIX.Theme.$.mode}`));
+effect(() => console.log(`Mode changed to ${UIX.Theme.mode}`));
 ```
-
 
 ```tsx
-<div>
-  { always(() =>
-    val(UIX.Theme.$.mode) == "dark" ?
-      "Dark mode" :
-      "Light mode"
-  ) }
-</div>
+<div>{
+    always(() =>
+      UIX.Theme.mode == "dark" ?
+        "Dark mode" :
+        "Light mode"
+    )
+}</div>
 ```
+
+Alternatively, you can directly access the underlying pointers with `UIX.Theme.$.theme` / `UIX.Theme.$.mode`.

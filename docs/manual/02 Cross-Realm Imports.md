@@ -1,7 +1,7 @@
 # Cross-Realm Imports
 
-Modules in the `frontend` directory of a UIX app can import values from `backend` modules, as if they are running on the same device and within the same process. 
-This is accomplished with DATEX exchange between the frontend and backend endpoints.
+Modules in the `frontend` directory of a UIX app can import exported values from `backend` modules, as if they are running on the same device and within the same process. 
+Under the hood, this is achieved with DATEX messaging between the frontend and backend endpoints.
 
 **Cross-Realm Import Example**:
 
@@ -39,7 +39,7 @@ console.log(await getData()); // [1,2,3]
 
 Modules from the common directory can be imported from both the backend and frontend.
 
-This is useful for definining components that can be rendered by the backend or frontend, or for utility functions or libraries that are used on the backend and frontend.
+This is useful for definining components that can be rendered by the backend or frontend, or for utility functions and libraries that are used on the backend and frontend.
 
 > [!NOTE]
 > Common modules allow the usage of the *same source code* for the backend and frontend, but they do not share a state between the backend and frontend endpoints: Every module is initialized individually on each endpoint.

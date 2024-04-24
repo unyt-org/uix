@@ -30,7 +30,7 @@ DATEX is especially useful for dynamic (reactive) data, but can also be used to 
 
 # Hybrid rendering with HTTP and DATEX
 
-When using [hybrid rendering](./07%20Rendering%20Methods.md#hybrid-rendering), static HTML content is first served via HTTP and hydrated with dynamic DATEX data afterwards:
+When using [hybrid rendering](./08%20Rendering%20Methods.md#hybrid-rendering), static HTML content is first served via HTTP and hydrated with dynamic DATEX data afterwards:
 
 ![](./res/communication/hybrid-datex-http.svg)
 

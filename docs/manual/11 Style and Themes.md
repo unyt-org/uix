@@ -161,10 +161,25 @@ but you can override the current mode:
 UIX.Theme.setMode('dark');
 ```
 
-### Observing mode changes
+### Observing theme and mode changes
 
-Changes between dark and light mode can be handled with `UIX.Theme.onModeChange`:
+For some use cases, it might be useful to change content or styling depending on the current theme or mode.
+
+The `theme` and `mode` properties of `UIX.Theme` are bound to reactive pointers and can be used in combination
+with `effect` and `always` to react to changes:
 
 ```ts
-UIX.Theme.onModeChange(mode => console.log("mode changed to", mode);)
+effect(() => console.log(`Mode changed to ${UIX.Theme.mode}`));
 ```
+
+```tsx
+<div>{
+    always(() =>
+      UIX.Theme.mode == "dark" ?
+        "Dark mode" :
+        "Light mode"
+    )
+}</div>
+```
+
+Alternatively, you can directly access the underlying pointers with `UIX.Theme.$.theme` / `UIX.Theme.$.mode`.

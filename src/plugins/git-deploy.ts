@@ -5,7 +5,6 @@ import { json2yaml } from "https://deno.land/x/json2yaml@v1.0.1/mod.ts";
 import { Datex } from "datex-core-legacy/mod.ts";
 import { isCIRunner } from "../utils/check-ci.ts";
 import { normalizedAppOptions } from "../app/options.ts";
-import { app } from "../app/app.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { getInferredRunPaths } from "../app/options.ts";
 

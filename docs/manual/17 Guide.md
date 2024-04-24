@@ -3,11 +3,10 @@
 This guide conveys some important concepts and paradigms for developing applications with UIX/DATEX.
 We recommend that you read this guide before starting to develop a UIX application to fully grasp the concepts and possibilities of the framework. 
 
-
 ## Storage
 
-In UIX, you normally don't need to think a lot about how and where to store data.
-UIX provides an abstraction layer that essentially treats in-memory data and persistent data the same way.
+In UIX, you don't need to think a lot about how and where to store data.
+UIX provides an abstraction layer that essentially treats persistent data the same way as in-memory data.
 
 The most important point to take away is that you don't need to think about a database architecture or serialization strategy
 when building a UIX app - with eternal pointers, this is all been taken care of by UIX.
@@ -25,7 +24,7 @@ interface UserData {
 export const users = new Set<UserData>()
 ```
 
-Now make the module containing the `users` Set eternal by using an `eternal.ts` file extension:
+Now make the module containing the `users` Set eternal by using the `eternal.ts` file extension:
 ```tsx
 // file: data.eternal.ts
 // The code stays the same:
@@ -36,9 +35,9 @@ interface UserData {
 export const users = new Set<UserData>()
 ```
 
-The exported `users` Set is now stored persistently and the current state is still available after a restart of the application.
+The exported `users` set is now stored persistently and the current state is still available after an application restart.
 
-This works out of the box without any special functions or data types. For larger amounts of data, you can optimize this
+This works out of the box without any special functions or data types. For larger data sets, you can optimize this
 by using a special storage collection instead of a native `Set`:
 ```tsx
 // data.eternal.ts
@@ -49,25 +48,85 @@ interface UserData {
 export const users = new StorageSet<UserData>()
 ```
 
-A `StorageSet` provides the same methods and properties as a normal `Set`, but it works asynchronously and saves a lot of memory by lazily loading
-data into memory when required.
+A `StorageSet` has the same methods and properties as a normal `Set`, but it works asynchronously and saves a lot of memory by lazily loading
+data from storage into memory when required.
 
 ### Storage locations
 
+Under the hood, UIX can use multiple strategies for storing eternal data, such as in a key-value store, an SQL database, or local storage in the browser.
 
+On the backend, eternal data is stored in a simple key-value database per default.
+As an alternative, you can use an SQL database, which is more suitable for larger data sets where you need to query data.
+Switching to SQL storage *does not require any changes in your application code* - it just changes the underlying storage mechanism.
 
+On the frontend, eternal data is stored in the browser's local storage and IndexedDB.
 
 ## Networking
 
-UIX also creates an intuitive abstraction around the network layer and DATEX communication.
+UIX creates an intuitive abstraction around the network layer and [DATEX](https://docs.unyt.org/manual/datex/introduction) communication.
 You don't need to think about how to send data from the backend to the frontend or between browser clients.
 Instead, you can just call a JavaScript function - no need for API architectures and REST. In UIX, your exported classes and functions *are* the API.
+
+You want to get the age of a user from the backend?
+Just call a function that returns the age of a user:
+
+```tsx
+// backend/age.ts
+const users = new Map<string, {age: number}>();
+
+export function getAgeOfUser(userName: string) {
+    return users.get(userName)?.age
+}
+```
+
+And in the frontend, you can call this function as if it was a local function:
+
+```tsx
+// frontend/age.ts
+import { getAgeOfUser } from "backend/age.ts"
+console.log(await getAgeOfUser("1234"))
+```
+
+Although you can retrieve individual object properties this way, the preferred
+way in UIX is to just share the whole user object and read the required properties directly
+on the frontend:
+
+```tsx
+// backend/age.ts
+const users = new Map<string, {age: number}>();
+
+export function getUser(userName: string) {
+    return users.get(userName)
+}
+```
+
+```tsx
+// frontend/age.ts
+import { getUser from "backend/age.ts"
+
+const userA = await getUser("1234");
+console.log(userA.age); // get age
+userA.age = 42 // set age (automatically synced across the network)
+```
 
 
 ## Reactivity
 
+In UIX, reactive values are called pointers.
+Pointers can contain any kind of JavaScript value, including strings, numbers, objects, arrays, and functions.
+DOM elements can also be bound to pointers, making them reactive.
+
+When creating a DOM element with JSX, it is automatically bound to a pointer.
+
+```tsx
+const counter = $$(0); // create a reactive pointer with initial value 0
+const counterDisplay = <div>{counter}</div>; // bind the pointer to a DOM element
+document.body.appendChild(counterDisplay); // append the element to the DOM
+counter.val++; // increment the pointer value - updates the DOM element
+```
+
 Reactivity in UIX works cross-network per default.
-You can share reactive values (pointers) with other endpoints.
+You can share and synchronize pointers with other endpoints.
 
 ## Forms
 

@@ -14,8 +14,8 @@
 
 // ---
 import { Datex } from "datex-core-legacy";
-import { getCallerDir, getCallerInfo } from "datex-core-legacy/utils/caller_metadata.ts";
-import { Cookie, setCookie, getCookies } from "../lib/cookie/cookie.ts";
+import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
+import { Cookie, setCookie } from "../lib/cookie/cookie.ts";
 
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { Transpiler } from "./transpiler.ts";
@@ -443,6 +443,7 @@ export class Server {
             const datexEndpointNew = getCookie("datex-endpoint-new", requestEvent.request.headers, port);
 
             const uixSessionCookie = getCookie("uix-session", requestEvent.request.headers, port);
+
             
             // has datex-endpoint
             if (datexEndpointCookie) {

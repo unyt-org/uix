@@ -1,18 +1,25 @@
 # Getting Started with UIX
 
-UIX is an open-source full-stack framework for developing reactive web apps with *restorable and shared state*.
-UIX apps run on a [Deno](https://docs.deno.com/runtime/manual) backend and use state-of-the-art web technologies.
+## What is UIX?
 
-The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity and cross-device data exchange*.
-In contrast to frameworks like React, UIX provides *direct wiring* to the DOM for reactivity and does not need a virtual DOM.
+UIX is a state-of-the-art TypeScript framework for developing full-stack web applications.
+With UIX, you can write frontend and backend code in a single [Deno](https://docs.deno.com/runtime/manual) project.
+UIX abstracts away the complexity of communicating between servers and clients - there
+is no need to think about APIs, serialization, or data storage.
 
-**Our core principles**
- * Full compatibility with web standards
- * Full compatibility with [DATEX](https://github.com/unyt-org/datex-specification) and unyt.org Supranet principles
- * Both backend and frontend code is written as ES6 TypeScript modules
- * No JavaScript bundlers
+The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity, restorable state and cross-device data exchange*.
 
-**Main features**
+UIX works out of the box with TypeScript and JSX and does not require any additional tooling or build steps.
+
+UIX encourages the use of standard web APIs wherever possible, and provides a simple
+and intuitive abstraction layer for more advanced features.
+
+> [!NOTE]
+> The [UIX Guide](./17%20Guide.md) gives a comprehensive overview for developers who are new to UIX.
+
+
+## Main Features
+
  * [Cross-network reactivity](02%20Cross-Realm%20Imports.md#Reactivity)
  * [Server side rendering with partial hydration](07%20Rendering%20Methods.md)
  * [Hybrid backend/frontend routing](05%20Entrypoints%20and%20Routing.md)
@@ -30,12 +37,9 @@ This is why UIX ships with integrated features such as:
  * [Automated deployment](./13%20Deployment.md)
  * [Testing library](https://github.com/unyt-org/unyt-tests/)
 
-### CLI Installation
+## Installation
 
 To install UIX, you first need to install [Deno](https://docs.deno.com/runtime/manual/getting_started/installation).
-
-> [!WARNING]
-> UIX is only supported for Deno versions > 1.40.0
 
 <!-- #### Linux / MacOS
 
@@ -56,17 +60,20 @@ $ brew install uix
 Now, you can install UIX with `deno install`:
 
 ```bash
-$ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
+deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
 ```
+
+> [!WARNING]
+> UIX is only supported for Deno versions > 1.40.0
 
 ## Creating a new UIX project
 
 You can create a new UIX project by running
 ```bash
-$ uix --init
+uix --init
 ```
 
-This creates a new base project (https://github.com/unyt-org/uix-base-project.git) in the current directory
+This creates a new [base project](https://github.com/unyt-org/uix-base-project.git) in the current directory
 and starts the app locally.
 
 > [!NOTE]
@@ -79,7 +86,7 @@ To run your UIX app, make sure the [app.dx](./08%20Configuration.md#the-app-dx-f
 Execute the `uix` command in the root directory of your application (where the `app.dx` is located) to initialize and run the project.
 
 ```bash
-$ uix
+uix
 ```
 
 You can pass the following args to the UIX command line utility:
@@ -107,7 +114,7 @@ You can pass the following args to the UIX command line utility:
 
 To run your UIX project without installing the UIX CLI, you can alternatively run the following command in the project root directory:
 ```bash
-$ deno run -A --import-map https://cdn.unyt.org/importmap.json https://cdn.unyt.org/uix/run.ts
+deno run -A --import-map https://cdn.unyt.org/importmap.json https://cdn.unyt.org/uix/run.ts
 ```
 
 ## Architecture of a UIX Project
@@ -147,7 +154,7 @@ interface UIX {
     cacheDir: Path;                // URL pointing to the local UIX cache directory
     context: "backend"|"frontend"; // current context in which the process is running
     language: string;              // language ("de" | "en" | ...)
-    version: string;               // UIX version ("beta" | "1.0.0" | ...)
+    version: string;               // UIX version ("beta" | "0.2.0" | ...)
 }
 ```
 

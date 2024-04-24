@@ -859,7 +859,10 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 
 		// convert content to valid HTML string
 		if (content instanceof Element || content instanceof DocumentFragment) {
-			const requiredPointers = new Set<Node>()
+			const requiredPointers = new Set<Node>();
+
+			context = context instanceof Function ? context() : context;
+
 			const html = getOuterHTML(
 				content as Element, 
 				{
@@ -868,6 +871,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					injectStandaloneComponents:render_method!=RenderMethod.STATIC, 
 					allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), 
 					lang,
+					editMode: !!context?.getSessionFlag("editMode"),
 					requiredPointers
 				}
 			);

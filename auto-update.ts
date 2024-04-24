@@ -2,7 +2,7 @@ import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";
 import { Path } from "./src/utils/path.ts";
 
 export async function handleAutoUpdate(baseLibPath: Path, name: string) {
-	const { renderMarkdown } = await import('https://deno.land/x/charmd/mod.ts');
+	const { renderMarkdown } = await import("https://deno.land/x/charmd@v0.0.2/mod.ts");
 
 	baseLibPath = baseLibPath.asDir()
 	// console.log("Finding updates for " + name + " (" + baseLibPath + ")")

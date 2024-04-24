@@ -27,7 +27,7 @@ counter.val++; // increments the counter value each time the backend is restarte
 console.log(counter); // logs 1,2,3,4... on each backend restart
 ```
 
-You can read more about (eternal) contexts in the chapter [Functions and Contexts](./10%20Functions%20and%20Contexts.md).
+You can read more about (eternal) contexts in the chapter [Functions and Contexts](./11%20Functions%20and%20Contexts.md).
 
 
 ## Session data

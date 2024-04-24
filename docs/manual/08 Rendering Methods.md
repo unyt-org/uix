@@ -254,7 +254,7 @@ export default renderStatic(
 When using backend rendering, there is no UIX or DATEX library loaded on the client-side.
 All reactivity happens on the backend. 
 
-You can still execute JavaScript on the frontend using [`@frontend` decorators or `:frontend` labels](10%20Functions%20and%20Contexts.md#scenario-3-event-handlers-in-the-frontend-context),
+You can still execute JavaScript on the frontend using [`@frontend` decorators or `:frontend` labels](./11%20Functions%20and%20Contexts.md#scenario-3-event-handlers-in-the-frontend-context),
 but keep in mind that only default browser APIs are available.
 
 Example:
@@ -277,7 +277,7 @@ export default renderBackend(
 > Event handlers assigned to a JSX element (like the `onclick` handler on the increment button in the example above) are always executed in their origin context per default.
 > This means that when the HTML element is created on the backend, the event handler is also called on the backend per default.
 > 
-> You can read more about this behaviour in the chapter [Functions and Contexts](./10%20Functions%20and%20Contexts.md)
+> You can read more about this behaviour in the chapter [Functions and Contexts](./11%20Functions%20and%20Contexts.md)
 
 > [!WARNING]
 > Reactivity with backend rendering is still experimental and not yet fully supported. When using backend rendering,

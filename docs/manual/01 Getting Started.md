@@ -2,11 +2,10 @@
 
 ## What is UIX?
 
-UIX is a state-of-the-art TypeScript framework for developing web apps.
+UIX is a state-of-the-art TypeScript framework for developing full-stack web applications.
 With UIX, you can write frontend and backend code in a single [Deno](https://docs.deno.com/runtime/manual) project.
 UIX abstracts away the complexity of communicating between servers and clients - there
 is no need to think about APIs, serialization, or data storage.
-Everything is connected.
 
 The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity, restorable state and cross-device data exchange*.
 
@@ -74,7 +73,7 @@ You can create a new UIX project by running
 uix --init
 ```
 
-This creates a new base project (https://github.com/unyt-org/uix-base-project.git) in the current directory
+This creates a new [base project](https://github.com/unyt-org/uix-base-project.git) in the current directory
 and starts the app locally.
 
 > [!NOTE]
@@ -155,7 +154,7 @@ interface UIX {
     cacheDir: Path;                // URL pointing to the local UIX cache directory
     context: "backend"|"frontend"; // current context in which the process is running
     language: string;              // language ("de" | "en" | ...)
-    version: string;               // UIX version ("beta" | "1.0.0" | ...)
+    version: string;               // UIX version ("beta" | "0.2.0" | ...)
 }
 ```
 

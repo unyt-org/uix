@@ -1,6 +1,6 @@
 # JSX
 
-UIX supports JSX syntax for creating HTML and SVG elements.
+UIX supports [JSX](https://facebook.github.io/jsx/) syntax for creating HTML and SVG elements.
 
 ## Creating native DOM elements
 
@@ -331,9 +331,9 @@ const comp = <MyComponent style="color:green" text="text content"/>
 ```
 
 
-## Using the `HTML` utility function instead of JSX
+## Using `HTML` template strings instead of JSX
 
-As an alternative to JSX, you can also use the `HTML` function which provides exactly the same functionality as JSX with JavaScript template strings.
+As an alternative to JSX, you can also use the `HTML` template string function which provides exactly the same functionality as JSX:
 
 JSX:
 ```tsx
@@ -347,7 +347,7 @@ const div =
 HTML:
 ```tsx
 const count: Datex.Pointer<number> = $$(0);
-const div = HTML`
+const div = HTML `
     <div>
         <p>Count: ${count}</p>
     </div>` as HTMLDivElement

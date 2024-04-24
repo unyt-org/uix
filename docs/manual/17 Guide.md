@@ -59,7 +59,7 @@ On the backend, eternal data is stored in a simple key-value database per defaul
 As an alternative, you can use an SQL database, which is more suitable for larger data sets where you need to query data.
 Switching to SQL storage *does not require any changes in your application code* - it just changes the underlying storage mechanism.
 
-On the frontend, eternal data is stored in the browser's local storage and indexedDB.
+On the frontend, eternal data is stored in the browser's local storage and IndexedDB.
 
 ## Networking
 

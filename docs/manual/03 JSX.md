@@ -211,7 +211,7 @@ accept other values:
 #### Scoped stylesheets
 
 The special `stylesheet` attribute can be used on JSX elements to apply a whole CSS
-stylesheet to the scope of the element (See [Element-scoped styles](./11%20Style%20and%20Themes.md#element-scoped-styles]))
+stylesheet to the scope of the element (See [Element-scoped styles](./12%20Style%20and%20Themes.md#element-scoped-styles]))
 
 
 #### Class

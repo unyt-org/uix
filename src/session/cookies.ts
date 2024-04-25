@@ -10,10 +10,10 @@ const portPrefix = client_type == "browser" ? window.location.port : undefined;
 export const UIX_COOKIE = {
 	endpoint: "datex-endpoint",
 	endpointValidation: "datex-endpoint-validation",
-	endpointNew: "datex-endpoint-new",
 	endpointNonce: "datex-endpoint-nonce",
 
 	session: "uix-session",
+	unverifiedSession: "uix-session-unverified",
 	language: "uix-language",
 	themeDark: "uix-theme-dark",
 	themeLight: "uix-theme-light",

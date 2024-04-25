@@ -509,6 +509,21 @@ export class Server {
             
             // has no datex-endpoint -> init
             else {
+                const referrer = requestEvent.request.headers.get("Referer");
+                logger.info("referrer", referrer);
+                if (referrer === requestEvent.request.url) {
+                    const html = `<html>
+                        <noscript>Please activate JavaScript in your browser!</noscript>
+                        Please allow cookies!
+                    `;
+                    await this.serveContent(requestEvent, "text/html", html, undefined, 400, undefined, false);
+                    return;
+                }
+                if (requestEvent.request.method !== "GET")
+                    return new Response("UIX session is missing", {
+                        status: 403
+                    });
+
                 let uixURL = import.meta.resolve('uix/session/init.ts');
                 // local uix, use dev.cdn init as fallback - TODO: fix!;
                 if (uixURL.startsWith("file://")) uixURL = convertToWebPath(uixURL); // "https://cdn.unyt.org/uix/src/session/init.ts";
@@ -519,9 +534,11 @@ export class Server {
                 const headers = new Headers();
                 const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
                 setCookieUIX('datex-endpoint-nonce', this.getNonce(), undefined, headers, port, isSafariLocalhost)
-
-                await this.serveContent(requestEvent, "text/html", html, undefined, 300, headers, false);
-                return;
+                headers.set("Location", `${url.pathname}${url.search}`);
+                return new Response(null, {
+                    headers,
+                    status: 301
+                });
             }
             
         }

@@ -27,7 +27,7 @@ should not be available on the backend.
 
 ## 2. Just a backend entrypoint
 UI generated on the backend entrypoint is "moved" to the frontend client.
-UIX supports [multiple methods](./07%20Rendering%20Methods.md) for backend rendering.
+UIX supports [multiple methods](./08%20Rendering%20Methods.md) for backend rendering.
 
 ## 3. Backend and frontend entrypoints (route merging)
 When entrypoint exports for both the frontend and the backend are available, they are automatically merged.
@@ -53,7 +53,7 @@ export default <div>Content</div> satisfies Entrypoint;
 ```
 
 Like other entrypoint values, HTML Elements are DATEX compatible and their content can be synchronized.
-Keep in mind that the content is not updated when it is provided with [`renderStatic`](./07%20Rendering%20Methods.md#static-rendering).
+Keep in mind that the content is not updated when it is provided with [`renderStatic`](./08%20Rendering%20Methods.md#static-rendering).
 
 ```tsx
 const counter = $$(0);

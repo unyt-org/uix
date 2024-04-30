@@ -15,13 +15,13 @@ UIX encourages the use of standard web APIs wherever possible, and provides a si
 and intuitive abstraction layer for more advanced features.
 
 > [!NOTE]
-> The [UIX Guide](./17%20Guide.md) gives a comprehensive overview for developers who are new to UIX.
+> The [UIX Guide](./18%20Guide.md) gives a comprehensive overview for developers who are new to UIX.
 
 
 ## Main Features
 
  * [Cross-network reactivity](02%20Cross-Realm%20Imports.md#Reactivity)
- * [Server side rendering with partial hydration](07%20Rendering%20Methods.md)
+ * [Server side rendering with partial hydration](08%20Rendering%20Methods.md)
  * [Hybrid backend/frontend routing](05%20Entrypoints%20and%20Routing.md)
  * [Cross-realm imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports)
  * [Restorable state](06%20Persistent%20Contexts.md)
@@ -32,9 +32,9 @@ and intuitive abstraction layer for more advanced features.
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
 This is why UIX ships with integrated features such as:
  * Hot reloading
- * [Stage management](./08%20Configuration.md#app-deployment-stages)
+ * [Stage management](./09%20Configuration.md#app-deployment-stages)
  <!-- * Version management -->
- * [Automated deployment](./13%20Deployment.md)
+ * [Automated deployment](./15%20Deployment.md)
  * [Testing library](https://github.com/unyt-org/unyt-tests/)
 
 ## Installation
@@ -82,7 +82,7 @@ and starts the app locally.
 
 
 ## Running your UIX app
-To run your UIX app, make sure the [app.dx](./08%20Configuration.md#the-app-dx-file) configuration file exists.
+To run your UIX app, make sure the [app.dx](./09%20Configuration.md#the-app-dx-file) configuration file exists.
 Execute the `uix` command in the root directory of your application (where the `app.dx` is located) to initialize and run the project.
 
 ```bash

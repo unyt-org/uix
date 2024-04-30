@@ -92,7 +92,7 @@ const stage = app.stage // "production"
 ```
 
 In `app.dx` files, the `#public.uix.stage` helper function can be used to access the stage,
-enabling custom [deployment configurations](./13%20Deployment.md).
+enabling custom [deployment configurations](./15%20Deployment.md).
 
 ## The .dx files
 
@@ -107,7 +107,7 @@ Per default, a `.dx` config file can contain the following options:
 * `connect`: (boolean) Connect to the supranet on start (default: true)
 * `keys`: (Crypto.ExportedKeySet) Set custom private + public keys for this endpoint
 
-Additional options may be passed in for backend endpoints `.dx` configurations (See [Deployment](./11%20Deployment.md)).
+Additional options may be passed in for backend endpoints `.dx` configurations (See [Deployment](./15%20Deployment.md)).
 
 
 ### The "stage" helper function

@@ -25,7 +25,7 @@ The UIX library is designed with  a modular approach that makes it easy for deve
 
 **Main features**
  * [Cross-network reactivity](./docs/manual/02%20Cross-Realm%20Imports.md#Reactivity)
- * [Server side rendering with partial hydration](./docs/manual/07%20Rendering%20Methods.md)
+ * [Server side rendering with partial hydration](./docs/manual/08%20Rendering%20Methods.md)
  * [Hybrid backend/frontend routing](./docs/manual/05%20Entrypoints%20and%20Routing.md)
  * [Cross-realm imports](./docs/manual/02%20Cross-Realm%20Imports.md)
  * [Shared memory](./docs/manual/02%20Cross-Realm%20Imports.md#Synchronization)
@@ -37,9 +37,9 @@ UIX aims to simplify all phases of the app development cycle, including design, 
 This is why UIX ships with integrated features such as:
  * Hot reloading
  * [Testing library](https://github.com/unyt-org/unyt-tests/)
- * [Stage management](./docs/manual/08%20Configuration.md#app-deployment-stages)
+ * [Stage management](./docs/manual/09%20Configuration.md#app-deployment-stages)
  * Version management
- * [Automated deployment](./docs/manual/13%20Deployment.md)
+ * [Automated deployment](./docs/manual/15%20Deployment.md)
 
 ## Documentation
 
@@ -53,17 +53,20 @@ This is why UIX ships with integrated features such as:
 4. [Components](./docs/manual/04%20Components.md)
 5. [Entrypoints and Routing](./docs/manual/05%20Entrypoints%20and%20Routing.md)
 6. [Component States](./docs/manual/06%20Component%20States.md)
-7. [Rendering Methods](./docs/manual/07%20Rendering%20Methods.md)
-8. [Configuration](./docs/manual/08%20Configuration.md)
-9. [Localization](./docs/manual/09%20Localization.md)
-10. [Functions and Contexts](./docs/manual/10%20Functions%20and%20Contexts.md)
-11. [Styles and Themes](./docs/manual/11%20Styles%20and%20Themes.md)
-12. [Shadow DOM](./docs/manual/12%20Shadow%20DOM.md)
-13. [Utility Functions](./docs/manual/13%20Utility%20Functions.md)
-14. [Deployment](./docs/manual/14%20Deployment.md)
-15. [HTTP Tunneling](./docs/manual/15%20HTTP%20Tunneling.md)
-16. [Plugins](./docs/manual/16%20Plugins.md)
-17. [Tutorials](./docs/manual/17%20Tutorials.md)
+7. [Persistent Contexts](./docs/manual/07%20Persistent%20Contexts.md)
+8. [Rendering Methods](./docs/manual/08%20Rendering%20Methods.md)
+9. [Configuration](./docs/manual/09%20Configuration.md)
+10. [Localization](./docs/manual/10%20Localization.md)
+11. [Functions and Contexts](./docs/manual/11%20Functions%20and%20Contexts.md)
+12. [Styles and Themes](./docs/manual/12%20Styles%20and%20Themes.md)
+13. [Shadow DOM](./docs/manual/13%20Shadow%20DOM.md)
+14. [Utility Functions](./docs/manual/14%20Utility%20Functions.md)
+15. [Deployment](./docs/manual/15%20Deployment.md)
+16. [HTTP Tunneling](./docs/manual/16%20HTTP%20Tunneling.md)
+17. [Plugins](./docs/manual/17%20Plugins.md)
+18. [Guide](./docs/manual/18%20Guide.md)
+19. [Rendering](./docs/manual/19%20Rendering.md)
+20. [App Communication](./docs/manual/20%20App%20Communication.md)
 
 ## Examples
 Feel free to browse a collection of UIX projects on [uix.unyt.org/templates](https://uix.unyt.org/templates).

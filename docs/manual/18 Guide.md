@@ -212,3 +212,29 @@ const NewUserForm = template(() => {
 
 export default () => <NewUserForm/>
 ```
+
+## REST APIs
+
+Although UIX applications are normally *not* built on top of classic APIs, there are still use cases where a UIX backend has to provide a REST API to communicate with external services.
+
+REST API endpoints can easily be created using UIX entrypoint routing.
+
+The `handleTypedRequest` helper function can be used to handle requests containing JSON data and/or return responses containing JSON data:
+
+```tsx
+export default {
+  '/my-api-endpoint': handleTypedRequest({id: number, name: string}, data => {
+    console.log("received:", data});
+    return {status: "OK"});
+  })
+}
+```
+
+The request data is automatically parsed and validated.
+
+With the `RequestMethod` filters, you can distinguish between `GET`, `POST` and other request types in a declarative fashion:
+
+
+```tsx
+// todo
+```

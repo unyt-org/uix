@@ -19,7 +19,7 @@ export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:H
 			cookieSharedData = $$({__proto__:{}})
 			console.log(e)
 			console.error("Failed to reconstruct shared data");
-			deleteCookie(UIX_COOKIE.sharedData, writeHeaders, port)
+			deleteCookie(UIX_COOKIE.sharedData, writeHeaders, port, isSafariLocalhost)
 		}
 	}
 	else {

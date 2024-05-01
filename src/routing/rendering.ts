@@ -88,7 +88,7 @@ type entrypointData<T extends Entrypoint = Entrypoint> = {
 type resolvedEntrypointData<T extends Entrypoint = Entrypoint> = {
 	content: get_content<T>,
 	render_method: RenderMethod, // get_render_method<T>, 
-	status_code: number, 
+	status_code?: number, 
 	loaded: boolean, 
 	remaining_route?: Path.Route,
 	headers?: Headers // additional response headers
@@ -162,6 +162,7 @@ async function resolveRenderPreset(entrypointData: entrypointData<RenderPreset>)
 	const content = await entrypointData.entrypoint.__content;
 	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: content});
 	resolved.render_method = entrypointData.entrypoint.__render_method;
+	if (entrypointData.entrypoint.__status_code != undefined) resolved.status_code = entrypointData.entrypoint.__status_code;
 	return resolved;
 }
 
@@ -283,7 +284,7 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 	else {
 		// pass through if nothing found
 		return {
-			status_code: 200,
+			status_code: undefined,
 			content: null,
 			loaded: true,
 			render_method: RenderMethod.DYNAMIC
@@ -310,7 +311,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		render_method: RenderMethod.HYBRID,
 		remaining_route: entrypointData.route,
 		loaded: false,
-		status_code: 200
+		status_code: undefined
 	}
 
 	// handle only return static

@@ -922,7 +922,15 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 
 			// serve raw content (Blob or HTTP Response)
 			if (prerendered_content && render_method == RenderMethod.RAW_CONTENT) {
-				if (prerendered_content instanceof Response) await requestEvent.respondWith(prerendered_content.clone());
+				if (prerendered_content instanceof Response) {
+					let response = prerendered_content.clone();
+					console.log("response", response, status_code)
+					// create new response with different status code
+					if (status_code != undefined && response.status != status_code) {
+						response = new Response(response.body, {status: status_code, headers: response.headers});
+					}
+					await requestEvent.respondWith(response);
+				}
 				else await this.server.serveContent(requestEvent, typeof prerendered_content == "string" ? "text/plain;charset=utf-8" : (<any>prerendered_content).type, <any>prerendered_content, undefined, status_code, headers);
 			}
 

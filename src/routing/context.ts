@@ -343,7 +343,7 @@ export class ContextBuilder {
 export function getHTTPRequestEndpoint(request: Request, responseHeaders?: Headers) {
 	if (!request) return null;
 	const port = new URL(request.url).port;
-	const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers, port);
+	const endpointCookie = (request as any)._endpoint ?? getCookie(UIX_COOKIE.endpoint, request.headers, port);
 	if (!endpointCookie) return null;
 	else {
 		try {

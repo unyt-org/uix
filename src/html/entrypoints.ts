@@ -111,8 +111,8 @@ export abstract class EntrypointProxy<E extends Entrypoint = Entrypoint> impleme
 		route = Path.Route(await this.redirect?.(route, context) ?? route);
 		const intercepted = await this.intercept?.(route, context);
 		if (intercepted != null) entrypoint = intercepted as E;
-		const {content, render_method} = await resolveEntrypointRoute({entrypoint, route, context});
-		return this.transform?.(content, render_method, route, context) ?? <any> new RenderPreset<RenderMethod, html_content_or_generator>(render_method, content);
+		const {content, render_method, status_code} = await resolveEntrypointRoute({entrypoint, route, context});
+		return this.transform?.(content, render_method, status_code, route, context) ?? <any> new RenderPreset<RenderMethod, html_content_or_generator>(render_method, content, status_code);
 	}
 
 	/**
@@ -148,10 +148,11 @@ export abstract class EntrypointProxy<E extends Entrypoint = Entrypoint> impleme
 	 * 
 	 * @param content content as resolved by entrypoint
 	 * @param render_method render method as resolved by entrypoint
+	 * @param status_code HTTP response status code as resolved by entrypoint
 	 * @param route the requested route
 	 * @param context UIX context
 	 * @returns entrypoint override or null
 	 */
-	abstract transform?(content: Entrypoint, render_method: RenderMethod, route:Path.Route, context: Context): void|Entrypoint|Promise<void|Entrypoint>
+	abstract transform?(content: Entrypoint, render_method: RenderMethod, status_code: number, route:Path.Route, context: Context): void|Entrypoint|Promise<void|Entrypoint>
 }
 

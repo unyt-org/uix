@@ -147,6 +147,25 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 			hasError = true;
 			returnValue = new HTTPStatus(e.code, e.content);
 		}
+
+		// keep responses if they have an error code
+		else if (e instanceof Response) {
+			if (e.status >= 400) {
+				hasError = true;
+				returnValue = e;
+			}
+			else {
+				logger.warn("A Response with a non-error status code was thrown in a generator function. This is not recommended - when using throw, the response should always have a status code >= 400.");
+			}
+		}
+
+		// warn if URL was thrown
+		else if (e instanceof URL) {
+			logger.warn("A URL indicating a redirect (302) was thrown in a generator function. This is not recommended - URLs should always be returned and not thrown.");
+			hasError = true;
+			returnValue = e;
+		}
+
 		else {
 			returnValue = HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
 		}
@@ -378,7 +397,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		resolved.content = new Response(null, {
 			status: 302,
 			headers: new Headers({ location: convertToWebPath(entrypointData.entrypoint) })
-		})
+		});
 	}
 
 	// handle Error

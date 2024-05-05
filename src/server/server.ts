@@ -472,7 +472,7 @@ export class Server {
                                     datexEndpointCookie
                                 )
                                 // no valid new session, remove session cookie
-                                if (!endpointValid) this.setUnverifiedSessionInit(requestEvent, port);
+                                if (!endpointValid) endpoint = this.setUnverifiedSessionInit(requestEvent, port);
                             }
                             catch (e) {
                                 await requestEvent.respondWith(new Response(e.message, {
@@ -483,7 +483,7 @@ export class Server {
 
                         // invalid cookie state, reset
                         else {
-                            this.setUnverifiedSessionInit(requestEvent, port);
+                            endpoint = this.setUnverifiedSessionInit(requestEvent, port);
                         }
                         
                     }
@@ -516,7 +516,7 @@ export class Server {
                     // no valid session
                     if (!validateUnverifiedSession(endpoint, uixUnverifiedSessionCookie)) {
                         logger.debug("invalid session for " + endpoint + " (" + uixUnverifiedSessionCookie + ")")
-                        this.setUnverifiedSessionInit(requestEvent, port);
+                        endpoint = this.setUnverifiedSessionInit(requestEvent, port);
                     }
                     else {
                         logger.debug("valid unverified session for " + endpoint + " (" + uixUnverifiedSessionCookie + ")")
@@ -549,7 +549,7 @@ export class Server {
                     return;
                 }
 
-                this.setUnverifiedSessionInit(requestEvent, port);
+                endpoint = this.setUnverifiedSessionInit(requestEvent, port);
             }
             
         }
@@ -600,6 +600,8 @@ export class Server {
             for (const [key, value] of headers.entries()) response.headers.append(key, value);
             return originalRespondWith(response)
         }
+
+        return endpoint;
     }
 
     private setVerifiedSession(requestEvent: Deno.RequestEvent, port: string, endpoint: Datex.Endpoint) {

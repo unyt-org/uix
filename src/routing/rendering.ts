@@ -271,7 +271,8 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 			// route ends with * -> allow child routes
 			handle_children_separately = potential_route_key.endsWith("*");
 	
-			entrypointData.context.params = generateURLParamsObject(match);
+			// extend context with additional URL params
+			entrypointData.context.params = {...entrypointData.context.params, ...generateURLParamsObject(match)};
 			entrypointData.context.urlPattern = match;	
 		}
 	}

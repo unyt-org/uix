@@ -88,7 +88,7 @@ type entrypointData<T extends Entrypoint = Entrypoint> = {
 type resolvedEntrypointData<T extends Entrypoint = Entrypoint> = {
 	content: get_content<T>,
 	render_method: RenderMethod, // get_render_method<T>, 
-	status_code: number, 
+	status_code?: number, 
 	loaded: boolean, 
 	remaining_route?: Path.Route,
 	headers?: Headers // additional response headers
@@ -147,6 +147,25 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 			hasError = true;
 			returnValue = new HTTPStatus(e.code, e.content);
 		}
+
+		// keep responses if they have an error code
+		else if (e instanceof Response) {
+			if (e.status >= 400) {
+				hasError = true;
+				returnValue = e;
+			}
+			else {
+				logger.warn("A Response with a non-error status code was thrown in a generator function. This is not recommended - when using throw, the response should always have a status code >= 400.");
+			}
+		}
+
+		// warn if URL was thrown
+		else if (e instanceof URL) {
+			logger.warn("A URL indicating a redirect (302) was thrown in a generator function. This is not recommended - URLs should always be returned and not thrown.");
+			hasError = true;
+			returnValue = e;
+		}
+
 		else {
 			returnValue = HTTPStatus.INTERNAL_SERVER_ERROR.with(e)
 		}
@@ -162,6 +181,7 @@ async function resolveRenderPreset(entrypointData: entrypointData<RenderPreset>)
 	const content = await entrypointData.entrypoint.__content;
 	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: content});
 	resolved.render_method = entrypointData.entrypoint.__render_method;
+	if (entrypointData.entrypoint.__status_code != undefined) resolved.status_code = entrypointData.entrypoint.__status_code;
 	return resolved;
 }
 
@@ -251,7 +271,8 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 			// route ends with * -> allow child routes
 			handle_children_separately = potential_route_key.endsWith("*");
 	
-			entrypointData.context.params = generateURLParamsObject(match);
+			// extend context with additional URL params
+			entrypointData.context.params = {...entrypointData.context.params, ...generateURLParamsObject(match)};
 			entrypointData.context.urlPattern = match;	
 		}
 	}
@@ -283,7 +304,7 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 	else {
 		// pass through if nothing found
 		return {
-			status_code: 200,
+			status_code: undefined,
 			content: null,
 			loaded: true,
 			render_method: RenderMethod.DYNAMIC
@@ -310,7 +331,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		render_method: RenderMethod.HYBRID,
 		remaining_route: entrypointData.route,
 		loaded: false,
-		status_code: 200
+		status_code: undefined
 	}
 
 	// handle only return static
@@ -377,7 +398,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		resolved.content = new Response(null, {
 			status: 302,
 			headers: new Headers({ location: convertToWebPath(entrypointData.entrypoint) })
-		})
+		});
 	}
 
 	// handle Error

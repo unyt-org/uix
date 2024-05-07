@@ -63,7 +63,6 @@ export async function init() {
 
     localStorage.setItem("new_keys", JSON.stringify({endpoint: id, keys: keys.exportedKeys}))
     setCookie(UIX_COOKIE.endpoint, id + '/0001');
-    setCookie(UIX_COOKIE.endpointNew, "1");
 
     window.location.reload();
 }

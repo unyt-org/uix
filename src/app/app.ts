@@ -269,9 +269,9 @@ class App {
 		// clear cookies
 		deleteCookie(UIX_COOKIE.endpoint)
 		deleteCookie(UIX_COOKIE.endpointNonce)
-		deleteCookie(UIX_COOKIE.endpointNew)
 		deleteCookie(UIX_COOKIE.endpointValidation)
 		deleteCookie(UIX_COOKIE.session)
+		deleteCookie(UIX_COOKIE.unverifiedSession)
 		deleteCookie(UIX_COOKIE.language)
 		deleteCookie(UIX_COOKIE.sharedData)
 		deleteCookie(UIX_COOKIE.themeDark)

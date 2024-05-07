@@ -7,11 +7,25 @@ export type Credentials = {
 	password: string
 }
 
+export type AuthorizationOptions = 
+	{
+		type: "basic",
+		credentials: Credentials[]
+	} 
+	| 
+	{
+		type: "bearer",
+		tokens: string[]
+	}
+
+
+/**
+ * Proxy for authorization with various authentication methods (Basic, Bearer, etc.)
+ */
 export class AuthorizationProxy extends EntrypointProxy {
 	
-	override redirect = undefined
-
-	static readonly LOGIN_DIALOG = new Response("", {
+	// basic login dialog
+	static readonly BASIC_UNAUTHORIZED_RESPONSE = new Response("", {
 		status: 401,
 		statusText: 'Unauthorized',
 		headers: {
@@ -19,33 +33,79 @@ export class AuthorizationProxy extends EntrypointProxy {
 		}
 	})
 
-	#credentials: Credentials[]
+	static readonly UNAUTHORIZED_RESPONSE = new Response(JSON.stringify(
+		{ error: "Unauthorized" }
+	), {
+		status: 401,
+		statusText: 'Unauthorized',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+	
+
+	redirect = undefined
+	transform = undefined
+
+	#authorizationOptions: AuthorizationOptions
 	#unauthorizedEntrypoint?: Entrypoint
 
-	constructor(credentials: Credentials[], authorizedEntrypoint?: Entrypoint, unauthorizedEntrypoint?: Entrypoint) {
+	constructor(authorizationOptions: AuthorizationOptions, authorizedEntrypoint?: Entrypoint, unauthorizedEntrypoint?: Entrypoint) {
 		super(authorizedEntrypoint);
-		this.#credentials = credentials;
+		this.#authorizationOptions = authorizationOptions;
 		this.#unauthorizedEntrypoint = unauthorizedEntrypoint;
 	}
 	
 	intercept(_route: Path, context: Context) {
+		
+		let authorized = false;
+
+		if (this.#authorizationOptions.type === "basic") {
+			authorized = this.authorizeBasic(context);
+		}
+		else if (this.#authorizationOptions.type === "bearer") {
+			authorized = this.authorizeBearer(context);
+		}
+
+		// pass through if authorized
+		if (authorized) return null;
+
+		// return fallback entryoint if unauthorized
+		if (this.#unauthorizedEntrypoint) return this.#unauthorizedEntrypoint;
+		else {
+			if (this.#authorizationOptions.type === "basic") {
+				// ask for credentials
+				return AuthorizationProxy.BASIC_UNAUTHORIZED_RESPONSE;
+			}
+			else {
+				return AuthorizationProxy.UNAUTHORIZED_RESPONSE
+			}
+		}
+	}
+
+	authorizeBasic(context: Context) {
+		if (this.#authorizationOptions.type !== "basic") return false;
+
 		const credentials = context.request?.headers.get("Authorization");
-	
-		// has credentials
 		if (credentials) {
 			const base64 = credentials.split(" ")[1];
 			const [_username, _password] = atob(base64).split(":");
-			for (const {username, password} of this.#credentials??[]) {
-				if (username === _username && password === _password) return null;
+			for (const {username, password} of this.#authorizationOptions.credentials) {
+				if (username === _username && password === _password) return true;
 			}
 		}
-	
-		// return fallback entryoint if unauthorized
-		if (this.#unauthorizedEntrypoint) return this.#unauthorizedEntrypoint;
-		// ask for credentials
-		else return AuthorizationProxy.LOGIN_DIALOG;
+		return false;
 	}
 
-	transform = undefined
+	authorizeBearer(context: Context) {
+		if (this.#authorizationOptions.type !== "bearer") return false;
+
+		const token = context.request?.headers.get("Authorization");
+		if (token) {
+			return this.#authorizationOptions.tokens.includes(token.replace("Bearer ", ""));
+		}
+		return false;
+	}
+
 
 }

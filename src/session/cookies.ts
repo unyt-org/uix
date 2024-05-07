@@ -1,4 +1,4 @@
-import { getCookies as getHeaderCookies, setCookie as setHeaderCookie, deleteCookie as deleteHeaderCookie } from "../lib/cookie/cookie.ts";
+import { getCookies as getHeaderCookies, setCookie as setHeaderCookie } from "../lib/cookie/cookie.ts";
 
 // @ts-ignore
 // from "datex-core-legacy/utils/constants.ts"
@@ -10,10 +10,10 @@ const portPrefix = client_type == "browser" ? window.location.port : undefined;
 export const UIX_COOKIE = {
 	endpoint: "datex-endpoint",
 	endpointValidation: "datex-endpoint-validation",
-	endpointNew: "datex-endpoint-new",
 	endpointNonce: "datex-endpoint-nonce",
 
 	session: "uix-session",
+	unverifiedSession: "uix-session-unverified",
 	language: "uix-language",
 	themeDark: "uix-theme-dark",
 	themeLight: "uix-theme-light",
@@ -25,12 +25,21 @@ export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];
 
 const browserIsSafariLocalhost = window.location?.hostname == "localhost" && (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
 
-export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string) {
+export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string, isSafariLocalhost = false) {
 
 	port ??= portPrefix
 	if (port) name += "/" + port;
 
-	if (headers) deleteHeaderCookie!(headers, name)
+	if (headers) {
+		setHeaderCookie!(headers, {
+			name,
+			value: "",
+			sameSite: "None",
+			secure: !isSafariLocalhost,
+			path: '/',
+			expires: new Date(0)
+		})
+	}
     else document.cookie = name +'=; Path=/; SameSite=None; Expires=Thu, 01 Jan 1970 00:00:01 GMT;' + (browserIsSafariLocalhost ? "" :" Secure;")
 }
 

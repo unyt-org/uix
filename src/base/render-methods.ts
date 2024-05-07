@@ -97,8 +97,8 @@ export enum RenderMethod {
 }
 
 
-export class RenderPreset<R extends RenderMethod = RenderMethod,T extends html_content_or_generator<any,any> = html_content_or_generator> {
-	constructor(public readonly __render_method:R, public readonly __content:T) {
+export class RenderPreset<R extends RenderMethod = RenderMethod, T extends html_content_or_generator<any,any> = html_content_or_generator> {
+	constructor(public readonly __render_method:R, public readonly __content:T, public readonly __status_code?:number) {
 		// don't transmit from backend to frontend via DATEX if static
 		if (this.__render_method == RenderMethod.BACKEND || this.__render_method == RenderMethod.STATIC) {
 			// @ts-ignore

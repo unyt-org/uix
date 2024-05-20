@@ -430,7 +430,6 @@ export class Server {
             (  
                 requestEvent.request.headers.get("Sec-Fetch-Dest") == "document" ||
                 requestEvent.request.headers.get("UIX-Inline-Backend") == "true" ||
-                // workaround for SAfAri without sec-fest-dest header
                 !requestEvent.request.headers.has("Sec-Fetch-Site")
                 /*|| requestEvent.request.headers.get("Sec-Fetch-Dest") == "iframe"*/
             ) && 
@@ -652,7 +651,7 @@ export class Server {
     }
 
     public static isBrowserClient(request:Request){
-        return !!request.headers.get("user-agent")?.startsWith("Mozilla")
+        return !!request.headers.get("user-agent")?.startsWith("Mozilla") || !!request.headers.get("user-agent")?.startsWith("curl")
     }
 
 

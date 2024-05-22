@@ -651,7 +651,7 @@ export class Server {
     }
 
     public static isBrowserClient(request:Request){
-        return !!request.headers.get("user-agent")?.startsWith("Mozilla") || !!request.headers.get("user-agent")?.startsWith("curl")
+        return !request.headers.get("user-agent")?.startsWith("Deno"); // everything that is not deno is considered a browser
     }
 
 

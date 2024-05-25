@@ -8,7 +8,7 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { BackendManager } from "./backend-manager.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file-utils.ts";
 import { logger } from "../utils/global-values.ts";
-import { generateHTMLPage, getOuterHTML } from "../html/render.ts";
+import { extractedData, generateHTMLPage, getOuterHTML } from "../html/render.ts";
 import { HTMLProvider } from "../html/html-provider.ts";
 
 import { provideValue } from "../html/entrypoint-providers.tsx";
@@ -843,7 +843,7 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 			only_return_static_content: true
 		});
 
-		const openGraphData = (content as any)?.[OPEN_GRAPH];
+		let openGraphData = (content as any)?.[OPEN_GRAPH];
 
 		// raw file content
 		if (content instanceof Blob || content instanceof Response) return [content, RenderMethod.RAW_CONTENT, status_code, openGraphData, headers];
@@ -863,6 +863,8 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 
 			context = context instanceof Function ? context() : context;
 
+			const extractedData:extractedData = {}
+
 			const html = getOuterHTML(
 				content as Element, 
 				{
@@ -872,9 +874,17 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 					allowIgnoreDatexFunctions:(render_method==RenderMethod.HYBRID||render_method==RenderMethod.PREVIEW), 
 					lang,
 					editMode: !!context?.getSessionFlag("editMode"),
-					requiredPointers
+					requiredPointers,
+					extractedData
 				}
 			);
+
+			// set opengraph metadata extracted from HTML
+			if (extractedData.title) {
+				if (openGraphData) openGraphData.data.title = extractedData.title;
+				else openGraphData = new OpenGraphInformation({title: extractedData.title});
+			}
+
 			return [html, render_method, status_code, openGraphData, headers, content as Element, requiredPointers];
 		}
 		

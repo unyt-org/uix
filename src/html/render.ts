@@ -31,12 +31,17 @@ type _renderOptions = {
 	injectStandaloneComponents?: boolean, 
 	forms?:string[], datex_update_type?:string[], 
 	_injectedJsData?:injectScriptData, 
+	extractedData?: extractedData,
 	lang?:string, 
 	allowIgnoreDatexFunctions?: boolean,
 	requiredPointers?: Set<any>,
 	plainHTML?: boolean, // if true, only plain html is returned, attributes like uix-ptr are not rendered
 	editMode?: boolean, // if true, editable content is enabled for editable elements
 	forceParentLive?: boolean // set by child nodes to indicate parent should be marked as hydratable
+}
+
+export type extractedData = {
+	title?: string
 }
 
 export const CACHED_CONTENT = Symbol("CACHED_CONTENT");
@@ -219,6 +224,11 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 		if (opts?.plainHTML && attrib.name == "uix-ptr") continue;
 		if (!opts?.editMode && (attrib.name == "data-edit-location" || attrib.name == "data-edit-props")) continue;
+
+		// set/override latest uix-title
+		if (attrib.name == "uix-title" && opts?.extractedData) {
+			opts.extractedData.title = attrib.value;
+		}
 
 		let val:string;
 
@@ -514,6 +524,7 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{
 	injectStandaloneJS?:boolean, 
 	injectStandaloneComponents?: boolean, 
 	allowIgnoreDatexFunctions?: boolean, 
+	extractedData?: extractedData,
 	lang?:string, 
 	plainHTML?: boolean,
 	editMode?: boolean

@@ -63,6 +63,8 @@ Now, you can install UIX with `deno install`:
 deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
 ```
 
+Make sure to restart your terminal or code editor after installation to make the `uix` command available.
+
 > [!WARNING]
 > UIX is only supported for Deno versions > 1.40.0
 

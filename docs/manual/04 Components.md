@@ -152,8 +152,8 @@ When the property is overriden, the element with the matching id is also replace
     </article>
 )
 class MyCustomComponent extends Component {
-    @id declare header: HTMLHeadingElement
-    @id declare description: HTMLElement
+    @id header!: HTMLHeadingElement
+    @id description!: HTMLElement
 
     override onCreate() {
         this.description.innerText = "Some description text..."
@@ -246,10 +246,10 @@ To access elements defined in the template layout consider assigning an unique i
 })
 class MyApp extends Component {
     // declare id explicitly if property name does not match id
-    @id("parent") declare myParent: HTMLDivElement;
+    @id("parent") myParent!: HTMLDivElement;
 
     // declare myInput automaticially since myInput property matches id
-    @id declare myInput: HTMLInputElement;
+    @id myInput!: HTMLInputElement;
 }
 ```
 <!-- 

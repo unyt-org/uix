@@ -37,7 +37,6 @@ export async function resolveDependencies(file: Path|string, appOptions: normali
 			const response = await fetch(file.toString());
 			// has X-Module-Dependencies header
 			if (response.headers.get("X-Module-Dependencies") == "true") {
-				console.log(file + " has x-module-dependencies header")
 				return await resolveDependenciesFromDependencyFile(file);
 			}
 			// http file without X-Module-Dependencies header

@@ -38,7 +38,7 @@ import { include } from "uix/base/decorators.ts";
     return <h1>{this.plane} ✈️</h1>;
 })
 export class MyApp extends Component {
-    @include("./localized.dx") declare plane: string;
+    @include("./localized.dx") plane!: string;
 }
 ```
 

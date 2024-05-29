@@ -246,10 +246,10 @@ To access elements defined in the template layout consider assigning an unique i
 })
 class MyApp extends Component {
     // declare id explicitly if property name does not match id
-    @id("parent") declare myParent: HTMLDivElement;
+    @id("parent") myParent!: HTMLDivElement;
 
     // declare myInput automaticially since myInput property matches id
-    @id declare myInput: HTMLInputElement;
+    @id myInput!: HTMLInputElement;
 }
 ```
 <!-- 

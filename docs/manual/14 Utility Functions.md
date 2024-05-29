@@ -21,6 +21,6 @@ window.location.href = "/home"
 
 The `redirect` function is available in the global scope per default, but can also be imported from `"uix/utils/window-apis.ts"`.
 
-> ![NOTE]
+> [!NOTE]
 > The `redirect` function can only be used on the frontend. If you want to redirect during backend
 > routing, use the [`provideRedirect` function](./05%20Entrypoints%20and%20Routing#redirects)

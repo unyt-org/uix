@@ -152,8 +152,8 @@ When the property is overriden, the element with the matching id is also replace
     </article>
 )
 class MyCustomComponent extends Component {
-    @id declare header: HTMLHeadingElement
-    @id declare description: HTMLElement
+    @id header!: HTMLHeadingElement
+    @id description!: HTMLElement
 
     override onCreate() {
         this.description.innerText = "Some description text..."

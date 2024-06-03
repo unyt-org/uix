@@ -20,7 +20,9 @@ export function validateVerifiedSession(endpoint: Datex.Endpoint, token: string)
 }
 
 export function validateUnverifiedSession(endpoint: Datex.Endpoint, token: string) {
-	return unverifiedSessions.getAuto(endpoint.main).has(token)
+	const isValid = unverifiedSessions.getAuto(endpoint.main).has(token);
+	if (!isValid) return unverifiedSessions.delete(endpoint.main);
+	return isValid;
 }
 
 export function unverifiedSessionExists(endpoint: Datex.Endpoint) {

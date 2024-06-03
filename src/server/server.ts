@@ -391,9 +391,10 @@ export class Server {
 
             // endpoint with valid keys tries to verify, but the same endpoint id is already used on another unverified session
             if (unverifiedSessionExists(endpoint) && !(unverifiedSessionCookie && validateUnverifiedSession(endpoint, unverifiedSessionCookie))) {
-                logger.warn("Another unverified session exists for " + endpoint + ")");
-                throw new Error("Cannot create a session for this endpoint (conflicting endpoint ids)");
+                throw new Error("Invalid unverified session token for this endpoint");
             }
+ 
+            if (!Datex.Supranet.connected) throw new Error("Canno validate endpoint signature, not connected to supranet");
 
             const valid = await Crypto.verify(nonce, validation, endpoint);
 
@@ -449,12 +450,8 @@ export class Server {
 
                 endpoint = Target.get(datexEndpointCookie) as Datex.Endpoint;
 
-                if (!Datex.Supranet.connected) {
-                    // connected to supranet -> cannot validate keys
-                }
-
                 // has uix-session - check if still a valid session
-                else if (uixSessionCookie) {
+                if (uixSessionCookie) {
 
                     // no valid session
                     if (!validateVerifiedSession(endpoint, uixSessionCookie)) {
@@ -474,9 +471,8 @@ export class Server {
                                 if (!endpointValid) endpoint = this.setUnverifiedSessionInit(requestEvent, port);
                             }
                             catch (e) {
-                                await requestEvent.respondWith(new Response(e.message, {
-                                    status: 403
-                                }));
+                                console.log(e);
+                                endpoint = this.setUnverifiedSessionInit(requestEvent, port);
                             }
                         }
 
@@ -495,17 +491,19 @@ export class Server {
                 // -> convert to uix-session
                 else if (datexEndpointValidationCookie && datexEndpointNonceCookie) {
                     try {
-                        await this.validateEndpoint(
+                        const endpointValid = await this.validateEndpoint(
                             requestEvent,
                             port,
                             datexEndpointNonceCookie,
                             datexEndpointValidationCookie,
                             datexEndpointCookie
                         )
+                        // no valid new session, remove session cookie
+                        if (!endpointValid) endpoint = this.setUnverifiedSessionInit(requestEvent, port);
                     } catch (e) {
-                        await requestEvent.respondWith(new Response(e.message, {
-                            status: 403
-                        }));
+                        // make sure that an invalid endpoint cookie state is reset (legacy backwards compatibility or coookie tampering)
+                        console.log("invalid endpoint cookie state", e);
+                        endpoint = this.setUnverifiedSessionInit(requestEvent, port);
                     }
                 }
                 
@@ -523,7 +521,8 @@ export class Server {
                 }
 
                 else {
-                    logger.warn("no valid session for " + datexEndpointCookie)
+                    logger.warn("no valid session for " + datexEndpointCookie);
+                    endpoint = this.setUnverifiedSessionInit(requestEvent, port);
                 }
 
             }

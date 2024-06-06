@@ -10,6 +10,14 @@ const CMD = {
 	GET_STATUS: 'git status'
 } as const;
 
+export function isGitInstalled(): boolean {
+	try {
+		return (new Deno.Command("git", { args: ["--version"] }).outputSync().success);
+	} catch {
+		return false;
+	}
+}
+
 export class GitRepo {
 
 	#origin!: string

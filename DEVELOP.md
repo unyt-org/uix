@@ -21,7 +21,7 @@ This file is used for `uix --help` (See https://github.com/unyt-org/command-line
 You can test your local UIX library in UIX apps on the same host:
  1. Expose the local UIX library on `localhost:4242` by running `deno task expose-uix`
  2. Copy the `importmap.uixdev.json` from the uix repo to your project repo
- 2. Launch your app with `deno run -Aqr http://localhost:4242/run.ts -wr --import-map importmap.uixdev.json`
+ 2. Launch your app with `deno run --import-map importmap.uixdev.json -Aqr http://localhost:4242/run.ts -wr`
 
 
 ## Git feature branches

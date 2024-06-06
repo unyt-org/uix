@@ -27,6 +27,29 @@ import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskFor
 import { isCIRunner } from "./src/utils/check-ci.ts";
 import { logger, runParams } from "./src/runners/runner.ts";
 import { applyPlugins } from "./src/app/config-files.ts";
+import { serializePath } from "https://jspm.dev/npm:whatwg-url@11.0.0!cjs";
+
+
+// Check internet connection
+export const isOnline = async () => {
+	try {
+		(await Deno.connect({ hostname: "github.com", port: 80 })).close();
+		return true;
+	} catch (error) {
+		logger.debug(error);
+		return false;
+	}
+}
+
+export const ensureOnlineStatus = async () => {
+	if (!(await isOnline())) {
+		logger.error("UIX could not launch due to a poor or missing internet connection. Please connect to the internet to allow for dynamic module loading.");
+		Deno.exit(1);
+	}
+}
+
+await ensureOnlineStatus();
+
 
 // login flow
 if (login) await triggerLogin();
@@ -65,20 +88,26 @@ if (stage === "dev") {
 // version update?
 let forceUpdate = false;
 const updatePromises = []
-if (await handleAutoUpdate(new Path(import.meta.url).parent_dir, "UIX")) {
-	updatePromises.push(
-		updateCache(import.meta.resolve("./run.ts")),
-		updateCache(import.meta.resolve("./src/app/start.ts")),
-		updateCache("https://cdn.unyt.org/uix/run.ts")
-	)
-	forceUpdate = true
+try {
+	if (await handleAutoUpdate(new Path(import.meta.url).parent_dir, "UIX")) {
+		updatePromises.push(
+			updateCache(import.meta.resolve("./run.ts")),
+			updateCache(import.meta.resolve("./src/app/start.ts")),
+			updateCache("https://cdn.unyt.org/uix/run.ts")
+		)
+		forceUpdate = true
+	}
+	if (await handleAutoUpdate(new Path(import.meta.resolve("datex-core-legacy")).parent_dir, "DATEX Core")) {
+		updatePromises.push(updateCache(import.meta.resolve("datex-core-legacy/datex.ts")))
+		forceUpdate = true
+	}
+	await Promise.all(updatePromises)
+} catch (error) {
+	logger.debug(error);
+	logger.warn("UIX could not handle the auto update procedure due to a poor or missing internet connection.");
+	// TODO TBD should we really abort? We do need stable internet connection for dynamic module loading and supranet connection
+	Deno.exit(1);
 }
-if (await handleAutoUpdate(new Path(import.meta.resolve("datex-core-legacy")).parent_dir, "DATEX Core")) {
-	updatePromises.push(updateCache(import.meta.resolve("datex-core-legacy/datex.ts")))
-	forceUpdate = true
-}
-
-await Promise.all(updatePromises)
 
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.WARNING
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.WARNING

@@ -32,9 +32,8 @@ import { applyPlugins } from "./src/app/config-files.ts";
 // clean error presentation
 globalThis.addEventListener("unhandledrejection", async (event) => {
 	event.preventDefault();
-	console.log(); // more distance to the force-printed uncaught promise
 	const error = await event.promise.catch(error => error);
-	handleError(error, logger);
+	await handleError(error, logger);
 	Deno.exit(1);
 });
 

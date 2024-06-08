@@ -14,8 +14,6 @@ export const eternalExts = [
 	'mjs',
 ].map(x => 'eternal.'+x);
 
-const cachePath = new Path(cache_path);
-
 export async function createProxyImports(options: normalizedAppOptions, baseURL: URL, denoConfigPath: URL) {
 	const proxyImportMapPath = new Path("./importmap.lock.json", cache_path)
 	const proxyImportMap = options.import_map.getMoved(proxyImportMapPath, false);
@@ -42,7 +40,7 @@ export async function createProxyImports(options: normalizedAppOptions, baseURL:
 	for await (const e of walk!(new Path(baseURL).normal_pathname, {includeDirs: false, exts: eternalExts.map(e => "."+e)})) {
 		const path = Path.File(e.path);
 
-		if (path.isChildOf(cachePath)) continue;
+		if (path.isChildOf(cache_path)) continue;
 		const proxyPath = await createEternalProxyFile(path, baseURL);
 		addEternalFileImportMapScope(path, proxyPath, proxyImportMap, options);
 	}

@@ -31,12 +31,12 @@ import { applyPlugins } from "./src/app/config-files.ts";
 // login flow
 if (login) await triggerLogin();
 // init
-if (init) {
+if (init!=undefined) {
 	if (rootPath) {
 		logger.error("A UIX Project already exists in this location");
 		Deno.exit(1);
 	}
-	else await initBaseProject();
+	else await initBaseProject(init);
 }
 
 // allow unyt.org diagnostics?

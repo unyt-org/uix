@@ -3,11 +3,18 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";
 import { version as UIX_VERSION } from "../utils/version.ts";
+import { _updateProjectRootURL } from "datex-core-legacy/utils/global_values.ts"
 
 export const command_line_options = new CommandLineOptions("UIX", "Fullstack Web Framework with DATEX Integration.\nVisit https://unyt.org/uix for more information", "../RUN.md");
 
-export const path = command_line_options.option("path", {collectNotPrefixedArgs: true, type:"string", description: "The root path for the UIX app (parent directory for app.dx and deno.json)"});
-const _path = new Path(path??'./', 'file://' + Deno.cwd() + '/');
+export let path = command_line_options.option("path", {collectNotPrefixedArgs: true, type:"string", description: "The root path for the UIX app (parent directory for app.dx and deno.json)"});
+let _path: Path.File;
+updatePath(path);
+
+export function updatePath(newPath?: string) {
+	path = newPath;
+	_path = new Path(path??'./', 'file://' + Deno.cwd() + '/');
+}
 
 export const watch_backend = command_line_options.option("watch-backend", {aliases:["b"], type:"boolean", default: false, description: "Restart the backend deno process when backend files are modified"});
 export const live = command_line_options.option("live", {aliases:["l"],  type:"boolean", default: false, description: "Automatically reload connected browsers tabs when files are modified and enable automatic backend restarts"});
@@ -22,7 +29,7 @@ export const allowAll = command_line_options.option("allow-all", {type:"boolean"
 export const allowNone = command_line_options.option("allow-none", {type:"boolean", default: false, aliases:["n"], description: "Automatically decline all dialog"});
 
 export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});
-export const init = command_line_options.option("init", {type:"boolean", description: "Inititialize a new UIX project"});
+export const init = command_line_options.option("init", {type:"string", description: "Inititialize a new UIX project"});
 
 // TODO: aliases:["p"],  -p xxxx not working
 export const port = command_line_options.option("port", {default: 80, type:"number", description: "The port for the HTTP server"});
@@ -57,11 +64,10 @@ if (version) {
 
 
 
-export let rootPath:Path.File;
+export let rootPath:Path.File;	
+await updateRootPath(CommandLineOptions.collecting||init!=null);
 
-updateRootPath(CommandLineOptions.collecting||init);
-
-export function updateRootPath(allowFail = false) {
+export async function updateRootPath(allowFail = false) {
 	const config_path = getExistingFile(_path, './app.dx', './app.json', './src/app.dx', './src/app.json');
 
 	if (!config_path && !allowFail) {
@@ -69,4 +75,5 @@ export function updateRootPath(allowFail = false) {
 	}
 
 	rootPath = (config_path ? new Path(config_path).parent_dir : null) as Path.File;
+	if (rootPath) await _updateProjectRootURL(rootPath);
 }

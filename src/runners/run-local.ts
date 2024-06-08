@@ -1,9 +1,10 @@
 import { cache_path, ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
-import { clear } from "../app/args.ts";
+import { clear, path, rootPath } from "../app/args.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { logger, runParams } from "./runner.ts";
+import { verboseArg } from "datex-core-legacy/utils/logger.ts";
 
 
 export const CSI = '\u001b['
@@ -53,6 +54,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		"-Aq"
 	];
 
+	const args = [...Deno.args];
+
 	if (params.enableTLS) cmd.push("--unsafely-ignore-certificate-errors=localhost");
 
 	if (params.reload) {
@@ -73,6 +76,11 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	}
 	if (options.import_map.path) {
 		config_params.push("--import-map", options.import_map.path?.is_web ? options.import_map.path.toString() : options.import_map.path?.normal_pathname)
+	}
+
+	// pass different path (required when starting for the first time with uix --init)
+	if (rootPath.normal_pathname != new Path('file://' + Deno.cwd() + '/').normal_pathname) {
+		args.push("--path", rootPath.normal_pathname)
 	}
 
 	let process: Deno.ChildProcess;
@@ -107,13 +115,14 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	let isClearingState = clear;
 	let stateCleared = false;
 	
-	const args = [...Deno.args];
 
 	await run();
 	
 	async function run() {
-		await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
-		await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
+		if (!verboseArg) {
+			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
+			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
+		}
 		
 		if (stateCleared) {
 			stateCleared = false;
@@ -146,6 +155,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				...args,
 			]
 		})
+
 		process = command.spawn();
 
 		// detach, continues in background

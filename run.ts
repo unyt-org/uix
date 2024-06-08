@@ -31,19 +31,19 @@ import { applyPlugins } from "./src/app/config-files.ts";
 // login flow
 if (login) await triggerLogin();
 // init
-if (init) {
+if (init!=undefined) {
 	if (rootPath) {
 		logger.error("A UIX Project already exists in this location");
 		Deno.exit(1);
 	}
-	else await initBaseProject();
+	else await initBaseProject(init);
 }
 
 // allow unyt.org diagnostics?
 if (stage === "dev") {
 
 	try {
-		let allow = false;
+		let allow = false	;
 		
 		if (await shouldAskForErrorReportingPreference()) {
 			allow = confirm("\nWould you like to share anonymized error reports with unyt.org to help improve UIX?");

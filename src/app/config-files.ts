@@ -48,8 +48,9 @@ export async function getAppOptions(root_path:URL) {
 		}
 		config = Object.fromEntries(Datex.DatexObject.entries(<Record<string, unknown>>raw_config));
 	}
-	else throw "Could not find an app.dx or app.json config file in " + new Path(root_path).normal_pathname
-
+	else {
+		throw "Could not find an app.dx or app.json config file in " + new Path(root_path).normal_pathname
+	}
 	// overwrite --import-map path
 	if (arg_import_map) config.import_map_path = arg_import_map;
 

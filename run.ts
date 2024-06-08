@@ -43,7 +43,7 @@ if (init!=undefined) {
 if (stage === "dev") {
 
 	try {
-		let allow = false	;
+		let allow = false;
 		
 		if (await shouldAskForErrorReportingPreference()) {
 			allow = confirm("\nWould you like to share anonymized error reports with unyt.org to help improve UIX?");

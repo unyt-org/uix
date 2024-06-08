@@ -15,7 +15,6 @@ export const eternalExts = [
 ].map(x => 'eternal.'+x);
 
 export async function createProxyImports(options: normalizedAppOptions, baseURL: URL, denoConfigPath: URL) {
-	console.log(cache_path,"<<<")
 	const proxyImportMapPath = new Path("./importmap.lock.json", cache_path)
 	const proxyImportMap = options.import_map.getMoved(proxyImportMapPath, false);
 

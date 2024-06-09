@@ -42,3 +42,22 @@ export async function handleError(error: Error, logger: Datex.Logger, exit = tru
 
 	if (exit) Deno.exit(exitCode);
 }
+
+
+let unhandledRejectionHandlerEnabled = false;
+
+/**
+ * Enables the unhandled rejection handler, which logs unhandled promise rejections
+ * and prevents the program from crashing.
+ * @param customLogger a custom logger to use for logging unhandled rejections
+ */
+export function enableUnhandledRejectionHandler(customLogger = logger) {
+	if (unhandledRejectionHandlerEnabled) return;
+	unhandledRejectionHandlerEnabled = true;
+	// clean error presentation
+	globalThis.addEventListener("unhandledrejection", async (event) => {
+		event.preventDefault();
+		const error = await event.promise.catch(error => error);
+		await handleError(error, customLogger);
+	});
+}

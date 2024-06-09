@@ -11,11 +11,13 @@ const ESCAPE_SEQUENCE_NORMAL_INTENSITY = "\x1b[22m";
 
 /**
  * Formats and prints an error in a fashion that's readable and informative
- * for the user.
+ * for the user. If `exit` is enabled, the process exits afterwards.
  * @param error The error object to handle
  * @param logger Logger to print the information to
+ * @param [exit=true] Specifies whether the process should exit, defaults to `true`
+ * @param [exitCode=1] Code to exit with if `exit` is set to true, defaults to `1`
  */
-export async function handleError(error: Error, logger: Datex.Logger) {
+export async function handleError(error: Error, logger: Datex.Logger, exit = true, exitCode = 1) {
 	if (error instanceof KnownError) {
 		if (error.solutions.length > 0) {
 			logger.info(`Suggested Problem Solutions\n${error.solutions.map(s => `- ${s}`).join("\n")}`);
@@ -37,4 +39,6 @@ export async function handleError(error: Error, logger: Datex.Logger) {
 			stack: error.stack
 		});
 	}
+
+	if (exit) Deno.exit(exitCode);
 }

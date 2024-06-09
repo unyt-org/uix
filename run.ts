@@ -34,7 +34,6 @@ globalThis.addEventListener("unhandledrejection", async (event) => {
 	event.preventDefault();
 	const error = await event.promise.catch(error => error);
 	await handleError(error, logger);
-	Deno.exit(1);
 });
 
 // login flow

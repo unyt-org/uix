@@ -22,19 +22,15 @@ import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 
 import { addUIXNamespace } from "./src/base/uix-datex-module.ts"
 
-import { handleError } from "./src/utils/handle-issue.ts";
+import { enableUnhandledRejectionHandler } from "./src/utils/handle-issue.ts";
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
 import { isCIRunner } from "./src/utils/check-ci.ts";
 import { logger, runParams } from "./src/runners/runner.ts";
 import { applyPlugins } from "./src/app/config-files.ts";
 
-// clean error presentation
-globalThis.addEventListener("unhandledrejection", async (event) => {
-	event.preventDefault();
-	const error = await event.promise.catch(error => error);
-	await handleError(error, logger);
-});
+// catch unhandledrejections
+enableUnhandledRejectionHandler(logger);
 
 // login flow
 if (login) await triggerLogin();

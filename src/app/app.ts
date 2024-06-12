@@ -263,7 +263,7 @@ class App {
 
 	async reset(resetEndpoint = false) {
 		if (resetEndpoint) endpoint_config.clear();
-        localStorage.clear();
+		localStorage.clear();
 		sessionStorage.clear();
 
 		// clear cookies
@@ -292,9 +292,6 @@ class App {
  * The currrent UIXApp, accessible on a client or on the backend
  */
 export const app = new App();
-
-// @ts-ignore
-globalThis.reset = app.reset;
 
 // reset key shortcut
 

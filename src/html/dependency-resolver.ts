@@ -100,7 +100,7 @@ async function resolveDependenciesFromSource(file: Path, source:string|undefined
 		if (pre?.match(importTypeRegex) || path.startsWith("https://deno.land/") || path.startsWith("npm:")) {
 			continue;
 		}
-		const normalizedPath = path.startsWith('./') || path.startsWith('../') ? new Path(path, file).toString() : path;
+		const normalizedPath = path.startsWith('/') || path.startsWith('./') || path.startsWith('../') ? new Path(path, file).toString() : path;
 		const resolvedPath = import.meta.resolve(normalizedPath);
 
 		// ignore backend modules that are not exposed to the frontend

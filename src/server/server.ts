@@ -391,13 +391,12 @@ export class Server {
             // endpoint with valid keys tries to verify, but the same endpoint id is already used on another unverified session
             if (unverifiedSessionExists(endpoint) && 
                 !(unverifiedSessionCookie && validateUnverifiedSession(endpoint, unverifiedSessionCookie))) {
-                throw new Error("Invalid unverified session token for this endpoint");
+                throw new Error("Invalid unverified session token for " + endpoint);
             }
  
             if (!Datex.Supranet.connected) throw new Error("Cannot validate endpoint signature, not connected to supranet");
             if (!(await Crypto.verify(endpoint.binary, nonce, Datex.Runtime.endpoint)))
-                throw new Error("The nonce is not signed by the server. Can not verify session");
-            
+                throw new Error("The nonce is not signed by the server. Can not verify session for " + endpoint);
             const valid = await Crypto.verify(nonce, validation, endpoint);
             if (valid) {
                 this.setVerifiedSession(requestEvent, port, endpoint);
@@ -405,7 +404,7 @@ export class Server {
             }
         }
         catch (e) {
-            logger.debug(e);
+            logger.warn(e);
         }
         return false;
     }

@@ -37,6 +37,7 @@ import {SourceMapConsumer} from "npm:source-map"
 import { hasDependencyList } from "../html/dependency-resolver.ts";
 
 import { UIX_COOKIE } from "../session/cookies.ts";
+import { Endpoint } from "datex-core-legacy/types/addressing.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -375,10 +376,8 @@ export class Server {
     }
 
     // TODO: validate if nonce was created on server
-    private getNonce() {
-        const array = new Uint8Array(30);
-        self.crypto.getRandomValues(array);
-        return arrayBufferToBase64(array);
+    private async getNonce(endpoint: Endpoint) {
+        return arrayBufferToBase64(await Crypto.sign(endpoint.binary));
     }
 
     private async validateEndpoint(requestEvent:Deno.RequestEvent, port: string, datexEndpointNonceCookie: string, datexEndpointValidationCookie: string, datexEndpointCookie: string) {
@@ -390,22 +389,23 @@ export class Server {
             const unverifiedSessionCookie = getCookie("uix-session-unverified", requestEvent.request.headers, port);
 
             // endpoint with valid keys tries to verify, but the same endpoint id is already used on another unverified session
-            if (unverifiedSessionExists(endpoint) && !(unverifiedSessionCookie && validateUnverifiedSession(endpoint, unverifiedSessionCookie))) {
+            if (unverifiedSessionExists(endpoint) && 
+                !(unverifiedSessionCookie && validateUnverifiedSession(endpoint, unverifiedSessionCookie))) {
                 throw new Error("Invalid unverified session token for this endpoint");
             }
  
-            if (!Datex.Supranet.connected) throw new Error("Canno validate endpoint signature, not connected to supranet");
-
+            if (!Datex.Supranet.connected) throw new Error("Cannot validate endpoint signature, not connected to supranet");
+            if (!(await Crypto.verify(endpoint.binary, nonce, Datex.Runtime.endpoint)))
+                throw new Error("The nonce is not signed by the server. Can not verify session");
+            
             const valid = await Crypto.verify(nonce, validation, endpoint);
-
             if (valid) {
                 this.setVerifiedSession(requestEvent, port, endpoint);
                 return true;
             }
         }
         catch (e) {
-            // cannot get endpoint keys, no valid session for now
-            //console.log(e)
+            logger.debug(e);
         }
         return false;
     }
@@ -468,17 +468,17 @@ export class Server {
                                     datexEndpointCookie
                                 )
                                 // no valid new session, remove session cookie
-                                if (!endpointValid) endpoint = this.setUnverifiedSessionInit(requestEvent, port);
+                                if (!endpointValid) endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
                             }
                             catch (e) {
                                 console.log(e);
-                                endpoint = this.setUnverifiedSessionInit(requestEvent, port);
+                                endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
                             }
                         }
 
                         // invalid cookie state, reset
                         else {
-                            endpoint = this.setUnverifiedSessionInit(requestEvent, port);
+                            endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
                         }
                         
                     }
@@ -499,11 +499,11 @@ export class Server {
                             datexEndpointCookie
                         )
                         // no valid new session, remove session cookie
-                        if (!endpointValid) endpoint = this.setUnverifiedSessionInit(requestEvent, port);
+                        if (!endpointValid) endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
                     } catch (e) {
                         // make sure that an invalid endpoint cookie state is reset (legacy backwards compatibility or coookie tampering)
                         console.log("invalid endpoint cookie state", e);
-                        endpoint = this.setUnverifiedSessionInit(requestEvent, port);
+                        endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
                     }
                 }
                 
@@ -513,7 +513,7 @@ export class Server {
                     // no valid session
                     if (!validateUnverifiedSession(endpoint, uixUnverifiedSessionCookie)) {
                         logger.debug("invalid session for " + endpoint + " (" + uixUnverifiedSessionCookie + ")")
-                        endpoint = this.setUnverifiedSessionInit(requestEvent, port);
+                        endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
                     }
                     else {
                         logger.debug("valid unverified session for " + endpoint + " (" + uixUnverifiedSessionCookie + ")")
@@ -522,7 +522,7 @@ export class Server {
 
                 else {
                     logger.warn("no valid session for " + datexEndpointCookie);
-                    endpoint = this.setUnverifiedSessionInit(requestEvent, port);
+                    endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
                 }
 
             }
@@ -547,7 +547,7 @@ export class Server {
                     return;
                 }
 
-                endpoint = this.setUnverifiedSessionInit(requestEvent, port);
+                endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
             }
             
         }
@@ -576,7 +576,7 @@ export class Server {
     }
 
 
-    private setUnverifiedSessionInit(requestEvent: Deno.RequestEvent, port: string) {
+    private async setUnverifiedSessionInit(requestEvent: Deno.RequestEvent, port: string) {
         const url = new URL(requestEvent.request.url);
         const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
         const endpoint = Datex.Endpoint.getNewEndpoint().getInstance(1);
@@ -586,7 +586,7 @@ export class Server {
         deleteCookie('datex-endpoint-validation', headers, port, isSafariLocalhost)
         deleteCookie('uix-session', headers, port, isSafariLocalhost)
 
-        setCookieUIX('datex-endpoint-nonce', this.getNonce(), undefined, headers, port, isSafariLocalhost)
+        setCookieUIX('datex-endpoint-nonce', await this.getNonce(endpoint), undefined, headers, port, isSafariLocalhost)
         setCookieUIX('uix-session-unverified', unverifiedSession, undefined, headers, port, isSafariLocalhost);
         setCookieUIX(UIX_COOKIE.endpoint, endpoint.toString(), undefined, headers, port, isSafariLocalhost);
 

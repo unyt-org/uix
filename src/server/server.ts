@@ -608,8 +608,9 @@ export class Server {
         const session = createSession(endpoint, true);
         const headers = new Headers();
         
-        deleteCookie('datex-endpoint-validation', headers, port, isSafariLocalhost)
-        deleteCookie('datex-endpoint-nonce', headers, port, isSafariLocalhost)
+        // If we delete those cookies the backend can not verify the session on restart
+        // deleteCookie('datex-endpoint-validation', headers, port, isSafariLocalhost)
+        // deleteCookie('datex-endpoint-nonce', headers, port, isSafariLocalhost)
         deleteCookie('uix-session-unverified', headers, port, isSafariLocalhost)
         
         setCookieUIX('uix-session', session, undefined, headers, port, isSafariLocalhost)

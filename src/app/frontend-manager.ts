@@ -1080,19 +1080,6 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 		requestEvent.respondWith(await fetch(request));		
 	}
 
-	private async handleInitPage(requestEvent: Deno.RequestEvent) {
-		try {
-
-			const html = `<html>
-			INIT...
-			<script type="module" src="${import.meta.resolve('uix/session/init.ts')}"></script>
-			`
-			await this.server.serveContent(requestEvent, "text/html", html);
-		} catch {
-			await this.server.sendError(requestEvent, 500);
-		}	
-	}
-
 	private async handleFavicon(requestEvent: Deno.RequestEvent, _path:string) {
 		try {
 			const path = new Path(this.resolveImport(this.app_options.icon, true, false), this.base_path);

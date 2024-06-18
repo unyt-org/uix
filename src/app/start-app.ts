@@ -114,7 +114,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 			}
 		}
 		const dxContent = {
-			nodes:nodes
+			nodes: nodes
 		};
 		// copy blockchain_relay from backend dx to frontend dx
 		if (endpoint_config.blockchain_relay) dxContent.blockchain_relay = endpoint_config.blockchain_relay;
@@ -174,6 +174,8 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 		// ignore cdn urls, assumes that the modules are already imported on all clients
 		// TODO: improve, what if type modules are not all loaded per default?
 		if (webPath.startsWith("https://dev.cdn.unyt.org/") || webPath.startsWith("https://cdn.unyt.org/")) return;
+		// ignore local clones of the core libs
+		else if (webPath.toString().includes("/datex-core-js-legacy/") || webPath.toString().includes("/uix/")) return;
 		else if (webPath.startsWith("https://") || webPath.startsWith("http://")) return webPath;
 		else return `route:${webPath}`
 	})

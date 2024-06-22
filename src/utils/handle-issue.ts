@@ -6,6 +6,7 @@ import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";
 import DATEX_VERSION from "datex-core-legacy/VERSION.ts"
 import { version as UIX_VERSION } from "./version.ts";
 import { sendReport } from "datex-core-legacy/utils/error-reporting.ts";
+import { logger } from "./global-values.ts";
 
 const ESCAPE_SEQUENCE_NORMAL_INTENSITY = "\x1b[22m";
 
@@ -56,8 +57,13 @@ export function enableUnhandledRejectionHandler(customLogger = logger) {
 	unhandledRejectionHandlerEnabled = true;
 	// clean error presentation
 	globalThis.addEventListener("unhandledrejection", async (event) => {
-		event.preventDefault();
-		const error = await event.promise.catch(error => error);
-		await handleError(error, customLogger);
+		try {
+			event.preventDefault();
+			const error = await event.promise.catch(error => error);
+			await handleError(error, customLogger);
+		}
+		catch (e) {
+			console.error(e);
+		}
 	});
 }

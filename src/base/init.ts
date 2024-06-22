@@ -12,7 +12,7 @@ import { initSession } from "../session/frontend.ts";
 
 // custom dom elements
 import "../html/light-root.ts"
-import { overrideEventTargetPrototype } from "datex-core-legacy/utils/persistent-listeners.ts";
+// import { overrideEventTargetPrototype } from "datex-core-legacy/utils/persistent-listeners.ts";
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference } from "../utils/error-reporting-preference.ts";
 import { enableUnhandledRejectionHandler } from "../utils/handle-issue.ts";
@@ -22,14 +22,15 @@ if (client_type == "browser") {
 }
 
 // catch unhandledrejections
-enableUnhandledRejectionHandler()
+if (client_type == "deno")
+	 enableUnhandledRejectionHandler()
 
 enableErrorReporting(await getErrorReportingPreference())
 
 if (UIX.context == "frontend") {
 
 	// TODO: keep this? only required when using document.write
-	overrideEventTargetPrototype()
+	// overrideEventTargetPrototype()
 
     // keyboard overlay content (on chrome)
     if ('virtualKeyboard' in navigator) {

@@ -22,8 +22,7 @@ if (client_type == "browser") {
 }
 
 // catch unhandledrejections
-if (client_type == "deno")
-	 enableUnhandledRejectionHandler()
+if (client_type == "deno") enableUnhandledRejectionHandler()
 
 enableErrorReporting(await getErrorReportingPreference())
 

@@ -664,13 +664,21 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     }
 
     private handleIdProps(constructed=false){
-
-        const id_props:Record<string,string> = (this.constructor as any)[METADATA]?.[ID_PROPS]?.public;
-        const content_props:Record<string,string> = (this.constructor as any)[METADATA]?.[CONTENT_PROPS]?.public;
-        const layout_props:Record<string,string> = (this.constructor as any)[METADATA]?.[LAYOUT_PROPS]?.public;
-        // only add children when constructing component, otherwise they are added twice
-        const child_props:Record<string,string> = constructed ? (this.constructor as any)[METADATA]?.[CHILD_PROPS]?.public : undefined;
-        bindContentProperties(this, id_props, content_props, layout_props, child_props);
+        const constructorList = [this.constructor] 
+        while (true) {
+            const _constructor = Object.getPrototypeOf(Object.getPrototypeOf(constructorList.at(-1)!));
+            if (_constructor === domContext.HTMLElement || _constructor === domContext.Element || _constructor === Object)
+                break;
+            constructorList.push(_constructor);
+        }
+        for (const constr of constructorList.toReversed()) {
+            const id_props:Record<string,string> = (constr as any)[METADATA]?.[ID_PROPS]?.public;
+            const content_props:Record<string,string> = (constr as any)[METADATA]?.[CONTENT_PROPS]?.public;
+            const layout_props:Record<string,string> = (constr as any)[METADATA]?.[LAYOUT_PROPS]?.public;
+            // only add children when constructing component, otherwise they are added twice
+            const child_props:Record<string,string> = constructed ? (constr as any)[METADATA]?.[CHILD_PROPS]?.public : undefined;
+            bindContentProperties(this, id_props, content_props, layout_props, child_props);
+        }
     }
 
 

@@ -29,13 +29,12 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 	// @UIX.id props
 	if (!element[PROPS_MAP]) element[PROPS_MAP] = new Map<string,any>();
 	const props_map = element[PROPS_MAP];
-	
+
 	if (id_props) {
 		for (const [prop,id] of Object.entries(id_props)) {
 			if (content_props?.[prop] || layout_props?.[prop] || child_props?.[prop]) continue; // is content, ignore
 
 			const prev = element[prop];
-
 			Object.defineProperty(element, prop, {
 				get() {
 					return props_map.get(prop) ?? getElementWithId(element, id);
@@ -46,6 +45,7 @@ export function bindContentProperties(element: HTMLElement & {[key:string|symbol
 				},
 				configurable: true,
 			})
+			// console.log(Object.getOwnPropertyDescriptor(element, prop), id, prop)
 
 			if (prev != undefined) element[prop] = prev; // trigger setter
 		}

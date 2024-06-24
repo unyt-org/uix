@@ -18,8 +18,10 @@ const ESCAPE_SEQUENCE_NORMAL_INTENSITY = "\x1b[22m";
  * @param [exit=true] Specifies whether the process should exit, defaults to `true`
  * @param [exitCode=1] Code to exit with if `exit` is set to true, defaults to `1`
  */
-export async function handleError(error: Error, logger: Datex.Logger, exit = true, exitCode = 1) {
-	if (error instanceof KnownError) {
+export async function handleError(error: Error|string, logger: Datex.Logger, exit = true, exitCode = 1) {
+	if (typeof error === "string" || error instanceof String) {
+		logger.error(error);
+	} else if (error instanceof KnownError) {
 		if (error.solutions.length > 0) {
 			logger.info(`Suggested Problem Solutions\n${error.solutions.map(s => `- ${s}`).join("\n")}`);
 			console.log();

@@ -1,15 +1,23 @@
-import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
+import { ESCAPE_SEQUENCES, LOG_FORMATTING } from "datex-core-legacy/datex_all.ts";
 import { path, updatePath, updateRootPath } from "../app/args.ts";
 import { isGitInstalled } from "./git.ts";
 import { logger } from "./global-values.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-import process from "node:process";
+import { handleError } from "./handle-issue.ts";
+import { KnownError } from "../app/errors.ts"
 
 export async function initBaseProject(name?: string) {
 
 	if (!isGitInstalled()) {
-		logger.error(`Unable to find git executable in PATH. Please install Git before retrying (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)`);
-		Deno.exit(1);
+		handleError(
+			new KnownError(
+				"Git is required to initialize a new project. However, UIX is not able to execute it.",
+				"Make sure that Git is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
+				"Ensure that the 'git' executable is in your PATH environment variable",
+				"Verify the correctness of your Git installation"
+			),
+			logger
+		);
 	}
 	
 	const gitRepo = "https://github.com/unyt-org/uix-base-project.git"
@@ -32,10 +40,8 @@ export async function initBaseProject(name?: string) {
 	else {
 		projectName = name;
 		projectPath = cwd.getChildPath(name).asDir();
-		if (projectPath.fs_exists) {
-			logger.error(`The directory ${projectPath.normal_pathname} already exists. Please choose a different name.`);
-			Deno.exit(1);
-		}
+		if (projectPath.fs_exists)
+			handleError(`The directory ${projectPath.normal_pathname} exists already. Please choose a different name.`, logger);
 	}
 
 	logger.success(`Initializing new UIX project "${projectName}"`);
@@ -46,15 +52,23 @@ export async function initBaseProject(name?: string) {
 	}
 
 	try {
-		const clone = Deno.run({
-			cmd: ["git", "clone", gitRepo, projectPath.normal_pathname],
-			stdout: "null"
+		const cloneProcess = new Deno.Command("git", {
+			args: ["clone", "--depth=1", "--branch=main", gitRepo, projectPath.normal_pathname],
 		});
-		if (!(await clone.status()).success)
-			throw new Error("Git clone failed");
+		const { success, stderr } = await cloneProcess.output();
+		if (!success) {
+			logger.error("Git reported an error:\n" + new TextDecoder().decode(stderr));
+			handleError(
+				new KnownError(
+					"Could not clone the base project repository.",
+					"Check your internet connection",
+					`Try to clone it manually (${gitRepo})`
+				),
+				logger
+			);
+		}
 	} catch (error) {
-		logger.error(`Unable to clone repository. Please make sure that Git is correctly installed.`, error);
-		Deno.exit(1);
+		handleError(error, logger);
 	}
 	
 	await Deno.remove(projectPath.getChildPath(".git"), {recursive: true});
@@ -65,14 +79,25 @@ export async function initBaseProject(name?: string) {
 	await Deno.writeTextFile(projectPath.getChildPath("app.dx"), newAppDxContent);
 
 	try {
-		await Deno.run({
+		const initProcess = new Deno.Command("git", {
+			args: ["init"],
 			cwd: projectPath.normal_pathname,
-			cmd: ["git", "init"],
-			stdout: "null"
-		}).status();
+		});
+
+		const { success, stderr } = await initProcess.output();
+		if (!success) {
+			logger.error("Git reported an error:\n" + new TextDecoder().decode(stderr));
+			handleError(
+				new KnownError(
+					"The base project cannot be initialized using 'git init'.",
+					"Try to initialize it manually"
+				),
+				logger
+			);
+		}
 	}
 	catch (error) {
-		logger.error(`Unable to initialize git repository.`, error);
+		handleError(error, logger);
 	}
 
 	updatePath(projectPath.normal_pathname);

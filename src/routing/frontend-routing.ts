@@ -167,22 +167,23 @@ export namespace Routing {
 	 */
 	async function renderResponse(response: Response) {
 		if (response.body instanceof ReadableStream) {
-			if (isContentType(response, "text/html")) {
-				if (response.redirected) setCurrentRoute(response.url, true);
-				try {
-					const text = await response.text();
-					document.clear()
-					document.write(text);
-				}
-				catch (e) {
-					console.error(e)
-				}
-				// important: insert global style sheet urls from already loaded component classes again
-				await recreateGlobalStyleSheetLinks()
-				recreatePersistentListeners()
-				document.close();
-			}
-			else if (isContentType(response, "text/plain")) {
+			// if (isContentType(response, "text/html")) {
+			// 	if (response.redirected) setCurrentRoute(response.url, true);
+			// 	try {
+			// 		const text = await response.text();
+			// 		document.clear()
+			// 		document.write(text);
+			// 	}
+			// 	catch (e) {
+			// 		console.error(e)
+			// 	}
+			// 	// important: insert global style sheet urls from already loaded component classes again
+			// 	await recreateGlobalStyleSheetLinks()
+			// 	recreatePersistentListeners()
+			// 	document.close();
+			// }
+			// else 
+			if (isContentType(response, "text/plain")) {
 				if (response.redirected) setCurrentRoute(response.url, true);
 				const content = await response.text()
 				document.body.innerHTML = '<pre style="all:initial;word-wrap: break-word; white-space: pre-wrap;">'+domUtils.escapeHtml(content)+'</pre>'

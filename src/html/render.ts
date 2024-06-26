@@ -711,7 +711,7 @@ export async function generateHTMLPage({
 		files += indent(4) `
 			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("datex-core-legacy/runtime/display.ts").toString()}";\ndisableInitScreen();\n` : ''}
 			const {f} = (await import("${provider.resolveImport("datex-core-legacy").toString()}"));
-			const {Routing} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts").toString()}"));` 
+			const {frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing-new.ts").toString()}"));` 
 			// await new Promise(resolve=>setTimeout(resolve,5000))
 
 		// files += `\nDatex.MessageLogger.enable();`
@@ -761,11 +761,11 @@ export async function generateHTMLPage({
 		const mergeFrontendVal = render_method == RenderMethod.PREVIEW ? "'override'" : "'insert'"
 
 		if (backend_entrypoint && frontend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
 		else if (backend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(undefined, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(undefined, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
 		else if (frontend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal})`
 
 		files += '\n</script>\n'
 

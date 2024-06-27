@@ -342,8 +342,12 @@ export class Server {
             const cachedFallbackPort = portCachePath.fs_exists && await Deno.readTextFile(portCachePath.normal_pathname);
             try {
                 if (!cachedFallbackPort) throw "No cached fallback path";
-                const conn = this.tryListen(Number(cachedFallbackPort))
-                this.#port = Number(cachedFallbackPort);
+		if (isNaN(cachedFallbackPort)) throw "Invalid fallback port";
+		const port = Number(cachedFallbackPort);
+		if (port < 0 || port > 65535)
+			throw "Invalid fallback port";
+                const conn = this.tryListen(port)
+                this.#port = port;
                 return conn;
             }
             catch {

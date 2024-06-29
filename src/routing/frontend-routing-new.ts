@@ -24,7 +24,7 @@ export class FrontendRouter {
 		this.#frontendEntrypoint = frontend;
 		this.#backendEntrypoint = backend;
 
-		this.render(isHydrating, mergeStrategy);
+		this.renderRouteContent(isHydrating, mergeStrategy);
 	}
 
 	navigateTo(route: string|URL) {
@@ -37,10 +37,10 @@ export class FrontendRouter {
 		// update current tab url
 		history.pushState(null, "", routePath.routename);
 		// render content
-		this.render(false, 'override', route);
+		this.renderRouteContent(false, 'override', route);
 	}
 
-	async render(isHydrating: boolean, mergeStrategy: MergeStrategy = 'override', route: string|URL = location.href) {
+	async renderRouteContent(isHydrating: boolean, mergeStrategy: MergeStrategy = 'override', route: string|URL = location.href) {
 
 		// has backend content?
 		const hasBackendRenderedContent = isHydrating;
@@ -199,7 +199,7 @@ export class FrontendRouter {
 
 	async getContentFromEntrypoint(entrypoint: Entrypoint, route: URL|string, probe_no_side_effects = false) {
 
-		route = route instanceof URL ? route : new Path(route, window.location.origin);
+		route = route instanceof Path ? route : new Path(route, window.location.origin);
 
 		// create new context with fake request
 		const url = new Path(route, window.location.origin);
@@ -220,13 +220,41 @@ export class FrontendRouter {
 
 
 	enableNavigationInterception() {
-		globalThis.addEventListener("click", (e) => {
-			const target = e.target as HTMLAnchorElement;
-			if (target.tagName === "A" && target.href) {
-				e.preventDefault();
-				this.navigateTo(target.href);
-			}
-		})
+
+		if (globalThis.navigation) {
+			// @ts-ignore
+			globalThis.navigation?.addEventListener("navigate", (e:any)=>{
+				
+				if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
+				
+				const url = new URL(e.destination.url);
+				// pass links to /@uix/...
+				if (url.pathname.startsWith("/@uix/")) return;
+
+				if (url.origin != new URL(window.location.href).origin) return;
+
+				const router = this;
+
+				// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)
+				e.intercept({
+					handler() {
+						console.log("intercept", url)
+						// render content
+						return router.renderRouteContent(false, 'override', url);
+					},
+					focusReset: 'manual',
+					scroll: 'manual'
+				})
+			})
+		}
+
+		// globalThis.addEventListener("click", (e) => {
+		// 	const target = e.target as HTMLAnchorElement;
+		// 	if (target.tagName === "A" && target.href) {
+		// 		e.preventDefault();
+		// 		this.navigateTo(target.href);
+		// 	}
+		// })
 	}
 
 }

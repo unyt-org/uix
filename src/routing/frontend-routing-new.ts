@@ -253,7 +253,6 @@ export class FrontendRouter {
 				// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)
 				e.intercept({
 					handler: () => {
-						console.log("intercept", url)
 						// render content
 						return this.renderRouteFrontendContent(false, 'override', url);
 					},

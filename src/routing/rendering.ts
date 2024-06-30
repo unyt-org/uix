@@ -16,7 +16,6 @@ import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { FileHandle } from "../html/entrypoint-providers.tsx";
 
-
 // URLPattern polyfill
 // @ts-ignore
 if (!globalThis.URLPattern) { 
@@ -178,6 +177,22 @@ async function resolveGeneratorFunction(entrypointData: entrypointData<html_gene
 }
 
 async function resolveRenderPreset(entrypointData: entrypointData<RenderPreset>): Promise<resolvedEntrypointData> {
+	// handle cached response on server
+	if (entrypointData.entrypoint.__render_method == RenderMethod.CACHED_RESPONSE) {
+		if (!entrypointData.route) throw new Error("missing entrypoint route (required for cached response)");
+		const response = await fetch(entrypointData.route, {
+			headers: new Headers({ "UIX-Cache-Token": entrypointData.entrypoint.__content as string }),
+			credentials: "include"
+		});
+		return {
+			content: response,
+			render_method: entrypointData.entrypoint.__render_method,
+			status_code: response.status,
+			headers: response.headers,
+			loaded: true
+		}
+	}
+	
 	const content = await entrypointData.entrypoint.__content;
 	const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: content});
 	resolved.render_method = entrypointData.entrypoint.__render_method;
@@ -358,6 +373,8 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	// handle FsFile
 	else if (client_type === "deno" && entrypointData.entrypoint instanceof Deno.FsFile) {
 		resolved.content = new Response(entrypointData.entrypoint.readable)
+		// TODO: get mime type from FsFile
+		logger.warn("Mime type cannot be determined for FsFile");
 		// cors headers (TODO: more general way to define cors behaviour)
 		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
 		resolved.content.headers.set("Access-Control-Allow-Headers", "*");
@@ -366,10 +383,14 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	// handle FileHandle
 	else if (client_type === "deno" && entrypointData.entrypoint instanceof FileHandle) {
 		const file = await Deno.open(entrypointData.entrypoint.path.normal_pathname);
+		const { mime } = await import("https://deno.land/x/mimetypes@v1.0.0/mod.ts");
+		const mimeType = mime.getType(entrypointData.entrypoint.path.name);
+
 		resolved.content = new Response(file.readable)
 		// cors headers (TODO: more general way to define cors behaviour)
 		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
 		resolved.content.headers.set("Access-Control-Allow-Headers", "*");
+		if (mimeType) resolved.content.headers.set("Content-Type", mimeType);
 	}
 
 

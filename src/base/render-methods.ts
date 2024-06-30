@@ -92,8 +92,9 @@ export enum RenderMethod {
 	BACKEND, // Serve server-side rendererd HTML to the frontend, runtime + reactivity on the backend, frontend context native js functionality
 	STATIC, // Just serve static HTML pages to the frontend, no frontend JS at all
 	DYNAMIC, // No server side prerendering, loading all content over DATEX
-	RAW_CONTENT, // Serve raw file content
-	PREVIEW // // Server side prerendering, override with content on frontend
+	RAW_CONTENT, // Serve raw response content
+	PREVIEW, // // Server side prerendering, override with content on frontend
+	CACHED_RESPONSE // Serve side cached response, content is token to cached response
 }
 
 

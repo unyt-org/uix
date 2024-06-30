@@ -8,6 +8,12 @@ import { querySelector } from "../uix-dom/dom/shadow_dom_selector.ts";
 import { Datex } from "datex-core-legacy/mod.ts";
 import { PartialHydration } from "../hydration/partial-hydration.ts";
 import { displayError } from "../html/errors.tsx";
+import { setCookie } from "../session/cookies.ts";
+
+// navigation api polyfill
+if (!(globalThis as any).navigation) {
+	await import("../lib/navigation-api-polyfill/navigation-api.js");
+}
 
 const logger = new Logger("frontend router");
 
@@ -24,10 +30,11 @@ export class FrontendRouter {
 		this.#frontendEntrypoint = frontend;
 		this.#backendEntrypoint = backend;
 
-		this.renderRouteContent(isHydrating, mergeStrategy);
+		// render current route frontend content, backend content is already provided from the HTTP response
+		this.renderRouteFrontendContent(isHydrating, mergeStrategy);
 	}
 
-	navigateTo(route: string|URL) {
+	async navigateTo(route: string|URL) {
 		const routePath = new Path(route, window.location.origin);
 		if (new Path(location.href).toString() === routePath.toString()) {
 			logger.info("already on route " + route + ", skipping navigation");
@@ -37,18 +44,39 @@ export class FrontendRouter {
 		// update current tab url
 		history.pushState(null, "", routePath.routename);
 		// render content
-		this.renderRouteContent(false, 'override', route);
+		const {content: backendContent, status_code } = await this.getBackendContent(route);
+		
+		// full reload if status code is 302
+		if (status_code === 302) {
+			if (typeof backendContent == "string") {
+				// set uix-cache-token cookie
+				setCookie("uix-cache-token", routePath.pathname + ":" + backendContent);
+			}
+			globalThis.location.href = routePath.routename;
+			return;
+		}
+
+		if (backendContent!=null) this.displayContent(backendContent);
+
+		const isHydrating = backendContent != null;
+		const mergeStrategy = isHydrating ? 'insert' : 'override';
+		this.renderRouteFrontendContent(isHydrating, mergeStrategy, route);
 	}
 
-	async renderRouteContent(isHydrating: boolean, mergeStrategy: MergeStrategy = 'override', route: string|URL = location.href) {
-
+	async renderRouteFrontendContent(isHydrating: boolean, mergeStrategy: MergeStrategy = 'override', route: string|URL = location.href) {
 		// has backend content?
 		const hasBackendRenderedContent = isHydrating;
 
 		// no backend content, just render frontend content
 		if (!hasBackendRenderedContent) mergeStrategy = 'override';
 
-		const content = await this.getContentFromEntrypoint(this.#frontendEntrypoint, route);
+		const {content} = await this.getContentFromEntrypoint(this.#frontendEntrypoint, route);
+
+		if (content == null) {
+			if (!hasBackendRenderedContent) displayError("UIX Rendering Error", "Route not found on backend or frontend");
+			this.#currentContent = content;
+			return;
+		}
 
 		if (content == this.#currentContent) {
 			logger.info("content for " + route + " is the same, skipping");
@@ -65,8 +93,6 @@ export class FrontendRouter {
 	}
 
 	displayContent(content: unknown) {
-		console.log("displayContent", content);
-
 		if (content == null) return;
 
 		// partial hydration, no need to set new dom nodes 
@@ -92,8 +118,6 @@ export class FrontendRouter {
 		else {
 			displayError("UIX Rendering Error", "Cannot render value of type " + Datex.Type.ofValue(content));
 		}
-
-		// TODO
 	}
 
 	/**
@@ -119,7 +143,6 @@ export class FrontendRouter {
 			// }
 			// else 
 			if (this.isContentType(response, "text/plain")) {
-				if (response.redirected) setCurrentRoute(response.url, true);
 				const content = await response.text()
 				document.body.innerHTML = '<pre style="all:initial;word-wrap: break-word; white-space: pre-wrap;">'+domUtils.escapeHtml(content)+'</pre>'
 			}
@@ -128,7 +151,8 @@ export class FrontendRouter {
 			}
 		}
 		else if (response.status === 302) {
-			window.location.href = response.headers.get("location")!;
+			this.navigateTo(response.headers.get("location")!);
+			// window.location.href = response.headers.get("location")!;
 		}
 		else if (response.body) {
 			console.warn("cannot handle response body on frontend (TODO)", response)
@@ -144,15 +168,12 @@ export class FrontendRouter {
 	}
 
 	mergeContent(content: unknown) {
-		console.log("mergeContent", content);
-
 		// get elements list from content
 		const elements = this.getElementsListFromContent(content);
 
 		// no elements could be extracted
 		if (!elements) {
 			if (content instanceof Response) {
-				// TODO:
 				logger.warn("Content of type 'Response' cannot be merged with existing content, falling back to override");
 				this.displayContent(content)
 				return;
@@ -162,8 +183,6 @@ export class FrontendRouter {
 				return;
 			}
 		}
-
-		console.log("elements", elements)
 		
 		// insert into existing DOM
 		for (const el of elements) {
@@ -210,20 +229,18 @@ export class FrontendRouter {
 		context.path = path;
 		context.request = new Request(url)
 
-		const { content } = await resolveEntrypointRoute({entrypoint, context, route, probe_no_side_effects});
-		return content;
+		const { content, status_code } = await resolveEntrypointRoute({entrypoint, context, route, probe_no_side_effects});
+		return { content, status_code };
 	}
 
 	getBackendContent(route: URL|string) {
 		return this.getContentFromEntrypoint(this.#backendEntrypoint, route);
 	}
 
-
 	enableNavigationInterception() {
-
-		if (globalThis.navigation) {
-			// @ts-ignore
-			globalThis.navigation?.addEventListener("navigate", (e:any)=>{
+		const _globalThis = globalThis as any;
+		if (_globalThis.navigation) {
+			_globalThis.navigation?.addEventListener("navigate", (e:any)=>{
 				
 				if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
 				
@@ -233,28 +250,18 @@ export class FrontendRouter {
 
 				if (url.origin != new URL(window.location.href).origin) return;
 
-				const router = this;
-
 				// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)
 				e.intercept({
-					handler() {
+					handler: () => {
 						console.log("intercept", url)
 						// render content
-						return router.renderRouteContent(false, 'override', url);
+						return this.renderRouteFrontendContent(false, 'override', url);
 					},
 					focusReset: 'manual',
 					scroll: 'manual'
 				})
 			})
 		}
-
-		// globalThis.addEventListener("click", (e) => {
-		// 	const target = e.target as HTMLAnchorElement;
-		// 	if (target.tagName === "A" && target.href) {
-		// 		e.preventDefault();
-		// 		this.navigateTo(target.href);
-		// 	}
-		// })
 	}
 
 }

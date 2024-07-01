@@ -353,6 +353,7 @@ class ThemeManager  {
 			document.body.dataset.colorScheme = theme.mode ?? "light";
 		}
 
+		// stylesheets not available for parsed themes
 		// stylesheets
 		if (theme.stylesheets) {			
 			this.#updateCustomStylesheets(this.#normalizeThemeStylesheets(theme))
@@ -399,9 +400,14 @@ class ThemeManager  {
 
 	#updateCustomStylesheets(customStyleSheets: Set<string>) {
 		if (client_type == "browser") {
+
+			// remove stylesheets which are not in the new list
 			this.#clearCustomStyleSheets(customStyleSheets);
+
+			// add new stylesheets
 			for (const url of customStyleSheets) {
-				if (document.head.querySelector('link.custom-theme[href="'+url+'"]')) continue;
+				const existingLink = document.head.querySelector('link.custom-theme');
+				if (existingLink?.href == url) continue;
 				const stylesheet = document.createElement("link");
 				stylesheet.classList.add("custom-theme");
 				stylesheet.rel = "stylesheet"
@@ -483,6 +489,9 @@ class ThemeManager  {
 				name,
 				mode,
 				values,
+				stylesheets: [
+					...document.head.querySelectorAll('link.custom-theme') as unknown as HTMLLinkElement[]
+				].map(l => l.href),
 				parsed: true
 			});
 		}

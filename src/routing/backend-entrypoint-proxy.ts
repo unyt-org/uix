@@ -3,7 +3,7 @@ import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
 import { Entrypoint } from "../html/entrypoints.ts";
 import { logger } from "../utils/global-values.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-import { Context } from "./context.ts";
+import { Context, ContextBuilder } from "./context.ts";
 import { resolveEntrypointRoute } from "./rendering.ts";
 import { getRandomString } from "datex-core-legacy/utils/utils.ts";
 import { HTTPStatus } from "../html/http-status.ts";
@@ -19,10 +19,21 @@ import { HTTPStatus } from "../html/http-status.ts";
  * @returns 
  */
 export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
-	const fn = $$(async function(ctx: Context, _params:Record<string,string>) {
+	const fn = $$(async function(_ctx: Context, _params:Record<string,string>) {
+
+		// set endpoint from datex meta
+		const path = Path.Route(_ctx.path);
+		const ctx = new ContextBuilder()
+			.setRequestData(_ctx.request, _ctx.path)
+			.build();
+		
+		const meta = datex.meta;
+		ctx.endpoint = meta.caller;
+		if (meta.signed) ctx.endpointIsTrusted = true;
+		console.log("ctx",ctx);
 
 		// resolve entrypoint
-		const { content, render_method, status_code } = await resolveEntrypointRoute({entrypoint, route: Path.Route(ctx.path)});
+		const { content, render_method, status_code } = await resolveEntrypointRoute({entrypoint, context: ctx, route: path});
 		
 		// cache response
 		if (content instanceof Response) {

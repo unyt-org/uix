@@ -29,6 +29,7 @@ export class FrontendRouter {
 	setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint, isHydrating = false, mergeStrategy: MergeStrategy = 'override') {
 		this.#frontendEntrypoint = frontend;
 		this.#backendEntrypoint = backend;
+		console.log("setEntrypoints", frontend, backend, isHydrating, mergeStrategy)
 
 		// render current route frontend content, backend content is already provided from the HTTP response
 		this.renderRouteFrontendContent(isHydrating, mergeStrategy);
@@ -44,8 +45,15 @@ export class FrontendRouter {
 		// update current tab url
 		history.pushState(null, "", routePath.routename);
 		// render content
+		await this.renderRouteContent(routePath);
+	}
+
+	async renderRouteContent(route: string|URL = location.href) {
+		const routePath = new Path(route, window.location.origin);
+		// render content
 		const {content: backendContent, status_code } = await this.getBackendContent(route);
-		
+		console.log("renderRouteContent " +  route, backendContent, status_code)
+
 		// full reload if status code is 302
 		if (status_code === 302) {
 			if (typeof backendContent == "string") {
@@ -229,6 +237,8 @@ export class FrontendRouter {
 		context.path = path;
 		context.request = new Request(url)
 
+		console.log("resolve", entrypoint, context, route, probe_no_side_effects)
+
 		const { content, status_code } = await resolveEntrypointRoute({entrypoint, context, route, probe_no_side_effects});
 		return { content, status_code };
 	}
@@ -254,7 +264,7 @@ export class FrontendRouter {
 				e.intercept({
 					handler: () => {
 						// render content
-						return this.renderRouteFrontendContent(false, 'override', url);
+						return this.renderRouteContent(url);
 					},
 					focusReset: 'manual',
 					scroll: 'manual'

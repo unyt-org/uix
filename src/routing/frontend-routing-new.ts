@@ -25,11 +25,11 @@ export class FrontendRouter {
 	#backendEntrypoint: Entrypoint;
 
 	#currentContent: unknown;
+	#currentMergeStrategy?: MergeStrategy;
 	
 	setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint, isHydrating = false, mergeStrategy: MergeStrategy = 'override') {
 		this.#frontendEntrypoint = frontend;
 		this.#backendEntrypoint = backend;
-		console.log("setEntrypoints", frontend, backend, isHydrating, mergeStrategy)
 
 		// render current route frontend content, backend content is already provided from the HTTP response
 		this.renderRouteFrontendContent(isHydrating, mergeStrategy);
@@ -83,10 +83,11 @@ export class FrontendRouter {
 		if (content == null) {
 			if (!hasBackendRenderedContent) displayError("UIX Rendering Error", "Route not found on backend or frontend");
 			this.#currentContent = content;
+			this.#currentMergeStrategy = mergeStrategy;
 			return;
 		}
 
-		if (content == this.#currentContent) {
+		if (content == this.#currentContent && mergeStrategy == this.#currentMergeStrategy) {
 			logger.info("content for " + route + " is the same, skipping");
 			return;
 		}
@@ -94,6 +95,7 @@ export class FrontendRouter {
 		logger.success("navigating to " + route);
 
 		this.#currentContent = content;
+		this.#currentMergeStrategy = mergeStrategy;
 
 		if (mergeStrategy == 'override') this.displayContent(content);
 		else if (mergeStrategy == 'insert') this.mergeContent(content);
@@ -236,8 +238,6 @@ export class FrontendRouter {
 			.build()
 		context.path = path;
 		context.request = new Request(url)
-
-		console.log("resolve", entrypoint, context, route, probe_no_side_effects)
 
 		const { content, status_code } = await resolveEntrypointRoute({entrypoint, context, route, probe_no_side_effects});
 		return { content, status_code };

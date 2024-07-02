@@ -71,8 +71,7 @@ function commandExists(cmd: string, arg = "-h") {
 		console.log(new TextDecoder().decode(runCommand(cmd, {args:[arg]}).outputSync().stderr));
 		return true;
 	}
-	catch (e) {
-		console.log(e);
+	catch {
 		return false;
 	}
 }

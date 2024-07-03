@@ -573,6 +573,8 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     declare [METADATA]:any
     declare [OPEN_GRAPH]?:OpenGraphInformation
 
+    declare public readonly childNodes: NodeListOf<ChildElement extends ChildNode ? ChildElement : ChildNode> & Iterable<ChildElement extends ChildNode ? ChildElement : ChildNode>;
+    declare public readonly children: Iterable<ChildElement extends ChildNode ? ChildElement : ChildNode> & HTMLCollection;
 
     /**
      * true if component is in standalone mode (UIX library not loaded)

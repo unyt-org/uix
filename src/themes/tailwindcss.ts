@@ -2,6 +2,7 @@ import { UIX } from "../../uix.ts";
 import type { Theme } from "../base/theme-manager.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
+import { runCommand } from "../utils/run-command.ts";
 
 export const tailwindcss = {
 	name: 'tailwindcss',
@@ -13,16 +14,16 @@ export const tailwindcss = {
 		const { watch, watch_backend, live } = await import("../app/args.ts" /*lazy*/);
 
 		const logger = new Logger("tailwindcss")
-		const cmd = "tailwindcss"
+		const tailwindCssCmd = "tailwindcss"
 
 		// install tailwindcss via npm if not available
-		let cmdAvailable = new Deno.Command("which", {args:[cmd]}).outputSync().code == 0;
+		let cmdAvailable = commandExists(tailwindCssCmd);
 
 		if (!cmdAvailable) {
-			const npmInstalled = new Deno.Command("which", {args:["npm"]}).outputSync().code == 0;
+			const npmInstalled = commandExists("npm", "-v");
 			if (npmInstalled) {
 				logger.info("installing via npm...");
-				cmdAvailable = new Deno.Command("npm", {args:["install", "-g", cmd]}).outputSync().code == 0;
+				cmdAvailable = runCommand("npm", {args:["install", "-g", tailwindCssCmd]}).outputSync().code == 0;
 				if (!cmdAvailable) {
 					logger.error("Could not install tailwindcss. Try to install it manually (https://tailwindcss.com/docs/installation)")
 					return;
@@ -45,7 +46,7 @@ export const tailwindcss = {
 			Deno.writeTextFileSync(configFile.normal_pathname, 'export default {\n  content: ["./**/*.{html,tsx,ts,jsx,js}"],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}')
 		}
 
-		const version = new TextDecoder().decode((await new Deno.Command(cmd, {args: cmdAvailable ? ['--help'] : ['tailwindcss', '--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
+		const version = new TextDecoder().decode((await runCommand(tailwindCssCmd, {args: cmdAvailable ? ['--help'] : ['tailwindcss', '--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
 		logger.info("using", version);
 
 		const args =  [
@@ -59,7 +60,18 @@ export const tailwindcss = {
 			args.push("--watch")
 		}
 
-		const status = await new Deno.Command(cmd, {args}).spawn().status
+		const status = await runCommand(tailwindCssCmd, {args}).spawn().status
 		if (status.code != 0) logger.error("Error running tailwindcss")
 	}
 } satisfies Theme
+
+
+function commandExists(cmd: string, arg = "-h") {
+	try {
+		console.log(new TextDecoder().decode(runCommand(cmd, {args:[arg]}).outputSync().stderr));
+		return true;
+	}
+	catch {
+		return false;
+	}
+}

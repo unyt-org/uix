@@ -575,12 +575,12 @@ export class Server {
                     await this.serveContent(requestEvent, "text/html", html, undefined, 400, undefined, false);
                     return;
                 }*/
-                if (requestEvent.request.method !== "GET") {
-                    await requestEvent.respondWith(new Response("UIX session is missing", {
-                        status: 403
-                    }));
-                    return;
-                }
+                // if (requestEvent.request.method !== "GET") {
+                //     await requestEvent.respondWith(new Response("UIX session is missing", {
+                //         status: 403
+                //     }));
+                //     return;
+                // }
 
                 endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
             }

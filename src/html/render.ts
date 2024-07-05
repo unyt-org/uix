@@ -864,7 +864,6 @@ export async function generateHTMLPage({
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-				<meta name="view-transition" content="same-origin"/>
 				<meta name="color-scheme" content="${color_scheme}"/>
 				<meta name="theme-color"${appColors?.[color_scheme] ? ` content="${appColors[color_scheme]}"` : ''}/>
 				${metaScripts}
@@ -895,6 +894,11 @@ export async function generateHTMLPage({
 						document.body.style.visibility = "visible"
 					});
 				</script>
+				<style>
+					@view-transition {
+						navigation: auto;
+					}
+				</style>
 				<noscript>
 					<style>
 						body {

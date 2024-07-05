@@ -264,7 +264,10 @@ export class FrontendRouter {
 				e.intercept({
 					handler: () => {
 						// render content
-						return this.renderRouteContent(url);
+						// With view transitions
+						if (document.startViewTransition) document.startViewTransition(() => this.renderRouteContent(url));
+						// Without view transitions
+						else return this.renderRouteContent(url);
 					},
 					focusReset: 'manual',
 					scroll: 'manual'

@@ -30,7 +30,6 @@ export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 		const meta = datex.meta;
 		ctx.endpoint = meta.caller;
 		if (meta.signed) ctx.endpointIsTrusted = true;
-		console.log("ctx",ctx);
 
 		// resolve entrypoint
 		const { content, render_method, status_code } = await resolveEntrypointRoute({entrypoint, context: ctx, route: path});

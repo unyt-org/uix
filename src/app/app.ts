@@ -90,6 +90,10 @@ class App {
 					])
 				};
 				if (appdata.host) appdata.host = f(appdata.host);
+				if (appdata.experimental_features && this.options) {
+					if (!this.options.experimental_features) this.options.experimental_features = [];
+					this.options.experimental_features.push(...appdata.experimental_features);
+				}
 				this.#setMetadata(appdata)
 			}
 		}
@@ -250,7 +254,7 @@ class App {
 		this.frontends = frontends;
 
 		// log enabled experimental features
-		const allowedFeatures = ['embedded-reactivity', 'protect-pointers', 'indirect-references'];
+		const allowedFeatures = ['embedded-reactivity', 'protect-pointers', 'indirect-references', 'frontend-navigation', 'view-transitions'];
 		for (const feature of this.options.experimental_features) {
 			if (allowedFeatures.includes(feature)) logger.info(`experimental feature "${feature}" enabled`)
 			else logger.error(`unknown experimental feature "${feature}"`)

@@ -9,6 +9,7 @@ import { Datex } from "datex-core-legacy/mod.ts";
 import { PartialHydration } from "../hydration/partial-hydration.ts";
 import { displayError } from "../html/errors.tsx";
 import { setCookie } from "../session/cookies.ts";
+import { app } from "../app/app.ts";
 
 // navigation api polyfill
 if (!(globalThis as any).navigation) {
@@ -18,6 +19,8 @@ if (!(globalThis as any).navigation) {
 const logger = new Logger("frontend router");
 
 type MergeStrategy = 'override'|'insert'
+
+const experimentalViewTransitionsEnabled = app.options?.experimental_features.includes("view-transitions")
 
 export class FrontendRouter {
 
@@ -52,7 +55,6 @@ export class FrontendRouter {
 		const routePath = new Path(route, window.location.origin);
 		// render content
 		const {content: backendContent, status_code } = await this.getBackendContent(route);
-		console.log("renderRouteContent " +  route, backendContent, status_code)
 
 		// full reload if status code is 302
 		if (status_code === 302) {
@@ -265,7 +267,7 @@ export class FrontendRouter {
 					handler: () => {
 						// render content
 						// With view transitions
-						if (document.startViewTransition) document.startViewTransition(() => this.renderRouteContent(url));
+						if (experimentalViewTransitionsEnabled && document.startViewTransition) document.startViewTransition(() => this.renderRouteContent(url));
 						// Without view transitions
 						else return this.renderRouteContent(url);
 					},

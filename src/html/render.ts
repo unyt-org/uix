@@ -710,11 +710,11 @@ export async function generateHTMLPage({
 		// js imports
 		files += indent(4) `
 			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("datex-core-legacy/runtime/display.ts").toString()}";\ndisableInitScreen();\n` : ''}
-			const {f} = (await import("${provider.resolveImport("datex-core-legacy").toString()}"));
-			const {frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing-new.ts").toString()}"));` 
+			const {f} = (await import("${provider.resolveImport("datex-core-legacy").toString()}"));` 
 			// await new Promise(resolve=>setTimeout(resolve,5000))
-
-		// files += `\nDatex.MessageLogger.enable();`
+		
+		if (app.options?.experimental_features.includes("frontend-navigation")) files += `const {frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing-new.ts").toString()}"));`
+		else files += `const {Routing: frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts").toString()}"));`
 
 		if (app.options?.experimental_features.includes("protect-pointers")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
 		if (app.options?.experimental_features.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
@@ -782,6 +782,7 @@ export async function generateHTMLPage({
 				${JSON.stringify({
 					name: provider.app_options.name, 
 					version: provider.app_options.version, 
+					experimental_features: provider.app_options.experimental_features,
 					stage: stage, 
 					backend: Datex.Runtime.endpoint.toString(),
 					backendLibVersions: {
@@ -894,11 +895,13 @@ export async function generateHTMLPage({
 						document.body.style.visibility = "visible"
 					});
 				</script>
-				<style>
+				${
+					app.options?.experimental_features.includes("view-transitions") ? `<style>
 					@view-transition {
 						navigation: auto;
 					}
-				</style>
+				</style>` : ''
+				}
 				<noscript>
 					<style>
 						body {

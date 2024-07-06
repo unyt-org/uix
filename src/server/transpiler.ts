@@ -640,7 +640,7 @@ export class Transpiler {
         try {
 
             // workaround: select decorators based on uix/datex version
-            let decoratorVersion = "2022-03";
+            let decoratorVersion:"2022-03" | "2021-12" = "2022-03";
             const pathname = ts_dist_path.normal_pathname;
             if (
                 pathname.match(/\/uix-0\.(0|1)\.\d+\//)||
@@ -656,8 +656,7 @@ export class Transpiler {
                     parser: {
                         tsx: !!ts_dist_path.hasFileExtension("tsx"),
                         syntax: "typescript",
-                        decorators: true,
-                        dynamicImport: true,
+                        decorators: true
 
                     },
                     transform: {

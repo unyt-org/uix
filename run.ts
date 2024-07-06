@@ -28,6 +28,7 @@ import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskFor
 import { isCIRunner } from "./src/utils/check-ci.ts";
 import { logger, runParams } from "./src/runners/runner.ts";
 import { applyPlugins } from "./src/app/config-files.ts";
+import { handleError } from "./src/utils/handle-issue.ts";
 
 // catch unhandledrejections
 enableUnhandledRejectionHandler(logger);
@@ -35,17 +36,15 @@ enableUnhandledRejectionHandler(logger);
 // login flow
 if (login) await triggerLogin();
 // init
-if (init!=undefined) {
+if (init != undefined) {
 	if (rootPath) {
-		logger.error("A UIX Project already exists in this location");
-		Deno.exit(1);
+		handleError("A UIX Project exists already in this location", logger);
 	}
 	else await initBaseProject(init);
 }
 
 // allow unyt.org diagnostics?
 if (stage === "dev") {
-
 	try {
 		let allow = false;
 		

@@ -352,6 +352,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	// handle only return static
 	if (entrypointData.only_return_static_content && entrypointData.entrypoint && (<any> entrypointData.entrypoint).__render_method == RenderMethod.DYNAMIC) {
 		resolved.remaining_route = Path.Route("/");
+		resolved.render_method = RenderMethod.DYNAMIC;
 		resolved.content = "";
 	}
 

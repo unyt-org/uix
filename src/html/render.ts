@@ -759,13 +759,14 @@ export async function generateHTMLPage({
 		const isHydratingVal = isHydrating ? 'true' : 'false'
 
 		const mergeFrontendVal = render_method == RenderMethod.PREVIEW ? "'override'" : "'insert'"
+		const requestBackendContent = render_method == RenderMethod.DYNAMIC ? 'true' : 'false' // content must first be request from backend router via DATEX when using DYNAMIC rendering
 
 		if (backend_entrypoint && frontend_entrypoint)
-			files += `\n\nawait frontendRouter.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal}, ${requestBackendContent})`
 		else if (backend_entrypoint)
-			files += `\n\nawait frontendRouter.setEntrypoints(undefined, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(undefined, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal}, ${requestBackendContent})`
 		else if (frontend_entrypoint)
-			files += `\n\nawait frontendRouter.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal}, ${requestBackendContent})`
 
 		files += '\n</script>\n'
 
@@ -896,11 +897,13 @@ export async function generateHTMLPage({
 					});
 				</script>
 				${
-					app.options?.experimental_features.includes("view-transitions") ? `<style>
-					@view-transition {
-						navigation: auto;
-					}
-				</style>` : ''
+					app.options?.experimental_features.includes("view-transitions") ? `
+					<meta name="view-transition" content="same-origin" />
+					<style>
+						@view-transition {
+							navigation: auto;
+						}
+					</style>` : ''
 				}
 				<noscript>
 					<style>

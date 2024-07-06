@@ -30,12 +30,14 @@ export class FrontendRouter {
 	#currentContent: unknown;
 	#currentMergeStrategy?: MergeStrategy;
 	
-	setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint, isHydrating = false, mergeStrategy: MergeStrategy = 'override') {
+	setEntrypoints(frontend?: Entrypoint, backend?: Entrypoint, isHydrating = false, mergeStrategy: MergeStrategy = 'override', requestBackendContent = false) {
 		this.#frontendEntrypoint = frontend;
 		this.#backendEntrypoint = backend;
 
+		// no initial ssr content provided, request it from the backend
+		if (requestBackendContent) this.renderRouteContent();
 		// render current route frontend content, backend content is already provided from the HTTP response
-		this.renderRouteFrontendContent(isHydrating, mergeStrategy);
+		else this.renderRouteFrontendContent(isHydrating, mergeStrategy);
 	}
 
 	async navigateTo(route: string|URL) {
@@ -66,7 +68,7 @@ export class FrontendRouter {
 			return;
 		}
 
-		if (backendContent!=null) this.displayContent(backendContent);
+		if (backendContent!=null) this.overrideContent(backendContent);
 
 		const isHydrating = backendContent != null;
 		const mergeStrategy = isHydrating ? 'insert' : 'override';
@@ -99,12 +101,12 @@ export class FrontendRouter {
 		this.#currentContent = content;
 		this.#currentMergeStrategy = mergeStrategy;
 
-		if (mergeStrategy == 'override') this.displayContent(content);
-		else if (mergeStrategy == 'insert') this.mergeContent(content);
+		if (mergeStrategy == 'override') this.overrideContent(content);
+		else if (mergeStrategy == 'insert') this.insertContent(content);
 		else throw new Error("Invalid merge strategy: " + mergeStrategy);
 	}
 
-	displayContent(content: unknown) {
+	overrideContent(content: unknown) {
 		if (content == null) return;
 
 		// partial hydration, no need to set new dom nodes 
@@ -179,7 +181,7 @@ export class FrontendRouter {
 		return actualMimeType === mimeType || actualMimeType?.startsWith(mimeType + ";")
 	}
 
-	mergeContent(content: unknown) {
+	insertContent(content: unknown) {
 		// get elements list from content
 		const elements = this.getElementsListFromContent(content);
 
@@ -187,7 +189,7 @@ export class FrontendRouter {
 		if (!elements) {
 			if (content instanceof Response) {
 				logger.warn("Content of type 'Response' cannot be merged with existing content, falling back to override");
-				this.displayContent(content)
+				this.overrideContent(content)
 				return;
 			}
 			else {
@@ -206,7 +208,7 @@ export class FrontendRouter {
 			}
 			else {
 				slot = querySelector("frontend-slot") as HTMLElement;
-				if (!slot) logger.error("Could not find a matching <frontend-slot/> for content provided from frontend entrypoint. Make sure your backend and frontend routes are not unintentionally colliding.");
+				if (!slot) return this.overrideContent(content);
 			}
 
 			if (slot) {

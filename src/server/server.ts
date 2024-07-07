@@ -38,6 +38,7 @@ import { hasDependencyList } from "../html/dependency-resolver.ts";
 
 import { UIX_COOKIE } from "../session/cookies.ts";
 import { Endpoint } from "datex-core-legacy/types/addressing.ts";
+import { getCachedResponse } from "../routing/backend-entrypoint-proxy.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -426,6 +427,37 @@ export class Server {
         }
 
         let endpoint: Datex.Endpoint|undefined;
+
+        // has UIX-Cache-Token header, try to serve response from cache
+        const cacheToken = requestEvent.request.headers.get("UIX-Cache-Token");
+        if (cacheToken) {
+            const cachedResponse = getCachedResponse(cacheToken);
+            if (cachedResponse) {
+                requestEvent.respondWith(cachedResponse);
+                return;
+            }
+        }
+        // has UIX-Cache-Token cookie
+        else {
+            const cacheTokenCookieName = "uix-cache-token"
+            const cacheTokenCookie = getCookie(cacheTokenCookieName, requestEvent.request.headers, url.port);
+            if (cacheTokenCookie && cacheTokenCookie.startsWith(url.pathname+":")) {
+                const cachedResponse = getCachedResponse(cacheTokenCookie.split(":")[1]);
+                const headers = new Headers(cachedResponse?.headers);
+                deleteCookie(cacheTokenCookieName, headers, url.port);
+                if (cachedResponse) {
+                    requestEvent.respondWith(
+                        new Response(cachedResponse.body, {
+                            status: cachedResponse.status,
+                            statusText: cachedResponse.statusText,
+                            headers
+                        })
+                    );
+                    return;
+                }
+            }
+        }
+
 
         // session/endpoint handling:
         if (

@@ -710,11 +710,11 @@ export async function generateHTMLPage({
 		// js imports
 		files += indent(4) `
 			${prerendered_content?`${"import {disableInitScreen}"} from "${provider.resolveImport("datex-core-legacy/runtime/display.ts").toString()}";\ndisableInitScreen();\n` : ''}
-			const {f} = (await import("${provider.resolveImport("datex-core-legacy").toString()}"));
-			const {Routing} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts").toString()}"));` 
+			const {f} = (await import("${provider.resolveImport("datex-core-legacy").toString()}"));` 
 			// await new Promise(resolve=>setTimeout(resolve,5000))
-
-		// files += `\nDatex.MessageLogger.enable();`
+		
+		if (app.options?.experimental_features.includes("frontend-navigation")) files += `const {frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing-new.ts").toString()}"));`
+		else files += `const {Routing: frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts").toString()}"));`
 
 		if (app.options?.experimental_features.includes("protect-pointers")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
 		if (app.options?.experimental_features.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
@@ -759,13 +759,14 @@ export async function generateHTMLPage({
 		const isHydratingVal = isHydrating ? 'true' : 'false'
 
 		const mergeFrontendVal = render_method == RenderMethod.PREVIEW ? "'override'" : "'insert'"
+		const requestBackendContent = render_method == RenderMethod.DYNAMIC ? 'true' : 'false' // content must first be request from backend router via DATEX when using DYNAMIC rendering
 
 		if (backend_entrypoint && frontend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(frontend_entrypoint, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal}, ${requestBackendContent})`
 		else if (backend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(undefined, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(undefined, backend_entrypoint, ${isHydratingVal}, ${mergeFrontendVal}, ${requestBackendContent})`
 		else if (frontend_entrypoint)
-			files += `\n\nawait Routing.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal})`
+			files += `\n\nawait frontendRouter.setEntrypoints(frontend_entrypoint, undefined, ${isHydratingVal}, ${mergeFrontendVal}, ${requestBackendContent})`
 
 		files += '\n</script>\n'
 
@@ -782,6 +783,7 @@ export async function generateHTMLPage({
 				${JSON.stringify({
 					name: provider.app_options.name, 
 					version: provider.app_options.version, 
+					experimental_features: provider.app_options.experimental_features,
 					stage: stage, 
 					backend: Datex.Runtime.endpoint.toString(),
 					backendLibVersions: {
@@ -864,7 +866,6 @@ export async function generateHTMLPage({
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-				<meta name="view-transition" content="same-origin"/>
 				<meta name="color-scheme" content="${color_scheme}"/>
 				<meta name="theme-color"${appColors?.[color_scheme] ? ` content="${appColors[color_scheme]}"` : ''}/>
 				${metaScripts}
@@ -895,6 +896,15 @@ export async function generateHTMLPage({
 						document.body.style.visibility = "visible"
 					});
 				</script>
+				${
+					app.options?.experimental_features.includes("view-transitions") ? `
+					<meta name="view-transition" content="same-origin" />
+					<style>
+						@view-transition {
+							navigation: auto;
+						}
+					</style>` : ''
+				}
 				<noscript>
 					<style>
 						body {

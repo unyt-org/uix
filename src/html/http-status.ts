@@ -1,3 +1,4 @@
+import { Datex } from "datex-core-legacy/mod.ts";
 import { Entrypoint } from "./entrypoints.ts";
 
 export class HTTPStatus<Code extends number = number, T extends Entrypoint = Entrypoint> {
@@ -31,3 +32,9 @@ export class HTTPStatus<Code extends number = number, T extends Entrypoint = Ent
 		return `HTTP Status ${this.code}: ${String(this.content)}`
 	}
 }
+
+
+Datex.Type.get("uix:HTTPStatus").setJSInterface({
+    class: HTTPStatus,
+	is_normal_object : true
+})

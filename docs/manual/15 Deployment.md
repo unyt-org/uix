@@ -25,7 +25,7 @@ If you want to set up you own docker host on your server, take a look at the [Do
 The following options can be set in a backend `.dx` file to configure a remote docker host.
 
 * `location`: *(endpoint or text)* A docker host endpoint (e.g. `@+app-host-eu2` or a self-hosted endpoint) where the UIX should be hosted. The default is `@@local`, meaning that the app is run locally and not on a docker host.
-* `domain`: *(text or text[])* One or multiple custom domains on which the web server is listening. This only works if the domain is pointing to the ip address of the docker host.
+* `domain`: *(text or text[])* One or multiple custom domains on which the web server is listening. This only works if the domain is pointing to the ip address of the docker host. The domain name may include characters `a-z`, digits `0-9`, hypens, and dots as separator if part of a subdomain and must not start with a hypen.
 * `volumes`: *(url or url[])* Directories that are mapped to persistent docker volumes on the docker host
 
 

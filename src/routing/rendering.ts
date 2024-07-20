@@ -419,7 +419,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 	else if (entrypointData.entrypoint instanceof URL) {
 		resolved.content = new Response(null, {
 			status: 302,
-			headers: new Headers({ location: convertToWebPath(entrypointData.entrypoint) })
+			headers: new Headers({ location: convertToWebPath(entrypointData.entrypoint), "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" })
 		});
 	}
 

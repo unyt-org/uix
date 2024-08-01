@@ -3,6 +3,7 @@ import { Datex } from "datex-core-legacy/mod.ts"
 import { DX_PTR } from "datex-core-legacy/runtime/constants.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
+import { BACKEND_EXPORT } from "datex-core-legacy/utils/interface-generator.ts";
 
 export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
 
@@ -22,6 +23,8 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 	if (typeof fn !== "function") throw new Error("bindToOrigin: Must be a function");
 	// @ts-ignore already bound
 	if (fn[BOUND_TO_ORIGIN]) return fn as any;
+	// @ts-ignore if backend export
+	if (fn[BACKEND_EXPORT]) return fn as any;
 	// @ts-ignore already bound
 	if (fn.uix_bound || fn.ntarget?.uix_bound) return <any>fn;
 

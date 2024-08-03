@@ -44,7 +44,8 @@ export class HTMLProvider {
 		return Path.pathIsURL(path) ? path.toString() : import.meta.resolve(path)
 	}
 
-	getRelativeImportMap() {
+	async getRelativeImportMap() {
+		await this.app_options.import_map.init();
 		const import_map = {imports: {...this.app_options.import_map.static_imports}};
 
 		for (const [key, value] of Object.entries(import_map.imports)) {

@@ -42,6 +42,7 @@ export function handleTypedRequest<T extends Datex.Type|StructuralTypeDefIn|null
 					)
 				}
 			}
+			else if (e instanceof Response || e instanceof HTTPStatus) throw e;
 			else {
 				return HTTPStatus.BAD_REQUEST.with(
 					await provideJSON({error: e instanceof Error ? e.message : e?.toString() || "Request error"})

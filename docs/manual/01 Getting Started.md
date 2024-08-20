@@ -46,21 +46,21 @@ To install UIX, you first need to install the [Deno](https://docs.deno.com/runti
 Install the Deno runtime using one of the terminal commands below.
 
 <unyt-tabs>
-<unyt-tab value="mac" label="macOS" default>
+<unyt-tab label="macOS" default>
 
 ```sh
 curl -fsSL https://deno.land/install.sh | sh
 ```
 
 </unyt-tab>
-<unyt-tab value="windows" label="Windows">
+<unyt-tab label="Windows">
 
 ```powershell
 irm https://deno.land/install.ps1 | iex
 ```
 
 </unyt-tab>
-<unyt-tab value="linux" label="Linux">
+<unyt-tab label="Linux">
 
 ```sh
 curl -fsSL https://deno.land/install.sh | sh

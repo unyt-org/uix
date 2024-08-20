@@ -41,7 +41,7 @@ This is why UIX ships with integrated features such as:
 
 To install UIX, you first need to install the [Deno](https://docs.deno.com/runtime/manual/getting_started/installation) runtime on your system.
 
-## Install Deno
+### Install Deno
 
 Install the Deno runtime using one of the terminal commands below.
 
@@ -85,7 +85,7 @@ $ brew install uix
 
 #### Windows / other systems -->
 
-## Install UIX
+### Install UIX
 
 After having the deno runtime ready, you can install UIX on your system using the `deno install` command below:
 

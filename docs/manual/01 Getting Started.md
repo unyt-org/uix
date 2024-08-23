@@ -41,6 +41,10 @@ This is why UIX ships with integrated features such as:
 
 To install UIX, you first need to install [Deno](https://docs.deno.com/runtime/manual/getting_started/installation).
 
+> [!WARNING]
+> Due to a [bug in V8](https://chromium-review.googlesource.com/c/v8/v8/+/5807477), UIX currently only works with Deno version 1.45.5.<br>
+> Please change the version of your deno installation with `deno upgrade --version 1.45.5`
+
 <!-- #### Linux / MacOS
 
 ```bash
@@ -65,8 +69,13 @@ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix htt
 
 Make sure to restart your terminal or code editor after installation to make the `uix` command available.
 
+<!--
 > [!WARNING]
 > UIX is only supported for Deno versions > 1.40.0
+>
+-->
+
+
 
 ## Creating a new UIX project
 

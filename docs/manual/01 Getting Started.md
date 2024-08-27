@@ -69,6 +69,11 @@ curl -fsSL https://deno.land/install.sh | sh
 </unyt-tab>
 </unyt-tabs>
 
+> [!NOTE]
+> Please ensure that the environment variables `PATH` and `DENO_INSTALL` are
+> set as instructed by the Deno installer. For the following steps to work
+> correctly, they are required.
+
 <!-- #### Linux / MacOS
 
 ```bash

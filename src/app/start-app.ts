@@ -21,8 +21,8 @@ const logger = new Datex.Logger("UIX App");
  */
 export async function startApp(app: {domains:string[], hostDomains: string[], options?:normalizedAppOptions, base_url?: URL}, options:appOptions = {}, original_base_url?:string|URL) {
 
-	// enable network interface
-	await import("../server/network-interface.ts");
+	// // enable network interface (TODO: remove, is now in datex-core-legacy)
+	// await import("../server/network-interface.ts");
 
 	const frontends = new Map<string, FrontendManager>()
 

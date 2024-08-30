@@ -1407,10 +1407,16 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     /** called when a route is requested from the component, return element matching the route identifier or true if route was handled */
     protected onRoute?(identifier:string, is_initial_route:boolean):Promise<void|Component|boolean>|void|Component|boolean
 
-    /** called when a new child is appended - currently only working for child components */
+    /** 
+     * called when a new child is appended - currently only working for child components
+     * @deprecated
+     */
     protected onChildAdded(child:ChildElement){}
 
-    /** called when a child is removed - currently only working for child components */
+    /** 
+     * called when a child is removed - currently only working for child components
+     * @deprecated
+     */
     protected onChildRemoved(child:ChildElement){}
 
     /** called when a child is focused */

@@ -39,7 +39,44 @@ This is why UIX ships with integrated features such as:
 
 ## Installation
 
-To install UIX, you first need to install [Deno](https://docs.deno.com/runtime/manual/getting_started/installation).
+To install UIX, you first need to install the [Deno](https://docs.deno.com/runtime/manual/getting_started/installation) runtime on your system.
+
+### Install Deno
+
+Install the Deno runtime using one of the terminal commands below.
+
+<unyt-tabs>
+<unyt-tab label="macOS" default>
+
+```sh
+curl -fsSL https://deno.land/install.sh | sh
+```
+
+</unyt-tab>
+<unyt-tab label="Windows">
+
+```powershell
+irm https://deno.land/install.ps1 | iex
+```
+
+</unyt-tab>
+<unyt-tab label="Linux">
+
+```sh
+curl -fsSL https://deno.land/install.sh | sh
+```
+
+</unyt-tab>
+</unyt-tabs>
+
+> [!NOTE]
+> Please ensure that the environment variables `PATH` and `DENO_INSTALL` are
+> set as instructed by the Deno installer. For the following steps to work
+> correctly, they are required.
+
+> [!WARNING]
+> Due to a [bug in V8](https://chromium-review.googlesource.com/c/v8/v8/+/5807477), UIX currently only works with Deno version 1.45.5.<br>
+> Please change the version of your deno installation with `deno upgrade --version 1.45.5`
 
 <!-- #### Linux / MacOS
 
@@ -57,7 +94,9 @@ $ brew install uix
 
 #### Windows / other systems -->
 
-Now, you can install UIX with `deno install`:
+### Install UIX
+
+After having the deno runtime ready, you can install UIX on your system using the `deno install` command below:
 
 ```bash
 deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
@@ -65,18 +104,22 @@ deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix htt
 
 Make sure to restart your terminal or code editor after installation to make the `uix` command available.
 
+<!--
 > [!WARNING]
 > UIX is only supported for Deno versions > 1.40.0
+>
+-->
 
-## Creating a new UIX project
 
-You can create a new UIX project by running
+
+## Create a new UIX project
+
+You can initialize a new UIX project by running
 ```bash
 uix --init
 ```
 
-This creates a new [base project](https://github.com/unyt-org/uix-base-project.git) in the current directory
-and starts the app locally.
+This creates a new [base project](https://github.com/unyt-org/uix-base-project.git) in the current directory and starts the app locally.
 
 > [!NOTE]
 > We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for developing UIX apps.<br/>

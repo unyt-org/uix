@@ -814,7 +814,7 @@ export async function generateHTMLPage({
 	}
 
 	// TODO: add condition if (add_importmap), when polyfill for declarative shadow root is no longer required
-	if (includeImportMap) metaScripts += `<script type="importmap">\n${JSON.stringify(provider.getRelativeImportMap(), null, 4)}\n</script>`;
+	if (includeImportMap) metaScripts += `<script type="importmap">\n${JSON.stringify(await provider.getRelativeImportMap(), null, 4)}\n</script>`;
 	
 	let global_style = '';
 	// stylesheets

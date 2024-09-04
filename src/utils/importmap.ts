@@ -27,21 +27,71 @@ export class ImportMap {
 		return JSON.stringify(onlyImports ? {imports:this.imports, scopes: this.scopes} : this.#json, null, '    ')
 	}
 
+	#pinnedVersions:Record<string,string> = {};
+	#libVersions:Record<string,string|undefined> = {};
+
 	/**
 	 * imports without temporary imports
+	 * pinned versions are resolved
 	 */
 	get static_imports(){
 		const imports = {...this.#json.imports};
-		for (const key of Object.keys(imports)) {
+		for (const specifier of Object.keys(imports)) {
 			// exclude .eternal.ts imports
-			if (key.endsWith(".eternal.ts") || key.endsWith(".eternal.tsx") || key.endsWith(".eternal.js") || key.endsWith(".eternal.jsx") || key.endsWith(".eternal.mts") || key.endsWith(".eternal.mjs")) 
-				delete imports[key];
+			if (specifier.endsWith(".eternal.ts") || specifier.endsWith(".eternal.tsx") || specifier.endsWith(".eternal.js") || specifier.endsWith(".eternal.jsx") || specifier.endsWith(".eternal.mts") || specifier.endsWith(".eternal.mjs")) 
+				delete imports[specifier];
 			// exclude temp entries
-			if (this.isEntryTemporary(key)) delete imports[key];
+			if (this.isEntryTemporary(specifier)) delete imports[specifier];
+			// pinned versions
+			if (specifier in this.#pinnedVersions) imports[specifier] = this.#pinnedVersions[specifier];
 		}
 		return imports;
 	}
 
+	/**
+	 * resolves pinned versions (unyt CDNs)
+	 */
+	async resolvePinnedVersions() {
+		for (const [specifier, url] of Object.entries(this.static_imports)) {
+			// only if url
+			if (typeof url == "string" && (url.startsWith("https://") || url.startsWith("http://"))) {
+				// get path (https://domain/path/VERSION.ts)
+				const path = new Path(url);
+				const lib = path.pathname.split("/")[1];
+				if (!(lib in this.#libVersions)) {
+					// get version from VERSION.ts module
+					try {
+						const versionPath = new Path(path.origin).getChildPath(lib + "/VERSION.ts");
+						const version = (await import(versionPath.toString())).default;
+
+						// ignore non-semver versions
+						if (version.match(/\d+\.\d+\.\d+/)) {
+							this.#libVersions[lib] = version;
+							logger.debug("using pinned version " + version + " for " + lib);
+						}
+						else this.#libVersions[lib] = undefined;
+					}
+					catch {
+						this.#libVersions[lib] = undefined;
+					}
+				} 
+
+				// set pinned version for URL
+				if (this.#libVersions[lib]) {
+					this.#pinnedVersions[specifier] = url.replace(/(?<=https?:\/\/[^/]*\/)[^/]*/, (v)=> {
+						return v.replace(/@.*/, '') + "@" + this.#libVersions[lib];
+					})
+				}
+			}
+		}
+	}
+
+	#initialized = false;
+	async init() {
+		if (this.#initialized) return;
+		this.#initialized = true;
+		await this.resolvePinnedVersions();
+	}
 
 	#readonly = true;
 	#json: {imports:Record<string,string>, scopes?:Record<string,Record<string,string>>};

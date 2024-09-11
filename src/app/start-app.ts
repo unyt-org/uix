@@ -37,7 +37,6 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 
 
 	// enable experimental features
-	if (app.options?.experimental_features.includes("protect-pointers")) Datex.Runtime.OPTIONS.PROTECT_POINTERS = true;
 	if (app.options?.experimental_features.includes("indirect-references")) Datex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;
 
 	// for unyt log

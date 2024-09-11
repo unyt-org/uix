@@ -595,39 +595,9 @@ export class Transpiler {
 
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
-        // return this.transpileToJSDenoEmit(ts_dist_path)
-        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.experimental_features.includes('embedded-reactivity'));
+        return this.transpileToJSSWC(ts_dist_path, src_path, true);
     }
   
-    private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
-        const {transpile} = await import("https://deno.land/x/ts_transpiler@v0.0.2/mod.ts");
-
-        const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
-        try {
-            const jsxOptions = ts_dist_path.hasFileExtension("tsx") ? {
-                jsx: "react-jsx",
-                jsxImportSource: "uix"
-            } as const : null;
-            // TODO: remove jsxAutomatic:true, currently only because of caching problems
-            const transpiled = await transpile(await Deno.readTextFile(ts_dist_path.normal_pathname), {
-                inlineSourceMap: !!this.#options.sourceMaps, 
-                inlineSources: !!this.#options.sourceMaps,
-                ...jsxOptions
-            });
-            if (transpiled != undefined) await Deno.writeTextFile(js_dist_path.normal_pathname, 
-                this.#options.minifyJS ? 
-                    await this.minifyJS(transpiled) : 
-                    transpiled
-                );
-            else throw "unknown error"
-        }
-        catch (e) {
-            logger.error("could not transpile " + ts_dist_path + ": " + e.message??e);
-        }
-       
-        return js_dist_path;
-    }
-
     public static async getJusix(update = false) {
         const cacheDir = UIX.cacheDir.asDir().getChildPath("jusix").asDir();
         cacheDir.fsCreateIfNotExists();

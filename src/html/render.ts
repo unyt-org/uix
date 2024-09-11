@@ -713,10 +713,8 @@ export async function generateHTMLPage({
 			const {f} = (await import("${provider.resolveImport("datex-core-legacy").toString()}"));` 
 			// await new Promise(resolve=>setTimeout(resolve,5000))
 		
-		if (app.options?.experimental_features.includes("frontend-navigation")) files += `const {frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing-new.ts").toString()}"));`
-		else files += `const {Routing: frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts").toString()}"));`
+		files += `const {frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts").toString()}"));`
 
-		if (app.options?.experimental_features.includes("protect-pointers")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
 		if (app.options?.experimental_features.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
 
 

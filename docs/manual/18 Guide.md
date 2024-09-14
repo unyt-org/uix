@@ -1,19 +1,18 @@
 # The UIX Guide
 
-This guide conveys some important concepts and paradigms for developing applications with UIX/DATEX.
-We recommend that you read this guide before starting to develop a UIX application to fully grasp the concepts and possibilities of the framework. 
+This guide introduces some important concepts and paradigms for developing applications with UIX/DATEX.
+We recommend that you read this guide before starting to develop a UIX application to fully understand the concepts and capabilities of the framework. 
 
 ## Storage
 
-In UIX, you don't need to think a lot about how and where to store data.
+In UIX, you don't have to think much about how and where to store data.
 UIX provides an abstraction layer that essentially treats persistent data the same way as in-memory data.
 
-The most important point to take away is that you don't need to think about a database architecture or serialization strategy
-when building a UIX app - with eternal pointers, this is all been taken care of by UIX.
+The most important point to take away is that you don't have to think about a database architecture or serialization strategy when building a UIX app - with eternal pointers, UIX takes care of all that.
 
 ### Eternal modules
-In UIX, you can just write your application code as if the application runs forever and all your data is available in application memory.
-You need to store a list of user data? Just think about how you would normally do this in JavaScript:
+In UIX, you can simply write your application code as if the application would run forever and all your data would be available in application memory.
+Need to store a list of user data? Just think about how you would normally do that in JavaScript:
 
 ```tsx
 // file: data.ts

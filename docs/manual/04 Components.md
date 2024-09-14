@@ -1,6 +1,6 @@
 # Components
 
-## Template components
+## Anonymous component templates
 The easiest way to define components in UIX is to use templates.
 With anonymous component templates, you can still get behavior and stored states, but you don't get any advanced component features like
 lifecycle handlers and utility methods.
@@ -60,7 +60,7 @@ const MyComponent = template<{background: 'red'|'green', countstart: number}>(({
            </div>;
 });
 
-// create element:
+// instantiate:
 export default
     <MyComponent background="green" countstart={42}>
         <div>Child 1</div>
@@ -84,15 +84,13 @@ const CustomComponent = blankTemplate<{color:string}>(({color, style, id, childr
     <div id={id} style={style}>
         <h1 style={{color}}>Header</h1>{...children}
     </div>
-)
+);
 
-// create:
-const comp = (
-<CustomComponent id="c1" color="blue">
-     <div>first child</div>
-     <div>second child</div>
-</CustomComponent>
-)
+// instantiate:
+const comp = <CustomComponent id="c1" color="blue">
+    <div>first child</div>
+    <div>second child</div>
+</CustomComponent>;
 ```
 
 This behaviour is more similar to other JSX frameworks. You can also just use a normal function instead of `blankTemplate` (the `blankTemplate` is just a wrapper around a component function with some additional type features).
@@ -103,21 +101,20 @@ Keep in mind that UIX always returns the `children` property as an array, even i
 function CustomFunctionComponent({color, id, children}: {id:string, children:JSX.Element[], color:string}) {
     return <div id={id} style={{color}}>
         {...children}
-    </div>
-}
+    </div>;
+};
 
-// create:
-const comp = (
-<CustomFunctionComponent id="c1" color="blue">
+// instantiate:
+const comp = <CustomFunctionComponent id="c1" color="blue">
      <div>first child</div>
      <div>second child</div>
-</CustomFunctionComponent>
+</CustomFunctionComponent>;
 ```
 
 
-## Creating custom component classes
+## Custom class components
 
-You can create custom UIX components by extending `Component` or another UIX Component class and register it by decorating the class with `@template`.
+You can create custom UIX components by extending `Component` or another UIX component class and registering it by decorating the class with `@template`.
 
 
 ```typescript
@@ -127,20 +124,16 @@ import { Component } from "uix/components/Component.ts";
 // register the component and set default options
 @template()
 class MyCustomComponent extends Component {
-
     @content helloText = "Hello from my custom component"
-
 }
 ```
 
-## Creating component classes based on templates
+## Class template components
 
-Templates defined with `template` can also be used as a base layout for component classes - 
-just use the template returned from `template` as a class decorator.
+Templates defined with `template` can also be used as a base layout for component classes - just use the template returned by `template` as a class decorator.
 
-*With the `@id` decorator, component properties can be bound to the element inside the component which has
-an id that equals the property name.
-When the property is overriden, the element with the matching id is also replaced with the new property.*
+*With the `@id` decorator, component properties can be bound to the element inside the component that has an id that matches the property name.
+When the property is overridden, the element with the matching id is also replaced with the new property.*
 
 ```tsx
 // using a static template
@@ -155,10 +148,11 @@ class MyCustomComponent extends Component {
     @id description!: HTMLElement
 
     override onCreate() {
-        this.description.innerText = "Some description text..."
+        this.description.innerText = "Some description text...";
     }
 }
 ```
+
 ```tsx
 // using a template generator
 @template<{title:string}>(({title}) =>
@@ -169,10 +163,11 @@ class MyCustomComponent extends Component {
 )
 class MyCustomComponent extends Component<{title:string, additionalOption:number}> {
     override onCreate() {
-        console.log("options", this.options.title, this.options.additionalOption)
+        console.log(this.options.title, this.options.additionalOption)
     }
 }
 ```
+
 ```tsx
 // using a pre-defined template
 const CoolDiv = template(<div>cool</div>);
@@ -184,9 +179,9 @@ class MyCustomComponent extends Component<{title:string}> {
 ```
 
 
-## Component children
+## Children handling
 
-Children can be added to components like to any HTML Element:
+Children can be added to components just like any other HTML element:
 ```tsx
 // add children with DOM APIs
 const comp1 = new CustomComponent();
@@ -196,9 +191,9 @@ comp1.append("text content")
 // add children with JSX
 const comp2 = 
     <CustomComponent>
-        <div>child 1</div>
-        <div>child 2</div>
-    </CustomComponent>
+        <div>Child 1</div>
+        <div>Child 2</div>
+    </CustomComponent>;
 ```
 
 
@@ -274,7 +269,8 @@ const parent =
 
 
 ```typescript
-@Component class CustomComponent extends UIX.BaseComponent {
+@Component
+class CustomComponent extends Component {
 
     // called when component is constructed
     onConstruct() {}
@@ -290,11 +286,10 @@ const parent =
 
     // called after onAnchor when the component is displayed in a browser context
     onDisplay() {}
-
 }
 
 ```
 
-## Styling
+## Component styling
 
 See [Styles and Themes](./12%20Style%20and%20Themes.md)

@@ -27,7 +27,7 @@ To learn more about DATEX Script, check out the [DATEX documentation](https://do
 
 ### General Options
 
-The following options provide some general information or behaviour of the app.
+The following options provide some general information or behavior of the app.
 
 * `name`: *(text)* - The name of the app
 * `description`: *(text)* - Short description for the app

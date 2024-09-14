@@ -126,7 +126,7 @@ export class FrontendRouter {
 		// TODO: currently only displayed if type not correctly mapped (TypedValue fallback)
 		else if (!(content instanceof Datex.TypedValue)) { //if (content instanceof Element || content instanceof DocumentFragment) {
 			document.body.innerHTML = "";
-			// TODO: handle all content correctly (same behaviour as on backend)
+			// TODO: handle all content correctly (same behavior as on backend)
 			domUtils.append(document.body, content as any) // add to document
 		}
 		else {

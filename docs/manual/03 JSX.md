@@ -108,7 +108,7 @@ const myDiv = <div class={myClass}></div>
 myClass = "abc"; // myDiv class is still "xyz"
 ```
 
-To achieve reactive behaviour, you can pass in a `Ref` value:
+To achieve reactive behavior, you can pass in a `Ref` value:
 ```tsx
 let myClass = $$("xyz");
 const myDiv = <div class={myClass}></div>

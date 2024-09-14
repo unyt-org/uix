@@ -50,8 +50,8 @@ export function register() {
 ```
 
 <br/>
-Per default, all of those functions behave as you would expect in any JavaScript code.
-But UIX can extend this behaviour, as you will see in the following examples.
+By default, all of these functions behave as you would expect in any JavaScript code.
+But UIX can extend this behavior, as you will see in the following examples.
 
 
 ### Scenario 1: Stationary exported functions
@@ -109,14 +109,14 @@ In this example, `"button was clicked"` is logged on the backend when the button
 
 ### Scenario 3: Event handlers in the frontend context
 
-Now that we understand the default behaviour of functions, lets take a look at a
+Now that we understand the default behavior of functions, lets take a look at a
 different scenario: 
 
 > What if we want to execute the `onclick` handler from the last
 > example in the browser, despite the button being created and rendered in the
 > backend?
 
-There are many reasons for such a behaviour: Maybe we want to show an alert to the user,
+There are many reasons for such a behavior: Maybe we want to show an alert to the user,
 or we want to download a file, or update some DOM content on the frontend, etc.
 
 To achieve this, we only need to make one small change in our example code: replacing

@@ -364,7 +364,7 @@ The abstract `EntrypointProxy` class has two methods that can be implemented:
 abstract class EntrypointProxy implements RouteHandler {
     /**
      * This method is called before a route is resolved by the entrypoint
-     * It can be used to implement a custom routing behaviour
+     * It can be used to implement a custom routing behavior
      * for some or all routes, overriding the entrypoint routing
      * 
      * The returned value replaces the entrypoint, if not null

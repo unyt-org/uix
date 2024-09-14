@@ -12,7 +12,7 @@ export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
  * 
  * In standalone mode, the function is always called on the backend endpoint.
  * 
- * This is the default behaviour when setting event listeners in JSX.
+ * This is the default behavior when setting event listeners in JSX.
  * 
  * - uses datex-over-http when DATEX is not available
  * - parameters must be json compatible

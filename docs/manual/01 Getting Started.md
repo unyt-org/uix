@@ -184,7 +184,7 @@ With the `--port` argument, the UIX CLI lets you specify a custom port on which 
 
 > [!WARNING]
 > Note that HTTP cookies are shared between all localhost applications, regardless of port.
-> This can lead to unexpected behaviour when opening multiple apps that are running on different ports in the same browser (e.g. client endpoints and theme data might get overridden).
+> This can lead to unexpected behavior when opening multiple apps that are running on different ports in the same browser (e.g. client endpoints and theme data might get overridden).
 
 
 ## Helpful articles

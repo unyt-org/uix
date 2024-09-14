@@ -1131,7 +1131,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
     private route_initialized = false;
 
-    // implements resolveRoute per default, can be overriden for more custom routing behaviour
+    // implements resolveRoute per default, can be overriden for more custom routing behavior
     public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
         const {Path} = await import("uix/utils/path.ts");
 

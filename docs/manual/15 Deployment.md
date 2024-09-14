@@ -6,7 +6,7 @@ UIX provides options for automatic deployment with optional git integration.
 The *location* of an endpoint describes the actual physical of a backend endpoint in a UIX app.
 Per default, the location of a backend endpoint is the device where the UIX app is started.
 
-This default behaviour can be changed by defining a `location` property in the backend `.dx` file.
+This default behavior can be changed by defining a `location` property in the backend `.dx` file.
 
 Besides the default local location, 
 there are two other possible endpoint location types:
@@ -50,7 +50,7 @@ With this example configuration, every time you start your app by running `uix`,
 it will get deployed on `@+app-host-eu2`.
 
 To still run the app locally during development and
-get a fine-grained control for the behaviour in different stages,
+get a fine-grained control for the behavior in different stages,
 you can use the `stage` helper function from `#public.uix`.
 It allows you to select a value for `endpoint`/`location`/`domain` etc.
 depending on the current stage.

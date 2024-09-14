@@ -376,7 +376,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		resolved.content = new Response(entrypointData.entrypoint.readable)
 		// TODO: get mime type from FsFile
 		logger.warn("Mime type cannot be determined for FsFile");
-		// cors headers (TODO: more general way to define cors behaviour)
+		// cors headers (TODO: more general way to define cors behavior)
 		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
 		resolved.content.headers.set("Access-Control-Allow-Headers", "*");
 	}
@@ -388,7 +388,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		const mimeType = mime.getType(entrypointData.entrypoint.path.name);
 
 		resolved.content = new Response(file.readable)
-		// cors headers (TODO: more general way to define cors behaviour)
+		// cors headers (TODO: more general way to define cors behavior)
 		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
 		resolved.content.headers.set("Access-Control-Allow-Headers", "*");
 		if (mimeType) resolved.content.headers.set("Content-Type", mimeType);

@@ -93,7 +93,7 @@ const comp = <CustomComponent id="c1" color="blue">
 </CustomComponent>;
 ```
 
-This behaviour is more similar to other JSX frameworks. You can also just use a normal function instead of `blankTemplate` (the `blankTemplate` is just a wrapper around a component function with some additional type features).
+This behavior is more similar to other JSX frameworks. You can also just use a normal function instead of `blankTemplate` (the `blankTemplate` is just a wrapper around a component function with some additional type features).
 
 Keep in mind that UIX always returns the `children` property as an array, even if just a single child was provided in JSX.
 ```tsx

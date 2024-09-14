@@ -56,40 +56,32 @@ But UIX can extend this behavior, as you will see in the following examples.
 
 ### Scenario 1: Stationary exported functions
 
-Per default, all functions in a UIX app are stationary, meaning that they only exist
-in their origin context and cannot be transferred to another endpoint.
+Per default, all functions in a UIX app are stationary, meaning that they exist only in their origin context and cannot be transferred to another endpoint.
 
-However, they can still be *called* from other endpoints - the function execution just always
-happens in the origin context.
+However, they can still be *called* from other endpoints - the function execution just always takes place in the original context.
 
 As a simple example, let's call an exported backend function from the client (frontend):
-```ts
-/// file: backend/entrypoint.ts
+```ts title="backend/entrypoint.ts" icon="fa-file"
 export function callMe() {
-    return "thanks"
+    return "thanks";
 }
 ```
-```ts
-/// file: frontend/entrypoint.ts
-import {callMe} from "backend/entrypoint.ts";
-const result = await callMe() // "thanks"
+```ts title="frontend/entrypoint.ts" icon="fa-file"
+import { callMe } from "backend/entrypoint.ts";
+const result = await callMe(); // "thanks"
 ```
 
-This is nearly identical to the more trivial example of 
-importing a function from a frontend module inside another frontend module.
+This is almost identical to the more trivial example of 
+importing a function from one frontend module into another frontend module.
 The only difference is the additional `await` that is required for all functions called from an external context.
 
 ### Scenario 2: Stationary event handlers
 
-When using functions as callbacks for events on HTML elements, they
-are also stationary per default and are executed inside their origin context.
+When using functions as callbacks for events on HTML elements, they are also stationary per default and are executed inside their origin context.
 
-This means that when an event handler is defined on a HTML element exported from a backend entrypoint,
-it is still executed on the backend entrypoint, also when the element is displayed in the browser (frontend context):
+This means that if an event handler is defined on an HTML element exported from a backend entrypoint, it will still be executed on the backend entrypoint, even when the element is displayed in the browser (frontend context):
 
-```tsx
-/// file: backend/entrypoint.ts
-
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 const counter = $$(0)
 
 export default 
@@ -98,7 +90,7 @@ export default
         counter.val++
     }}>
         I was clicked {counter} times
-    </button>
+    </button>;
 ```
 In this example, `"button was clicked"` is logged on the backend when the button is clicked in the browser.
 

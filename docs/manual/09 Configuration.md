@@ -1,15 +1,12 @@
 # App Configuration
 
-A UIX app can be configured with 2 types of files: An `app.dx` file specifying general options for the
-entire app, and individual `.dx` files located in frontend or backend directories that specify options for
-the specific endpoints.
+A UIX app can be configured with 2 types of files: An `app.dx` file that specifies general options for the entire app, and individual `.dx` files located in frontend or backend directories that specify options for the specific endpoints.
 
 ## DATEX Script files (.dx)
 
-UIX uses DATEX Script files as configuration files.
+UIX uses DATEX script files as its configuration files.
 
-DATEX Script is a superset of JSON. It also supports URLs, relative paths and custom types.
-Single- and multiline comments can be used.
+DATEX Script is a superset of JSON. It also supports URLs, relative paths and user-defined types. Single- and multiline comments can be used.
 
 Example:
 ```datex
@@ -23,7 +20,7 @@ Example:
 */
 ```
 
-To learn more about DATEX Script, check out the [DATEX docs](https://docs.unyt.org/manual/datex/introduction).
+To learn more about DATEX Script, check out the [DATEX documentation](https://docs.unyt.org/manual/datex/introduction).
 
 
 ## The app.dx file

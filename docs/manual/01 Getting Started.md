@@ -89,9 +89,9 @@ This will create a new [UIX Base Project](https://github.com/unyt-org/uix-base-p
 > For syntax highlighting and language support (DATEX, Typescript, Deno), the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> can be used.
 
 
-## Running your UIX app
-To run your UIX app, make sure the [app.dx](./09%20Configuration.md#the-app-dx-file) configuration file exists.
-Execute the `uix` command in the root directory of your application (where the `app.dx` is located) to initialize and run the project.
+## The UIX CLI
+To launch your UIX application, make sure that a [app.dx](./09%20Configuration.md#the-app-dx-file) configuration file exists in the project root.
+Execute the `uix` command in the root directory of the application to initialize and run the project.
 
 ```bash
 uix
@@ -120,29 +120,29 @@ You can pass the following args to the UIX command line utility:
 * `--unstable`                  - Enable unstable deno features
 
 
-To run your UIX project without installing the UIX CLI, you can alternatively run the following command in the project root directory:
+To run your UIX project without installing the UIX CLI first, you can alternatively run the following command in the project root directory:
 ```bash
 deno run -A --import-map https://cdn.unyt.org/importmap.json https://cdn.unyt.org/uix/run.ts
 ```
 
-## Architecture of a UIX Project
-In a UIX project, frontend and backend source code or other resources are combined in one single project.
+## UIX Project Architecture
+UIX projects combine frontend and backend source code with other resources into a single code base.
 
 ```
 .
 └── uix-app/
     ├── backend/
-    │   ├── .dx                 // Config file for the backend endpoint
-    │   └── entrypoint.tsx      // Backend entrypoint
-    ├── common/                 // Common modules accessible from backend and frontend
+    │   ├── .dx               // Backend config file
+    │   └── entrypoint.tsx    // Backend entrypoint
+    ├── common/               // Shared modules for backend and frontend
     ├── frontend/
-    │   ├── .dx                 // Config file for the frontend endpoint
-    │   └── entrypoint.tsx      // Frontend entrypoint
-    ├── app.dx                  // App config file
-    └── deno.json               // Deno config file
+    │   ├── .dx               // Frontend config file
+    │   └── entrypoint.tsx    // Frontend entrypoint
+    ├── app.dx                // App config file
+    └── deno.json             // Deno config file
 ```
 
-Per default, all files in the `frontend` directory are only available in browser clients (frontend endpoints), while files in the `backend` directory are only available for backend endpoints (Deno runtime).
+By default, all files in the `frontend` directory are only available to browser clients *(frontend endpoints)*, while files in the `backend` directory are only available to backend endpoints *(Deno runtime)*.
 
 With UIX [Cross-Realm Imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports), TypeScript/JavaScript/DATEX modules from the backend can be imported and used inside frontend modules.
 

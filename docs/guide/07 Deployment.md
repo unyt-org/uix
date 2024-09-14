@@ -61,3 +61,5 @@ Follow these steps to launch your UIX app in minutey.
 
 ### How does that work?
 *Alright. Some technical background on UIX Docker Hosts.*
+
+The Docker Host instance installed as a service on your server will startup a persistent Deno process. The Docker Hosts joins the [Supranet](https://unyt.org/supranet) using the configured endpoint id and exposes a public DATEX interface called `Container`.

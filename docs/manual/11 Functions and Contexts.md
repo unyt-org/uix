@@ -95,25 +95,19 @@ export default
 In this example, `"button was clicked"` is logged on the backend when the button is clicked in the browser.
 
 > [!NOTE]
-> If the exact same entrypoint module was a frontend module, the logs would be shown in the frontend,
-> since the origin context is also the frontend context.
+> If the exact same entrypoint module was a frontend module, the logs would be shown in the frontend, since the origin context is also the frontend context.
 
 
 ### Scenario 3: Event handlers in the frontend context
 
-Now that we understand the default behavior of functions, lets take a look at a
-different scenario: 
+Now that we understand the default behavior of functions, let us look at another scenario: 
 
-> What if we want to execute the `onclick` handler from the last
-> example in the browser, despite the button being created and rendered in the
-> backend?
+> What if we want to execute the `onclick` handler from the last example in the browser, even though the button was created and rendered in the backend?
 
-There are many reasons for such a behavior: Maybe we want to show an alert to the user,
-or we want to download a file, or update some DOM content on the frontend, etc.
+There are many reasons for this behavior: Maybe we want to show an alert to the user, or we want to download a file, or we want to update some DOM content on the frontend, etc.
 
-To achieve this, we only need to make one small change in our example code: replacing
-the `onclick` attribute with a *labeled* `onclick:frontend` attribute.
-This tells UIX that the event handler function must be run in the frontend context:
+To achieve this, we just need to make a small change in our example code: replace the `onclick` attribute with a *labeled* `onclick:frontend` attribute.
+This tells UIX that the event handler function must be executed in the frontend context:
 
 ```ts
 /// file: backend/entrypoint.ts

@@ -64,9 +64,8 @@ This is why UIX ships with integrated features such as:
 15. [Deployment](./docs/manual/15%20Deployment.md)
 16. [HTTP Tunneling](./docs/manual/16%20HTTP%20Tunneling.md)
 17. [Plugins](./docs/manual/17%20Plugins.md)
-18. [Guide](./docs/manual/18%20Guide.md)
-19. [Rendering](./docs/manual/19%20Rendering.md)
-20. [App Communication](./docs/manual/20%20App%20Communication.md)
+18. [Rendering](./docs/manual/18%20Rendering.md)
+19. [App Communication](./docs/manual/19%20App%20Communication.md)
 
 ## Examples
 Feel free to browse a collection of UIX projects on [uix.unyt.org/templates](https://uix.unyt.org/templates).

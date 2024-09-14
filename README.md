@@ -8,8 +8,7 @@
 
 UIX is an open-source full-stack framework for developing reactive web apps with *restorable and shared state*.
 UIX runs on a [deno](https://docs.deno.com/runtime/manual) backend and 
-supports both *single- and multi page* applications 
-with frontend or server-side rendering and hydration.
+supports both *single- and multi page* applications with frontend or server-side rendering and hydration.
 
 
 The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity and cross-device data exchange*.

@@ -63,27 +63,30 @@ curl -fsSL https://deno.land/install.sh | bash
 </unyt-tab>
 </unyt-tabs>
 
-> [!NOTE]
-> Please ensure that the system environment variable `PATH` includes the `~/.uix/bin` folder as instructed by the UIX installer. Restarting your terminal or IDE after installation might be helpful to make the `uix` command available.
-
 After installation, you should have the [Deno for UIX](https://github.com/unyt-org/deno) and [UIX](https://github.com/unyt-org/uix) executables available on your system path. You can verify the installation by running:
 
 ```shell
 uix --version
 ```
 
+
+> [!NOTE]
+> Please ensure that the system environment variable `PATH` includes the `~/.uix/bin` folder as instructed by the UIX installer. Restarting your terminal or IDE after installation might be helpful to make the `uix` command available.
+
+Please make sure to have the [`git`](https://git-scm.com/downloads) utility installed on your system since it is used for the deployment of UIX apps.
+
 ## Create a new UIX project
 
 You can initialize a new UIX project by running
 ```bash
-uix --init
+uix --init <PROJECT_NAME>
 ```
 
-This creates a new [base project](https://github.com/unyt-org/uix-base-project.git) in the current directory and starts the app locally.
+This will create a new [UIX Base Project](https://github.com/unyt-org/uix-base-project.git) in the given directory and start the application locally.
 
 > [!NOTE]
-> We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for developing UIX apps.<br/>
-> For syntax highlighting and language support (DATEX, Typescript, Deno), the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> is required.
+> We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for UIX development.<br/>
+> For syntax highlighting and language support (DATEX, Typescript, Deno), the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> can be used.
 
 
 ## Running your UIX app

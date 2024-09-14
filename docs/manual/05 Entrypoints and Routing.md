@@ -41,35 +41,35 @@ The route `/home/about` is resolved on the *backend* to `About us`.
 # Entrypoint values
 
 ## HTML elements
-HTML Elements are directly appended to the document body. They can be created with
-normal DOM APIs (`document.createElement()`) or with JSX syntax:
+HTML elements are appended directly to the body of the document. They can be created using the built-in DOM APIs (`document.createElement()`) or using JSX syntax:
 ```tsx
 import { Entrypoint } from "uix/html/entrypoints.ts";
 export default <div>Content</div> satisfies Entrypoint;
 ```
 
-Like other entrypoint values, HTML Elements are DATEX compatible and their content can be synchronized.
+Like other entrypoint values, HTML elements are DATEX compatible and their content can be synchronized.
 Keep in mind that the content is not updated when it is provided with [`renderStatic`](./08%20Rendering%20Methods.md#static-rendering).
 
 ```tsx
 const counter = $$(0);
 setInterval(()=>counter.val++,1000);
 
-export default <div>Count: {counter}</div> satisfies Entrypoint
+export default <div>Count: {counter}</div> satisfies Entrypoint;
 ```
 
 ## Strings
-Strings are displayed as text appended to the document body (color and background color depends on the current App theme).
+Strings are displayed as text appended to the document body (color and background color depend on the current app theme).
 
 Examples:
 ```typescript
-export default "Hi World" satisfies Entrypoint
+export default "Hi World" satisfies Entrypoint;
 ```
 ```typescript
 const content = $$("content");
 export default content satisfies Entrypoint;
-content.val = "new content"
+content.val = "new content";
 ```
+
 (If you only want to display plain text without a parent HTML document and CSS styles, you can use `provideContent("text content")`)
 
 
@@ -77,30 +77,29 @@ content.val = "new content"
 
 Route maps are simple JavaScript objects with route patterns as keys and entrypoint values as values.
 
-When a URL is requested from the backend or loaded on the frontend, the most specific (longest) matching route entry is resolved to an entrypoint
-value. 
+When a URL is requested from the backend or loaded on the frontend, the most specific (longest) matching route entry is resolved to an entrypoint value.
 
-A simple Route Map could look like this:
+A simple route map might look like this:
 ```tsx
 export default {
     '/home': <HomePage/>,
     '/about': <div>About us...</div>
-} satisfies Entrypoint
+} satisfies Entrypoint;
 ```
 
-Since Route Maps are valid `Entrypoint` values, multiple Route Maps can be nested. Because a route part must exactly match the route pattern key,
-the parent route key must end with `*` for the route to be followed.
+Since route maps are valid `Entrypoint` values, multiple route maps can be nested. Since a route part must match the route pattern key exactly, the parent route key must end with `*` for the route to be resolved recursively.
+
 ```tsx
 export default {
     '/articles/*': {
         '/first': 'First Article...',
         '/second': 'Second Article...'
     }
-} satisfies Entrypoint
+} satisfies Entrypoint;
 ```
 
 
-Besides the `*` syntax, many more patterns, like Regular Expressions, are supported in the Route Map keys. Internally, Route Maps use the [URLPattern API](https://developer.mozilla.org/en-US/docs/Web/API/URLPattern/URLPattern).
+Besides the `*` syntax, many more patterns, such as Regular Expressions, are supported in route map keys. Internally, route maps use the [URLPattern API](https://developer.mozilla.org/en-US/docs/Web/API/URLPattern/URLPattern).
 Matches can be accessed via the second argument in the callback function. The raw `URLPatternResult` can be acessed via `ctx.urlPattern`.
 
 ```tsx
@@ -111,7 +110,7 @@ export default {
     '/page/(1|2|3)/': (ctx) => `This is page ${ctx.urlPattern.pathname.groups[0]}` 
     // Fallback if nothing else matches
     '*': 'Not found' 
-} satisfies Entrypoint
+} satisfies Entrypoint;
 ```
 
 ## Route map filters
@@ -119,8 +118,7 @@ export default {
 Route Maps also accept special symbols, called *filters* as keys.
 They can be used to follow a specific route only if a certain condition is met.
 
-One important use cases for filters are the `RequestMethod` filters that can be used to
-route depending on the HTTP request method:
+An important use case for filters is the `RequestMethod` filter, which can be used to route depending on the HTTP request method:
 
 ```tsx
 import { RequestMethod } from "uix/routing/request-methods.ts"
@@ -132,14 +130,14 @@ export default {
         // Handle POST method triggered from login page    
         [RequestMethod.POST]: (ctx) => handleLogin(ctx)
     }
-} satisfies Entrypoint
+} satisfies Entrypoint;
 ```
 
 Custom route filters can be created with the `createFilter()` method from `"uix/routing/route-filter.ts"`:
 ```tsx
 
-const isAdmin = createFilter((ctx: Context) => ctx.privateData.isAdmin)
-const isPayingCustomer = createFilter((ctx: Context) => ctx.privateData.isPayingCustomer)
+const isAdmin = createFilter((ctx: Context) => ctx.privateData.isAdmin);
+const isPayingCustomer = createFilter((ctx: Context) => ctx.privateData.isPayingCustomer);
 
 export default {
     '/api/*': {
@@ -147,24 +145,22 @@ export default {
         [isPayingCustomer]: ctx => handleAPICall(ctx, {rateLimit: 1000}),
         '*' :               ctx => handleAPICall(ctx, {rateLimit: 10}),
     }
-} satisfies Entrypoint
+} satisfies Entrypoint;
 ```
 
-In this example, API calls are triggered with different rate limits depending on the type of
-the requesting client.
-The wildcard (`'*'`) selector can be used like with normal routes to provide a fallback behaviour
-if none of the other cases match.
+In this example, API calls are triggered with different rate limits depending on the type of the requesting client.
+The wildcard (`'*'`) selector can be used as with normal routes to provide fallback behavior if none of the other cases match.
 
 ## Blobs
-Blobs are directly displayed as files in the browser (Creating a file response with the correct mime type).
+Blobs are displayed directly as files in the browser (creating a file response with the correct mime type).
 
 Example:
 ```typescript
-export default datex.get('./image.png') satisfies Entrypoint
+export default datex.get('./image.png') satisfies Entrypoint;
 ```
 
 ## Filesystem files
-In a deno environment, `Deno.FSFile` values can be returned as entrypoint values. They create a file response with the correct mime type.
+In a Deno environment, `Deno.FSFile` values can be returned as entrypoint values. They create a file response with the correct mime type.
 
 The `provideFile()` function can also be used to return files from the local file system.
 
@@ -182,7 +178,7 @@ This can also be achieved with `provideRedirect()`:
 ```typescript
 import { provideRedirect } from "uix/html/entrypoint-providers.tsx";
 
-export default provideRedirect('https://example.unyt.app') satisfies Entrypoint
+export default provideRedirect('https://example.unyt.app') satisfies Entrypoint;
 ```
 
 
@@ -193,12 +189,12 @@ Virtual redirects are similar to normal redirects, but they directly return a re
 ```typescript
 import { provideVirtualRedirect } from "uix/html/entrypoint-providers.tsx";
 
-export default provideVirtualRedirect('/example/home') satisfies Entrypoint
+export default provideVirtualRedirect('/example/home') satisfies Entrypoint;
 ```
 
 ## Entrypoint functions
-In the example above, an Entrypoint Function is used to return custom content based on the context of a route.
-Entrypoint Functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>` 
+In the example above, an Entrypoint function is used to return custom content based on the context of a route.
+Entrypoint functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>`.
 
 Example:
 ```tsx

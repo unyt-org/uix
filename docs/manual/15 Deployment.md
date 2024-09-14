@@ -39,27 +39,23 @@ ssh -L 127.0.0.1:9229:127.0.0.1:9229 YOUR_USERNAME@YOUR_SERVER_DOMAIN
 
 **Example:**
 
-```datex
+```datex title="backend/.dx"
 endpoint: @+my_app,
 location: @+app-host-eu2,
 volumes:  [../data]
 ```
 
-With this example configuration, every time you start your app by running `uix`,
-it will get deployed on `@+app-host-eu2`.
+With this example configuration, every time you start your app by running `uix`, it will get deployed on `@+app-host-eu2`.
 
-To still run the app locally during development and
-get a fine-grained control for the behavior in different stages,
-you can use the `stage` helper function from `#public.uix`.
-It allows you to select a value for `endpoint`/`location`/`domain` etc.
-depending on the current stage.
+In order to run the application locally during development and get fine-grained control for the behavior in different stages, you can use the `stage` helper function from `#public.uix`.
+It allows you to select a value for `endpoint`/`location`/`domain` etc. depending on the current stage.
 
 > [!NOTE]
 > The stage of a UIX app execution can be set with the `--stage` argument.
 > The default stage is `dev`.
 
 ### Example
-```datex
+```datex title="backend/.dx"
 use stage from #public.uix;
 
 // set different endpoints for different stages
@@ -69,7 +65,7 @@ endpoint: stage {
     prod:       @+my_app_prod
 },
 
-// set remote docker host locations for 'staging'
+// set remote Docker host locations for 'staging'
 // and 'prod'. The default 'dev' stage has no assigned value 
 // and falls back to the default (running locally)
 location: stage {
@@ -81,7 +77,7 @@ location: stage {
 > [!NOTE]
 > When using remote Docker hosts, it is currently required that
 > your UIX app is available in a GitHub repository. Make sure
-> that all files are committed and all commits pushed.
+> that all files are committed and all commits are pushed.
 
 ### Local Dockers
 
@@ -107,7 +103,7 @@ Now, you can start your app like always with the `uix` command.
 
 The `git_deploy` [plugin](./17%20Plugins.md) can be used in a `app.dx` file to automate app deployment:
 
-```datex
+```datex title="app.dx"
 plugin git_deploy (
     // Deploy this app in the 'prod' stage
     // when a push to the main branch occurs
@@ -124,7 +120,7 @@ plugin git_deploy (
 
 The `git_deploy` plugin takes an object where the keys are the [stage names](#app-deployment-stages) and the values are an object with the following options:
 
-* `branch`: (text or text[]) On or more branches on which the deployment is triggered
+* `branch`: (text or text[]) One or more branches on which the deployment is triggered
 * `on`: (text or text[]) GitHub event name that triggers the deployment
 * `secrets` (text or text[]) List of GitHub secrets that are exposed to the app as environment variables
 * `tests`: (boolean) If this option is enabled, [tests](https://github.com/unyt-org/unyt-tests/) for all `*.test.ts`, `*.test.js` and `*.test.dx`

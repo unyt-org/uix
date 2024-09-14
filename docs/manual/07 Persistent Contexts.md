@@ -33,8 +33,7 @@ Both shared and private data are persisted across backend restarts. They exist o
 
 The shared and private data for the current session can be accessed through the `Context` object:
 
-```tsx
-// backend/entrypoint.tsx
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 export default {
     '/get-name': async (ctx) => {
         // load sharedData object for this context
@@ -53,10 +52,9 @@ export default {
 ```
 
 In the same way, you can access the private data for a session on the backend with `await ctx.getPrivateData()`.
-You can store any DATEX-compatible value in the shared/private data objects.
+You can store any DATEX compatible value in the shared/private data objects.
 
-You can also access private data in normal backend functions that have no access to a UIX context element, by passing
-the caller information provided by `datex.meta` to `Context.getPrivateData`:
+You can also access private data in normal backend functions that do not access a UIX context element by passing the caller information provided by `datex.meta` to `Context.getPrivateData`:
 ```ts
 export async function updatePrivateId(id: number) {
     // get the private data for the caller endpoint
@@ -67,14 +65,13 @@ export async function updatePrivateId(id: number) {
 ```
 
 > [!WARNING]
-> Private data is directly stored on the backend and can contain an arbitrary amount of data.<br>
+> Private data is stored directly on the backend and can contain any amount of data.<br>
 > In contrast, shared data is stored in the browser cookies, which are limited to a maximum storage size of 4096 bytes.
 
 
 ### Declaring session data types
 
-You can define the global interfaces `SharedData` and `PrivateData` for session data type safety
-across your entrypoints.
+You can define the global interfaces `SharedData` and `PrivateData` for session data type safety across your entrypoints.
 
 ```ts
 declare global {
@@ -97,19 +94,17 @@ ctx.username // -> type string
 ctx.nonExistingProperty // error, property does not exist!
 ```
 
-
-
 ## Persistent values
 
 As as an alternative to using `eternal` modules, persistent values can also be created with the `eternal` label
 
 ```typescript
-const counter = eternal ?? $$(0); // counter value gets restored from the previous state or initialized
-                                  // if no previous state exists
+const counter = eternal ?? $$(0); // counter value gets restored from the previous state or initialized if no previous state exists
+
 counter.val ++; // counter gets incremented every time
 ```
 
-For non-DATEX-native types like HTML elements, you need to use `lazyEternal` to make sure the type definitions are loaded:
+For non-DATEX native types such as HTML elements, you must use `lazyEternal` to ensure that the type definitions are loaded:
 
 ```typescript
 export default await lazyEternal ?? $$(<div>Content</div>)

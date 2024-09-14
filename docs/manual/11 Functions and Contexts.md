@@ -82,7 +82,7 @@ When using functions as callbacks for events on HTML elements, they are also sta
 This means that if an event handler is defined on an HTML element exported from a backend entrypoint, it will still be executed on the backend entrypoint, even when the element is displayed in the browser (frontend context):
 
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
-const counter = $$(0)
+const counter = $$(0);
 
 export default 
     <button onclick={() => {
@@ -109,10 +109,8 @@ There are many reasons for this behavior: Maybe we want to show an alert to the 
 To achieve this, we just need to make a small change in our example code: replace the `onclick` attribute with a *labeled* `onclick:frontend` attribute.
 This tells UIX that the event handler function must be executed in the frontend context:
 
-```ts
-/// file: backend/entrypoint.ts
-
-const counter = $$(0)
+```ts title="backend/entrypoint.tsx" icon="fa-file"
+const counter = $$(0);
 
 export default 
     <button onclick:frontend={() => { // add a :frontend label
@@ -120,18 +118,16 @@ export default
         counter.val++
     }}>
         I was clicked {counter} times
-    </button>
+    </button>;
 ```
 
 But if we try to run this code now, we will get an error: `Uncaught ReferenceError: counter is not defined`.
-This happens because the event handler function now lives in a new frontend context and can no longer access variables from its original context per default.
+This happens because the event handler function now lives in a new frontend context and can no longer access variables from its original context by default.
 
 To fix this, we need to explicitly state that we want to access the `counter` variable from the original context.
 This is done with a `use()` declaration at the top of the function body:
-```ts
-/// file: backend/entrypoint.ts
-
-const counter = $$(0)
+```ts title="backend/entrypoint.tsx" icon="fa-file"
+const counter = $$(0);
 
 export default 
     <button onclick:frontend={() => {
@@ -140,38 +136,30 @@ export default
         counter.val++
     }}>
         I was clicked {counter} times
-    </button>
+    </button>;
 ```
 
 Now everything works as expected.
 
 
 > [!NOTE]
-> use() declarations don't have an effect if they are used in normal functions. 
-> There is no harm in adding them to a stationary function that might be transferred
-> at some point.
+> use() declarations don't have any effect when used in normal functions. 
+> There is no harm in adding them to a stationary function that may be transferred at some point.
 
 ### Restorable contexts (eternal modules)
 
-Modules with the file extension `.eternal.ts`, `.eternal.tsx`, or `.eternal.js`
-keep a persistent context across restarts of an endpoint.
+Modules with the file extension `.eternal.ts`, `.eternal.tsx`, or `.eternal.js` maintain a persistent context across endpoint restarts.
 
-The state of the module is stored as DATEX and recreated when the endpoint is
-restarted.
+The state of the module is stored as DATEX and recreated when the endpoint is restarted.
 
-Eternal modules can be used as a persistent storage without any additional overhead that comes with
-File I/O or Database mappings - everything is just normal typescript code.
+Eternal modules can be used as a persistent storage without the overhead of file I/O or database mappings - everything is just normal typescript code.
 
-Eternal modules can be used like an other module, exported values can be imported, updated and
-functions can be called.
+Eternal modules can be used like any other module, exported values can be imported and updated, and functions can be called.
 
-The only thing to keep in mind when using eternal modules is that functions must always include `use()`
-declarations to restore the original context.
+The only thing to keep in mind when using eternal modules is that functions must always include `use()` declarations to restore the original context.
 
 Example:
-```ts
-// file: backend/counter.eternal.ts
-
+```ts title="backend/counter.eternal.ts" icon="fa-file"
 // this is only ever called once:
 console.log("init eternal context"); 
 
@@ -185,10 +173,8 @@ export function incrementCounter() {
 ```
 
 > [!NOTE]
-> It is recommended to use eternal modules mostly to store data and functions.
-> Class definitions with DATEX bindings should always be declared in separate non-eternal
-> modules so that they can be properly recreated on restart. This is a limitation of the current datex-core
-> beta implementation and will be fixed in the next versions.
+> It is recommended that eternal modules be used primarily to store data and functions.
+> Class definitions with DATEX bindings should always be declared in separate non-eternal modules so that they can be properly recreated on restart. This is a limitation of the current datex-core beta implementation and will be fixed in the next releases.
 
 ## Limitations of use() declarations
 
@@ -220,12 +206,9 @@ const fn2 = () => (use(x), x * 2);
 
 ### Calling a backend function
 
-In this example, we fetch some data from the backend by calling a function
-that is injected to the frontend context with `use()`.
+In this example, we fetch some data from the backend by calling a function that is injected into the frontend context with `use()`.
 
-```tsx
-// file: backend/entrypoint.tsx
-
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 function getData(name: string, count: bigint) {
     return {
         name,
@@ -243,15 +226,14 @@ export default (
         }}>Load Data</button>
         <p id="data"/>
     </div>
-)
+);
 ```
 
-Since we provided no explicit render method, we used the default `renderHybrid`.
+Since we did not provide an explicit rendering method, we used the default `renderHybrid`.
 In this case, we have a full DATEX runtime on the client and are not restricted by constraint 3 (see [Limitations of use() declarations](#limitations-of-use-declarations)).
 
-If we want to achieve the same thing using `renderBackend`, we need to modify or code to only use JSON-compatible values.
-To allow the event handler function to run in a context without a DATEX Runtime leading to the restrictions just mentioned,
-we need to add the `"standalone"` flag to the `use()` declaration: 
+If we want to achieve the same thing with `renderBackend`, we need to modify or code to use only JSON-compatible values.
+To allow the event handler function to run in a context without a DATEX Runtime which leads to the limitations just mentioned, we need to add the `"standalone"` flag to the `use()` declaration: 
 
 
 ```tsx

@@ -5,11 +5,10 @@ Localized text content can be implemented using dynamic [text pointers](https://
 
 You can get the current user language with `DATEX.Runtime.ENV.LANG` or `UIX.language`.
 
-## Defining localized text in DATEX resource scripts
+## Using resource scripts
 The easiest way to create and load localizations is to define texts for multiple languages in a [DATEX Script](https://docs.unyt.org/manual/datex/important-datex-concepts) (*.dx*) file using the `localtext` helper function:
 
-```datex
-// file: localized.dx
+```datex title="localized.dx"
 use localtext from #std;
 
 export const plane = localtext {
@@ -42,9 +41,9 @@ export class MyApp extends Component {
 }
 ```
 
-## Defining localized texts with TypeScript
+## Using TypeScript
 
-Localized texts can also be defined in TypeScript with the `localtext` method.
+Localized texts can also be defined in TypeScript using the `localtext` method.
 ```tsx
 import { localtext } from "unyt_core/datex_short.ts";
 
@@ -66,4 +65,3 @@ function myApp() {
     </>;
 )
 ```
-

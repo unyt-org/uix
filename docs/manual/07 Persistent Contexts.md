@@ -1,25 +1,20 @@
 # Persistent Contexts
 
-
 ## Eternal modules
 
 UIX allows you to save and restore the context of a module across backend restarts or page reloads.
 Such persistent modules are called *eternal modules*.
-To create an eternal module, simple add an `.eternal.ts` or `.eternal.tsx` extension to the module file name.
+To create an eternal module, simply add a `.eternal.ts` or `.eternal.tsx` extension to the module filename.
 
 Simple example:
 
-```ts
-// file: backend/counter.eternal.ts
+```ts title="backend/counter.eternal.ts" icon="fa-file"
 // this is an eternal module that is only initialized once
-
 export const counter = $$(0);
 ```
 
-```ts
-// file: backend/entrypoint.ts
-// this module is loaded with a new context each time the app backend
-// is restarted
+```ts title="backend/entrypoint.ts" icon="fa-file"
+// this module is loaded with a new context each time the app backend is restarted
 
 import {counter} from "./counter.eternal.ts";
 
@@ -33,10 +28,10 @@ You can read more about (eternal) contexts in the chapter [Functions and Context
 ## Session data
 
 Each browser client in a UIX app is automatically bound to a unique session.
-You can acesss **shared data** for this session both from the frontend and the backend, and **private data** only from the backend.
-Both shared and private data are persisted across backend restarts. They only exist as long as the frontend session has not been expired.
+You can access **shared data** for this session from both the frontend and the backend, and **private data** from the backend only.
+Both shared and private data are persisted across backend restarts. They exist only as long as the frontend session has not been expired.
 
-The shared and private data for the current session can be accessed via the `Context` object:
+The shared and private data for the current session can be accessed through the `Context` object:
 
 ```tsx
 // backend/entrypoint.tsx

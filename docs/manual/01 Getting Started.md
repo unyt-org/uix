@@ -2,20 +2,18 @@
 
 ## What is UIX?
 
-UIX is a state-of-the-art TypeScript framework for developing full-stack web applications.
+UIX is a state-of-the-art TypeScript framework for building full-stack web applications.
 With UIX, you can write frontend and backend code in a single [Deno](https://docs.deno.com/runtime/manual) project.
-UIX abstracts away the complexity of communicating between servers and clients - there
-is no need to think about APIs, serialization, or data storage.
+UIX abstracts away the complexity of communication between servers and clients - there is no need to think about APIs, data serialization, or data storage.
 
 The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity, restorable state and cross-device data exchange*.
 
-UIX works out of the box with TypeScript and JSX and does not require any additional tooling or build steps.
+UIX works out of the box with TypeScript and JSX requiring no additional tools or build steps.
 
-UIX encourages the use of standard web APIs wherever possible, and provides a simple
-and intuitive abstraction layer for more advanced features.
+UIX encourages the use of standard web APIs wherever possible, and provides a simple and intuitive abstraction layer for more advanced functionality.
 
 > [!NOTE]
-> The [UIX Guide](./18%20Guide.md) gives a comprehensive overview for developers who are new to UIX.
+> The [UIX Guide](./18%20Guide.md) provides a comprehensive overview for developers new to UIX.
 
 
 ## Main Features
@@ -29,88 +27,50 @@ and intuitive abstraction layer for more advanced features.
  * [Reusable web components](./04%20Components.md)
  * [And many more](https://uix.unyt.org)...
 
-UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
-This is why UIX ships with integrated features such as:
+UIX aims to simplify all phases of the application development cycle, including design, development, testing and deployment, in order to make the developer experience as convenient as possible. 
+For this reason, UIX ships with built-in features such as
+
  * Hot reloading
  * [Stage management](./09%20Configuration.md#app-deployment-stages)
- <!-- * Version management -->
  * [Automated deployment](./15%20Deployment.md)
  * [Testing library](https://github.com/unyt-org/unyt-tests/)
 
 ## Installation
 
-To install UIX, you first need to install the [Deno](https://docs.deno.com/runtime/manual/getting_started/installation) runtime on your system.
-
-### Install Deno
-
-Install the Deno runtime using one of the terminal commands below.
+Install the UIX runtime on your system using one of the terminal commands below.
 
 <unyt-tabs>
 <unyt-tab label="macOS" default>
 
 ```sh
-curl -fsSL https://deno.land/install.sh | sh
+curl -fsSL https://unyt.land/install.sh | sh
 ```
 
 </unyt-tab>
 <unyt-tab label="Windows">
 
 ```powershell
-irm https://deno.land/install.ps1 | iex
+irm https://unyt.land/install.ps1 | iex
 ```
 
 </unyt-tab>
 <unyt-tab label="Linux">
 
 ```sh
-curl -fsSL https://deno.land/install.sh | sh
+curl -fsSL https://deno.land/install.sh | bash
 ```
 
 </unyt-tab>
 </unyt-tabs>
 
 > [!NOTE]
-> Please ensure that the environment variables `PATH` and `DENO_INSTALL` are
-> set as instructed by the Deno installer. For the following steps to work
-> correctly, they are required.
+> Please ensure that the system environment variable `PATH` includes the `~/.uix/bin` folder as instructed by the UIX installer. Restarting your terminal or IDE after installation might be helpful to make the `uix` command available.
 
-> [!WARNING]
-> Due to a [bug in V8](https://chromium-review.googlesource.com/c/v8/v8/+/5807477), UIX currently only works with Deno version 1.45.5.<br>
-> Please change the version of your deno installation with `deno upgrade --version 1.45.5`
+After installation, you should have the [Deno for UIX](https://github.com/unyt-org/deno) and [UIX](https://github.com/unyt-org/uix) executables available on your system path. You can verify the installation by running:
 
-<!-- #### Linux / MacOS
-
-```bash
-$ curl -s https://cdn.unyt.org/uix/install.sh | sh
+```shell
+uix --version
 ```
-
-#### MacOS (Homebrew)
-
-On MacOS, UIX can also be installed with homebrew:
-```bash
-$ brew tap unyt-org/uix
-$ brew install uix
-```
-
-#### Windows / other systems -->
-
-### Install UIX
-
-After having the deno runtime ready, you can install UIX on your system using the `deno install` command below:
-
-```bash
-deno install --import-map https://cdn.unyt.org/uix/importmap.json -Aq -n uix https://cdn.unyt.org/uix/run.ts
-```
-
-Make sure to restart your terminal or code editor after installation to make the `uix` command available.
-
-<!--
-> [!WARNING]
-> UIX is only supported for Deno versions > 1.40.0
->
--->
-
-
 
 ## Create a new UIX project
 

@@ -200,10 +200,10 @@ Example:
 ```tsx
 export default (ctx: Context) => {
     return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`
-} satisfies Entrypoint
+} satisfies Entrypoint;
 ```
 
-When an entrypoint function throws an error, the error value is returned like a normal return value, but with an HTTP Status Code **500**.
+When an entrypoint function throws an error, the error value is returned like a normal return value, but with an HTTP status code **500**.
 
 ## UIX components
 

@@ -231,7 +231,7 @@ class Parent extends Component {
 
     override onRoute(identifier:string) {
         // find the child that has the same id as the identifier
-        this.#activeChild = this.shadowRoot.querySelector(`#${identifier}`);
+        this.#activeChild = this.querySelector(`#${identifier}`);
         this.#activeChild?.focus();
         return this.#activeChild;
     }
@@ -254,14 +254,13 @@ export default {
             <div id="b">B</div>
             <div id="c">C</div>
          </Parent>
-}
-    
+};
 ```
 
 ## Error handling
 
 ### Throwing values
-Values that are thrown with `throw` from an entrypoint function are treated similarly to returned values - the value is still rendered in the browser. There is only one difference: The response has an error status code instead of the default status code 200.
+Values that are thrown with `throw` from an entrypoint function are treated similarly to returned values - the value is still rendered in the browser. There is only one difference: The response will have an error status code instead of the default **200** status code.
 
 ```typescript
 export default {
@@ -275,8 +274,7 @@ export default {
 
 ### Throwing errors
 
-Instances of `Error` that are thrown or returned from an entrypoint function are rendered in the browser as
-an error info box (including a stack trace when running in `dev` stage).
+Instances of `Error` that are thrown or returned b an entrypoint function will be rendered in the browser as an error info box including a stack trace when running in `dev` stage.
 
 ```typescript
 export default {
@@ -302,12 +300,11 @@ export default {
          return "The secret is 42!";
      }
 } satisfies Entrypoint;
-
 ```
 
 ## UIX providers
 
-UIX provider utility functions allow backend entrypoint to directly return HTTP Responses from an entrypoint.
+UIX provider utility functions allow the backend entrypoint to return HTTP responses directly from an entrypoint.
 
 ### List of UIX providers:
  * ```typescript
@@ -326,11 +323,10 @@ UIX provider utility functions allow backend entrypoint to directly return HTTP 
    Returns a HTTP Response with custom content and a custom mime type and status code.
 
 
-
 ## Route handlers
 
 Route handlers are similar to [Dynamic Entrypoint Functions](#dynamic-entrypoint-functions), but they are represented with an interface. 
-In contrast to a Dynamic Entrypoint Function, which only take a UIX Context as a parameter, the `getRoute` method of a Route Handlers additionally takes the remaining route as an argument.
+Unlike a dynamic entrypoint function, which only takes a UIX context as a parameter, the `getRoute` method of a route handler additionally takes the remaining route as an argument.
 
 ```typescript
 export interface RouteHandler {
@@ -342,15 +338,14 @@ export interface RouteHandler {
 
 ## Route managers
 The `RouteManager` interface represents an entity with an internal route state.
-In contrast to other entrypoints, it can modify the request route.
+In contrast to other entrypoints, it has the ability to modify the requested route.
 
-When a Route Manager is encountered while resolving a route, the `resolveRoute` method is called with the remaining
-part of the current route.
-The Route Manager decides how to update its internal state and returns the part of the route that it could resolve.
-The actual route on the client is updated to only contain this part.
+When a route manager is encountered while resolving a route, the `resolveRoute` method is called with the remaining part of the current route.
+The route manager decides how to update its internal state and returns the part of the route that it was able to resolve.
+The actual route on the client is updated to contain only this portion.
 The `getInternalRoute` should always return the route represented by the current state, and should match the route part returned by `resolveRoute`.
 
-The `RouteManager` interface is implemented by UIX Components.
+The `RouteManager` interface is implemented by UIX components.
 
 ```typescript
 interface RouteManager {
@@ -363,7 +358,7 @@ interface RouteManager {
 
 ## Entrypoint proxies
 
-An Entrypoint Proxy can be wrapped around any Entrypoint value to intercept routing and add custom functionality.
+An Entrypoint proxy can be wrapped around any Entrypoint value to intercept routing and add custom functionality.
 The abstract `EntrypointProxy` class has two methods that can be implemented:
 
 ```typescript
@@ -397,13 +392,10 @@ abstract class EntrypointProxy implements RouteHandler {
 }
 ```
 
-
-
-
 # Context
 
 A UIX `Context` is created for each entrypoint request (when requesting a URL from a backend entrypoint or when redirecting to a URL on the frontend) and can be accessed in [Dynamic Entrypoint Functions](#dynamic-entrypoint-functions), [Route Managers](#route-managers) and [Route Handlers](#route-handlers).
-It contains information about the client, about the route, and about the HTTP request (only on backend entrypoints).
+It contains information about the client, about the route, and about the HTTP request (for backend entrypoints only).
 
 ```typescript
 interface Context {

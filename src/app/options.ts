@@ -19,7 +19,7 @@ export type appOptions = {
 	frontend?: string|URL|(string|URL)[], // directory for frontend code
 	backend?:  string|URL|(string|URL)[] // directory for backend code
 	common?: string|URL|(string|URL)[] // directory with access from both frontend end backend code
-	pages?: string|URL // common directory with access from both frontend end backend code - gets mapped per default with a UIX.PageProvider for all frontends and backends without a entrypoint
+	pages?: string|URL // common directory with access from both frontend end backend code - gets mapped by default with a UIX.PageProvider for all frontends and backends without a entrypoint
 
 	import_map_path?: string|URL, // custom importmap for the frontend
 	import_map?: {imports:Record<string,string>} // prefer over import map path

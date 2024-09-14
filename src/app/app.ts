@@ -319,7 +319,7 @@ if (app.stage !== "dev") {
 	Datex.Runtime.OPTIONS.NATIVE_ERROR_STACK_TRACES = false
 }
 
-// load DATEX WASM / Decompiler, only in backend per default
+// load DATEX WASM / Decompiler, only in backend by default
 if (client_type === "deno") {
 	await wasm_init();
 	init_runtime();

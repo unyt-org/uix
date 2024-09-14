@@ -51,7 +51,7 @@ To enable experimental features, add them to the `experimental_features` list in
 Available experimental features:
 
 * `"embedded-reactivity"`: Enables compile-time reactivity features for JSX templates and the `$()` syntax
-* `"protect-pointers"`: Sets the `PROTECT_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints per default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
+* `"protect-pointers"`: Sets the `PROTECT_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints by default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
 * `"indirect-references"`: Sets the `INDIRECT_REFERENCES` DATEX Runtime, which enables for indirect references to pointers from other pointers.
 * `"view-transitions"`: Enables [CSS view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for backend navigations and frontend navigations.
 <!-- * `"frontend-navigation"`: Enables the new frontend navigation system, which allows for client-side routing without full page reloads. -->

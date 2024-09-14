@@ -4,7 +4,7 @@ UIX provides options for automated deployment with optional `git` integration.
 ## Backend Endpoint Locations
 
 The *location* of an endpoint describes the actual physical of a backend endpoint in a UIX app.
-Per default, the location of a backend endpoint is the device where the UIX app is started.
+By default, the location of a backend endpoint is the device where the UIX app is started.
 
 This default behavior can be changed by defining a `location` property in the backend `.dx` file.
 
@@ -124,7 +124,7 @@ The `git_deploy` plugin takes an object where the keys are the [stage names](#ap
 * `on`: (text or text[]) GitHub event name that triggers the deployment
 * `secrets` (text or text[]) List of GitHub secrets that are exposed to the app as environment variables
 * `tests`: (boolean) If this option is enabled, [tests](https://github.com/unyt-org/unyt-tests/) for all `*.test.ts`, `*.test.js` and `*.test.dx`
-    files in the repository are automatically executed before deployment (enabled per default)
+    files in the repository are automatically executed before deployment (enabled by default)
 
 When the git_deploy plugin is defined, GitHub workflow files are automatically generated when the app is run.
 

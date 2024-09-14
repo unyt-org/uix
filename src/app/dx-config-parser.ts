@@ -49,7 +49,7 @@ export async function getDXConfigData(backend: Path, options:normalizedAppOption
 		let backendDomains: string[]|undefined;
 		({requiredLocation, stageEndpoint, domains: backendDomains, volumes, instances} = await readDXConfigData(backendDxFile))
 		for (const domain of backendDomains) {
-			domains[domain] = null; // no port mapping specified per default
+			domains[domain] = null; // no port mapping specified by default
 		}
 	}
 
@@ -63,7 +63,7 @@ export async function getDXConfigData(backend: Path, options:normalizedAppOption
 			if (frontendDomains) {
 				const domainPort = port ?? autoPort++;
 				for (const domain of frontendDomains) {
-					domains[domain] = domainPort; // no port mapping specified per default
+					domains[domain] = domainPort; // no port mapping specified by default
 				}
 			}
 		}

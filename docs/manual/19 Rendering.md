@@ -14,7 +14,7 @@ This can significantly reduce load times, especially on first loads when modules
 
 Static (`import x from "y"`) and dynamic imports (`await import("y")`), as well as `datex.get` imports are resolved.
 
-The following URLs are excluded from module preloading per default:
+The following URLs are excluded from module preloading by default:
  * URLs explicitly imported as type modules (`import type {} from "modules.ts"`)
  * NPM modules (identifiers starting with `npm:`, eg. `import x from "npm:..."`)
  * Deno.land modules (starting with `https://deno.land/`)
@@ -36,5 +36,5 @@ You can disable minification by setting `minify_js: false` in the `app.dx` confi
 
 # Source Maps
 
-Source maps are enabled for the `dev` stage per default and disabled for other stages.
+Source maps are enabled for the `dev` stage by default and disabled for other stages.
 You can explicitly enable or disable source maps by setting the `source_maps` configuration option in the `app.dx` file.

@@ -172,7 +172,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 			}
 		}
 		// ignore cdn urls, assumes that the modules are already imported on all clients
-		// TODO: improve, what if type modules are not all loaded per default?
+		// TODO: improve, what if type modules are not all loaded by default?
 		if (webPath.startsWith("https://dev.cdn.unyt.org/") || webPath.startsWith("https://cdn.unyt.org/")) return;
 		// ignore local clones of the core libs
 		else if (webPath.toString().includes("/datex-core-js-legacy/") || webPath.toString().includes("/uix/")) return;

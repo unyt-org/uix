@@ -309,7 +309,7 @@ There are a few special attributes for uix-specific functionality:
     <img uix-module={import.meta.url} src="./relative/path/from/current/module/image.png"/>
      ```
     This is only required for compatibility with Safari. In other runtime environments (e.g. Deno), the `import.meta.url` is always automatically inferred and does not have to be explicitly set.
- * `datex-pointer`: boolean (set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. Per default, only class components are automatically bound to a pointer.
+ * `datex-pointer`: boolean (set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. By default, only class components are automatically bound to a pointer.
 
 ## Creating components
 

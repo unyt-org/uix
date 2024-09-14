@@ -1,5 +1,5 @@
 
-// @ts-ignore safari doesn't have monospace font per default
+// @ts-ignore safari doesn't have monospace font by default
 
 const color_esc_seq = /\x1b\[((?:\d+;)*\d+)?m/g
 

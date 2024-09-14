@@ -820,7 +820,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
             const name = this.attributes[i].name;
             // don't override provided options object
             if (!(name in options)) {
-                // json (number, array, ...) - for attributes written in html (strings per default, must be converted to the right type)
+                // json (number, array, ...) - for attributes written in html (strings by default, must be converted to the right type)
                 try {
                     options[<keyof typeof options>name] = JSON.parse(this.attributes[i].value);
                 } 
@@ -873,7 +873,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
                 this.logger.debug("hybrid initialization")
                 if (!standaloneOnDisplayWasTriggered) this.onDisplay?.();
             }
-            // TODO: required? should probably not be called per default
+            // TODO: required? should probably not be called by default
             // bindObserver(this)
         })
 
@@ -1131,7 +1131,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
     private route_initialized = false;
 
-    // implements resolveRoute per default, can be overriden for more custom routing behavior
+    // implements resolveRoute by default, can be overriden for more custom routing behavior
     public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
         const {Path} = await import("uix/utils/path.ts");
 

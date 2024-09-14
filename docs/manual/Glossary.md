@@ -6,7 +6,7 @@
 HTTP tunneling over DATEX. This allows local web servers
 to be accessible via a public IP or domain (e.g *.unyt.app).
 
-HTTP-over-DATEX is enabled per default. To disable it, run your
+HTTP-over-DATEX is enabled by default. To disable it, run your
 UIX app with `--http-over-datex=false`.
 
 > [!WARNING]

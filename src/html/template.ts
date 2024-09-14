@@ -109,7 +109,7 @@ export type jsxInputGenerator<
  * // create:
  * const comp = <CustomComponent id="c1" color="green"/>
  * ```
- * Per default, children are just appended to the root element of the template.
+ * By default, children are just appended to the root element of the template.
  * You can create a template with a shadow root by adding the 'shadow-root' attribute to the root element.
  * Children are appended to the <slot> element inside the root:
  * @example

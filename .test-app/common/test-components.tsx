@@ -279,7 +279,7 @@ export const testComponents = {
 	/** 
 	 * Contexts demo:
 	 * 
-	 * Per default, event listeners are always called in the *original context*
+	 * By default, event listeners are always called in the *original context*
 	 * -> When the button is created on the backend and displayed in standalone mode 
 	 *    on the frontend, the onclick handler is still called on the *backend*
 	 * -> When the button is created and rendered on the frontend, the onclick

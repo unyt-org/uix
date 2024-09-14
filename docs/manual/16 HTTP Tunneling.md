@@ -1,6 +1,6 @@
 # HTTP Tunneling
 
-UIX provides [HTTP tunneling over DATEX](./Glossary.md#http-over-datex) per default.
+UIX provides [HTTP tunneling over DATEX](./Glossary.md#http-over-datex) by default.
 When you start a UIX app, it is immediately available through a unique `unyt.app` domain, using the endpoint name as a subdomain.
 
 Examples:

@@ -54,7 +54,7 @@ data from storage into memory when required.
 
 Under the hood, UIX can use multiple strategies for storing eternal data, such as in a key-value store, an SQL database, or local storage in the browser.
 
-On the backend, eternal data is stored in a simple key-value database per default.
+On the backend, eternal data is stored in a simple key-value database by default.
 As an alternative, you can use an SQL database, which is more suitable for larger data sets where you need to query data.
 Switching to SQL storage *does not require any changes in your application code* - it just changes the underlying storage mechanism.
 
@@ -124,7 +124,7 @@ document.body.appendChild(counterDisplay); // append the element to the DOM
 counter.val++; // increment the pointer value - updates the DOM element
 ```
 
-Reactivity in UIX works cross-network per default.
+Reactivity in UIX works cross-network by default.
 You can share and synchronize pointers with other endpoints.
 
 ## Forms
@@ -161,7 +161,7 @@ But what if you want to only update the `User` object after a form was submitted
 by clicking a button?
 
 UIX provides a special element attribute for this exact usecase, called `datex-update`.
-Per default, `datex-update` is set to `"onchange"`, meaning every input update is immediately propagated.
+By default, `datex-update` is set to `"onchange"`, meaning every input update is immediately propagated.
 
 To only update the bound pointer values when a submit
 event was triggered, you can set `datex-update` to `"onsubmit"`:

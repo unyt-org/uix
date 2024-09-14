@@ -56,7 +56,7 @@ But UIX can extend this behavior, as you will see in the following examples.
 
 ### Scenario 1: Stationary exported functions
 
-Per default, all functions in a UIX app are stationary, meaning that they exist only in their origin context and cannot be transferred to another endpoint.
+By default, all functions in a UIX app are stationary, meaning that they exist only in their origin context and cannot be transferred to another endpoint.
 
 However, they can still be *called* from other endpoints - the function execution just always takes place in the original context.
 
@@ -77,7 +77,7 @@ The only difference is the additional `await` that is required for all functions
 
 ### Scenario 2: Stationary event handlers
 
-When using functions as callbacks for events on HTML elements, they are also stationary per default and are executed inside their origin context.
+When using functions as callbacks for events on HTML elements, they are also stationary by default and are executed inside their origin context.
 
 This means that if an event handler is defined on an HTML element exported from a backend entrypoint, it will still be executed on the backend entrypoint, even when the element is displayed in the browser (frontend context):
 
@@ -181,7 +181,7 @@ export function incrementCounter() {
 `use` declarations are a powerful tool for creating tranferable and restorable JavaScript functions.
 
 Nevertheless, there are some constraints you should keep in mind:
- 1) Variables that are accessed with `use()` are readonly - they cannot be reassigned. The values are immutable per default. This restriction does not apply to pointer values: if you need mutable values, use pointers.
+ 1) Variables that are accessed with `use()` are readonly - they cannot be reassigned. The values are immutable by default. This restriction does not apply to pointer values: if you need mutable values, use pointers.
  2) All values accessed with `use()` must be DATEX-compatible
  3) `use()` declarations for a context without a loaded DATEX runtime (this is the case when using `renderBackend`) must be called with the `"standalone"` flag: `use("standalone, ...)`.<br>
   With this flag, additional restrictions apply to `use()` declarations:

@@ -23,7 +23,7 @@ const comp2 = <CustomComponent id='c2' customAttr={42}/>; // returns: <div class
 ### Child elements
 
 Default element attributes (e.g. `id`, `style`, ...) are assigned to the root element after it is created.
-Children defined in JSX are also appended to the root element per default:
+Children defined in JSX are also appended to the root element by default:
 
 ```tsx
 // define template:

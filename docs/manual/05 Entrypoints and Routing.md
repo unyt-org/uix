@@ -1,41 +1,37 @@
 # Entrypoints
 
-In a UIX app, UI is provided via default exports from the `entrypoint.ts`/`entrypoint.tsx` files located at the root
-of the backend or frontend directories.
+In a UIX app, the user interface is provided by default exports from the `entrypoint.ts`/`entrypoint.tsx` files located at the root of the backend or frontend directories.
 
-There is a variety of values that can be exported from an entrypoint to be displayed in the browser client, including strings, HTML Elements, Blobs and [more](#entrypoint-values).
+There are variety of values that can be exported from an entrypoint for display in the browser, including strings, HTML Elements, Blobs and [more](#entrypoint-values).
 
 Example Entrypoints:
-```typescript
-// backend/entrypoint.ts
-export default "Hello, this is a simple text displayed on a website and loaded from the backend entrypoint"
+```typescript title="backend/entrypoint.tsx" icon="fa-file"
+export default "Hello, this is a simple text displayed on a website and loaded from the backend entrypoint";
 ```
-```tsx
-// frontend/entrypoint.tsx
+```tsx title="frontend/entrypoint.tsx" icon="fa-file"
 export default 
     <section>
         <h1>Title</h1>
         <p>Description...</p>
-    </section>
+    </section>;
 ```
 
 # Entrypoint configurations
 ## 1. Just a frontend entrypoint
-If there are no backend entrypoint exports, the UI is generated directly on each frontend client from the frontend entrypoint.
-This configuration is useful for complex web applications with user-specific UI and also when the UI content
-should not be available on the backend.
+If there are no backend entrypoint exports, the UI is generated directly from the frontend entrypoint on each frontend client.
+This configuration is useful for complex web applications with user-specific UI and also when the UI content should not be available on the backend.
 
 ## 2. Just a backend entrypoint
 UI generated on the backend entrypoint is "moved" to the frontend client.
 UIX supports [multiple methods](./08%20Rendering%20Methods.md) for backend rendering.
 
 ## 3. Backend and frontend entrypoints (route merging)
-When entrypoint exports for both the frontend and the backend are available, they are automatically merged.
-This configuration normally only makes senses in combination with [Entrypoint Routes](#route-maps).
+If entrypoint exports exist for both the frontend and the backend, they will be merged automatically.
+This configuration is especially useful when combined with [Entrypoint Routes](#route-maps).
 
 
 The following diagram visualizes the concept of route merging in UIX:
-![d](./res/entrypoints.svg)
+![Entrypoint Routing](./res/entrypoints.svg)
 
 Backend routes are always prioritized over frontend routes.
 

@@ -9,7 +9,7 @@ UIX uses DATEX script files as its configuration files.
 DATEX Script is a superset of JSON. It also supports URLs, relative paths and user-defined types. Single- and multiline comments can be used.
 
 Example:
-```datex
+```datex title="MyFile.dx"
 {
     normalJSON: [1, "text", {"a": "b"}],
     url: https://example.com, // this is a comment
@@ -53,13 +53,13 @@ Available experimental features:
 * `"embedded-reactivity"`: Enables compile-time reactivity features for JSX templates and the `$()` syntax
 * `"protect-pointers"`: Sets the `PROTECT_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints per default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
 * `"indirect-references"`: Sets the `INDIRECT_REFERENCES` DATEX Runtime, which enables for indirect references to pointers from other pointers.
-* `"frontend-navigation"`: Enables the new frontend navigation system, which allows for client-side routing without full page reloads.
-* `"view-transitions"`: Enables [CSS view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for backend navigations and frontend navigations (the `"frontend-navigation"` feature must be enabled to work with frontend navigations).
+* `"view-transitions"`: Enables [CSS view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for backend navigations and frontend navigations.
+<!-- * `"frontend-navigation"`: Enables the new frontend navigation system, which allows for client-side routing without full page reloads. -->
 
 ### Paths
 
-The paths for frontend, backend and shared (common) files can be explicitly set in the `app.dx` files.
-Per default, the frontend path is `./frontend/`, the backend path is `./backend/` and the common path is `./common/`.
+The paths for frontend, backend and common files can be explicitly set in the `app.dx` files.
+By default, the frontend path is `./frontend/`, the backend path is `./backend/` and the common path is `./common/`.
 
 * `frontend`: *(url or url[])* - Directory for frontend code
 * `backend`:  *(url or url[])* - Directory for backend code
@@ -67,7 +67,7 @@ Per default, the frontend path is `./frontend/`, the backend path is `./backend/
 * `pages`: *(url or url[])* **experimental!** - Common directory with structural access from both frontend end backend code. File paths are automaticially mapped to app routes.
 
 ### Example app.dx configuration
-```datex
+```datex title="app.dx"
 name: "My App",
 description: "I made a thing",
 icon: "https://example.org/icon.ico",
@@ -84,7 +84,7 @@ To run a UIX app in a specific stage, use the `--stage` options:
 uix --stage production
 ```
 
-Per default, running a UIX app in a different stage does not have any noticable effect.
+By default configuration, running a UIX app in a different stage has no noticeable effect.
 
 The current stage can be accessed via `app.stage`:
 ```ts
@@ -92,8 +92,7 @@ import { app } from "uix/app/app.ts";
 const stage = app.stage // "production"
 ```
 
-In `app.dx` files, the `#public.uix.stage` helper function can be used to access the stage,
-enabling custom [deployment configurations](./15%20Deployment.md).
+In `app.dx` files, the `#public.uix.stage` helper function can be used to access the stage, enabling custom [deployment configurations](./15%20Deployment.md).
 
 ## The .dx files
 
@@ -103,7 +102,7 @@ a `.dx` file in a frontend directory is applied to each frontend endpoint.
 
 ### Options
 
-Per default, a `.dx` config file can contain the following options:
+By default, a `.dx` config file can contain the following options:
 * `endpoint`: (endpoint) The endpoint that should be used for this directory
 * `connect`: (boolean) Connect to the supranet on start (default: true)
 * `keys`: (Crypto.ExportedKeySet) Set custom private + public keys for this endpoint
@@ -113,9 +112,8 @@ Additional options may be passed in for backend endpoints `.dx` configurations (
 
 ### The "stage" helper function
 
-To dynamically set options in the `.dx` configuration file depending on the current [deployment stage](#app-deployment-stages),
-the `#public.uix.stage` helper function can be used:
-```datex
+To dynamically set options in the `.dx` configuration file depending on the current [deployment stage](#app-deployment-stages), the `#public.uix.stage` helper function can be used:
+```datex title=".dx"
 use stage from #public.uix; // import the 'stage' helper function
 
 endpoint: stage {

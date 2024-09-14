@@ -2,15 +2,14 @@
 
 ## External style sheets
 
-To apply css styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
+To apply CSS styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
 
 > [!NOTE]
 > Although SCSS is supported natively by UIX, we recommend using CSS files rather than SCSS files.
 > Modern CSS already includes most of the features that are provided by SCSS.
 > For this reason, CSS support might be completely removed from UIX in the future.
 
-The styles declared in this file are automatically adopted for all instances of the component and are not exposed
-to other components.
+The styles declared in this file are automatically applied to all instances of the component and are not exposed to other components.
 
 You can use the `:host` selector to access the component root element (also when not using a shadow dom).
 
@@ -19,7 +18,7 @@ you can define general global styles in an `entrypoint.css` file next to the `en
 
 ## Inline styles
 
-Another way to add css rules to a component is to use inline styles with the `@style` decorator:
+Another way to add CSS rules to a component is to use inline styles with the `@style` decorator:
 
 ```ts
 @style(css `
@@ -40,21 +39,18 @@ The best way to create this stylesheet is using the `css` template function.
 
 ## Element-scoped styles
 
-Besides setting individual css properties on the `"style"` attribute of an element, you can also use
-the custom UIX `"stylesheet"` attribute for applying a stylesheet to the scope of the element.
+In addition to setting individual CSS properties on an element's `"style"` attribute, you can also use the custom UIX `"stylesheet"` attribute to apply a stylesheet to the scope of the element.
 
 ```tsx
 // normal "style" attribute:
-export default <div style="color:red">...</div> 
+export default <div style="color:red">...</div>;
 
 // "stylesheet" attribute:
-export default <div stylesheet="./myStyle.css">  
+export default <div stylesheet="./MyStyle.css">  
     <h1>Title</h1>
-  </div> 
+</div>;
 ```
-```css
-/* file: myStyle.css */
-
+```css title="MyStyle.css" icon="fa-file"
 /* applies to the outer div*/
 :scope {
   color: green
@@ -66,8 +62,7 @@ h1 {
 }
 ```
 
-This is the preferred way over putting styles in the `entrypoint.css` or a custom theme stylesheet,
-because the styles are always scoped to the element in which they are needed and never leaked out to
+This is the preferred method over placing styles in the `entrypoint.css` or a custom theme stylesheet, because the styles are always scoped to the element in which they are needed and never leaked out to
 other elements in the DOM.
 
 Element-scoped styles can also be used inside function components, which do not support [external style sheets](#external-style-sheets) like class components.
@@ -78,8 +73,7 @@ Element-scoped styles can also be used inside function components, which do not 
 
 ### The `css` template function
 
-The `css` function creates a `CSSStylesheet` from any valid css string (@import directives are not allowed).
-Additionally, it supports reactive properties:
+The `css` function creates a `CSSStylesheet` from any valid CSS string (@import directives are not allowed). Additionally, it supports reactive properties:
 
 ```ts
 const fontSize: Datex.Ref<string> = $$("10px")
@@ -97,11 +91,9 @@ In this example, the `font-size` property is bound to a pointer, and the color i
 
 ## Themes
 
-Via the `UIX.Theme` namespace, global themes can be registered and activated.
-Themes can be defined as dark or light mode themes.
+The `UIX.Theme` namespace, is used to register and activate global themes. Themes can be defined as dark or light mode themes.
 
-Per default, UIX automatically decides which mode (dark or light) to use, depending
-on the preferred OS mode.
+By default, UIX automatically decides which mode (dark or light) to use, depending on the preferred operating system mode.
 
 The default themes provided by UIX are `uix-light` and `uix-dark`.
 

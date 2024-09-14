@@ -1,23 +1,23 @@
 # Components
 
 ## Template components
-The easiest way to define components in UIX is using templates.
-With anonymous component templates, you can still get reactive behaviour and saved states, but you don't get any advanced component features like
+The easiest way to define components in UIX is to use templates.
+With anonymous component templates, you can still get behavior and stored states, but you don't get any advanced component features like
 lifecycle handlers and utility methods.
 Anonymous components are built on top of existing DOM API features (shadow roots, slots).
 
-To define a new template, call the `template` function and pass in an element value (JSX definition) or a generator function returning an element (JSX):
+To define a new template, call the `template` function and pass in an element value (JSX definition) or a generator function that returns an element (JSX):
 
 ```tsx
 import { template } from "uix/html/template.ts";
 
 // define templates:
-const CustomComponent = template(<div class='class1'></div>)
-const CustomComponent2 = template<{customAttr:number}>(({customAttr}) => <div class='class2'><b>the customAttr is {customAttr}</b></div>)
+const CustomComponent = template(<div class='class1'></div>);
+const CustomComponent2 = template<{customAttr: number}>(({customAttr}) => <div class='class2'><b>the customAttr is {customAttr}</b></div>);
 
 // create elements:
-const comp1 = <CustomComponent id='c1'/> // returns: <div class='class1' id='c1'></div>
-const comp2 = <CustomComponent id='c2' customAttr={42}/> // returns: <div class='class2' id='c2'><b>the customAttr is 42</b></div>
+const comp1 = <CustomComponent id='c1'/>; // returns: <div class='class1' id='c1'></div>
+const comp2 = <CustomComponent id='c2' customAttr={42}/>; // returns: <div class='class2' id='c2'><b>the customAttr is 42</b></div>
 ```
 
 ### Child elements
@@ -27,7 +27,7 @@ Children defined in JSX are also appended to the root element per default:
 
 ```tsx
 // define template:
-const CustomComponent = template(<div class='class1'></div>)
+const CustomComponent = template(<div class='class1'></div>);
 
 // create element:
 const comp3 = <CustomComponent id='c1'>
@@ -57,15 +57,15 @@ const MyComponent = template<{background: 'red'|'green', countstart: number}>(({
     // return component content
     return <div style={{background}}>
                 Count: {counter}
-           </div>
+           </div>;
 });
 
 // create element:
 export default
     <MyComponent background="green" countstart={42}>
-        <div>child 1</div>
-        <div>child 2</div>
-    </MyComponent>
+        <div>Child 1</div>
+        <div>Child 2</div>
+    </MyComponent>;
 ```
 
 ### Using blankTemplate / function components
@@ -73,8 +73,7 @@ export default
 For some use cases, it may be useful to access all attributes and the children set in JSX when creating an anonymous component.
 
 The `blankTemplate` function allows you to create an element with complete control over attributes and children.
-In contrast to `template`, children defined in JSX are not automatically appended to the root element of the template,
-and HTML Attributes defined in JSX are also not automatically set for the root element.
+Unlike `template`, children defined in JSX are not automatically appended to the root element of the template, and HTML attributes defined in JSX are not automatically set for the root element.
 
 All attributes and the children are available in the props argument of the generator function.
 ```tsx

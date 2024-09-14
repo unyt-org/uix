@@ -131,7 +131,7 @@ const showDialog = $$(false);
 const myDiv = <div>
     My Div
     {always (() => showDialog.val ? <div id="dialog">My Dialog</div> : <div/>)}
-</div>
+</div>;
 ```
 
 #### Using `toggle`
@@ -144,13 +144,12 @@ const showDialog = $$(false);
 const myDiv = <div>
     My Div
     {toggle (showDialog, <div id="dialog">My Dialog</div>, <div/>)}
-</div>
+</div>;
 ```
 
 #### Using the `display` style property
 
-A different approach for conditional rendering is setting the `display` style property
-to a ref: When `showDialog` is false, `display` is `none` and the div is not rendered.
+A different approach for conditional rendering is setting the `display` style property to a Ref: When `showDialog` is `false`, `display` is `none` and the div is not rendered.
 Otherwise, `display` is `block` and the div is visible.
 
 ```tsx
@@ -158,7 +157,7 @@ const showDialog = $$(false);
 const myDiv = <div>
     My Div
     <div id="dialog" style={{display:showDialog}}>My Dialog</div>
-</div>
+</div>;
 ```
 
 ### Special attributes values
@@ -173,13 +172,12 @@ Some attributes support special values. For example, all event listener attribut
 
 ```tsx
 const btnDisabled = $$(false);
-
 export default
     <div>
         <button disabled={btnDisabled}>Button</button>
         <button onclick={()=>btnDisabled.val=false}>Enable</button>
         <button onclick={()=>btnDisabled.val=true}>Disable</button>
-    </div>
+    </div>;
 ```
 
 #### Style
@@ -188,43 +186,40 @@ The `style` attribute accepts a string or an object with style declarations. The
 get dynamically updated.
 
 ```tsx
-export default <div style={{color:'blue', padding:'10px'}}></div>
+export default <div style={{color:'blue', padding:'10px'}}/>;
 ```
 
 ```tsx
 // increase border width every 1s
 const borderWidth = $$(0);
-setInterval(()=>borderWidth.val++, 1000)
+setInterval(()=>borderWidth.val++, 1000);
 
-export default <div style={{borderStyle:'solid', borderWidth}}>content</div>
+export default <div style={{borderStyle:'solid', borderWidth}}>content</div>;
 ```
 ##### Special style values
 
-Most style properties are assigned to strings. The following style properties also
-accept other values:
+Most style properties are associated with to strings. The following style properties also accept other values:
  * `display`: The display property accepts a `boolean` value. If the value is `true`, `display` is set to the default display value (e.g. `display: block` for a div). If the value is `false`, `display` is set to `none`.
 
 
 #### Scoped stylesheets
 
-The special `stylesheet` attribute can be used on JSX elements to apply a whole CSS
-stylesheet to the scope of the element (See [Element-scoped styles](./12%20Style%20and%20Themes.md#element-scoped-styles]))
+The special `stylesheet` attribute can be used on JSX elements to apply a whole CSS stylesheet to the scope of the element (See [Element-scoped styles](./12%20Style%20and%20Themes.md#element-scoped-styles]))
 
 
 #### Class
 Similar to the `style` attribute, the `class` accepts a string or an object.
-The object must contain the potential class names as properties and booleans as the corresponding properties,
-indicating whether this class should be activated.
+The object must contain the potential class names as properties and booleans as the corresponding properties, indicating whether this class should be activated.
 
 Simple class string:
 ```tsx
-export default <div class="main big"></div>
+export default <div class="main big"/>;
 ```
 
 Class object:
 ```tsx
 const enableBig = $$(false);
-export default <div class={{main: true, big: enableBig}}></div> // results in class="main"
+export default <div class={{main: true, big: enableBig}}/>; // results in class="main"
 
 // ...
 enableBig.val = true; // div class gets updated to class="main big"
@@ -234,9 +229,9 @@ enableBig.val = true; // div class gets updated to class="main big"
 ```tsx
 // increase border width every 1s
 const borderWidth = $$(0);
-setInterval(()=>borderWidth.val++, 1000)
+setInterval(()=>borderWidth.val++, 1000);
 
-export default <div style={{borderStyle:'solid', borderWidth}}>content</div>
+export default <div style={{borderStyle:'solid', borderWidth}}>content</div>;
 ```
 
 #### Paths
@@ -245,19 +240,17 @@ All attributes that accept a path as a value (e.g. `src`, `href`) can be set to 
 
 Relative paths in element attributes are always resolved correctly on the backend and on the frontend.
 
-```tsx
-// backend/entrypoint.ts
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 export default {
     '/img1': <img href="../common/images/1.png"/>, // file is in common directory: can be resolved on the frontend
     '/img2': <img href="./res/images/2.png"/>, // file is in backend directory: only accessible on the backend, not available on the frontend!
-}
+};
 ```
-```tsx
-// frontend/entrypoint.ts
+```tsx title="frontend/entrypoint.tsx" icon="fa-file"
 export default {
     '/img3': <img href="../common/images/3.png"/>, // file is in common directory: can be resolved on the frontend
     '/img4': <img href="./res/images/4.png"/>, // file is in frontend directory: accessible on the frontend
-}
+};
 ```
 
 If you need paths that are relative to the current URL as displayed in the browser, you can use the special `href:route` attribute:
@@ -267,7 +260,7 @@ If you need paths that are relative to the current URL as displayed in the brows
 export default {
     '/some/path' : <a href:route="./other-path"/>, // resolves to "/some/other-path"
     '/some/other-path': "Hello there"
-}
+};
 ```
 
 Instead of strings, `URL` values can also be set as path attributes.
@@ -278,10 +271,10 @@ The special `checked` attribute of a checkbox element can be use to set or get t
 ```ts
 // create new isChecked pointer bound to the "checked" state of the checkbox
 const isChecked = $$(false);
-export default <input type="checkbox" checked={isChecked}/>
+export default <input type="checkbox" checked={isChecked}/>;
 
 // observe isChecked pointer
-isChecked.observe((checked) => console.log("checkbox is checked: " + checked))
+isChecked.observe((checked) => console.log("checkbox is checked: " + checked));
 ```
 
 #### Form actions

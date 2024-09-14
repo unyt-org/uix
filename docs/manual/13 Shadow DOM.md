@@ -1,10 +1,9 @@
 # Shadow DOM
 ## Using shadow roots in components
 
-To get more control over the location of child elements, shadow roots and slots can be used.
+For more control over the location of child elements, shadow roots and slots can be used.
 To add a shadow root to the root element add a `<shadow-root>` element as the first child of the outer element.
-Alternativly, you can add a `shadow-root` attribute to the outer element. In this case, they child elements of the outer element are
-all appended to the shadow root.
+Alternatively, you can add a `shadow-root` attribute to the outer element.  In this case, all of the outer element's child elements are appended to the shadow root.
 
 ```tsx
 import { template } from "uix/html/template.ts";

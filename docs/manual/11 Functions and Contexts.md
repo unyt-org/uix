@@ -236,8 +236,7 @@ If we want to achieve the same thing with `renderBackend`, we need to modify or 
 To allow the event handler function to run in a context without a DATEX Runtime which leads to the limitations just mentioned, we need to add the `"standalone"` flag to the `use()` declaration: 
 
 
-```tsx
-// file: backend/entrypoint.tsx
+```tsx title="backend/counter.eternal.tsx" icon="fa-file"
 import { renderBackend } from "uix/base/render-methods.ts";
 
 function getData(name: string, count: number) {
@@ -257,28 +256,21 @@ export default renderBackend(
         }}>Load Data</button>
         <p id="data"/>
     </div>
-)
+);
 ```
 
 > [!NOTE]
-> The `"standalone"` flag can also be set when rendering with `renderHybrid`. In this case, the
-> event handler function is already activated before the DATEX Runtime is fully initialized, 
-> leading to faster
-> initial response times.
+> The `"standalone"` flag can also be set when rendering with `renderHybrid`. In this case, the event handler function is already activated before the DATEX Runtime is fully initialized, leading to faster initial response times.
 
 
 ## Security Considerations
 
-<sup>This section is not relevant for understanding how contexts work in UIX,
-but it talks about a relevant topic related to transferable functions: <i>Preventing arbitrary remote code execution</i></sup>
+<sup>This section is not relevant for understanding how contexts work in UIX, but it talks about a relevant topic related to transferable functions: <i>Preventing arbitrary remote code execution</i></sup>
 
-Per design, DATEX code can be executed remotely, but it is always run in an isolated sandbox. Permissions for certain functionalities must be explicitly given to specific endpoints.
+By design, DATEX code can be executed remotely, but it is always run in an isolated sandbox. Permissions for specific functionality must be explicitly granted to specific endpoints.
 
-In contrast to normal DATEX functions, transferable functions containing JavaScript source code pose
-a potentially higher threat, because they have access to the global (`window`) object and can do
-almost everything within the scope of a website.
+In contrast to normal DATEX functions, transferable functions containing JavaScript source code pose a potentially higher threat, because they have access to the global (`window`) object and can do almost anything within the scope of a web page.
 
-This is why per default, transferable functions can only be called when they were created by the same endpoint.
-Additionally, the DATEX runtime maintains a whitelist of all remote endpoints that are allowed to transfer executable JavaScript source code to the endpoint. 
+Therefore, by default, transferable functions can only be called when they were created by the same endpoint. In addition, the DATEX runtime maintains a whitelist of all remote endpoints that are allowed to transfer executable JavaScript source code to the endpoint.
 
-Within a UIX app, the only endpoint in this whitelist is the app backend endpoint, which is always considered trusthworty.
+Within a UIX app, the only endpoint in this whitelist is the app backend endpoint, which is always considered trustworthy.

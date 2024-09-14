@@ -177,11 +177,10 @@ This is the stage where special development features are enabled:
 
 ### Run UIX applications locally
 
-Per default, UIX apps run on `http://localhost:80`.
-If port 80 is already in use, UIX automatically finds a free port.
+UIX applications run on `http://localhost:80` by default.
+If the port 80 on the host system is already in use, UIX will automatically select a free port.
 
-You can also specify a custom port with the `--port` argument if this port is not available
-on your system or if you want to run multiple UIX simultaneously.
+With the `--port` argument, the UIX CLI lets you specify a custom port on which to start the UIX application. This can be useful if you plan to run multiple UIX instances in parallel.
 
 > [!WARNING]
 > Keep in mind that the cookies are the same for all localhost apps, regardless of the port.

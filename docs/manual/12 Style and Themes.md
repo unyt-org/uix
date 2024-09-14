@@ -151,23 +151,22 @@ UIX.Theme.setMode('dark');
 
 ### Observing theme and mode changes
 
-For some use cases, it might be useful to change content or styling depending on the current theme or mode.
+For some use cases, it may be useful to change content or styling depending on the current theme or mode.
 
-The `theme` and `mode` properties of `UIX.Theme` are bound to reactive pointers and can be used in combination
-with `effect` and `always` to react to changes:
+The `theme` and `mode` properties of `UIX.Theme` are bound to reactive pointers and can be used in combination with `effect` and `always` to react to changes:
 
 ```ts
 effect(() => console.log(`Mode changed to ${UIX.Theme.mode}`));
 ```
 
 ```tsx
-<div>{
-    always(() =>
+<div>
+    {always(() =>
       UIX.Theme.mode == "dark" ?
         "Dark mode" :
         "Light mode"
-    )
-}</div>
+    )}
+</div>
 ```
 
-Alternatively, you can directly access the underlying pointers with `UIX.Theme.$.theme` / `UIX.Theme.$.mode`.
+Alternatively, you can access the underlying pointers directly with `UIX.Theme.$.theme` / `UIX.Theme.$.mode`.

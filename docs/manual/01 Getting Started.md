@@ -144,7 +144,7 @@ UIX projects combine frontend and backend source code with other resources into 
 
 By default, all files in the `frontend` directory are only available to browser clients *(frontend endpoints)*, while files in the `backend` directory are only available to backend endpoints *(Deno runtime)*.
 
-With UIX [Cross-Realm Imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports), TypeScript/JavaScript/DATEX modules from the backend can be imported and used inside frontend modules.
+UIX [Cross-Realm Imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports) allows the import of TypeScript / JavaScript / DATEX modules from the backend and can therefore be used within frontend modules.
 
 Files in the `common` directory can be accessed from both the `frontend` and `backend` scope.
 
@@ -155,7 +155,7 @@ with
 import { UIX } from "uix"
 ```
 
-This namespace contains some important global properties:
+These are important properties that can be found in the UIX namespace:
 ```ts
 interface UIX {
     Theme: ThemeManager;           // UIX Theme manager to register and activate themes and dark/light mode
@@ -168,14 +168,14 @@ interface UIX {
 
 ## UIX development
 
-Per default, a UIX app runs in the `dev` stage. 
+By default, a UIX application starts up in the development (`dev`) stage. 
 
-In this stage, special development features are enabled:
+This is the stage where special development features are enabled:
  * You can completely reset the current page state with `CTRL+R`
  * Error stacks for backend errors thrown during routing are displayed in the browser
  * Source maps for TypeScript files are available in the browser
 
-### Running UIX apps locally
+### Run UIX applications locally
 
 Per default, UIX apps run on `http://localhost:80`.
 If port 80 is already in use, UIX automatically finds a free port.

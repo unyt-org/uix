@@ -60,4 +60,4 @@ Follow these steps to launch your UIX app in minutey.
 
 
 ### How does that work?
-*Alright. Some technical background on Docker Hosts.*
+*Alright. Some technical background on UIX Docker Hosts.*

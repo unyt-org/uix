@@ -1,17 +1,16 @@
 # JSX
-
-UIX supports [JSX](https://facebook.github.io/jsx/) syntax for creating HTML and SVG elements.
+UIX has built-in support for [JSX](https://facebook.github.io/jsx/) in `.tsx files. JSX in UIX can be handy for server-side rendering or reusable component definitions.
 
 ## Creating native DOM elements
 
-All native DOM elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>` ...) can be created with JSX. 
+All [native DOM](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API) elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>` ...) can be created with JSX and used in your UIX application both on frontend and backend code. 
 
 ```tsx
 const section = 
-    <div id="section-1">
-        <h1 style="font-weight:bold">Title</h1>
+    <div id="section">
+        <h1 style="font-weight: bold">Title</h1>
         <p>First Paragraph</p>
-    </div>
+    </div>;
 ```
 
 In contrast to frameworks like React, the value returned by this JSX expression is an actual instance of an HTML div element.
@@ -25,17 +24,17 @@ document.body.append(section);
 ## Supported attributes
 
 For default DOM elements, all attributes that are natively supported by the element can be used.
-Components support the common attributes for DOM element (e.g. `id`, `class`, `style` or event handlers) per default, and 
+Components support the common DOM element attributes (such as `id`, `class`, `style` or event handlers) by default, and 
 can accept additional custom attributes defined in the component class or function.
 
 
 ## Fragments
 
-There are two ways to create fragments in UIX.
+Fragments represent a minimal document object that has no parent. There are two ways to use fragments within UIX.
 
 ### DocumentFragments
 
-You can create HTML DocumentFragments with `<></>`:
+You can create [HTML DocumentFragments](https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment) with `<></>`:
 ```tsx
 <>
     <div>Content 1</div>
@@ -75,9 +74,9 @@ A `uix-fragment` is a reusable fragment that is part of the actual DOM but is ne
 </uix-fragment>
 ```
 
-UIX Fragments do not face the reusablity issues of normal DocumentFragments, but you need to keep in mind that they are always visible to CSS selectors:
+UIX Fragments do not face the reusablity issues of DocumentFragments, but you need to keep in mind that they are always visible to CSS selectors:
 
-```tsx
+```tsx title="App.tsx" icon="fa-file"
 <div>
     <uix-fragment>
         <h1>Title</h1>
@@ -85,7 +84,7 @@ UIX Fragments do not face the reusablity issues of normal DocumentFragments, but
 </div>
 ```
 
-```css
+```css title="App.css" icon="fa-file"
 div > h1 {
     // this does not work
 }
@@ -99,10 +98,9 @@ div > uix-fragment > h1 {
 
 ## Reactivity
 
-Thanks to DATEX, elements created with JSX are inherently reactive, even if they
-are not declared inside a component function.
+Thanks to DATEX, elements created with JSX are inherently reactive, even if they are not declared inside a component function.
 JSX elements accept plain JavaScript values *or* DATEX Refs as attribute values and element contents.
-When passing plain JavaScript values, the component is not updated dynamically:
+Passing plain JavaScript values, does not dynamically update the component:
 
 ```tsx
 let myClass = "xyz";
@@ -110,7 +108,7 @@ const myDiv = <div class={myClass}></div>
 myClass = "abc"; // myDiv class is still "xyz"
 ```
 
-To achieve reactive behaviour, you need to pass in a `Ref` value:
+To achieve reactive behaviour, you can pass in a `Ref` value:
 ```tsx
 let myClass = $$("xyz");
 const myDiv = <div class={myClass}></div>
@@ -124,7 +122,7 @@ There are multiple ways to achieve conditional rendering with UIX.
 
 #### Using `always`
 
-The `always` transform function autmatically recalculates the
+The `always` transform function automatically recalculates the
 result value when one of the dependency refs inside the function changes.
 In this case, it is recalculated each time the value of `showDialog` is updated.
 
@@ -138,9 +136,8 @@ const myDiv = <div>
 
 #### Using `toggle`
 
-With the `toggle` function, you can achieve the same effect as with the `always`
-function, but it is more efficient, because the return values are only every created once.
-The `toggle` function switches between to values, depending on another value (in this case, `showDialog`): 
+With the `toggle` function, you can achieve the same effect as with the `always` function, but it is more efficient, because the return values are only every created once.
+The `toggle` function toggles between two values, depending on another input condition (in this case, `showDialog`): 
 
 ```tsx
 const showDialog = $$(false);

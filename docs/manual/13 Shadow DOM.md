@@ -13,7 +13,7 @@ const CustomComponentWithSlots = template(<div shadow-root>
     Before children
     <slot/>
     After children
-</div>)
+</div>);
 
 // alternative template definition:
 const CustomComponentWithSlots2 = template(<div>
@@ -23,7 +23,7 @@ const CustomComponentWithSlots2 = template(<div>
         After children
     </shadow-root>
     This child is appended to the slot element inside the shadow root
-</div>)
+</div>);
 
 // create element:
 const comp3 = <CustomComponentWithSlots id='c1'>

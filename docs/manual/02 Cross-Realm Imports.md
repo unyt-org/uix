@@ -1,7 +1,7 @@
 # Cross-Realm Imports
 
-Modules in the `frontend` directory of a UIX app can import exported values from `backend` modules, as if they are running on the same device and within the same process. 
-Under the hood, this is achieved with DATEX messaging between the frontend and backend endpoints.
+Modules in the `frontend` directory of a UIX app can import exported values from `backend` modules, as if they were running on the same device and within the same process. 
+Under the hood, this is achieved using DATEX messaging between the frontend and backend endpoints.
 
 **Cross-Realm Import Example**:
 
@@ -32,18 +32,18 @@ console.log(await getData()); // [1,2,3]
 > [!WARNING]
 > The following values have limitations when they are imported as backend exports from the frontend:
 > * Classes 
->   * Class definitions should always be put in a `common` module if the class is used both on the backend and frontend.
->   * static class fields can still be accessed on a class imported from the backend
+>   * Class definitions should always be placed in a `common` module if the class is used on both the backend and the frontend.
+>   * Static class fields can still be accessed on a class imported from the backend
 
 ## Common Modules
 
-Modules from the common directory can be imported from both the backend and frontend.
+Modules from the common directory can be imported by both the backend and the frontend.
 
-This is useful for definining components that can be rendered by the backend or frontend, or for utility functions and libraries that are used on the backend and frontend.
+This is useful for defining components that can be rendered by the backend or frontend, or for utility functions and libraries that are used on the backend and frontend.
 
 > [!NOTE]
-> Common modules allow the usage of the *same source code* for the backend and frontend, but they do not share a state between the backend and frontend endpoints: Every module is initialized individually on each endpoint.
-> A shared module state is only possible with *backend modules* imported from the backend and frontend.
+> Common modules allow the use of the *same source code* for the backend and frontend, but they do not share a state between the backend and frontend endpoints: Each module is initialized individually on each endpoint.
+> A shared module state is only possible with *backend modules* that are imported from the backend and the frontend.
 
 
 ## Security

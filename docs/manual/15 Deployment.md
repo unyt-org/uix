@@ -1,5 +1,5 @@
 # Deployment
-UIX provides options for automatic deployment with optional git integration.
+UIX provides options for automated deployment with optional `git` integration.
 
 ## Backend Endpoint Locations
 
@@ -10,31 +10,30 @@ This default behavior can be changed by defining a `location` property in the ba
 
 Besides the default local location, 
 there are two other possible endpoint location types:
- * [Remote docker hosts](#remote-docker-hosts)
- * [Local dockers](#local-dockers)
+ * [Remote Docker hosts](#remote-docker-hosts)
+ * [Local Dockers](#local-dockers)
 
 ### Remote Docker Hosts
 
-A remote docker host is a special endpoint running on another device (e.g. on a deployment server) that manages
-dockers on the device and can communicate with a UIX app to deploy new docker containers.
+A remote Docker host is a special endpoint running on another device (e.g. on a deployment server) that manages Dockers on the device and can communicate with a UIX app to deploy new Docker containers.
 
-unyt.org provides public docker hosts (`@+app-host-eu2`) that can be used to deploy UIX apps under `unyt.app` domains.
+The unyt.org entity provides public Docker hosts (`@+app-host-eu2`) that can be used to deploy UIX apps under the `unyt.app` domain.
 
-If you want to set up you own docker host on your server, take a look at the [Docker Host](https://github.com/unyt-org/docker-host/) documentation.
+If you want to set up you own Docker host on your machine, take a look at the [Docker Host](https://github.com/unyt-org/docker-host/) documentation.
 
-The following options can be set in a backend `.dx` file to configure a remote docker host.
+The following options can be set in the backend `.dx` file to configure a remote Docker host to be used.
 
-* `location`: *(endpoint or text)* A docker host endpoint (e.g. `@+app-host-eu2` or a self-hosted endpoint) where the UIX should be hosted. The default is `@@local`, meaning that the app is run locally and not on a docker host.
-* `domain`: *(text or text[])* One or multiple custom domains on which the web server is listening. This only works if the domain is pointing to the ip address of the docker host. The domain name may include characters `a-z`, digits `0-9`, hypens, and dots as separator if part of a subdomain and must not start with a hypen.
-* `volumes`: *(url or url[])* Directories that are mapped to persistent docker volumes on the docker host
+* `location`: *(endpoint or text)* A Docker host endpoint (e.g. `@+app-host-eu2` or a self-hosted endpoint) where the UIX should be hosted. The default is `@@local`, meaning that the app is run locally and not on a Docker host.
+* `domain`: *(text or text[])* One or multiple custom domains on which the web server is listening. This only works if the domain is pointing to the ip address of the Docker host. The domain name may include characters `a-z`, digits `0-9`, hypens, and dots as separator if part of a subdomain and must not start with a hypen.
+* `volumes`: *(url or url[])* Directories that are mapped to persistent Docker volumes on the Docker host
 
 
 #### Inspecting UIX apps remote docker hosts
 
-You can start a UIX app with `--inspect` to debug the app while running on a remote docker host.
-To access the inspect port, you need to have ssh access to the docker host server and run the following command to map the server inspect port to a port on your local device:
+You can start a UIX app with `--inspect` to debug the app it is running on a remote Docker host.
+To access the inspect port, you must have `ssh` access to the Docker host server and run the following command to map the server inspect port to a port on your local device:
 
-```
+```bash
 ssh -L 127.0.0.1:9229:127.0.0.1:9229 YOUR_USERNAME@YOUR_SERVER_DOMAIN
 ```
 
@@ -80,16 +79,16 @@ location: stage {
 ```
 
 > [!NOTE]
-> When using remote docker hosts, it is currently required that
+> When using remote Docker hosts, it is currently required that
 > your UIX app is available in a GitHub repository. Make sure
 > that all files are committed and all commits pushed.
 
 ### Local Dockers
 
-The *local docker* location is similar to the default local location:<br>
-The endpoint still runs on the current device, but inside a [docker](https://www.docker.com/) container.
+The *local Docker* location is similar to the default local location:<br>
+The endpoint still runs on the current device, but inside a [Docker](https://www.docker.com/) container.
 
-To run a UIX app in a local docker, simply set the following `location` value in the backend `.dx` file:
+To run a UIX app in a local Docker, simply set the following `location` value in the backend `.dx` file:
 ```
 location: 'local-docker'
 ```

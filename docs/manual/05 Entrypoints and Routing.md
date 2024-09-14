@@ -4,7 +4,7 @@ In a UIX app, the user interface is provided by default exports from the `entryp
 
 There are variety of values that can be exported from an entrypoint for display in the browser, including strings, HTML Elements, Blobs and [more](#entrypoint-values).
 
-Example Entrypoints:
+Example entrypoints:
 ```typescript title="backend/entrypoint.tsx" icon="fa-file"
 export default "Hello, this is a simple text displayed on a website and loaded from the backend entrypoint";
 ```
@@ -193,8 +193,7 @@ export default provideVirtualRedirect('/example/home') satisfies Entrypoint;
 ```
 
 ## Entrypoint functions
-In the example above, an Entrypoint function is used to return custom content based on the context of a route.
-Entrypoint functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>`.
+In the example above, an entrypoint function is used to return custom content based on the context of a route. Entrypoint functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>`.
 
 Example:
 ```tsx
@@ -358,7 +357,7 @@ interface RouteManager {
 
 ## Entrypoint proxies
 
-An Entrypoint proxy can be wrapped around any Entrypoint value to intercept routing and add custom functionality.
+An entrypoint proxy can be wrapped around any entrypoint value to intercept routing and add custom functionality.
 The abstract `EntrypointProxy` class has two methods that can be implemented:
 
 ```typescript

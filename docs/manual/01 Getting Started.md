@@ -82,7 +82,7 @@ You can initialize a new UIX project by running
 uix --init <PROJECT_NAME>
 ```
 
-This will create a new [UIX Base Project](https://github.com/unyt-org/uix-base-project.git) in the given directory and start the application locally.
+This will create a new [UIX Base Project](https://github.com/unyt-org/uix-base-project.git) in the given directory and launch the application locally.
 
 > [!NOTE]
 > We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for UIX development.<br/>

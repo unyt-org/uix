@@ -183,8 +183,8 @@ If the port 80 on the host system is already in use, UIX will automatically sele
 With the `--port` argument, the UIX CLI lets you specify a custom port on which to start the UIX application. This can be useful if you plan to run multiple UIX instances in parallel.
 
 > [!WARNING]
-> Keep in mind that the cookies are the same for all localhost apps, regardless of the port.
-> This can lead to unexpected behaviour when opening multiple apps that are running on different localhost ports in the same browser (e.g. endpoint and themes might get overridden).
+> Note that HTTP cookies are shared between all localhost applications, regardless of port.
+> This can lead to unexpected behaviour when opening multiple apps that are running on different ports in the same browser (e.g. client endpoints and theme data might get overridden).
 
 
 ## Helpful articles

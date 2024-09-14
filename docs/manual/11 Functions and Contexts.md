@@ -2,29 +2,26 @@
 
 ## Contexts in a UIX app
 
-In UIX, we use the term 'context' to describe a module scope on a specific endpoint that
-was created at a specific time. 
-This context contains variables that can be accessed inside the context and also be exported.
+In UIX, we use the term 'context' to describe a module scope on a particular endpoint that was created at a specific time. 
+This context contains variables that can be accessed inside the context and exported within the context.
 
 To give an example, a context could be uniquely identified by the following parameters:
   * Module https://cdn.unyt.org/example/module.ts
   * Endpoint @example
   * Created on 4/20/2023 01:23
 
-When the endpoint is restarted and the same module is loaded again,
-a new context is created. This can be prevented by using [eternal modules](#restorable-contexts-eternal-modules).
+When the endpoint is restarted and the same module is loaded again, a new context is created. This can be prevented by using [eternal modules](#restorable-contexts-eternal-modules).
 
 In general, UIX distinguished between two context types:
 
  * **Backend context**: a module loaded on a backend endpoint
  * **Display context**: a module loaded on a frontend endpoint
 
-Values and functions can exist in different contexts within a UIX app. They can also be moved between contexts and exist
-in multiple contexts at once.
+Values and functions can exist in different contexts within a UIX app. They can also be moved between contexts and exist in multiple contexts at once.
 
-The **origin context** of a value is the module context in which the value was originally created. This can be a backend or frontend context.
-When a value is moved to another context, this new context is called the **host context**.
-For a given value, more than one host context can exist at the same time.
+The **origin context** of a value is the module context where the value was originally created. This can be a backend or a frontend context.
+When a value is moved to another context, the new context is called the **host context**.
+There can be more than one host context for a given value.
 
 ## Functions
 

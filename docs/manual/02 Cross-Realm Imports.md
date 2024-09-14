@@ -48,8 +48,8 @@ This is useful for defining components that can be rendered by the backend or fr
 
 ## Security
 
-Only values that are explicitly imported in frontend module source code are publicly exposed from the backend.
+Only values that are explicitly imported into the frontend module's source code are publicly exposed from the backend.
 All of the other exports are still only accessible within the backend context.
 
-Even if values are exported from the backend because they are required on the frontend, the backend module source
-code is never publicly exposed - only the exported values are accessible.
+Even if values are exported from the backend because they are needed on the frontend, the backend module source code is never exposed.
+Source code is never exposed to the public - only the exported values can be made accessible.

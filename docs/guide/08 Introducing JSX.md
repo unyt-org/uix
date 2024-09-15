@@ -56,3 +56,22 @@ export default <div>
 Voilà, we'll see something like below when we run UIX and open the app in our browser *(styles are of course a bit off when using IE or SaFarI)*:
 
 ![](./res/jsx-hello-world.png)
+
+## Creating and handling DOMElements
+If you've ever used React, you're probably familiar with the concept of the [Virtual DOM](https://legacy.reactjs.org/docs/faq-internals.html) — a lightweight, in-memory representation of the actual DOM that React uses to efficiently manage UI updates. However, in UIX, every JSX expressions returns real DOM elements, not virtual representations.
+
+That means that value returned by following JSX expression is an actual instance of an [HTMLSpanElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLSpanElement) and we can use it as it was created by `document.createElement('span')` to modify properties or change its children.
+
+```tsx
+const mySpan = <span>Hello, UIX!</span>;
+// Do whatever we want with the element
+mySpan.innerText = 'Some other text';
+document.body.append(mySpan);
+```
+
+UIX support a custom JSX flavour that is as close to original HTML as possible. That means we can set all common attributes for DOMElements (e.g. `id`, `class`, `style`, and `event` handlers) as we would do in HTML.
+
+```tsx
+document.body.append(<div id="myDiv">Hello, UIX!</div>);
+document.body.querySelector("myDiv").innerText = "New content";
+```

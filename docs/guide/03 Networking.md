@@ -7,8 +7,7 @@ Instead, you can just call a JavaScript function - no need for API architectures
 You want to get the age of a user from the backend?
 Just call a function that returns the age of a user:
 
-```tsx
-// backend/age.ts
+```tsx title="backend/age.ts" icon="fa-file"
 const users = new Map<string, {age: number}>();
 
 export function getAgeOfUser(userName: string) {
@@ -18,8 +17,7 @@ export function getAgeOfUser(userName: string) {
 
 And in the frontend, you can call this function as if it was a local function:
 
-```tsx
-// frontend/age.ts
+```tsx title="frontend/age.ts" icon="fa-file"
 import { getAgeOfUser } from "backend/age.ts"
 console.log(await getAgeOfUser("1234"))
 ```
@@ -28,8 +26,7 @@ Although you can retrieve individual object properties this way, the preferred
 way in UIX is to just share the whole user object and read the required properties directly
 on the frontend:
 
-```tsx
-// backend/age.ts
+```tsx title="backend/age.ts" icon="fa-file"
 const users = new Map<string, {age: number}>();
 
 export function getUser(userName: string) {
@@ -37,8 +34,7 @@ export function getUser(userName: string) {
 }
 ```
 
-```tsx
-// frontend/age.ts
+```tsx title="frontend/age.tsx" icon="fa-file"
 import { getUser from "backend/age.ts"
 
 const userA = await getUser("1234");

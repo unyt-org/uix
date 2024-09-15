@@ -73,5 +73,20 @@ UIX support a custom JSX flavour that is as close to original HTML as possible. 
 
 ```tsx
 document.body.append(<div id="myDiv">Hello, UIX!</div>);
-document.body.querySelector("myDiv").innerText = "New content";
+document.getElementById("myDiv").innerText = "Some other text";
+```
+
+## Reusable Components
+So we covered the basics. Let's continue with reusable components - what is where JSX comes in super handy. Think of reusable components like the building blocks of your UIX app. Instead of recreating similar buttons, list items, forms, or navigation menus over and over again, you can design a single component that can be used repeatedly with different data or styles. This reduces code duplication, makes your project more scalable, and simplifies maintenance.
+
+Let's create a reusable button component (WIP)
+
+```tsx
+function MyButton() {
+	return (
+		<button class="my-button">
+			I'm a button
+		</button>
+	);
+}
 ```

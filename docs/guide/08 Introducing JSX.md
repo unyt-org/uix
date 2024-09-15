@@ -37,6 +37,15 @@ Fast forward to today - introducing [JSX](https://facebook.github.io/jsx/) for [
 
 If you plan to use JSX syntax inside of your UIX app, make sure to change your file's extension from `.ts` to `.tsx`.
 
+All DOM elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>`, ...) can now be used within your TypeScript code as it was HTML:
+
+```tsx
+// That's magic, isn't it?
+const myDiv = <div>Hello world</div>;
+```
+
+Alright, let's see an example in how to render something in our `entrypoint.tsx` that we can acutally see in the browser. For that we can just set our default export to some JSX element:
+
 ```tsx title="entrypoint.tsx" icon="fa-file"
 export default <div>
 	<h1>Hello world</h1>

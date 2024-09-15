@@ -52,3 +52,7 @@ export default <div>
 	<input type="text" placeholder="My Text Input"/>
 </div>;
 ```
+
+Voilà, we'll see something like below when we run UIX and open the app in our browser *(styles are of course a bit off when using IE or SaFarI)*:
+
+![](./res/jsx-hello-world.png)

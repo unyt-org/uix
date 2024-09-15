@@ -14,7 +14,7 @@ If you don't like to setup all the infrastructure on your own, we recommend depl
 > Docker Hosts are only support on Linux systems.
 > If you experience some issues with your Linux distribution please let us know.
 
-Follow these steps to launch your UIX app in minutey.
+Follow these steps to launch your UIX app in minutey. For more information check out the [Docker Host repository](https://github.com/unyt-org/docker-host/tree/v2).
 
 1. Install Docker on your server:
 	
@@ -22,9 +22,9 @@ Follow these steps to launch your UIX app in minutey.
 2. Install the Docker Host Endpoint on your server:
 
 	```bash
-	curl -s https://raw.githubusercontent.com/unyt-org/docker-host/master/setup.sh | bash -s @+YOUR_DOCKER_HOST
+	curl -s https://raw.githubusercontent.com/unyt-org/docker-host/main/setup.sh | bash -s @+YOUR_DOCKER_HOST
 	```
-	Make sure to pass a unique [endpoint id]() to the install script. The setup script will create a docker host instance by installing [Deno](https://github.com/denoland/deno) and creating a persistent service inside of `etc/systemd/system`.
+	Make sure to pass a unique [endpoint id](https://docs.unyt.org/manual/datex/endpoints) to the install script. The setup script will create a Docker Host instance by installing [Deno](https://github.com/denoland/deno) and creating a persistent service inside of `etc/systemd/system`.
 
 	You can check if the installation was successfull using the following command: 
 	```bash
@@ -58,8 +58,46 @@ Follow these steps to launch your UIX app in minutey.
 
 	This command will deploy your UIX app to your custom Docker host, making it live on your custom domain.
 
+	> [!WARNING]
+	> If the Docker Host you plan to deploy to has a access token configured, you need to pass this access token to UIX to make sure your app can authenticate.<br/>
+	> You can set the access token as `HOST_TOKEN` environment variable on your local UIX projects console.
+	> ```bash
+	> export HOST_TOKEN=YOUR_TOKEN
+	> ```
+
 
 ### How does that work?
-*Alright. Some technical background on UIX Docker Hosts.*
+*Alright. Some technical background on Docker Hosts.*
 
-The Docker Host instance installed as a service on your server will startup a persistent Deno process. The Docker Hosts joins the [Supranet](https://unyt.org/supranet) using the configured endpoint id and exposes a public DATEX interface called `Container`.
+The Docker Host instance installed as a service on your remote machine will startup a persistent Deno process. The Docker Hosts joins the [Supranet](https://unyt.org/supranet) using the configured endpoint id and exposes a public DATEX interface called `ContainerManager`.
+
+DATEX can then access the interface using following code:
+
+```ts
+use ContainerManager from @+YOUR_DOCKER_HOST;
+
+ContainerManager.doWhatever(...)
+```
+
+When running the `uix --stage prod` command, UIX's [`run.ts`](https://cdn.unyt.org/uix/run.ts) will check the configured location inside of the `app.dx` config file for the given stage *(`dev` is set as default)*.
+
+If a remote endpoint for the current stage is configured, UIX will call the `createUIXAppContainer()` method of the public `ContainerManager` interface on the remote host.
+
+UIX under the hood does incovates something like following for remote deployment:
+
+```ts
+ref container = ContainerManager.createUIXAppContainer(
+	$HOST_TOKEN, 		// remote access token
+	$projectGitURL, 	// git url of the UIX app 
+	$projectBranch, 	// git branch of the UIX app
+	@+your_app, 		// endpoint for the prod stage
+	"prod", 			// current stage
+	["YOUR-DOMAIN.com"] // configured domain
+);
+```
+
+By calling the `createUIXAppContainer()` method on the Docker Host, the remote deployment is initialized using the passed parameters.
+
+The Docker Host will first verify the access token, clone the git repository and spin up a custom Docker container for the deployed app. To also allow for persistent storage accross deployment tasks, corresponding Docker volumes are generated.
+
+If the Docker Host is configured to handle the reverse proxy tasks, corresponding configuration is added to the Docker image automatically. Using custom `traefik` configurations, the Docker host can map configured domains ([YOUR-DOMAIN.com](https://YOUR-DOMAIN.com)) to the container of the UIX app and therefore allow for HTTP traffic to be handled by the deployed app.

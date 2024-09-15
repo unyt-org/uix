@@ -5,7 +5,7 @@ import { GitRepo } from "../utils/git.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { runParams } from "./runner.ts";
 import { logger } from "../utils/global-values.ts";
-import { gitToken } from "../app/args.ts";
+import { gitToken, hostToken } from "../app/args.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 type Endpoint = any
@@ -112,7 +112,7 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 		const container = await datex<any> `
 			use ContainerManager from ${requiredLocation};
 			ContainerManager.createUIXAppContainer(
-				${Deno.env.get("HOST_TOKEN")},
+				${hostToken ?? Deno.env.get("HOST_TOKEN")},
 				${repo.origin}, 
 				${repo.branch}, 
 				${stageEndpoint},

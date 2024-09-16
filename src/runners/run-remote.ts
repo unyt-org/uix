@@ -112,7 +112,6 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 		const container = await datex<any> `
 			use ContainerManager from ${requiredLocation};
 			ContainerManager.createUIXAppContainer(
-				${hostToken ?? Deno.env.get("HOST_TOKEN")},
 				${repo.origin}, 
 				${repo.branch}, 
 				${stageEndpoint},
@@ -122,7 +121,8 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 				${args},
 				${normalizedVolumes},
 				${gitToken ?? Deno.env.get("GITHUB_TOKEN")},
-				${{importMapPath, uixRunPath}}
+				${{importMapPath, uixRunPath}},
+				${hostToken ?? Deno.env.get("HOST_TOKEN")}
 			)
 		`
 		// console.log("");

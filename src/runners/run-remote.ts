@@ -107,7 +107,7 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 
 		const {importMapPath, uixRunPath} = getInferredRunPaths(options.import_map, root_path)
 		
-		// tell docker host to use uix v.0.2
+		// tell docker host to use uix v.0.3
 		env.push(`UIX_VERSION=0.3`)
 		const container = await datex<any> `
 			use ContainerManager from ${requiredLocation};

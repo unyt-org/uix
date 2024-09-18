@@ -30,7 +30,6 @@ import { observeElementforSSE } from "./sse-observer.ts";
 import { eternalExts, getEternalModuleProxyPath } from "./module-mapping.ts";
 import { rootPath, transpileCachePath } from "./args.ts";
 import { isSafariClient } from "../utils/safari.ts";
-import { Ref } from "datex-core-legacy/runtime/pointers.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 

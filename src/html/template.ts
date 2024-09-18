@@ -60,7 +60,7 @@ type Equals<X, Y> =
     (<T>() => T extends Y ? 1 : 2) ? true : false;
 
 
-type Props<Options extends Record<string,unknown>, Children, handleAllProps = true, optionalChildren = false> = JSX.DatexValueObject<Options> & 
+type Props<Options extends Record<string,unknown>, Children, handleAllProps = true, optionalChildren = false> = Options & 
 (
 	handleAllProps extends true ? 
 		(JSX._IntrinsicAttributes & 
@@ -72,11 +72,6 @@ type Props<Options extends Record<string,unknown>, Children, handleAllProps = tr
 			)) // TODO: optional children for JSX, but not for template callback function
 		) : unknown
 )
-
-
-type ObjectWithCollapsedValues<O extends Record<string, unknown>> = {
-	[K in keyof O]: O[K] extends Datex.RefOrValue<infer T> ? T : O[K]
-}
 
 export type jsxInputGenerator<
 	Return, 
@@ -92,10 +87,6 @@ export type jsxInputGenerator<
 			// inferred options:
 			Context extends {options:unknown} ? Omit<(Context)['options'], '$'|'$$'> : Options
 			, Children, handleAllProps, optionalChildren>,
-		propsValues: ObjectWithCollapsedValues<Props<
-			// inferred options:
-			Context extends {options:unknown} ? Omit<(Context)['options'], '$'|'$$'> : Options
-			, Children, handleAllProps, optionalChildren>>
 	) => Return;
 
 
@@ -187,15 +178,8 @@ export function createTemplateGenerator(templateOrGenerator?:JSX.Element|jsxInpu
 		}
 		// jsx
 		else {
-
-			const collapsedPropsProxy = new Proxy(propsOrClass??{}, {
-				get(target,p) {
-					return val(target[p]);
-				},
-			});
-
-			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass, collapsedPropsProxy)
-			else return templateOrGenerator(propsOrClass, collapsedPropsProxy);
+			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass)
+			else return templateOrGenerator(propsOrClass);
 
 		}
 	}
@@ -280,14 +264,8 @@ export function blankTemplate<
 		}
 
 		else {
-			const collapsedPropsProxy = new Proxy(propsOrClass??{}, {
-				get(target,p) {
-					return val(target[p])
-				},
-			});
-	
-			if (context && elementGenerator.call) return elementGenerator.call(context, propsOrClass, collapsedPropsProxy)
-			else return elementGenerator(propsOrClass, collapsedPropsProxy);
+			if (context && elementGenerator.call) return elementGenerator.call(context, propsOrClass)
+			else return elementGenerator(propsOrClass);
 		}
 
 	}

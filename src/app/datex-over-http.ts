@@ -117,7 +117,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
  * - uses datex-over-http when DATEX is not available
  * @param fn
  */
-export function getValueUpdater(ref:Datex.Ref, forceDatex = false, keepAlive = false): string {
+export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, keepAlive = false): string {
 	
 	// prevent garbage collection
 	if (ref instanceof Datex.Pointer) ref.is_persistent = true;

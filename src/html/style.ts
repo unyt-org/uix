@@ -73,15 +73,8 @@ export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGener
 		}
 		// evaluate
 		else {
-
-			const collapsedPropsProxy = new Proxy(propsOrClass??{}, {
-				get(target,p) {
-					return val(target[p])
-				},
-			});
-
-			if (context && (templateOrGenerator as Function).call) return (templateOrGenerator as Function).call(context, propsOrClass, collapsedPropsProxy)
-			else return (templateOrGenerator as Function)(propsOrClass, collapsedPropsProxy);
+			if (context && (templateOrGenerator as Function).call) return (templateOrGenerator as Function).call(context, propsOrClass)
+			else return (templateOrGenerator as Function)(propsOrClass);
 		}
 	}
 

@@ -625,7 +625,8 @@ export class Transpiler {
         const experimentalPlugins = useJusix ? {
             plugins: [
                 [jusixPath, {}]
-            ]
+            ],
+            cacheRoot: UIX.cacheDir.asDir().getChildPath("jusix/cache/").normal_pathname
         } as Record<string, any> : undefined;
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);

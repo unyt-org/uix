@@ -26,12 +26,12 @@ export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:H
 		cookieSharedData = $$({__proto__:{}})
 	}
 
-	cookieSharedData[Symbol.dispose] = () => Datex.Ref.unobserve(cookieSharedData, update)
+	cookieSharedData[Symbol.dispose] = () => Datex.ReactiveValue.unobserve(cookieSharedData, update)
 	const update = async () => {
 		console.debug("updating shared data cookie: \n" + Datex.Runtime.valueToDatexStringExperimental({...cookieSharedData}, true, true));
 		setCookie(UIX_COOKIE.sharedData, await Datex.Compiler.encodeValueBase64Async({...cookieSharedData}, undefined, undefined, false, true), undefined, writeHeaders, port, isSafariLocalhost)
 	};
-	Datex.Ref.observe(cookieSharedData, update)
+	Datex.ReactiveValue.observe(cookieSharedData, update)
 
 	return {sharedData:cookieSharedData, update};
 }

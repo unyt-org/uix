@@ -20,7 +20,7 @@ const logger = new Logger("frontend router");
 
 type MergeStrategy = 'override'|'insert'
 
-const experimentalViewTransitionsEnabled = app.options?.experimental_features.includes("view-transitions")
+const experimentalViewTransitionsEnabled = app.options?.experimental_features?.includes("view-transitions")
 
 export class FrontendRouter {
 

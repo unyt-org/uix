@@ -154,7 +154,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 			content = map[opts?.lang] ?? map["en"] ?? el.textContent;
 		}
 		// live ref value
-		else if ((el as any)[DX_VALUE] instanceof Datex.Ref) {
+		else if ((el as any)[DX_VALUE] instanceof Datex.ReactiveValue) {
 			if (opts) opts.forceParentLive = true;
 		}
 		// static value

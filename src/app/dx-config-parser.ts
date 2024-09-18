@@ -8,15 +8,15 @@ import { formatEndpointURL } from "datex-core-legacy/utils/format-endpoint-url.t
 
 async function readDXConfigData(path: URL) {
 	const dx = (await Datex.Runtime.getURLContent(path, false, false) ?? {}) as Record<string,any>;
-	const requiredLocation: DatexType.Endpoint = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
-	const stageEndpoint: DatexType.Endpoint = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
-	const port: number = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'port'), true, true);
-	const instances: number = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'instances'), true, true) ?? 1;
-	let volumes: URL[]|undefined = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'volumes'), true, true);
+	const requiredLocation: DatexType.Endpoint = Datex.ReactiveValue.collapseValue(Datex.DatexObject.get(dx, 'location'), true, true) ?? Datex.LOCAL_ENDPOINT;
+	const stageEndpoint: DatexType.Endpoint = Datex.ReactiveValue.collapseValue(Datex.DatexObject.get(dx, 'endpoint'), true, true) ?? Datex.LOCAL_ENDPOINT;
+	const port: number = Datex.ReactiveValue.collapseValue(Datex.DatexObject.get(dx, 'port'), true, true);
+	const instances: number = Datex.ReactiveValue.collapseValue(Datex.DatexObject.get(dx, 'instances'), true, true) ?? 1;
+	let volumes: URL[]|undefined = Datex.ReactiveValue.collapseValue(Datex.DatexObject.get(dx, 'volumes'), true, true);
 	if (!volumes) volumes = []
 	else if (!(volumes instanceof Array)) volumes = [volumes];
 
-	let domains:string[] = Datex.Ref.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
+	let domains:string[] = Datex.ReactiveValue.collapseValue(Datex.DatexObject.get(dx, 'domain'), true, true);
 	// make sure customDomains is a string array
 	if (domains instanceof Datex.Tuple) domains = domains.toArray();
 	else if (typeof domains == "string") domains = [domains];

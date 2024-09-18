@@ -1196,10 +1196,10 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         super.remove();
     }
 
-    public observeOption(key:keyof O, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
-        Datex.Ref.observeAndInit(this.options.$$[key as keyof typeof this.options.$$], handler, this);
+    public observeOption(key:keyof O, handler: (value: unknown, key?: unknown, type?: Datex.ReactiveValue.UPDATE_TYPE) => void) {
+        Datex.ReactiveValue.observeAndInit(this.options.$$[key as keyof typeof this.options.$$], handler, this);
     }
-    public observeOptions(keys:(keyof O)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
+    public observeOptions(keys:(keyof O)[], handler: (value: unknown, key?: unknown, type?: Datex.ReactiveValue.UPDATE_TYPE) => void) {
         for (const key of keys) this.observeOption(key, handler);
     }
 
@@ -1488,7 +1488,7 @@ function assignDefaultPrototype<T extends object>(default_object:T, object:T, cl
         // @ts-ignore
         if (!res_object.hasOwnProperty(key) && res_object[key] === default_object[key] &&  !(
             // don't clone fake primitives
-            res_object[key] instanceof Datex.Ref || 
+            res_object[key] instanceof Datex.ReactiveValue || 
             res_object[key] instanceof Datex.Type ||
             res_object[key] instanceof Datex.Target ||
             res_object[key] instanceof Datex.Quantity

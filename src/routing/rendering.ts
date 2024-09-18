@@ -307,7 +307,7 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 	
 	if (closest_match_key!==null) {
 		let val = <any> entrypointData.entrypoint.$ ? (<any>entrypointData.entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypointData.entrypoint)[closest_match_key];
-		if (val instanceof Datex.Ref && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
+		if (val instanceof Datex.ReactiveValue && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
 		val = await val;
 		// only update route if a string key, symbol keys don't mutate the route
 		const new_path = matchingSymbol ? entrypointData.route : closest_match_route ? Path.Route(entrypointData.route!.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");

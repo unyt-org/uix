@@ -41,7 +41,7 @@ export class FrontendRouter {
 	}
 
 	async navigateTo(route: string|URL) {
-		const routePath = new Path(route, window.location.origin);
+		const routePath = new Path(route, globalThis.location.origin);
 		if (new Path(location.href).toString() === routePath.toString()) {
 			logger.info("already on route " + route + ", skipping navigation");
 			return;
@@ -54,7 +54,7 @@ export class FrontendRouter {
 	}
 
 	async renderRouteContent(route: string|URL = location.href) {
-		const routePath = new Path(route, window.location.origin);
+		const routePath = new Path(route, globalThis.location.origin);
 		// render content
 		const {content: backendContent, status_code } = await this.getBackendContent(route);
 
@@ -166,7 +166,7 @@ export class FrontendRouter {
 		}
 		else if (response.status === 302) {
 			this.navigateTo(response.headers.get("location")!);
-			// window.location.href = response.headers.get("location")!;
+			// globalThis.location.href = response.headers.get("location")!;
 		}
 		else if (response.body) {
 			console.warn("cannot handle response body on frontend (TODO)", response)
@@ -232,10 +232,10 @@ export class FrontendRouter {
 
 	async getContentFromEntrypoint(entrypoint: Entrypoint, route: URL|string, probe_no_side_effects = false) {
 
-		route = route instanceof Path ? route : new Path(route, window.location.origin);
+		route = route instanceof Path ? route : new Path(route, globalThis.location.origin);
 
 		// create new context with fake request
-		const url = new Path(route, window.location.origin);
+		const url = new Path(route, globalThis.location.origin);
 		const path = route.pathname;
 		const context = new ContextBuilder()
 			.setRequestData(new Request(url), path)
@@ -262,7 +262,7 @@ export class FrontendRouter {
 				// pass links to /@uix/...
 				if (url.pathname.startsWith("/@uix/")) return;
 
-				if (url.origin != new URL(window.location.href).origin) return;
+				if (url.origin != new URL(globalThis.location.href).origin) return;
 
 				// TODO: this intercept should be cancelled/not executed when the route is loaded from the server (determined in handleCurrentURLRoute)
 				e.intercept({

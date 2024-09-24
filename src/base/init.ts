@@ -45,7 +45,7 @@ if (UIX.context == "frontend") {
 
 	// Activate if Safari sucks:
 	// if (/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
-	//     window.location.href = "https://www.google.com/chrome/"
+	//     globalThis.location.href = "https://www.google.com/chrome/"
 	// }
 	
 	// handle invalid images (TODO) ....

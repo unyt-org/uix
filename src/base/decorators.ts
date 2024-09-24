@@ -8,16 +8,6 @@ import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { Class, Decorators } from "datex-core-legacy/datex_all.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 
-/**
- * @defaultOptions to define component default options
- */
-export function defaultOptions<T extends Record<string, unknown>>(defaultOptions:Partial<Datex.DatexObjectPartialInit<T>>): (value: typeof Component, context: ClassDecoratorContext)=>void {
-	const url = getCallerFile(); // TODO: called even if _init_module set
-	return handleClassDecoratorWithArgs([defaultOptions], ([defaultOptions], value, context) => {
-		console.log("@defaultOptions",defaultOptions, value,context)
-		return initDefaultOptions(url, value as unknown as ComponentClass, defaultOptions)
-	})
-}
 
 type ComponentClass = 
 	typeof Component & 
@@ -46,10 +36,9 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
 		// preload css files
 		componentClass.preloadStylesheets?.();
 
-		const name = String(componentClass.name).replace(/1$/,'').split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // convert from CamelCase to snake-case
+		const name = String(componentClass.name).split(/([A-Z][a-z]+)/).filter(t=>!!t).map(t=>t.toLowerCase()).join("-"); // convert from CamelCase to snake-case
 
 		const datex_type = Datex.Type.get("std", "uix", name);
-		const options_datex_type = Datex.Type.get("uixopt", name);
 
 		// js module reference
 		if (client_type == "deno") {
@@ -68,7 +57,9 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
 		
 		Object.assign(datex_type.interface_config, transformWrapper)
 		
+
 		datex_type.interface_config.serialize = (value) => {
+
 
 			// serialize html part (style, attr, content)
 			const html_serialized = <Record<string,any>> html_interface.serialize!(value);
@@ -83,25 +74,6 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
 			return html_serialized;
 		}
 
-		// component default options
-
-		new_class.DEFAULT_OPTIONS = Object.create(Object.getPrototypeOf(new_class).DEFAULT_OPTIONS ?? {});
-		if (!defaultOptions) defaultOptions = {};
-		// set default options + title
-		// ! title is overriden, even if a parent class has specified another default title
-		// if (!(<Components.Base.Options>params[0]).title)(<Components.Base.Options>params[0]).title = component_class.name;
-		Object.assign(new_class.DEFAULT_OPTIONS, defaultOptions)
-
-		// find non-primitive values in default options (must be copied)
-		new_class.CLONE_OPTION_KEYS = getCloneKeys(new_class.DEFAULT_OPTIONS);
-
-		// create DATEX type for options (with prototype)
-		options_datex_type.setJSInterface({
-			prototype: new_class.DEFAULT_OPTIONS,
-
-			proxify_children: true,
-			is_normal_object: true,
-		})
 		// define custom DOM element after everything is initialized
 		domContext.customElements.define("uix-" + name, componentClass as typeof HTMLElement)
 		return new_class

@@ -780,7 +780,7 @@ export class FrontendManager extends HTMLProvider {
 		this.#logger.success("hot reloading enabled");
 		const script = `
 ${"import"} {BackgroundRunner} from "uix/background-runner/background-runner.ts";
-if (!window.location.origin.endsWith(".unyt.app")) {
+if (!globalThis.location.origin.endsWith(".unyt.app")) {
 	const runner = BackgroundRunner.get();
 	runner.enableHotReloading();
 }

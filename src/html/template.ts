@@ -1,4 +1,3 @@
-import { Datex } from "datex-core-legacy";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { IS_TEMPLATE, SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../uix-dom/jsx/parser.ts";
 import { Component } from "../components/Component.ts";
@@ -75,7 +74,7 @@ type Props<Options extends Record<string,unknown>, Children, handleAllProps = tr
 
 export type jsxInputGenerator<
 	Return, 
-	Options extends Record<string,unknown>, 
+	_Props extends Record<string,unknown>, 
 	Children, 
 	handleAllProps = true, 
 	optionalChildren = true, 
@@ -85,7 +84,7 @@ export type jsxInputGenerator<
 		this: Context,
 		props: Props<
 			// inferred options:
-			Context extends {options:unknown} ? Omit<(Context)['options'], '$'|'$$'> : Options
+			Context extends {properties: unknown} ? Context['properties'] : _Props
 			, Children, handleAllProps, optionalChildren>,
 	) => Return;
 
@@ -180,7 +179,6 @@ export function createTemplateGenerator(templateOrGenerator?:JSX.Element|jsxInpu
 		else {
 			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass)
 			else return templateOrGenerator(propsOrClass);
-
 		}
 	}
 	else if (templateOrGenerator) {

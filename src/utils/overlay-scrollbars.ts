@@ -47,7 +47,7 @@ export function enableOverlayScrollbarsGlobal() {
 	// TODO
 	if (globalEnabled) return;
 	querySelectorAll("*").forEach(el => {
-		if (window.getComputedStyle(el)["overflow"] == "scroll")
+		if (globalThis.getComputedStyle(el)["overflow"] == "scroll")
 			console.log("scrollbar element",el)
 	})
 }

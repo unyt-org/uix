@@ -5,7 +5,7 @@ import { getCookies as getHeaderCookies, setCookie as setHeaderCookie } from "..
 const is_worker = (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope);
 export const client_type = is_worker ? 'worker' : ("Deno" in globalThis && !(globalThis.Deno as any).isPolyfill ? 'deno' : 'browser')
 
-const portPrefix = client_type == "browser" ? window.location.port : undefined;
+const portPrefix = client_type == "browser" ? globalThis.location.port : undefined;
 
 export const UIX_COOKIE = {
 	endpoint: "datex-endpoint",

@@ -347,15 +347,21 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		for (const [attr, ptr] of (<DOMUtils.elWithUIXAttributes>el)[DOMUtils.ATTR_BINDINGS] ?? []) {
 
 			opts?.requiredPointers?.add(ptr);
+
+			let type: "string" | "number" | "bigint" | "boolean" | "Date" = "string";
+			if (ptr.type.matchesType(Datex.Type.std.boolean)) type = "boolean";
+			else if (ptr.type.matchesType(Datex.Type.std.decimal)) type = "number";
+			else if (ptr.type.matchesType(Datex.Type.std.integer)) type = "bigint";
+			else if (ptr.type.matchesType(Datex.Type.std.time)) type = "Date";
 			
 			hasScriptContent = true;
 			const propName = attr == "checked" ? "checked" : "value";
 			const keepAlive = datexUpdateType == "onsubmit"
-			const fn = getValueUpdater(ptr, false, keepAlive);
+			const fn = getValueUpdater(ptr, false, keepAlive, type);
 			script += `{\n`
 			script += `const __f1__ = ${fn.toString()};`; 
 			script += `const __original__ = el.${propName};`;
-			script += `const __f__ = async function(diff, e) {
+			script += `const __f__ = async function(diff, evt) {
 				const val = el.${propName};
 				if (diff && val == __original__) return;
 				try {
@@ -368,7 +374,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 					const message = e?.message ?? e?.toString()
 					el.setCustomValidity(message)
 					el.reportValidity()
-					if (e) e.preventDefault() // TODO
+					if (evt) evt.preventDefault() // TODO
 				}
 			};\n`;
 

@@ -117,7 +117,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
  * - uses datex-over-http when DATEX is not available
  * @param fn
  */
-export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, keepAlive = false): string {
+export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, keepAlive = false, type: "number"|"string"|"bigint"|"boolean"|"Date"): string {
 	
 	// prevent garbage collection
 	if (ref instanceof Datex.Pointer) ref.is_persistent = true;
@@ -136,6 +136,15 @@ export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, kee
 	else {
 		// TODO: remove sendBeacon as fallback for firefox if keepAlive needed
 		return `async (val) => {
+			// cast value
+			${
+				type == "number" ? "val = Number(val)":
+				type == "bigint" ? "val = BigInt(val)":
+				type == "boolean" ? "val = Boolean(val)":
+				type == "Date" ? "val = new Date(val)":
+				type == "string" ? "val = String(val)":
+				""
+			}
 			// use datex
 			if (globalThis.datex && globalThis.Datex) {
 				await Datex.Supranet.connect();

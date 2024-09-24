@@ -113,7 +113,7 @@ class ThemeManager  {
 		if (!this.getTheme(uixLight.name, true)) this.registerTheme(uixLight);
 
 		const currentModeCookie = client_type == "browser" && getCookie(UIX_COOKIE.colorMode) as "dark"|"light";
-		const currentMode = currentModeCookie || (client_type == "browser" ? (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") : "light");
+		const currentMode = currentModeCookie || (client_type == "browser" ? (globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") : "light");
 		
 		const currentDarkTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.themeDark) ?? "uix-dark") : "uix-dark";
 		const currentLightTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.themeLight) ?? "uix-light") : "uix-light";

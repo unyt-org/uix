@@ -11,8 +11,6 @@ export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:H
 	if (cookie) {
 
 		try {
-			// {__proto__:{}}
-			console.debug("shared data cookie: \n" + await Datex.MessageLogger.decompile(Datex.base64ToArrayBuffer(cookie), false));
 			cookieSharedData = $$({__proto__:{}, ...await Datex.Runtime.decodeValueBase64<Record<string, unknown>>(cookie)})
 		}
 		catch (e) {

@@ -197,7 +197,7 @@ class App {
             logger.info("app version changed from " + from + " to " + to);
             await ServiceWorker.clearCache();
             if (this.#current_version_change_handler) await this.#current_version_change_handler(from, to);
-            window.location.reload();
+            globalThis.location.reload();
         }
         if (this.#current_version_change_handler) this.#waiting_version_change(); // call if handler available
         // show ui

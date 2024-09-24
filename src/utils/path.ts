@@ -43,7 +43,7 @@ export class Path<P extends Path.protocol = Path.protocol, IsDir extends boolean
 
 	// get path for current working directory
 	static cwd(){
-		return new Path(client_type === "deno" ? Deno.cwd() : window.location.href);
+		return new Path(client_type === "deno" ? Deno.cwd() : globalThis.location.href);
 	}
 
 	/**

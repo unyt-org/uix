@@ -76,7 +76,7 @@ Element-scoped styles can also be used inside function components, which do not 
 The `css` function creates a `CSSStylesheet` from any valid CSS string (@import directives are not allowed). Additionally, it supports reactive properties:
 
 ```ts
-const fontSize: Datex.ReactiveValue<string> = $$("10px")
+const fontSize: Datex.ReactiveValue<string> = $("10px")
 const stylesheet: CSSStylesheet = css `
   h1.big {
     font-size: ${fontSize};

@@ -11,17 +11,17 @@ export async function getSharedDataPointer(readHeaders?:Headers, writeHeaders?:H
 	if (cookie) {
 
 		try {
-			cookieSharedData = $$({__proto__:{}, ...await Datex.Runtime.decodeValueBase64<Record<string, unknown>>(cookie)})
+			cookieSharedData = $({__proto__:{}, ...await Datex.Runtime.decodeValueBase64<Record<string, unknown>>(cookie)})
 		}
 		catch (e) {
-			cookieSharedData = $$({__proto__:{}})
+			cookieSharedData = $({__proto__:{}})
 			console.log(e)
 			console.error("Failed to reconstruct shared data");
 			deleteCookie(UIX_COOKIE.sharedData, writeHeaders, port, isSafariLocalhost)
 		}
 	}
 	else {
-		cookieSharedData = $$({__proto__:{}})
+		cookieSharedData = $({__proto__:{}})
 	}
 
 	cookieSharedData[Symbol.dispose] = () => Datex.ReactiveValue.unobserve(cookieSharedData, update)

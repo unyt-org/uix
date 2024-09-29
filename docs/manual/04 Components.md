@@ -51,7 +51,7 @@ import { template } from "uix/html/template.ts";
 // define component template:
 const MyComponent = template<{background: 'red'|'green', countstart: number}>(({background, countstart}) => {
     // create a counter pointer and increment every second
-    const counter = $$(countstart);
+    const counter = $(countstart);
     setInterval(() => counter.val++, 1000);
 
     // return component content
@@ -155,7 +155,7 @@ class MyCustomComponent extends Component {
 
 ```tsx
 // using a template generator
-@template<{title:string}>(({title}) =>
+@template(({title}) =>
     <article>
         <h1>{title}</h1>
         <section>Default section content</section>

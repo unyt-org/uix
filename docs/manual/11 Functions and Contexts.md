@@ -82,7 +82,7 @@ When using functions as callbacks for events on HTML elements, they are also sta
 This means that if an event handler is defined on an HTML element exported from a backend entrypoint, it will still be executed on the backend entrypoint, even when the element is displayed in the browser (frontend context):
 
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
-const counter = $$(0);
+const counter = $(0);
 
 export default 
     <button onclick={() => {
@@ -110,7 +110,7 @@ To achieve this, we just need to make a small change in our example code: replac
 This tells UIX that the event handler function must be executed in the frontend context:
 
 ```ts title="backend/entrypoint.tsx" icon="fa-file"
-const counter = $$(0);
+const counter = $(0);
 
 export default 
     <button onclick:frontend={() => { // add a :frontend label
@@ -127,7 +127,7 @@ This happens because the event handler function now lives in a new frontend cont
 To fix this, we need to explicitly state that we want to access the `counter` variable from the original context.
 This is done with a `use()` declaration at the top of the function body:
 ```ts title="backend/entrypoint.tsx" icon="fa-file"
-const counter = $$(0);
+const counter = $(0);
 
 export default 
     <button onclick:frontend={() => {
@@ -164,7 +164,7 @@ Example:
 console.log("init eternal context"); 
 
 // 'counter' keeps its current value, even after a server restart / page reload
-export const counter = $$(0);
+export const counter = $(0);
 
 export function incrementCounter() {
     use (counter); // references the counter of the original context
@@ -196,7 +196,7 @@ Furthermore, keep in mind:
 In single-line arrow functions, `use` statements can be combined with an `&&` operator or separated with commas:
 
 ```ts
-const x = $$(10);
+const x = $(10);
 
 const fn1 = () => use(x) && x * 2;
 const fn2 = () => (use(x), x * 2);

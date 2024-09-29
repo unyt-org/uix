@@ -15,7 +15,7 @@ Modifing the inputs value will modify the value of the `myVal` property and vice
 import { template } from "uix/html/template.ts";
 import { Component } from "uix/components/Component.ts";
 
-@template(function(this: CustomComponent) {
+@template(() => {
     return <div>
          <input value={this.$.myVal}/>
     </div>;

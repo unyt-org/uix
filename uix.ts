@@ -28,10 +28,10 @@ export const UIX = {
 		if (themeManager) return themeManager;
 
 		themeManager = getThemeManager() as ReactiveThemeManager;
-		const mode = $$(UIX.Theme.mode)
+		const mode = $(UIX.Theme.mode)
 		UIX.Theme.onModeChange(m => mode.val = m)
 
-		const theme = $$(UIX.Theme.theme)
+		const theme = $(UIX.Theme.theme)
 		UIX.Theme.onThemeChange(m => theme.val = m)
 
 		// define UIX.Theme.$.theme, UIX.Theme.$.mode

@@ -10,7 +10,7 @@ Simple example:
 
 ```ts title="backend/counter.eternal.ts" icon="fa-file"
 // this is an eternal module that is only initialized once
-export const counter = $$(0);
+export const counter = $(0);
 ```
 
 ```ts title="backend/entrypoint.ts" icon="fa-file"
@@ -99,7 +99,7 @@ ctx.nonExistingProperty // error, property does not exist!
 As as an alternative to using `eternal` modules, persistent values can also be created with the `eternal` label
 
 ```typescript
-const counter = eternal ?? $$(0); // counter value gets restored from the previous state or initialized if no previous state exists
+const counter = eternal ?? $(0); // counter value gets restored from the previous state or initialized if no previous state exists
 
 counter.val ++; // counter gets incremented every time
 ```
@@ -107,9 +107,9 @@ counter.val ++; // counter gets incremented every time
 For non-DATEX native types such as HTML elements, you must use `lazyEternal` to ensure that the type definitions are loaded:
 
 ```typescript
-export default await lazyEternal ?? $$(<div>Content</div>)
+export default await lazyEternal ?? $(<div>Content</div>)
 ```
 
 ```typescript
-const customValue = await lazyEternal ?? $$(new MyCustomClass())
+const customValue = await lazyEternal ?? $(new MyCustomClass())
 ```

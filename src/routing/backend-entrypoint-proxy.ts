@@ -19,7 +19,7 @@ import { HTTPStatus } from "../html/http-status.ts";
  * @returns 
  */
 export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
-	const fn = $$(async function(_ctx: Context, _params:Record<string,string>) {
+	const fn = $(async function(_ctx: Context, _params:Record<string,string>) {
 
 		// set endpoint from datex meta
 		const path = Path.Route(_ctx.path);

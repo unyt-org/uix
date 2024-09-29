@@ -76,11 +76,11 @@ export function renderFrontend(content_generator:() => JSX.singleChild|Promise<J
 	else {
 		const fn = JSTransferableFunction.functionIsAsync(content_generator) ?
 			JSTransferableFunction.createAsync(content_generator).then(fn=>{
-				fn = $$(fn);
+				fn = $(fn);
 				(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder ?? "";
 				return fn;
 			}) :
-			$$(JSTransferableFunction.create(content_generator));
+			$(JSTransferableFunction.create(content_generator));
 		(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder ?? "";
 		return fn
 	}

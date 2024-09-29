@@ -35,7 +35,7 @@ Hybrid rendering behaves similarly to [backend rendering](#backend-rendering), w
 Example:
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
 
-const counter = $$(0);
+const counter = $(0);
 
 export default
     <div>
@@ -119,7 +119,7 @@ Example:
 ```tsx
 import { renderFrontend } from "uix/base/render-methods.ts";
 
-const counter = $$(0);
+const counter = $(0);
 
 export default 
 	<div>
@@ -137,7 +137,7 @@ export default
 > ```tsx
 > import { renderFrontend } from "uix/base/render-methods.ts";
 >
-> const counter = $$(0);
+> const counter = $(0);
 >
 > export default 
 >   <div>
@@ -232,7 +232,7 @@ Example:
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
 import {renderBackend} from "uix/base/render-methods.ts";
 
-const counter = $$(0);
+const counter = $(0);
 
 export default renderBackend(
     <div>
@@ -264,7 +264,7 @@ Example:
 ```ts title="backend/entrypoint.tsx" icon="fa-file"
 import {renderDynamic} from "uix/base/render-methods.ts";
 
-const counter = $$(0);
+const counter = $(0);
 
 export default renderDynamic(
     <div>

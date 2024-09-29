@@ -242,7 +242,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
             }
             // (standalone) transferable function
             else if (Object.keys(useDeclaration.vars).length) {
-                (this.prototype as any)[name] = $$(JSTransferableFunction.create(method, undefined, useDeclaration)); 
+                (this.prototype as any)[name] = $(JSTransferableFunction.create(method, undefined, useDeclaration)); 
                 if (useDeclaration.flags?.includes("standalone")) this.addStandaloneMethod(name, (this.prototype as any)[name]);
                 // also override type template to add overridden transferable function as datex property
                 type.template[name] = Datex.Type.js.TransferableFunction;
@@ -1018,7 +1018,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
 
         // continue component lifecycle
         const type = Datex.Type.ofValue(this);
-        type.initProperties(this, {options:$$({})});
+        type.initProperties(this, {options:$({})});
         // trigger UIX lifecycle (onReplicate)
         type.construct(this, undefined, false, true);
 

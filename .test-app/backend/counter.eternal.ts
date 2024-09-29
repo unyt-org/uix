@@ -1,1 +1,1 @@
-export const counter = $$(0);
+export const counter = $(0);

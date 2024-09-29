@@ -51,7 +51,7 @@ Like other entrypoint values, HTML elements are DATEX compatible and their conte
 Keep in mind that the content is not updated when it is provided with [`renderStatic`](./08%20Rendering%20Methods.md#static-rendering).
 
 ```tsx
-const counter = $$(0);
+const counter = $(0);
 setInterval(()=>counter.val++,1000);
 
 export default <div>Count: {counter}</div> satisfies Entrypoint;
@@ -65,7 +65,7 @@ Examples:
 export default "Hi World" satisfies Entrypoint;
 ```
 ```typescript
-const content = $$("content");
+const content = $("content");
 export default content satisfies Entrypoint;
 content.val = "new content";
 ```

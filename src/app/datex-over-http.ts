@@ -31,7 +31,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 	if (context && !fn.bind) throw new Error("bindToOrigin: Cannot bind arrow function to context");
 
 	// @ts-ignore
-	fn = $$(Datex.Function.createFromJSFunction(fn, context));
+	fn = $(Datex.Function.createFromJSFunction(fn, context));
 
 	// @ts-ignore
 	const ptr:Datex.Pointer = (globalThis.Datex ? Datex.Pointer.getByValue(fn) : fn[DX_PTR]) ?? fn.ntarget?.[DX_PTR];
@@ -73,7 +73,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
  */
 export function getValueInitializer(value:any, forceDatex = false): string {
 	
-	value = $$(value);
+	value = $(value);
 	// @ts-ignore
 	const ptr:Datex.Pointer = value.idString ? value : (globalThis.Datex ? Datex.Pointer.getByValue(value) : value[DX_PTR]);
 	if (!ptr) throw new Error("getValueInitializer: value must be bound to a DATEX pointer");

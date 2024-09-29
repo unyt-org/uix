@@ -1,6 +1,6 @@
-const count = $$(0);
+const count = $(0);
 
-export default await lazyEternal ?? $$(
+export default await lazyEternal ?? $(
 	<div>
 
 		<button onclick={() => {

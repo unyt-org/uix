@@ -42,7 +42,7 @@ if (client_type === "deno") {
 // enable DATEX CLI
 if (enable_datex_cli && client_type === "deno") Datex.enableCLI();
 
-const version = eternal ?? $$("unknown");
+const version = eternal ?? $("unknown");
 
 
 export type appMetadata = {

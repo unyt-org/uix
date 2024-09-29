@@ -4,7 +4,7 @@
 
 UIX is a state-of-the-art TypeScript framework for building full-stack web applications.
 With UIX, you can write frontend and backend code in a single [Deno](https://docs.deno.com/runtime/manual) project.
-UIX abstracts away the complexity of communication between servers and clients - there is no need to think about APIs, data serialization, or data storage.
+UIX abstracts away the complexity of communicating between servers and clients - there is no need to think about APIs, data serialization, or data storage.
 
 The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) acts as the backbone of UIX, providing useful functionality such as *reactivity, restorable state and cross-device data exchange*.
 
@@ -37,13 +37,13 @@ For this reason, UIX ships with built-in features such as
 
 ## Installation
 
-Install the UIX runtime on your system using one of the terminal commands below.
+Install the UIX runtime on your system using one of the shell commands below.
 
 <unyt-tabs>
 <unyt-tab label="macOS" default>
 
 ```sh
-curl -fsSL https://unyt.land/install.sh | sh
+curl -fsSL https://unyt.land/install.sh | bash
 ```
 
 </unyt-tab>
@@ -57,7 +57,7 @@ irm https://unyt.land/install.ps1 | iex
 <unyt-tab label="Linux">
 
 ```sh
-curl -fsSL https://deno.land/install.sh | bash
+curl -fsSL https://unyt.land/install.sh | bash
 ```
 
 </unyt-tab>
@@ -126,7 +126,7 @@ deno run -A --import-map https://cdn.unyt.org/importmap.json https://cdn.unyt.or
 ```
 
 ## UIX Project Architecture
-UIX projects combine frontend and backend source code with other resources into a single code base.
+A UIX project combines frontend and backend source code with other resources into a single code base.
 
 ```
 .
@@ -142,11 +142,11 @@ UIX projects combine frontend and backend source code with other resources into 
     └── deno.json             // Deno config file
 ```
 
-By default, all files in the `frontend` directory are only available to browser clients *(frontend endpoints)*, while files in the `backend` directory are only available to backend endpoints *(Deno runtime)*.
+By default, all files in the `frontend` directory are only available to browser clients *(frontend endpoints)*, while files in the `backend` directory are only available to Deno server instances (*backend endpoints*).
 
-UIX [Cross-Realm Imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports) allows the import of TypeScript / JavaScript / DATEX modules from the backend and can therefore be used within frontend modules.
+UIX [Cross-Realm Imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports) allow crossing this boundary between frontend and backend. You can directly import TypeScript modules from the backend in frontend modules and access exported functions and values.
 
-Files in the `common` directory can be accessed from both the `frontend` and `backend` scope.
+Files in the `common` directory can be accessed from both the `frontend` and `backend` realm and can contain shared logic, types, components or resources.
 
 ## The UIX namespace
 The `UIX` namespace can be imported
@@ -155,7 +155,8 @@ with
 import { UIX } from "uix"
 ```
 
-These are important properties that can be found in the UIX namespace:
+The `UIX` namespace contains the following properties:
+
 ```ts
 interface UIX {
     Theme: ThemeManager;           // UIX Theme manager to register and activate themes and dark/light mode

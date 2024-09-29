@@ -865,7 +865,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
 
         Datex.Pointer.onPointerForValueCreated(this, () => {
             const pointer = Datex.Pointer.getByValue(this)!
-            if (!this.hasAttribute("uix-ptr")) this.setAttribute("uix-ptr", pointer.id);
+            if (!this.hasAttribute("uix-ptr") && client_type == "deno") this.setAttribute("uix-ptr", pointer.id);
 
             if (this.is_skeleton && UIX.context == "frontend") {
                 this.logger.debug("hybrid initialization")

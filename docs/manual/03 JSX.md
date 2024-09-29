@@ -150,7 +150,33 @@ const myDiv = <div>
 </div>;
 ```
 
-### Input Validation
+### Looping
+
+To render a list of elements, you can use the `map` function on an array and return an array of JSX elements:
+
+```tsx
+const items = ["Item 1", "Item 2", "Item 3"];
+const list = <ul>
+    {items.map(item => <li>{item}</li>)}
+</ul>;
+```
+
+This also works with reactive arrays:
+
+```tsx
+const items = $(["Item 1", "Item 2", "Item 3"]);
+const list = <ul>
+    {items.map(item => <li>{item}</li>)}
+</ul>;
+
+// add an item to the list
+items.val.push("Item 4");
+```
+
+You can use other array functions like `filter`, `reduce`, `forEach` or `find` in the same way.
+
+
+## Input Validation
 *TODO*
 
 ### Special attributes values

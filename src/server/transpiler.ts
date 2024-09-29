@@ -7,6 +7,7 @@ import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { getDependencyTree, loadDependencyList } from "../html/dependency-resolver.ts";
 import { UIX } from "../../uix.ts";
+import { reload } from "../app/args.ts";
 
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
@@ -597,8 +598,14 @@ export class Transpiler {
 
         return this.transpileToJSSWC(ts_dist_path, src_path, true);
     }
+
+    static #jusixLoading?: Promise<string>
   
     public static async getJusix(update = false) {
+        if (this.#jusixLoading) return this.#jusixLoading;
+        const {promise, resolve} = Promise.withResolvers<string>()
+        this.#jusixLoading = promise;
+
         const cacheDir = UIX.cacheDir.asDir().getChildPath("jusix").asDir();
         cacheDir.fsCreateIfNotExists();
 
@@ -606,21 +613,23 @@ export class Transpiler {
 
         // if wasm file does not exist or update is forced, download
         if (update || !await wasmPath.fsExists()) {
+            logger.info("updating JUSIX...");
             // download jusix
             const JUSIX_WASM_URL = "https://github.com/unyt-org/jusix/raw/wasm-plugin/jusix.wasm";
             const response = await fetch(JUSIX_WASM_URL);
             // save in deno dir
             const bin = await response.arrayBuffer();
             await Deno.writeFile(wasmPath.normal_pathname, new Uint8Array(bin));
+            logger.success("JUSIX updated");
         }
-
+        resolve(wasmPath.normal_pathname);
         return wasmPath.normal_pathname;
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, src_path: Path.File, useJusix = false) {
         const {transform} = await import("npm:@swc/core@1.7.23");
 
-        const jusixPath = await Transpiler.getJusix();
+        const jusixPath = await Transpiler.getJusix(reload);
 
         const experimentalPlugins = useJusix ? {
             plugins: [

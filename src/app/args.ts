@@ -46,6 +46,7 @@ export const clear = command_line_options.option("clear", {type:"boolean", descr
 export const transpileCachePathRaw = command_line_options.option("transpile-cache-path", {type:"string", description: "Path to store transpiled file persistently"});
 export const transpileCachePath = transpileCachePathRaw ? new URL(transpileCachePathRaw, "file://" + Deno.cwd() + "/") : undefined;
 
+export const reload = command_line_options.option("reload", {type:"boolean", aliases: ["r"], default: false, description: "Reload dependency caches"});
 
 // print uix version
 const version = command_line_options.option("version", {type:"boolean", description: "Get the version of your UIX installation"});

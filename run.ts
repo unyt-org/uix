@@ -6,7 +6,7 @@ import { Datex, datex } from "datex-core-legacy/no_init.ts"; // required by getA
 import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppConfig
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
-import { command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live } from "./src/app/args.ts";
+import { command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live, reload } from "./src/app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
@@ -29,6 +29,7 @@ import { isCIRunner } from "./src/utils/check-ci.ts";
 import { logger, runParams } from "./src/runners/runner.ts";
 import { applyPlugins } from "./src/app/config-files.ts";
 import { handleError } from "./src/utils/handle-issue.ts";
+import { Transpiler } from "./src/server/transpiler.ts";
 
 // catch unhandledrejections
 enableUnhandledRejectionHandler(logger);
@@ -91,7 +92,7 @@ Datex.Logger.production_log_level = Datex.LOG_LEVEL.WARNING
 const isWatching = live || watch_backend;
 
 const params: runParams = {
-	reload: forceUpdate || command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
+	reload: forceUpdate || reload,
 	enableTLS: enableTLS,
 	inspect: command_line_options.option("inspect", {type:"string", description: "Enable debugging for the deno process"}),
 	unstable: command_line_options.option("unstable", {type:"boolean", description: "Enable unstable deno features"}),

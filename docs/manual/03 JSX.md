@@ -1,5 +1,5 @@
 # JSX
-UIX has built-in support for [JSX](https://facebook.github.io/jsx/) in `.tsx` files. ´
+UIX has built-in support for [JSX](https://facebook.github.io/jsx/) in `.tsx` files.
 
 In UIX, JSX is used to create native DOM elements and components in a declarative way. JSX elements can be used interchangeably in both frontend and backend code.
 
@@ -54,7 +54,7 @@ const myDiv = <div class={myClass}></div>
 myClass.val = "abc"; // myDiv class is now "abc"
 ```
 
-## Reactive attributes
+### Reactive attributes
 
 Per default, all attributes are reactive and updated bidirectionally.
 This means that if the attribute value is a `Ref`, the attribute is updated when the Ref value is changed externally, and the Ref value itself is updated when the attribute is changed, e.g. by user interaction.
@@ -74,7 +74,7 @@ observe(inputText, val => console.log("Text changed to: " + val));
 ```
 
 
-## Reactive expressions
+### Reactive expressions
 
 Instead of single values, you can also pass in reactive expressions as attribute values or children.
 Reactive expressions are automatically recalculated when one of the dependencies changes:
@@ -131,9 +131,11 @@ The `toggle` function toggles between two values, depending on another input con
 
 ```tsx
 const showDialog = $(false);
+const componentInstance = <MyComponent/>;
+
 const myDiv = <div>
     My Div
-    {toggle (showDialog, <div id="dialog">My Dialog</div>, <div/>)}
+    {toggle (showDialog, componentInstance, <div/>)}
 </div>;
 ```
 

@@ -678,7 +678,8 @@ export class Transpiler {
                             module: true,
                             compress: {
                                 unused: true,
-                                drop_debugger: false
+                                drop_debugger: false,
+                                keep_classnames: true,
                             },
                             mangle: {
                                 toplevel: true,

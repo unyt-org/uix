@@ -8,7 +8,7 @@ In UIX, JSX is used to create native DOM elements and components in a declarativ
 > which allows writing reactive code in a less verbose way. 
 
 
-## Creating native DOM elements
+## Creating elements
 
 All [native DOM](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API) elements (e.g. `<div>`, `<p>`, `<img>`, `<svg>` ...) can be created with JSX and used in your UIX application both on frontend and backend code. 
 
@@ -20,9 +20,9 @@ const section =
     </div>;
 ```
 
-In contrast to frameworks like React, the value returned by this JSX expression is an actual instance of an HTML div element.
+In contrast to frameworks such as React, the value returned by above JSX expression is an actual instance of an HTML element (in this case `section` is an instance of [HTMLDivElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDivElement).
 
-You can directly append it to another element:
+This means that you can directly modify this element using common DOM APIs to update attributes, attach event listeners, or change style or children. You can also append this element to the document body:
 
 ```tsx
 document.body.append(section);
@@ -30,10 +30,48 @@ document.body.append(section);
 
 ## Supported attributes
 
-For default DOM elements, all attributes that are natively supported by the element can be used.
-Components support the common DOM element attributes (such as `id`, `class`, `style` or event handlers) by default, and 
-can accept additional custom attributes defined in the component class or function.
+For default DOM elements, all attributes that are natively supported by the element can be used in UIX.
+Components support the common DOM element attributes (such as `id`, `class`, `style` or event handlers) by default, and can accept additional custom attributes defined in the [component class](./04%20Components.md) or function.
 
+
+In UIX, you can define attributes directly on HTML elements. For example, the class attribute can be assigned a value as follows:
+
+```tsx
+<div class="my-div">
+    Hello, UIX!
+</div>
+```
+
+You can use dynamic values within curly braces `{}` in your attributes. This allows you to pass variables or expressions into the element attributes:
+
+```tsx
+const className = "my-div";
+
+<div class={className}>
+    Hello, UIX!
+</div>
+```
+
+For setting inline styles, UIX allows the use of an object notation within the style attribute. This is done using double curly braces `{{}}` such as shown in the following example:
+
+```tsx
+<div style={{color: 'red', backgroundColor: 'yellow'}}>
+    Styled Text
+</div>
+```
+
+Per default common HTML attributes are type safe to use, if you want to define custom data attributes, you can use the `data-*` notation. This is useful for embedding custom data that can later be accessed via your applications code. For example:
+
+```tsx
+const myArticle = {
+    id: 42,
+    title: "My article #1"
+};
+
+<h1 data-article={myArticle.id}>
+    {myArticle.title}
+</h1>
+```
 
 ## Reactivity
 

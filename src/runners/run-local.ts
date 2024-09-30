@@ -51,7 +51,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 	const cmd = [
 		"run",
-		"-Aq"
+		"-Aq",
+		"--unstable-ffi" // required for sqlite3
 	];
 
 	const args = [...Deno.args];

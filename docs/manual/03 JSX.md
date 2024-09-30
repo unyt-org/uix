@@ -1,5 +1,5 @@
 # JSX
-UIX has built-in support for [JSX](https://facebook.github.io/jsx/) in `.tsx` files. ´
+UIX has built-in support for [JSX](https://facebook.github.io/jsx/) in `.tsx` files.
 
 In UIX, JSX is used to create native DOM elements and components in a declarative way. JSX elements can be used interchangeably in both frontend and backend code.
 

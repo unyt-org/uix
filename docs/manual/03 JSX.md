@@ -95,7 +95,7 @@ myClass.val = "abc"; // myDiv class is now "abc"
 ## Reactive attributes
 
 Per default, all attributes are reactive and updated bidirectionally.
-This means that if the attribute value is a `Ref`, the attribute is updated when the Ref value is changed externally, and the Ref value itself is updated when the attribute is changed, e.g. by user interaction.
+This means that if the attribute value is a `Ref', the attribute will be updated when the Ref value is changed externally, and the Ref value itself will be updated when the attribute is changed, e.g. by user interaction in an input field.
 
 Bidirectional reactivity works with certain native attributes like `value` or `checked`:
 
@@ -108,9 +108,11 @@ document.body.append(
 );
 
 // observe inputText changes, log every time the input value changes
-observe(inputText, val => console.log("Text changed to: " + val));
+observe(
+    inputText, 
+    val => console.log("Text changed to: " + val)
+);
 ```
-
 
 ## Reactive expressions
 
@@ -184,7 +186,7 @@ Otherwise, `display` is `block` and the div is visible.
 const showDialog = $(false);
 const myDiv = <div>
     My Div
-    <div id="dialog" style={{display:showDialog}}>My Dialog</div>
+    <div id="dialog" style={{display: showDialog}}>My Dialog</div>
 </div>;
 ```
 

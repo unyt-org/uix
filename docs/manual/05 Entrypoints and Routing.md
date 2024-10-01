@@ -172,6 +172,70 @@ import { provideFile } from "uix/html/entrypoint-providers.tsx";
 export default provideFile('./image.png') satisfies Entrypoint;
 ```
 
+### Dynamic Images
+The `provideImage()` method allows you to generate dynamic images using JSX and CSS. This is useful for generating social media images such as Open Graph images, Twitter cards, and more.
+
+The following options are available for `provideImage`:
+
+```tsx
+provideImage(
+  element: Element,
+  options: {
+    width?: number = 200
+    height?: number = 200
+    fonts?: {
+      name: string,
+      data: Uint8Array | ArrayBuffer,
+      weight?: number,
+      style?: 'normal' | 'italic',
+      lang?: string
+    }[]
+    contentType?: "png" | "svg" = "svg",
+    // Options that will be passed to the UIX HTTP response
+    status?: number = 200
+  }
+)
+```
+You can render your favicon using following code:
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
+import type { Entrypoint } from "uix/html/entrypoints.ts";
+import { provideImage } from "uix/providers/image-provider.ts";
+import { app } from "uix/app/app.ts";
+
+export default {
+    '/favicon.png': provideImage(<div style={{
+            color: "white",
+            height: "100%",
+            fontSize: 30,
+            background: app.stage === "dev" ? 
+                "orange" :
+                "black",
+            display: "flex",
+            lineHeight: 2,
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column"
+        }}>
+            <h1>My App</h1>
+            <span>
+                <i style={{color: app.stage=="dev" ?
+                    "black" :
+                    "orange"}}>
+                    {app.stage}
+                </i>-Stage
+            </span>
+        </div>, {
+            width: 250,
+            height: 250,
+            contentType: "png"
+        })
+    )
+} satisfies Entrypoint;
+```
+
+> [!WARNING]
+> Not all CSS features can be used to create dynamic images from JSX, as Satori only supports a subset of CSS. Please refer to [Satori's documentation](https://github.com/vercel/satori#css) for a list of supported properties and elements.
+
 ### Redirects
 
 `URL` objects result in a redirect response (HTTP Status Code **304**) to the given URL.

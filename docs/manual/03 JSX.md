@@ -22,10 +22,11 @@ const section =
 
 In contrast to frameworks such as React, the value returned by above JSX expression is an actual instance of an HTML element (in this case `section` is an instance of [HTMLDivElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDivElement).
 
-This means that you can directly modify this element using common DOM APIs to update attributes, attach event listeners, or change style or children. You can also append this element to the document body:
+This means that you can directly modify created elements using common DOM APIs to update attributes, attach event listeners, or change style or children. You can also append created elements to others, such as appending them directly to the document body:
 
 ```tsx
-document.body.append(section);
+const myElement = <p>Hello, UIX!</p>;
+document.body.append(myElement);
 ```
 
 ## Supported attributes
@@ -77,27 +78,27 @@ const myArticle = {
 
 Thanks to DATEX, elements created with JSX are inherently reactive, even if they are not declared inside a component function like in React.
 JSX elements accept plain JavaScript values *or* DATEX Refs as attribute values and element children.
-Passing plain JavaScript values does not dynamically update the component:
+Passing plain values does not dynamically update the component:
 
 ```tsx
 let myClass = "xyz";
-const myDiv = <div class={myClass}></div>
+const myDiv = <div class={myClass}>Hello, UIX!</div>
 myClass = "abc"; // myDiv class is still "xyz"
 ```
 
 To achieve reactive behavior, you can pass in a `Ref` value:
 ```tsx
 let myClass = $("xyz");
-const myDiv = <div class={myClass}></div>
+const myDiv = <div class={myClass}>Hello, UIX!</div>
 myClass.val = "abc"; // myDiv class is now "abc"
 ```
 
 ### Reactive attributes
 
-Per default, all attributes are reactive and updated bidirectionally.
-This means that if the attribute value is a `Ref', the attribute will be updated when the Ref value is changed externally, and the Ref value itself will be updated when the attribute is changed, e.g. by user interaction in an input field.
+Per default, all attributes are reactive and updated *bidirectionally*.
+This means that if the attribute value is a `Ref`, the attribute will be updated when the `Ref` value is changed externally, and the Ref value itself will be updated when the attribute is changed, e.g. by user interaction in an input field.
 
-Bidirectional reactivity works with certain native attributes like `value` or `checked`:
+Bidirectional reactivity works with certain native attributes such as [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#value) or [`checked`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#checked):
 
 ```tsx
 const inputText = $("Hello");
@@ -144,7 +145,9 @@ The simplest way to conditionally render elements is using ternary expressions:
 const showDialog = $(false);
 const myDiv = <div>
     My Div
-    {showDialog.val ? <div id="dialog">My Dialog</div> : null}
+    { showDialog.val ? 
+        <div id="dialog">My Dialog</div> :
+        null }
 </div>;
 ```
 
@@ -159,11 +162,11 @@ Alternatively, you can use the `&&` operator to conditionally render elements:
 const showDialog = $(false);
 const myDiv = <div>
     My Div
-    {showDialog.val && <div id="dialog">My Dialog</div>}
+    { showDialog.val && <div id="dialog">My Dialog</div> }
 </div>;
 ```
 
-This is useful if you only want to render an element if a certain condition is met and don't need an `else` case.
+This is especially useful if you want to render an element only if a certain condition is met and you have no need for an `else` case.
 
 #### Using `toggle`
 
@@ -176,14 +179,21 @@ const componentInstance = <MyComponent/>;
 
 const myDiv = <div>
     My Div
-    {toggle (showDialog, componentInstance, <div/>)}
+    {toggle(
+        showDialog, // input trigger property
+        componentInstance, // rendered if showDialog is true
+        <span>Nothing to show</span> // rendered if showDialog is false
+    )}
 </div>;
+
+showDialog.val = true;
 ```
+
+If the value of `showDialog` is updated in the above example the of `myDiv` will toggle between `componentInstance` and the `span` depending if set to `true` or `false`.
 
 #### Using the `display` style property
 
-A different approach for conditional rendering is setting the `display` style property to a Ref: When `showDialog` is `false`, `display` is `none` and the div is not rendered.
-Otherwise, `display` is `block` and the div is visible.
+A different approach for conditional rendering is setting the `display` style property to a `Ref`: 
 
 ```tsx
 const showDialog = $(false);
@@ -192,6 +202,8 @@ const myDiv = <div>
     <div id="dialog" style={{display: showDialog}}>My Dialog</div>
 </div>;
 ```
+When `showDialog` is set to `false`, `display` is `none` and the div is not rendered.
+Otherwise, `display` is `block` and the div is visible.
 
 ### Looping
 

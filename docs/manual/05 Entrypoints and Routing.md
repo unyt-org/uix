@@ -191,7 +191,7 @@ export default {
 
 Virtual redirects are similar to normal redirects, but they directly return a response with the content of the redirect URL, not a redirect response (HTTP Status **304**).
 
-```typescript
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 import { provideVirtualRedirect } from "uix/html/entrypoint-providers.tsx";
 
 export default provideVirtualRedirect('/example/home') satisfies Entrypoint;
@@ -201,7 +201,7 @@ export default provideVirtualRedirect('/example/home') satisfies Entrypoint;
 In the example above, an entrypoint function is used to return custom content based on the context of a route. Entrypoint functions take a single argument, a [`Context`](#uixcontext) object and return a `Entrypoint` or `Promise<Entrypoint>`.
 
 Example:
-```tsx
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 export default (ctx: Context) => {
     return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`;
 } satisfies Entrypoint;
@@ -265,7 +265,7 @@ export default {
 ### Throwing values
 Values that are thrown with `throw` from an entrypoint function are treated similarly to returned values - the value is still rendered in the browser. There is only one difference: The response will have an error status code instead of the default **200** status code.
 
-```typescript
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 export default {
     '/:id': (_, { id }) => {
          if (id !== "4269420")
@@ -279,7 +279,7 @@ export default {
 
 Instances of `Error` that are thrown or returned b an entrypoint function will be rendered in the browser as an error info box including a stack trace when running in `dev` stage.
 
-```typescript
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 export default {
     '/:id': (_, { id }) => {
          if (id !== "4269420")
@@ -294,7 +294,7 @@ export default {
 `HTTPStatus` values can be returned or thrown to create a response with a specific status code.
 Additionally, custom content can be returned using the `with` method:
 
-```ts
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 import { HTTPStatus } from "uix/html/http-status.ts";
 export default {
     '/:id': (_, { id }) => {
@@ -311,17 +311,17 @@ UIX provider utility functions allow the backend entrypoint to return HTTP respo
 
 ### List of UIX providers:
  * ```typescript
-   function provideValue(value:unknown, options?:{type?:Datex.DATEX_FILE_TYPE, formatted?:boolean})
+   function provideValue(value:unknown, options? :{ type?: Datex.DATEX_FILE_TYPE, formatted?: boolean})
    ```
    This function returns a HTTP Response with the mime type `application/json`, `application/datex` or `text/datex`,
    containing the serialized value. When the `options.type` is `Datex.DATEX_FILE_TYPE.JSON`, the value must be serializable with JSON.stringify. The default value for `options.type` is `Datex.FILE_TYPE.DATEX_SCRIPT`. In this configuration, any DATEX-compatible value can be provided.
  * ```typescript
-   function provideJSON(value:unknown, options?:{formatted?:boolean})
+   function provideJSON(value:unknown, options?: { formatted?: boolean })
    ```
    This function returns a HTTP Response with the mime type `application/json`,
    containing the serialized value. The value must be JSON-compatible.
  * ```typescript
-   function provideContent(content:string|ArrayBuffer, type:mime_type = "text/plain;charset=utf-8", status?:number)
+   function provideContent(content: string | ArrayBuffer, type: mime_type = "text/plain;charset=utf-8", status?: number)
    ```
    Returns a HTTP Response with custom content and a custom mime type and status code.
 

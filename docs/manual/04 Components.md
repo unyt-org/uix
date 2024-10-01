@@ -1,71 +1,97 @@
 # Components
+Components encapsulate distinct pieces of UI functionality, promoting reusability, modularity, and ease of maintenance.
+
 
 ## Anonymous component templates
-The easiest way to define components in UIX is to use templates.
+The easiest way to define components in UIX is to use `templates`.
+
 With anonymous component templates, you can still get behavior and stored states, but you don't get any advanced component features like
 lifecycle handlers and utility methods.
 Anonymous components are built on top of existing DOM API features (shadow roots, slots).
 
 To define a new template, call the `template` function and pass in an element value (JSX definition) or a generator function that returns an element (JSX):
 
-```tsx
+```tsx title="frontend/entrypoint.tsx" icon="fa-file"
 import { template } from "uix/html/template.ts";
 
-// define templates:
-const CustomComponent = template(<div class='class1'></div>);
-const CustomComponent2 = template<{customAttr: number}>(({customAttr}) => <div class='class2'><b>the customAttr is {customAttr}</b></div>);
+// define template:
+const SimpleComponent = template(<div class='simple'/>);
 
-// create elements:
-const comp1 = <CustomComponent id='c1'/>; // returns: <div class='class1' id='c1'></div>
-const comp2 = <CustomComponent id='c2' customAttr={42}/>; // returns: <div class='class2' id='c2'><b>the customAttr is 42</b></div>
+// create instance:
+export default <SimpleComponent id='c1'/>;
+```
+
+will render as:
+```html
+<div class='simple' id='c1'/>
+```
+
+The `template` method can also take properties (user defined attributes):
+
+```tsx
+const ComplexComponent = template<{customAttr: number}>(({customAttr}) =>
+    <div class='complex'>
+        <b>Answer is: {customAttr}</b>
+    </div>
+);
+
+<ComplexComponent id='c2' customAttr={42}/>;
+```
+
+will render as:
+```html
+<div class='complex' id='c2'>
+    <b>Answer is: 42</b>
+</div>
 ```
 
 ### Child elements
 
-Default element attributes (e.g. `id`, `style`, ...) are assigned to the root element after it is created.
+Default element attributes (e.g. `id` and `style`) are assigned to the root element after it is created.
 Children defined in JSX are also appended to the root element by default:
 
 ```tsx
-// define template:
-const CustomComponent = template(<div class='class1'></div>);
+const CustomComponent = template(<div class='class1'/>);
 
-// create element:
-const comp3 = <CustomComponent id='c1'>
+<CustomComponent id='c1'>
     <div>Child 1</div>
     {"Child 2"}
 </CustomComponent>;
+```
 
-/* returns:
+will be rendered as:
+```html
 <div class='class1' id='c1'>
     <div>Child 1</div>
     Child 2
 </div>
-*/
 ```
 
 ### Advanced example
 
 ```tsx
-import { template } from "uix/html/template.ts";
-
-// define component template:
-const MyComponent = template<{background: 'red'|'green', countstart: number}>(({background, countstart}) => {
-    // create a counter pointer and increment every second
+const MyComponent = template<{
+    background: 'red' | 'green',
+    countstart: number
+}>(({background, countstart}) => {
+    // create a counter pointer
     const counter = $(countstart);
+
+    // Increment the counter every second
     setInterval(() => counter.val++, 1000);
 
     // return component content
     return <div style={{background}}>
-                Count: {counter}
-           </div>;
+        Count: {counter}
+    </div>;
 });
 
-// instantiate:
-export default
-    <MyComponent background="green" countstart={42}>
-        <div>Child 1</div>
-        <div>Child 2</div>
-    </MyComponent>;
+
+// Render the component
+<MyComponent background="green" countstart={42}>
+    <div>Child 1</div>
+    <div>Child 2</div>
+</MyComponent>;
 ```
 
 ### Using blankTemplate / function components
@@ -75,7 +101,7 @@ For some use cases, it may be useful to access all attributes and the children s
 The `blankTemplate` function allows you to create an element with complete control over attributes and children.
 Unlike `template`, children defined in JSX are not automatically appended to the root element of the template, and HTML attributes defined in JSX are not automatically set for the root element.
 
-All attributes and the children are available in the props argument of the generator function.
+All attributes and children are available in the props argument of the generator function.
 ```tsx
 import { blankTemplate } from "uix/html/template.ts";
 

@@ -375,21 +375,21 @@ export default
 
 #### Other UIX-specific attributes 
 
-There are a few special attributes for uix-specific functionality:
- * `uix-module`: specify the module path which is used as a reference for relative paths, e.g.:
+There are a few special attributes for UIX-specific functionality:
+ * `uix-module` - specify the module path which is used as a reference for relative paths, e.g.:
      ```tsx
     <img uix-module={import.meta.url} src="./relative/path/from/current/module/image.png"/>
      ```
     This is only required for compatibility with Safari. In other runtime environments (e.g. Deno), the `import.meta.url` is always automatically inferred and does not have to be explicitly set.
- * `datex-pointer`: boolean (set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. By default, only class components are automatically bound to a pointer.
+ * `datex-pointer` - A boolean set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. By default, only [class components](./04%20Components.md) are automatically bound to a pointer.
 
 ## Creating components
 
 [Components](./04%20Components.md) defined with functions or component classes can also be instantiated with JSX.
-In addition to the default DOM element attributes, all component options can also be set via JSX attributes:
+In addition to the common DOM element attributes, all component options can also be set via type-safe JSX attributes if defined so:
 
 ```tsx
-const comp = <MyComponent style="color:green" text="text content"/>
+<MyComponent style="color:green" myParameter="Hello UIX!"/>
 ```
 
 
@@ -399,7 +399,7 @@ Fragments represent a minimal document object that has no parent. There are two 
 
 ### DocumentFragments
 
-You can create [HTML DocumentFragments](https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment) with `<></>`:
+You can create [HTML DocumentFragments](https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment) using the `<></>`-fragment tags:
 ```tsx
 <>
     <div>Content 1</div>
@@ -419,18 +419,17 @@ A fragment is collapsed into its child elements when appended to another DOM ele
 > [!NOTE]
 > Keep in mind that native DocumentFragments are *not reusable*.
 > This means that after a fragment was appended to another element, it no longer has any content.
-> If you want to directly return a top-level fragment for an entrypoint, you should always
-> return it from a function, not as a single instantiation:
+> If you want to directly return a top-level fragment for an entrypoint, you should always return it from a function, not as a single instantiation:
 > ```tsx
-> export default <>Content</> // Don't do this
-> export default () => <>Content</> // This is correct
+> export default <>Content</>; // Don't do this
+> export default () => <>Content</>; // This is correct
 > ```
-> Alternatively, you can use `uix-fragment` elements
+> Alternatively, you can use the [uix-fragment](#uix-fragments) element.
 
 
 ### UIX Fragments
 
-A `uix-fragment` is a reusable fragment that is part of the actual DOM but is never rendered itself. Just the children are visible in the DOM. It can be created like this:
+A `uix-fragment` is a reusable fragment that is part of the actual DOM but is never rendered itself. All of it's children are visible in the DOM. It can be instantiated like this:
 
 ```tsx
 <uix-fragment>
@@ -439,7 +438,7 @@ A `uix-fragment` is a reusable fragment that is part of the actual DOM but is ne
 </uix-fragment>
 ```
 
-UIX Fragments do not face the reusablity issues of DocumentFragments, but you need to keep in mind that they are always visible to CSS selectors:
+UIX Fragments do not face the reusablity issues of [DocumentFragments](#documentfragments), but you need to keep in mind that they are always visible to CSS selectors:
 
 ```tsx title="App.tsx" icon="fa-file"
 <div>
@@ -451,13 +450,13 @@ UIX Fragments do not face the reusablity issues of DocumentFragments, but you ne
 
 ```css title="App.css" icon="fa-file"
 div > h1 {
-    // this does not work
+    /* this does not work */
 }
 div h1 {
-    // this works
+    /* this works */
 }
 div > uix-fragment > h1 {
-    // this also works
+    /* this also works */
 }
 ```
 
@@ -465,22 +464,22 @@ div > uix-fragment > h1 {
 
 As an alternative to JSX, you can also use the `HTML` template string function which provides exactly the same functionality as JSX:
 
-JSX:
+This is how we would do it in JSX:
 ```tsx
-const count: Datex.Pointer<number> = $(0);
+const count = $(0);
 const div = 
     <div>
         <p>Count: {count}</p>
-    </div> as HTMLDivElement
+    </div> as HTMLDivElement;
 ```
 
-HTML:
+If we don't want to use JSX, we can treat the DOM as template string and pass it to the `HTML` helper function:
 ```tsx
-const count: Datex.Pointer<number> = $(0);
+const count = $(0);
 const div = HTML `
     <div>
         <p>Count: ${count}</p>
-    </div>` as HTMLDivElement
+    </div>` as HTMLDivElement;
 ```
 
 In contrast to JSX, the `HTML` function does not require an extra transpiler step and can also be used in plain `.js` files.
@@ -490,10 +489,9 @@ In contrast to JSX, the `HTML` function does not require an extra transpiler ste
 Besides JavaScript injections (with `${}`), the `HTML` function also supports reactive DATEX code injections with the `#()` syntax:
 ```ts
 const count = $(0);
-const div = HTML `<div>next count: #(${count} + 1)</div>`
+const div = HTML `<div>next count: #(${count} + 1)</div>`;
 ```
-The expression inside `#()` is always handled as a transform function that results in a new reactive
-pointer avlue.
+The expression inside `#()` is always handled as a transform function that results in a new reactive pointer value.
 
 This is equivalent to a JavaScript `always()` transform function
 ```ts

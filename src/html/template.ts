@@ -177,8 +177,8 @@ export function createTemplateGenerator(templateOrGenerator?:JSX.Element|jsxInpu
 		}
 		// jsx
 		else {
-			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass)
-			else return templateOrGenerator(propsOrClass);
+			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass, propsOrClass)
+			else return templateOrGenerator(propsOrClass, propsOrClass);
 		}
 	}
 	else if (templateOrGenerator) {
@@ -262,8 +262,8 @@ export function blankTemplate<
 		}
 
 		else {
-			if (context && elementGenerator.call) return elementGenerator.call(context, propsOrClass)
-			else return elementGenerator(propsOrClass);
+			if (context && elementGenerator.call) return elementGenerator.call(context, propsOrClass, propsOrClass)
+			else return elementGenerator(propsOrClass, propsOrClass);
 		}
 
 	}

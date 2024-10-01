@@ -73,8 +73,8 @@ export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGener
 		}
 		// evaluate
 		else {
-			if (context && (templateOrGenerator as Function).call) return (templateOrGenerator as Function).call(context, propsOrClass)
-			else return (templateOrGenerator as Function)(propsOrClass);
+			if (context && (templateOrGenerator as Function).call) return (templateOrGenerator as Function).call(context, propsOrClass, propsOrClass)
+			else return (templateOrGenerator as Function)(propsOrClass, propsOrClass);
 		}
 	}
 

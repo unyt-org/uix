@@ -164,11 +164,8 @@ The simplest form is to use a static template definition by passing JSX directly
     </article>
 )
 class MyCustomComponent extends Component {
-    override onCreate() {
-        // intercept the creation
-    }
-    override onDisplay() {
-        // handler when component was rendered
+    public sayHello() {
+        // Do something
     }
 }
 ```
@@ -186,7 +183,7 @@ class MyCustomComponent extends Component<{
     title: string,
     additionalOption: number
 }> {
-    override onCreate() {
+    public sayHello() {
         // The passed parameters are available in the option property
         console.log(this.options.title, this.options.additionalOption);
     }
@@ -202,7 +199,7 @@ const CoolDiv = template(<div>What is cooler than being cool?</div>);
 
 @CoolDiv
 class MyCustomComponent extends Component<{title:string}> {
-    onCreate() {}
+    // ...
 }
 ```
 

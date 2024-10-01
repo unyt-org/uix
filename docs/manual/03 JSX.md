@@ -205,13 +205,14 @@ const myDiv = <div>
 When `showDialog` is set to `false`, `display` is `none` and the div is not rendered.
 Otherwise, `display` is `block` and the div is visible.
 
-### Looping
+### Rendering lists
 
-To render a list of elements, you can use the `map` function on an array and return an array of JSX elements:
+To render a list of elements, you can use the [`map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) function on an array and map it to return an array of JSX elements:
 
 ```tsx
 const items = ["Item 1", "Item 2", "Item 3"];
-const list = <ul>
+
+<ul>
     {items.map(item => <li>{item}</li>)}
 </ul>;
 ```
@@ -220,6 +221,7 @@ This also works with reactive arrays:
 
 ```tsx
 const items = $(["Item 1", "Item 2", "Item 3"]);
+
 const list = <ul>
     {items.map(item => <li>{item}</li>)}
 </ul>;
@@ -228,84 +230,80 @@ const list = <ul>
 items.val.push("Item 4");
 ```
 
-You can use other array functions like `filter`, `reduce`, `forEach` or `find` in the same way.
+You can use other array functions such as [`filter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter), [`reduce`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce), [`forEach`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach) or [`find`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find) in the same way.
 
 
 ## Input Validation
 *TODO*
 
 ### Special attributes values
+Each attribute value can be set to a DATEX pointer.
+When the pointer value changes, the attribute is updated accordingly.
 
+Some attributes support special values that act as helpers to allow for easier modification, such as `event handlers`, `style` or `class`.
 
 #### Event handlers
-Every attribute value can be set to a DATEX pointer.
-When the pointer value changes, the attribute is also updated.
-
-Some attributes support special values. For example, all event listener attributes (`on[event]=...`) can take a callback function as a value.
+All [event listener attributes](https://developer.mozilla.org/en-US/docs/Web/Events/Event_handlers) such as `onclick`, `onfocus`, or `oninput` can take a callback function as value:
 
 
 ```tsx
 const btnDisabled = $(false);
-export default
-    <div>
-        <button disabled={btnDisabled}>Button</button>
-        <button onclick={()=>btnDisabled.val=false}>Enable</button>
-        <button onclick={()=>btnDisabled.val=true}>Disable</button>
-    </div>;
+<div>
+    <button disabled={btnDisabled}>Submit</button>
+    <button onclick={()=>btnDisabled.val=false}>Enable</button>
+    <button onclick={()=>btnDisabled.val=true}>Disable</button>
+</div>;
 ```
 
 #### Style
 
-The `style` attribute accepts a string or an object with style declarations. The style properties can be pointer values that 
-get dynamically updated.
+The `style` attribute accepts a string or an JavaScript object with style declarations. The style properties can be pointer values to allow for reactive updates:
 
 ```tsx
-export default <div style={{color:'blue', padding:'10px'}}/>;
+<div style={{color:'blue', padding:'10px'}}/>;
 ```
 
 ```tsx
-// increase border width every 1s
 const borderWidth = $(0);
+
+// increase border width every second
 setInterval(()=>borderWidth.val++, 1000);
 
-export default <div style={{borderStyle:'solid', borderWidth}}>content</div>;
+<div style={{borderStyle: 'solid', borderWidth}}>
+    Hello, UIX!
+</div>;
 ```
-##### Special style values
-
-Most style properties are associated with to strings. The following style properties also accept other values:
- * `display`: The display property accepts a `boolean` value. If the value is `true`, `display` is set to the default display value (e.g. `display: block` for a div). If the value is `false`, `display` is set to `none`.
+Most style properties accept only string values. However, UIX allows special shortcuts for some CSS properties. The following style properties also take other values:
+ * `display` - The display property accepts a `boolean` value. If the value is `true`, the `display` property is set to the default display value (e.g. `display: block` for a div). If the value is `false`, `display` is set to `none`.
 
 
 #### Scoped stylesheets
 
-The special `stylesheet` attribute can be used on JSX elements to apply a whole CSS stylesheet to the scope of the element (See [Element-scoped styles](./12%20Style%20and%20Themes.md#element-scoped-styles]))
+The special `stylesheet` attribute can be used on JSX elements to apply a whole CSS stylesheet to the scope of the element (See [Element-scoped styles](./12%20Style%20and%20Themes.md#element-scoped-styles])).
 
 
 #### Class
-Similar to the `style` attribute, the `class` accepts a string or an object.
-The object must contain the potential class names as properties and booleans as the corresponding properties, indicating whether this class should be activated.
+Similar to the `style' attribute, the `class' attribute takes a string or an object.
+The object must contain the potential class names as properties and booleans as corresponding values, indicating whether this class should be set or not.
 
 Simple class string:
 ```tsx
-export default <div class="main big"/>;
+<div class="main big"/>;
 ```
 
-Class object:
+Simple array list:
+```tsx
+const myClasses = ["main", "big"];
+<div class={myClasses}/>;
+```
+
+Reactive class object:
 ```tsx
 const enableBig = $(false);
-export default <div class={{main: true, big: enableBig}}/>; // results in class="main"
+export default <div class={{main: true, big: enableBig}}/>; // class is set to "main"
 
 // ...
-enableBig.val = true; // div class gets updated to class="main big"
-```
-
-
-```tsx
-// increase border width every 1s
-const borderWidth = $(0);
-setInterval(()=>borderWidth.val++, 1000);
-
-export default <div style={{borderStyle:'solid', borderWidth}}>content</div>;
+enableBig.val = true; // class is now "main big"
 ```
 
 #### Paths

@@ -177,12 +177,15 @@ export default provideFile('./image.png') satisfies Entrypoint;
 `URL` objects result in a redirect response (HTTP Status Code **304**) to the given URL.
 This can also be achieved with `provideRedirect()`:
 
-```typescript
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 import { provideRedirect } from "uix/html/entrypoint-providers.tsx";
 
-export default provideRedirect('https://example.unyt.app') satisfies Entrypoint;
+export default {
+    '/github': new URL('https://github.com/unyt-org'),
+    '/to/:id': (_, { id }) => 
+        provideRedirect(`https://${id}.unyt.app`),
+} satisfies Entrypoint;
 ```
-
 
 ### Virtual redirects
 

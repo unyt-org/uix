@@ -424,10 +424,10 @@ A fragment is collapsed into its child elements when appended to another DOM ele
 > export default <>Content</>; // Don't do this
 > export default () => <>Content</>; // This is correct
 > ```
-> Alternatively, you can use the [uix-fragment](#uix-fragments) element.
+> Alternatively, you can use the [uix-fragment](#uixfragments) element.
 
 
-### UIX Fragments
+### UIXFragments
 
 A `uix-fragment` is a reusable fragment that is part of the actual DOM but is never rendered itself. All of it's children are visible in the DOM. It can be instantiated like this:
 
@@ -460,7 +460,7 @@ div > uix-fragment > h1 {
 }
 ```
 
-## Using `HTML` template strings instead of JSX
+## Using `HTML` template strings
 
 As an alternative to JSX, you can also use the `HTML` template string function which provides exactly the same functionality as JSX:
 
@@ -484,7 +484,7 @@ const div = HTML `
 
 In contrast to JSX, the `HTML` function does not require an extra transpiler step and can also be used in plain `.js` files.
 
-### DATEX Injections
+### DATEX injections
 
 Besides JavaScript injections (with `${}`), the `HTML` function also supports reactive DATEX code injections with the `#()` syntax:
 ```ts
@@ -495,22 +495,21 @@ The expression inside `#()` is always handled as a transform function that resul
 
 This is equivalent to a JavaScript `always()` transform function
 ```ts
-const div = HTML `<div>next count: ${always(() => count + 1)}</div>`
+const div = HTML `<div>next count: ${always(() => count + 1)}</div>`;
 ```
 or a DATEX `always` command
 ```ts
-const div = HTML `<div>next count: ${always `${count} + 1`}</div>`
+const div = HTML `<div>next count: ${always `${count} + 1`}</div>`;
 ```
 
-## JSX return types
+## Element return types
 
-TypeScript currently does not support dynamic return types for JSX declarations.
-This means that all JSX-generated elements must be explicitly cast to the correct class.
-The same is true for elements created with the `HTML` function.
+TypeScript has no support for dynamic return types for JSX declarations.
+As a result, all JSX-generated elements must be explicitly cast to the correct class for proper HTML type handling. The same applies to elements created with the [`HTML`](#using-html-template-strings) helper function.
 
 ```tsx
-const anchor = <a href="/link">Link</a> as HTMLAnchorElement
+const anchor = <a href="/link">Link</a> as HTMLAnchorElement;
 ```
 ```tsx
-const anchor = HTML `<a href="/link">Link</a>` as HTMLAnchorElement
+const anchor = HTML `<a href="/link">Link</a>` as HTMLAnchorElement;
 ```

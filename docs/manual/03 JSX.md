@@ -308,7 +308,7 @@ enableBig.val = true; // class is now "main big"
 
 #### Paths
 
-All attributes that accept a path as a value (e.g. `src`, `href`) can be set to paths relative to the current module (For additional information check out `uix-module` in [Supported Attributes](#supported-attributes)).
+All attributes that accept a path as a value (e.g. `src` and `href`) can be set to paths relative to the current module (For additional information check out `uix-module` in [Supported Attributes](#supported-attributes)).
 
 Relative paths in element attributes are always resolved correctly on the backend and on the frontend.
 
@@ -325,46 +325,46 @@ export default {
 };
 ```
 
-If you need paths that are relative to the current URL as displayed in the browser, you can use the special `href:route` attribute:
+You can use the special `href:route` attribute if you need paths that are relative to the current URL as displayed in the browser:
 
-```tsx
-// frontend/entrypoint.ts
+```tsx title="frontend/entrypoint.tsx" icon="fa-file"
 export default {
     '/some/path' : <a href:route="./other-path"/>, // resolves to "/some/other-path"
     '/some/other-path': "Hello there"
 };
 ```
 
-Instead of strings, `URL` values can also be set as path attributes.
+Instead of assigning string values, the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) object can also be set as path attribute.
 
 #### Checkbox `checked` attribute
 
-The special `checked` attribute of a checkbox element can be use to set or get the `checked` state of the checkbox:
-```ts
-// create new isChecked pointer bound to the "checked" state of the checkbox
+The special `checked` attribute of a checkbox element can be used to set or get the `checked` state of a checkbox:
+
+```tsx title="frontend/entrypoint.tsx" icon="fa-file"
 const isChecked = $(false);
+
+// Bind the "checked" state of the checkbox to the isChecked pointer
 export default <input type="checkbox" checked={isChecked}/>;
 
-// observe isChecked pointer
-isChecked.observe((checked) => console.log("checkbox is checked: " + checked));
+// Observe the pointer
+isChecked.observe(checked => 
+    console.log("checkbox is checked: " + checked)
+);
 ```
 
 #### Form actions
 
-The `action` attribute of a `<form>` element can be an URL / string containing the URL of the form request, or a [callback function](./05%20Entrypoints%20and%20Routing.md#entrypoint-functions) that is triggered on submit.
+The `action` attribute of a [`<form>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form) element can be an URL or string containing the URL of the form request, or a [callback function](./05%20Entrypoints%20and%20Routing.md#entrypoint-functions) that is triggered on submit.
 
-The return value of that function is rendered on the page and must be a valid [`Entrypoint` value](./05%20Entrypoints%20and%20Routing.md#entrypoint-values) (e.g. an HTML element, a string or a `Response` object).
+The return value of that function is rendered on the page and must be a valid [Entrypoint value](./05%20Entrypoints%20and%20Routing.md#entrypoint-values) (e.g. an HTML element, a string or a `Response` object).
 
-```tsx
-// backend/entrypoint.ts
-
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
 // this function gets called when the form is submitted
 function handleForm(ctx: Entrypoint) {
     // ...
-    return "Form submitted"
+    return "Form submitted";
 }
 
-// form
 export default 
     <form action={handleForm}>
         <input type="text" name="username"/>

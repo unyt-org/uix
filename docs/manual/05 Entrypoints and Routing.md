@@ -203,7 +203,7 @@ In the example above, an entrypoint function is used to return custom content ba
 Example:
 ```tsx
 export default (ctx: Context) => {
-    return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`
+    return `You visited this page from ${ctx.request.address} and your language is ${ctx.language}`;
 } satisfies Entrypoint;
 ```
 
@@ -220,14 +220,13 @@ class Component {
     // return the child element to which the route is resolved
     // if the route contains more sections, onRoute is called on this child element with the next route
     // section as the identifier
-    onRoute(identifier:string, is_initial_route:boolean):Component|boolean|void
+    onRoute(identifier:string, is_initial_route:boolean): Component | boolean |void
     // return internal state of last resolved route
-    getInternalRoute(): Path.route_representation|Promise<Path.route_representation> 
+    getInternalRoute(): Path.route_representation | Promise<Path.route_representation> 
 }
 ```
 
-#### Example
-Component routing can be used to display or focus on different child components depending on the route.
+Component routing can be used to display or focus on different child components depending on the route:
 ```tsx
 @template()
 class Parent extends Component {
@@ -254,10 +253,10 @@ export default {
     // content for all other routes
     // e.g. /a -> div#a is focused
     '*': <Parent>
-            <div id="a">A</div>
-            <div id="b">B</div>
-            <div id="c">C</div>
-         </Parent>
+        <div id="a">A</div>
+        <div id="b">B</div>
+        <div id="c">C</div>
+    </Parent>
 };
 ```
 

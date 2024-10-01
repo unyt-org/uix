@@ -1,6 +1,5 @@
 # Glossary
 
-
 ## HTTP-over-DATEX
 
 HTTP tunneling over DATEX. This allows local web servers

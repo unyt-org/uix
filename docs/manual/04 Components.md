@@ -14,10 +14,10 @@ To define a new template, call the `template` function and pass in an element va
 ```tsx title="frontend/entrypoint.tsx" icon="fa-file"
 import { template } from "uix/html/template.ts";
 
-// define template:
+// Define the template
 const SimpleComponent = template(<div class='simple'/>);
 
-// create instance:
+// Instantiate the component
 export default <SimpleComponent id='c1'/>;
 ```
 
@@ -35,7 +35,7 @@ const ComplexComponent = template<{customAttr: number}>(({customAttr}) =>
     </div>
 );
 
-<ComplexComponent id='c2' customAttr={42}/>;
+<ComplexComponent id='c2' customAttr={42}/>
 ```
 
 will render as:
@@ -56,7 +56,7 @@ const CustomComponent = template(<div class='class1'/>);
 <CustomComponent id='c1'>
     <div>Child 1</div>
     {"Child 2"}
-</CustomComponent>;
+</CustomComponent>
 ```
 
 will be rendered as:
@@ -86,12 +86,10 @@ const MyComponent = template<{
     </div>;
 });
 
-
-// Render the component
 <MyComponent background="green" countstart={42}>
     <div>Child 1</div>
     <div>Child 2</div>
-</MyComponent>;
+</MyComponent>
 ```
 
 ### Using blankTemplate / function components
@@ -105,42 +103,41 @@ All attributes and children are available in the props argument of the generator
 ```tsx
 import { blankTemplate } from "uix/html/template.ts";
 
-// define:
-const CustomComponent = blankTemplate<{color:string}>(({color, style, id, children}) => 
+const CustomComponent = blankTemplate<{
+    color:string
+}>(({color, style, id, children}) => 
     <div id={id} style={style}>
-        <h1 style={{color}}>Header</h1>{...children}
+        <h1 style={{color}}>Header</h1>
+        {...children}
     </div>
 );
 
-// instantiate:
-const comp = <CustomComponent id="c1" color="blue">
-    <div>first child</div>
-    <div>second child</div>
-</CustomComponent>;
+<CustomComponent id="c1" color="blue">
+    <div>First child</div>
+    <div>Second child</div>
+</CustomComponent>
 ```
 
 This behavior is more similar to other JSX frameworks. You can also just use a normal function instead of `blankTemplate` (the `blankTemplate` is just a wrapper around a component function with some additional type features).
 
 Keep in mind that UIX always returns the `children` property as an array, even if just a single child was provided in JSX.
 ```tsx
-// define:
 function CustomFunctionComponent({color, id, children}: {id:string, children:JSX.Element[], color:string}) {
     return <div id={id} style={{color}}>
         {...children}
     </div>;
 };
 
-// instantiate:
-const comp = <CustomFunctionComponent id="c1" color="blue">
-     <div>first child</div>
-     <div>second child</div>
-</CustomFunctionComponent>;
+<CustomFunctionComponent id="c1" color="blue">
+     <div>First child</div>
+     <div>Second child</div>
+</CustomFunctionComponent>
 ```
 
 
 ## Custom class components
 
-You can create custom UIX components by extending `Component` or another UIX component class and registering it by decorating the class with `@template`.
+You can create custom UIX components by extending the `Component` class and registering it by decorating the class with `@template`.
 
 
 ```typescript
@@ -150,7 +147,7 @@ import { Component } from "uix/components/Component.ts";
 // register the component and set default options
 @template()
 class MyCustomComponent extends Component {
-    @content helloText = "Hello from my custom component"
+    @content helloText = "Hello from my custom component";
 }
 ```
 
@@ -158,45 +155,50 @@ class MyCustomComponent extends Component {
 
 Templates defined with `template` can also be used as a base layout for component classes - just use the template returned by `template` as a class decorator.
 
-*With the `@id` decorator, component properties can be bound to the element inside the component that has an id that matches the property name.
-When the property is overridden, the element with the matching id is also replaced with the new property.*
-
+The simplest form is to use a static template definition by passing JSX directly to the `template` decorator:
 ```tsx
-// using a static template
 @template(
     <article>
-        <h1 id="header">Header</h1>
-        <section id="description"></section>
+        <h1 id="header">UIX</h1>
+        <section id="description">Hello, UIX!</section>
     </article>
 )
 class MyCustomComponent extends Component {
-    @id header!: HTMLHeadingElement
-    @id description!: HTMLElement
-
     override onCreate() {
-        this.description.innerText = "Some description text...";
+        // intercept the creation
+    }
+    override onDisplay() {
+        // handler when component was rendered
     }
 }
 ```
 
+To allow for attributes to be handled in the template definition, it is reccomended to use a template generator by passing a callback function that returns JSX to the template decorator:
+
 ```tsx
-// using a template generator
 @template(({title}) =>
     <article>
         <h1>{title}</h1>
         <section>Default section content</section>
     </article>
 )
-class MyCustomComponent extends Component<{title:string, additionalOption:number}> {
+class MyCustomComponent extends Component<{
+    title: string,
+    additionalOption: number
+}> {
     override onCreate() {
-        console.log(this.options.title, this.options.additionalOption)
+        // The passed parameters are available in the option property
+        console.log(this.options.title, this.options.additionalOption);
     }
 }
+
+<MyCustomComponent title="Hello, UIX!" additionalOption={42}>
 ```
 
+It is also possible to use predefined templates to abstract behaviour:
+
 ```tsx
-// using a pre-defined template
-const CoolDiv = template(<div>cool</div>);
+const CoolDiv = template(<div>What is cooler than being cool?</div>);
 
 @CoolDiv
 class MyCustomComponent extends Component<{title:string}> {
@@ -204,15 +206,14 @@ class MyCustomComponent extends Component<{title:string}> {
 }
 ```
 
-
 ## Children handling
 
 Children can be added to components just like any other HTML element:
 ```tsx
 // add children with DOM APIs
 const comp1 = new CustomComponent();
-comp1.append(<div>content 1</div>)
-comp1.append("text content")
+comp1.append(<div>content 1</div>);
+comp1.append("text content");
 
 // add children with JSX
 const comp2 = 
@@ -255,23 +256,27 @@ export default
 ``` -->
 
 ## The `@id` decorator
+With the `@id` decorator, component properties can be bound to the element inside the component that has an [`id`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/id) attribute set that matches the properties name.
+
 To access elements defined in the template layout consider assigning an unique id attribute to the corresponding elements:
 
 ```tsx
-@template(()=>{
+@template(
     <div id="parent">
-         <h1>Hello</h1>
-         <input id="myInput" value="Hello UIX" type="text"/>
+        <h1>Hello</h1>
+        <input id="myInput" value="Hello, UIX!" type="text"/>
     </div>
-})
+)
 class MyApp extends Component {
-    // declare id explicitly if property name does not match id
-    @id("parent") myParent!: HTMLDivElement;
-
     // declare myInput automaticially since myInput property matches id
     @id myInput!: HTMLInputElement;
+
+    // declare id explicitly if property name does not match id
+    @id("parent") myParent!: HTMLDivElement;
 }
 ```
+Note that, when the property is overridden, the element with the matching id is also replaced with the new property. 
+
 <!-- 
 ### The `@child` decorator
 
@@ -292,12 +297,11 @@ const parent =
 ``` -->
 
 ## Component lifecycle
-
+Class components extending the `Component` class will expose methods to handle the components lifecyle. 
 
 ```typescript
 @Component
 class CustomComponent extends Component {
-
     // called when component is constructed
     onConstruct() {}
 
@@ -313,9 +317,10 @@ class CustomComponent extends Component {
     // called after onAnchor when the component is displayed in a browser context
     onDisplay() {}
 }
-
 ```
+
+It is recommended to use the `onDisplay` method to run user code that should be executed when the component has has finished rendering in the browser.
 
 ## Component styling
 
-See [Styles and Themes](./12%20Style%20and%20Themes.md)
+See [Styles and Themes](./12%20Style%20and%20Themes.md).

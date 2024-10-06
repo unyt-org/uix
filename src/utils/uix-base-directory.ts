@@ -9,3 +9,7 @@ export function getOS() {
 	const arch = Deno.build.arch;
 	return `${os}-${arch}`;
 }
+
+export function isDenoForUIX() {
+	return getBaseDirectory().toString().includes(".uix");
+}

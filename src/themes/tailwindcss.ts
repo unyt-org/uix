@@ -18,10 +18,15 @@ export const tailwindcss = {
 		const { watch, watch_backend, live } = await import("../app/args.ts" /*lazy*/);
 
 		const logger = new Logger("tailwindcss")
-		const tailwindCssCmd = "tailwindcss"
 
 		// install tailwindcss via npm if not available
-		const cmdAvailable = commandExists(tailwindCssCmd);
+		const executableTarget = getBaseDirectory().getChildPath("tailwindcss");
+		let tailwindCssCmd = "tailwindcss"
+		let cmdAvailable = commandExists(tailwindCssCmd);
+		if (!cmdAvailable) {
+			tailwindCssCmd = executableTarget.normal_pathname
+			cmdAvailable = commandExists(tailwindCssCmd);
+		}
 
 		if (!cmdAvailable) {
 			const os = getOS();
@@ -52,7 +57,6 @@ export const tailwindcss = {
 				if (!releaseURL)
 					throw new Error(`Could not get release URL for ${executableName}`);
 
-				const executableTarget = getBaseDirectory().getChildPath("tailwindcss");
 				await Deno.writeFile(
 					executableTarget.normal_pathname,
 					new Uint8Array(await (await fetch(releaseURL)).arrayBuffer()),
@@ -92,47 +96,53 @@ export const tailwindcss = {
 			Deno.writeTextFileSync(configFile.normal_pathname, 'export default {\n  content: ["./**/*.{html,tsx,ts,jsx,js}"],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}')
 		}
 
-		const version = new TextDecoder().decode((await runCommand(tailwindCssCmd, {args: cmdAvailable ? ['--help'] : ['tailwindcss', '--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
-		logger.info("using", version);
+		try {
 
-		const args =  [
-			"-i",
-			inFile.normal_pathname,
-			"-o",
-			outFile.normal_pathname
-		]
-		if (watch || watch_backend || live) {
-			logger.info("watching files");
-			args.push("--watch");
-		}
-
-		const status = runCommand(tailwindCssCmd, {args, stderr: "piped", stdout: "piped"}).spawn();
-		const decoder = new TextDecoder();
-		let resolver: (() => void) | undefined = undefined;
-		let isResolved = false;
-
-		for await (const data of status.stderr) {
-			const out = decoder.decode(data);
-			if (out.includes("Done in")) {
-				logger.success("finished building");
-				isResolved = true;
-				resolver?.();
-			} else if (out.includes("Rebuilding...")) {
-				logger.info("rebuilding styles...");
-				isResolved = false;
-				const { promise, resolve, reject } = Promise.withResolvers<void>();
-				resolver = resolve;
-				registerBuildLock(Promise.race<void>([
-					promise,
-					sleep(10_000).then(()=> {
-						if (!isResolved)
-							logger.warn("TailwindCSS has not finished building in 10s");
-					}).catch(reject)
-				]));
+			const version = new TextDecoder().decode((await runCommand(tailwindCssCmd, {args: cmdAvailable ? ['--help'] : ['tailwindcss', '--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
+			logger.info("using", version);
+	
+			const args =  [
+				"-i",
+				inFile.normal_pathname,
+				"-o",
+				outFile.normal_pathname
+			]
+			if (watch || watch_backend || live) {
+				logger.info("watching files");
+				args.push("--watch");
 			}
+	
+
+			const status = runCommand(tailwindCssCmd, {args, stderr: "piped", stdout: "piped"}).spawn();
+			const decoder = new TextDecoder();
+			let resolver: (() => void) | undefined = undefined;
+			let isResolved = false;
+
+			for await (const data of status.stderr) {
+				const out = decoder.decode(data);
+				if (out.includes("Done in")) {
+					logger.success("finished building");
+					isResolved = true;
+					resolver?.();
+				} else if (out.includes("Rebuilding...")) {
+					isResolved = false;
+					const { promise, resolve, reject } = Promise.withResolvers<void>();
+					resolver = resolve;
+					registerBuildLock(Promise.race<void>([
+						promise,
+						sleep(10_000).then(()=> {
+							if (!isResolved)
+								logger.warn("TailwindCSS has not finished building in 10s");
+						}).catch(reject)
+					]));
+				}
+			}
+			if ((await status.status).code != 0)
+				logger.error("Error running tailwindcss");
 		}
-		if ((await status.status).code != 0)
-			logger.error("Error running tailwindcss");
+		catch (e) {
+			logger.error(e);
+		}
 	}
 } satisfies Theme;
 

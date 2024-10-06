@@ -30,6 +30,7 @@ import { observeElementforSSE } from "./sse-observer.ts";
 import { eternalExts, getEternalModuleProxyPath } from "./module-mapping.ts";
 import { rootPath, transpileCachePath } from "./args.ts";
 import { isSafariClient } from "../utils/safari.ts";
+import { waitForBuildLocks } from "./build-lock.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -808,11 +809,12 @@ if (!globalThis.location.origin.endsWith(".unyt.app")) {
 
 	#ignore_reload = false;
 
-	private handleFrontendReload(){
+	private async handleFrontendReload(){
 		if (!this.live) return;
 		if (this.#ignore_reload) return;
 
 		// new hot reloading via sse
+		await waitForBuildLocks();
 		this.sendGlobalSSECommand("RELOAD");
 
 		setTimeout(()=>this.#ignore_reload=false, 500); // wait some time until next update triggered

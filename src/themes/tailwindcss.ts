@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-async-promise-executor
 import { UIX } from "../../uix.ts";
 import type { Theme } from "../base/theme-manager.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
@@ -5,7 +6,7 @@ import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { runCommand } from "../utils/run-command.ts";
 import { getBaseDirectory, getOS } from "../utils/uix-base-directory.ts";
 import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
-import { Stream } from "datex-core-legacy/datex_all.ts";
+import { registerBuildLock } from "../app/build-lock.ts";
 
 export const tailwindcss = {
 	name: 'tailwindcss',
@@ -20,8 +21,10 @@ export const tailwindcss = {
 		const tailwindCssCmd = "tailwindcss"
 
 		// install tailwindcss via npm if not available
+		const cmdAvailable = commandExists(tailwindCssCmd);
 
-		if (!commandExists(tailwindCssCmd)) {
+		if (!cmdAvailable) {
+			const os = getOS();
 			const executableName = {
 				'linux-x86_64': "tailwindcss-linux-x64",
 				'linux-aarm': "tailwindcss-linux-arm64",
@@ -29,13 +32,16 @@ export const tailwindcss = {
 				'windows-aarch64': "tailwindcss-windows-arm64",
 				'darwin-x86_64': "tailwindcss-macos-arm64",
 				'darwin-aarch64': "tailwindcss-macos-x64"
-			}[getOS()];
+			}[os];
 			if (!executableName)
 				handleError(
 					new KnownError(
-						"TailwindCSS executable could not be installed for your platform.",
-						"Make sure that TailwindCSS is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
-						"Ensure that the 'tailwindcss' executable is in your PATH environment variable"
+						`TailwindCSS executable could not be installed for your platform (${os}).`,
+						[
+							"Please open an issue on github.com/unyt-org/uix providing your platform details",
+							"Make sure that TailwindCSS is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
+							"Ensure that the 'tailwindcss' executable is in your PATH environment variable"
+						]
 					),
 					logger
 				);
@@ -48,19 +54,24 @@ export const tailwindcss = {
 
 				const executableTarget = getBaseDirectory().getChildPath("tailwindcss");
 				await Deno.writeFile(
-					executableTarget,
+					executableTarget.normal_pathname,
 					new Uint8Array(await (await fetch(releaseURL)).arrayBuffer()),
 					{
 						create: true
 					}
+				);
+
+				await Deno.chmod(
+					executableTarget.normal_pathname,
+					0o777
 				);
 				logger.success(`TailwindCSS was installed to ${executableTarget}`);
 			} catch (e) {
 				logger.error(e);
 				handleError(
 					new KnownError(
+						"TailwindCSS executable could not be downloaded",
 						[
-							"TailwindCSS executable could not be downloaded",
 							"Make sure that TailwindCSS is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
 							"Ensure that the 'tailwindcss' executable is in your PATH environment variable"
 						]
@@ -92,13 +103,38 @@ export const tailwindcss = {
 		]
 		if (watch || watch_backend || live) {
 			logger.info("watching files");
-			args.push("--watch")
+			args.push("--watch");
 		}
 
-		const status = await runCommand(tailwindCssCmd, {args}).spawn().status
-		if (status.code != 0) logger.error("Error running tailwindcss")
+		const status = runCommand(tailwindCssCmd, {args, stderr: "piped", stdout: "piped"}).spawn();
+		const decoder = new TextDecoder();
+		let resolver: (() => void) | undefined = undefined;
+		let isResolved = false;
+
+		for await (const data of status.stderr) {
+			const out = decoder.decode(data);
+			if (out.includes("Done in")) {
+				logger.success("finished building");
+				isResolved = true;
+				resolver?.();
+			} else if (out.includes("Rebuilding...")) {
+				logger.info("rebuilding styles...");
+				isResolved = false;
+				const { promise, resolve, reject } = Promise.withResolvers<void>();
+				resolver = resolve;
+				registerBuildLock(Promise.race<void>([
+					promise,
+					sleep(10_000).then(()=> {
+						if (!isResolved)
+							logger.warn("TailwindCSS has not finished building in 10s");
+					}).catch(reject)
+				]));
+			}
+		}
+		if ((await status.status).code != 0)
+			logger.error("Error running tailwindcss");
 	}
-} satisfies Theme
+} satisfies Theme;
 
 
 function commandExists(cmd: string, arg = "-h") {

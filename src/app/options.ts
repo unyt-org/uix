@@ -1,6 +1,9 @@
 import type { Tuple } from "datex-core-legacy/types/tuple.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
+import { isDenoForUIX } from "../utils/version.ts";
+import { KnownError } from "./errors.ts";
+import { handleError } from "datex-core-legacy/utils/error-handling.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 
@@ -12,6 +15,7 @@ export type appOptions = {
 	installable?: boolean, // can be installed as standalone web app
 	offline_support?: boolean, // add a service worker with offline cache
 	expose_deno?: boolean, // access Deno namespace from the frontend context
+	jusix?: boolean, // use JUSIX syntax (default: true)
 	
 	manifest?: Record<string, any>, // override default PWA manifest options
 	meta?: Record<string, string>, // custom meta tags (name, content)
@@ -61,6 +65,7 @@ export async function normalizeAppOptions(options:appOptions = {}, baseURL?:stri
 	n_options.offline_support = options.offline_support ?? true;
 	n_options.installable = options.installable ?? false;
 	n_options.expose_deno = options.expose_deno ?? false;
+	n_options.jusix = options.jusix ?? true;
 	
 	n_options.manifest = options.manifest;
 	n_options.meta = options.meta;
@@ -71,6 +76,17 @@ export async function normalizeAppOptions(options:appOptions = {}, baseURL?:stri
 	n_options.preload_dependencies = options.preload_dependencies ?? true;
 	n_options.source_maps = options.source_maps;
 	n_options.dependency_maps = options.dependency_maps;
+
+	// check if using custom deno for uix if jusix is enabled
+	if (n_options.jusix) {
+		if (!isDenoForUIX()) {
+			handleError(
+				new KnownError(
+					"JUSIX is enabled but the current Deno installation does not support JUSIX syntax. Please install Deno for UIX to use JUSIX syntax.",
+				)
+			)
+		}
+	}
 
 	// import map or import map path
 	if (options.import_map) n_options.import_map = new ImportMap(options.import_map);

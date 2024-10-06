@@ -3,6 +3,9 @@ import type { Theme } from "../base/theme-manager.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { runCommand } from "../utils/run-command.ts";
+import { getBaseDirectory, getOS } from "../utils/uix-base-directory.ts";
+import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
+import { Stream } from "datex-core-legacy/datex_all.ts";
 
 export const tailwindcss = {
 	name: 'tailwindcss',
@@ -17,23 +20,55 @@ export const tailwindcss = {
 		const tailwindCssCmd = "tailwindcss"
 
 		// install tailwindcss via npm if not available
-		let cmdAvailable = commandExists(tailwindCssCmd);
 
-		if (!cmdAvailable) {
-			const npmInstalled = commandExists("npm", "-v");
-			if (npmInstalled) {
-				logger.info("installing via npm...");
-				cmdAvailable = runCommand("npm", {args:["install", "-g", tailwindCssCmd]}).outputSync().code == 0;
-				if (!cmdAvailable) {
-					logger.error("Could not install tailwindcss. Try to install it manually (https://tailwindcss.com/docs/installation)")
-					return;
-				}
+		if (!commandExists(tailwindCssCmd)) {
+			const executableName = {
+				'linux-x86_64': "tailwindcss-linux-x64",
+				'linux-aarm': "tailwindcss-linux-arm64",
+				'windows-x86_64': "tailwindcss-windows-x64",
+				'windows-aarch64': "tailwindcss-windows-arm64",
+				'darwin-x86_64': "tailwindcss-macos-arm64",
+				'darwin-aarch64': "tailwindcss-macos-x64"
+			}[getOS()];
+			if (!executableName)
+				handleError(
+					new KnownError(
+						"TailwindCSS executable could not be installed for your platform.",
+						"Make sure that TailwindCSS is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
+						"Ensure that the 'tailwindcss' executable is in your PATH environment variable"
+					),
+					logger
+				);
+			
+			try {
+				const downloadMap = await datex.get<{assets: {browser_download_url: string, name: string}[]}>("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest");
+				const releaseURL = downloadMap.assets.find(e => e.name === executableName)?.browser_download_url;
+				if (!releaseURL)
+					throw new Error(`Could not get release URL for ${executableName}`);
+
+				const executableTarget = getBaseDirectory().getChildPath("tailwindcss");
+				await Deno.writeFile(
+					executableTarget,
+					new Uint8Array(await (await fetch(releaseURL)).arrayBuffer()),
+					{
+						create: true
+					}
+				);
+				logger.success(`TailwindCSS was installed to ${executableTarget}`);
+			} catch (e) {
+				logger.error(e);
+				handleError(
+					new KnownError(
+						[
+							"TailwindCSS executable could not be downloaded",
+							"Make sure that TailwindCSS is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
+							"Ensure that the 'tailwindcss' executable is in your PATH environment variable"
+						]
+					),
+					logger
+				);
 			}
-			else {
-				logger.error("Could not install tailwindcss. Please install npm.")
-				return;
-			}
-		} 
+		}
 
 		const outFile = new Path(this.stylesheets![0]);
 		const inFile = new Path(app.base_url).getChildPath("tailwind.css");

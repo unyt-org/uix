@@ -8,6 +8,7 @@ import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { getDependencyTree, loadDependencyList } from "../html/dependency-resolver.ts";
 import { UIX } from "../../uix.ts";
 import { reload } from "../app/args.ts";
+import { getBaseDirectory } from "../utils/uix-base-directory.ts";
 
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
@@ -596,7 +597,7 @@ export class Transpiler {
 
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
-        return this.transpileToJSSWC(ts_dist_path, src_path, true);
+        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.jusix);
     }
 
     static #jusixLoading?: Promise<string>
@@ -606,10 +607,7 @@ export class Transpiler {
         const {promise, resolve} = Promise.withResolvers<string>()
         this.#jusixLoading = promise;
 
-        const cacheDir = UIX.cacheDir.asDir().getChildPath("jusix").asDir();
-        cacheDir.fsCreateIfNotExists();
-
-        const wasmPath = cacheDir.getChildPath("jusix.wasm");
+        const wasmPath = getBaseDirectory().getChildPath("jusix.wasm");
 
         // if wasm file does not exist or update is forced, download
         if (update || !await wasmPath.fsExists()) {
@@ -629,7 +627,7 @@ export class Transpiler {
     private async transpileToJSSWC(ts_dist_path: Path.File, src_path: Path.File, useJusix = false) {
         const {transform} = await import("npm:@swc/core@1.7.23");
 
-        const jusixPath = await Transpiler.getJusix(reload);
+        const jusixPath = useJusix && await Transpiler.getJusix(reload);
 
         const experimentalPlugins = useJusix ? {
             plugins: [

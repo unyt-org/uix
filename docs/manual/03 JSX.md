@@ -260,6 +260,19 @@ domUtils.defaultInputValidation.bigint.message = "Why, just why?";
 ### Custom input validation
 In addition to default validation, UIX supports custom validation through assertion methods. These methods allow you to enforce specific rules for properties, such as requiring a `Ref`'s value to remain within a numeric range or ensuring that it has a specific length, format, or pattern — such as a valid email address.
 
+#### `Ref` input validation
+In the following example, we define a reactive `Ref` for a number input and ensure that its value is always less than 42 using the `assert()` method.
+
+
+```tsx
+const myValue = $(0);
+myValue.assert((val) => val < 42);
+
+<input type="number" value={myValue}/>;
+```
+
+If a user enters an invalid value — such as a number that doesn't satisfy the validation rule *(e.g. 69)* — the input state becomes invalid, and the browser will display an error message. You can enhance and customize this behavior using [`defaultInputValidation`](#default-input-validation), which provides more control over how validation errors are presented to the user.
+
 #### Class component input validation
 You can use the `@assert` decorator to apply custom validation logic to your [Class component’s](./04%20Components.md#class-template-components) instance properties. This allows you to enforce specific rules by providing a callback function that acts as the assertion. Here's an example:
 

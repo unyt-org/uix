@@ -652,6 +652,7 @@ export class Transpiler {
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
             let {code: transpiled, map} = await transform(file, {
                 sourceMaps: !!this.#options.sourceMaps,
+                minify: false,
                 jsc: {
                     parser: {
                         tsx: !!ts_dist_path.hasFileExtension("tsx"),
@@ -678,12 +679,9 @@ export class Transpiler {
                                 unused: true,
                                 drop_debugger: false,
                                 keep_classnames: true,
+                                keep_fnames: true
                             },
-                            mangle: {
-                                toplevel: true,
-                                keep_classnames: true,
-                                keep_fnames: false
-                            }
+                            mangle: false
                         } : 
                         undefined
                 }

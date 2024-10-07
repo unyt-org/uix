@@ -86,6 +86,12 @@ export async function normalizeAppOptions(options:appOptions = {}, baseURL?:stri
 				)
 			)
 		}
+		// disable jusix for deno
+		Deno.env.delete("DISABLE_JUSIX");
+	}
+	else {
+		// enable jusix for deno
+		Deno.env.set("DISABLE_JUSIX", "1");
 	}
 
 	// import map or import map path

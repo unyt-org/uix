@@ -95,10 +95,7 @@ The `UIX.Theme` namespace, is used to register and activate global themes. Theme
 
 By default, UIX automatically decides which mode (dark or light) to use, depending on the preferred operating system mode.
 
-The default themes provided by UIX are `uix-light` and `uix-dark`.
-
-### Predefined Themes
-
+The default themes provided by UIX are [`uix-light`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-light.ts) and [`uix-dark`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-dark.ts). More information on native themes can be found in the [Predefined Themes](#predefined-themes) section.
 
 ### Custom Themes
 
@@ -147,22 +144,55 @@ UIX.Theme.registerTheme({
     }
 });
 ```
+
+> [!NOTE]
+> Registering themes does not necessarily activate the theme. You can activate a theme using the [`useThemes`](#activating-themes) method.
+
 ### Activating themes
 
-Themes can be activated with `UIX.Theme.useThemes`.
-The first available (registered) dark-mode theme from the list is used
+Themes can be activated via the `useThemes` method of `UIX.Theme`.
+The first available *(registered)* dark-mode theme from the list is used
 as the new dark-mode theme, the first light-mode theme from the list is used as the new light-mode theme.
 
-When `UIX.Theme.useThemes` is called, all previously activated themes are removed.
+When `useThemes` is called, all previously activated themes are removed.
 
 ```ts 
+import { UIX } from "uix";
+
 // activate themes - the current theme is selected depending on the dark/light mode preference
-UIX.Theme.useThemes("my-custom-dark-theme", "uix-light-plain")
+UIX.Theme.useThemes("my-custom-dark-theme", "uix-light-plain");
 ```
 
 > [!NOTE]
-> Themes should always be activated  inboth the frontend and the backend. 
+> Themes should always be activated in both frontend and backend. 
 > To avoid duplicate code, put the theme activation in a common module and import it from both the backend and the frontend. Make sure that custom themes are also registered in a common module. 
+
+### Predefined Themes
+UIX provides two predefined themes out-of-the-box that are selected if no theme is set: [`uix-light`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-light.ts) and [`uix-dark`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-dark.ts). These themes are designed with a clean, professional look that fits a wide variety of applications, making them an excellent starting point for most UI projects.
+
+#### Tailwind CSS
+UIX also offers full support for [Tailwind CSS](https://tailwindcss.com/), a popular utility-first CSS framework that allows developers to rapidly build modern UIs using predefined CSS classes.
+
+To use TailwindCSS in your UIX application, import the theme and apply it:
+
+```ts
+import { UIX } from "uix";
+import { tailwindcss } from "uix/themes/tailwindcss.ts";
+
+UIX.Theme.useTheme(tailwindcss);
+```
+
+This will activate the `TailwindCSS` theme, enabling you to write JSX with Tailwind utility classes:
+
+```tsx title="frontend/entrypoint.tsx" icon="fa-file"
+export default <div class="text-red-500">
+    Hello, UIX!
+</div>;
+```
+More information can be found in the [Tailwind CSS documentation](https://tailwindcss.com/docs).
+
+> [!NOTE]
+> UIX does support live reloading for TailwindCSS themes when starting UIX with the [`-l` flag](./01%20Getting%20Started.md#the-uix-cli).
 
 ### Manually overriding the mode
 

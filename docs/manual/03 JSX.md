@@ -233,16 +233,55 @@ items.val.push("Item 4");
 You can use other array functions such as [`filter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter), [`reduce`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce), [`forEach`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach) or [`find`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find) in the same way.
 
 
-## Input Validation
-*TODO*
+## Input validation
 
-### Special attributes values
+Input validation ensures that user inputs on [HTMLInputElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement) or [HTMLSelectElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLSelectElement) meet the expected data requirements of their bound `Ref`.
+
+### Default input validation
+In UIX, default input validation is automatically applied to both [HTMLInputElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement) and [HTMLSelectElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLSelectElement) elements. This guarantees that the value bound to a `Ref` remains valid, even when a user attempts to enter invalid data, such as text in a numeric input field. Depending on the input type, the system enforces validation for formats like numbers or bigints to maintain consistent and reliable input data. For non-numeric inputs, UIX will cast the values appropriately *(e.g. entering a number in a text field will still result in a text value)*.
+
+```tsx
+const myValue = $(0);
+
+<input type="number" value={myValue}/>;
+```
+To disable the default input validation behaviour or change the validity message shown by the browser on invalid user input the `defaultInputValidation` of `domUtils` can be used:
+
+```ts
+import { domUtils } from "uix/app/dom-context.ts";
+
+// Disable validation for <input type='number'/>
+domUtils.defaultInputValidation.number.enabled = false;
+
+// Override the validation message (depends on the browser)
+domUtils.defaultInputValidation.bigint.message = "Why, just why?";
+```
+
+### Custom input validation
+In addition to default validation, UIX supports custom validation through assertion methods. These methods allow you to enforce specific rules for properties, such as requiring a `Ref`'s value to remain within a numeric range or ensuring that it has a specific length, format, or pattern — such as a valid email address.
+
+#### Class component input validation
+You can use the `@assert` decorator to apply custom validation logic to your [Class component’s](./04%20Components.md#class-template-components) instance properties. This allows you to enforce specific rules by providing a callback function that acts as the assertion. Here's an example:
+
+
+
+```tsx
+@template(function() {
+	return <input type={"text"} value={this.myEmail}/>;
+})
+class MyForm extends Component {
+	@assert(val => /\S+@\S+\.\S+/.test(val))
+	@property myEmail = 'max@unyt.org';	
+}
+```
+
+## Special attributes values
 Each attribute value can be set to a DATEX pointer.
 When the pointer value changes, the attribute is updated accordingly.
 
 Some attributes support special values that act as helpers to allow for easier modification, such as `event handlers`, `style` or `class`.
 
-#### Event handlers
+### Event handlers
 All [event listener attributes](https://developer.mozilla.org/en-US/docs/Web/Events/Event_handlers) such as `onclick`, `onfocus`, or `oninput` can take a callback function as value:
 
 
@@ -255,7 +294,7 @@ const btnDisabled = $(false);
 </div>;
 ```
 
-#### Style
+### Style
 
 The `style` attribute accepts a string or an JavaScript object with style declarations. The style properties can be pointer values to allow for reactive updates:
 
@@ -277,12 +316,12 @@ Most style properties accept only string values. However, UIX allows special sho
  * `display` - The display property accepts a `boolean` value. If the value is `true`, the `display` property is set to the default display value (e.g. `display: block` for a div). If the value is `false`, `display` is set to `none`.
 
 
-#### Scoped stylesheets
+### Scoped stylesheets
 
 The special `stylesheet` attribute can be used on JSX elements to apply a whole CSS stylesheet to the scope of the element (See [Element-scoped styles](./12%20Style%20and%20Themes.md#element-scoped-styles])).
 
 
-#### Class
+### Class
 Similar to the `style' attribute, the `class' attribute takes a string or an object.
 The object must contain the potential class names as properties and booleans as corresponding values, indicating whether this class should be set or not.
 
@@ -306,7 +345,7 @@ export default <div class={{main: true, big: enableBig}}/>; // class is set to "
 enableBig.val = true; // class is now "main big"
 ```
 
-#### Paths
+### Paths
 
 All attributes that accept a path as a value (e.g. `src` and `href`) can be set to paths relative to the current module (For additional information check out `uix-module` in [Supported Attributes](#supported-attributes)).
 
@@ -336,7 +375,7 @@ export default {
 
 Instead of assigning string values, the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) object can also be set as path attribute.
 
-#### Checkbox `checked` attribute
+### Checkbox `checked` attribute
 
 The special `checked` attribute of a checkbox element can be used to set or get the `checked` state of a checkbox:
 
@@ -352,7 +391,7 @@ isChecked.observe(checked =>
 );
 ```
 
-#### Form actions
+### Form actions
 
 The `action` attribute of a [`<form>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form) element can be an URL or string containing the URL of the form request, or a [callback function](./05%20Entrypoints%20and%20Routing.md#entrypoint-functions) that is triggered on submit.
 
@@ -373,7 +412,7 @@ export default
     </form>
 ```
 
-#### Other UIX-specific attributes 
+### Other UIX-specific attributes 
 
 There are a few special attributes for UIX-specific functionality:
  * `uix-module` - specify the module path which is used as a reference for relative paths, e.g.:

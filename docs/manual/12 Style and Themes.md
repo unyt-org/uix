@@ -1,22 +1,50 @@
 # Styles and Themes
+UIX supports different ways of styling your application, including:
 
-## External style sheets
+* [**Global CSS**](#global-styles): Simple to use and familiar for those experienced with traditional CSS.
+* [**CSS Modules**](#component-style-sheets): Create locally scoped CSS classes for your class components to improve maintainability.
+* [**Tailwind CSS**](#tailwind-css): A utility-first CSS framework that allows for rapid custom designs by composing utility classes.
+* [**Inline CSS**](./03%20JSX.md#style): Embed CSS directly in your [JSX components](./03%20JSX.md), enabling dynamic and scoped styling.
+* [**Element-scoped CSS**](#element-scoped-styles): Allows for having CSS styles bound to single JSX elements, enabling element-scoped styling.
+* [**Reactive CSS**](#the-css-template-function): Allows for creating CSS Stylesheets with reactive properties.
+* **Sass** (*deprecated*): A popular CSS preprocessor that extends CSS with features like variables, nested rules, and mixins.
 
-To apply CSS styles to a component in a module `my_component.ts`, you can create a CSS or SCSS file next to the module file, called `my_component.css` or `my_component.scss`. 
+## Global style sheets
+You can define general global styles in an `entrypoint.css` file next to the `entrypoint.ts` file for backend or frontend.
 
 > [!NOTE]
-> Although SCSS is supported natively by UIX, we recommend using CSS files rather than SCSS files.
-> Modern CSS already includes most of the features that are provided by SCSS.
-> For this reason, CSS support might be completely removed from UIX in the future.
+> Although SCSS is supported natively by UIX, we recommend using CSS files rather than SCSS files. Modern CSS already includes most of the features that are provided by SCSS.
+> For this reason, CSS support will be completely removed from UIX in future versions.
 
-The styles declared in this file are automatically applied to all instances of the component and are not exposed to other components.
 
-You can use the `:host` selector to access the component root element (also when not using a shadow dom).
+## Component style sheets
 
-If you need to apply styles to elements outside of a component,
-you can define general global styles in an `entrypoint.css` file next to the `entrypoint.ts` file.
+To apply CSS styles to a component in a module, you can create a CSS file next to the module file (e.g. `MyComponent.tsx`) sharing the same base name (e.g. `MyComponent.css`).
 
-## Inline styles
+The styles declared in the CSS file are automatically applied to all instances of the component and are not exposed to other components.
+
+You can use the `:host` selector to access the component root element (also when not using a [Shadow DOM](./13%20Shadow%20DOM.md)).
+
+```tsx title="common/MyComponent.tsx" icon="fa-file"
+@template(<p>Hello, UIX!</p>)
+class MyComponent extends Component {
+    // ...
+}
+```
+
+```css title="common/MyComponent.css" icon="fa-file"
+:host {
+    color: red;
+    font-size: large;
+    p {
+        margin: 10px;
+    }
+}
+```
+
+If you need to apply styles to elements outside of a component, you can use [global stylesheets](#global-style-sheets).
+
+## Component inline styles
 
 Another way to add CSS rules to a component is to use inline styles with the `@style` decorator:
 
@@ -29,7 +57,7 @@ Another way to add CSS rules to a component is to use inline styles with the `@s
 `)
 @template(...)
 class MyComponent extends Component {
-   ...
+   // ...
 }
 ```
 
@@ -43,10 +71,10 @@ In addition to setting individual CSS properties on an element's `"style"` attri
 
 ```tsx
 // normal "style" attribute:
-export default <div style="color:red">...</div>;
+<div style="color: red">...</div>;
 
 // "stylesheet" attribute:
-export default <div stylesheet="./MyStyle.css">  
+<div stylesheet="./MyStyle.css">  
     <h1>Title</h1>
 </div>;
 ```
@@ -62,8 +90,7 @@ h1 {
 }
 ```
 
-This is the preferred method over placing styles in the `entrypoint.css` or a custom theme stylesheet, because the styles are always scoped to the element in which they are needed and never leaked out to
-other elements in the DOM.
+This is the preferred method over placing styles in the `entrypoint.css` or a custom theme stylesheet, because the styles are always scoped to the element in which they are needed and never leaked out to other elements in the DOM.
 
 Element-scoped styles can also be used inside function components, which do not support [external style sheets](#external-style-sheets) like class components.
 
@@ -73,21 +100,20 @@ Element-scoped styles can also be used inside function components, which do not 
 
 ### The `css` template function
 
-The `css` function creates a `CSSStylesheet` from any valid CSS string (@import directives are not allowed). Additionally, it supports reactive properties:
+The `css` function creates a `CSSStylesheet` from any valid CSS string (*@import directives are not allowed*). Additionally, it supports reactive properties:
 
 ```ts
-const fontSize: Datex.ReactiveValue<string> = $("10px")
+const fontSize: Datex.ReactiveValue<string> = $("10px");
 const stylesheet: CSSStylesheet = css `
   h1.big {
     font-size: ${fontSize};
     color: ${it => it.myColor};
   }
-`
+`;
 fontSize.val = "20px"
 ```
 
 In this example, the `font-size` property is bound to a pointer, and the color is bound to a computed value, where `it` references an element for which the selector is applied.
-
 
 ## Themes
 

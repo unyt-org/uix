@@ -53,7 +53,7 @@ const className = "my-div";
 </div>
 ```
 
-For setting inline styles, UIX allows the use of an object notation within the style attribute. This is done using double curly braces `{{}}` such as shown in the following example:
+For setting [inline styles](#style), UIX allows the use of an object notation within the style attribute. This is done using double curly braces `{{}}` such as shown in the following example:
 
 ```tsx
 <div style={{color: 'red', backgroundColor: 'yellow'}}>

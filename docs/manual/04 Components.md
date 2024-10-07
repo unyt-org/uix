@@ -170,7 +170,7 @@ class MyCustomComponent extends Component {
 }
 ```
 
-To allow for attributes to be handled in the template definition, it is reccomended to use a template generator by passing a callback function that returns JSX to the template decorator:
+To allow for attributes to be handled in the template definition, it is recommended to use a template generator by passing a callback function that returns JSX to the template decorator:
 
 ```tsx
 @template(({title}) =>
@@ -184,15 +184,18 @@ class MyCustomComponent extends Component<{
     additionalOption: number
 }> {
     public sayHello() {
-        // The passed parameters are available in the option property
-        console.log(this.options.title, this.options.additionalOption);
+        // The passed parameters are available in 'properties'
+        console.log(this.properties.title, this.properties.additionalOption);
     }
 }
 
 <MyCustomComponent title="Hello, UIX!" additionalOption={42}>
 ```
 
-It is also possible to use predefined templates to abstract behaviour:
+Custom attributes defined for your components *(such as `title` and `additionalOption` in above example)* can be accessed via the `properties` field. This acts as a type-safe accessor similar to [`props` in React](https://react.dev/learn/passing-props-to-a-component).
+
+
+It is possible to use predefined templates to abstract behaviour:
 
 ```tsx
 const CoolDiv = template(<div>What is cooler than being cool?</div>);

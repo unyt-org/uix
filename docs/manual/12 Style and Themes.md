@@ -97,32 +97,55 @@ By default, UIX automatically decides which mode (dark or light) to use, dependi
 
 The default themes provided by UIX are `uix-light` and `uix-dark`.
 
-### Registering Custom Themes
+### Predefined Themes
 
-Before you can use a custom theme, you must register it:
+
+### Custom Themes
+
+You can create and apply a custom theme by using the `registerTheme` method of `UIX.Theme`. This allows you to define and apply a personalized visual style for your application's frontend and backend:
 
 ```ts
-// register a new theme
+registerTheme(theme: {
+    name: string,
+    mode?: 'light' | 'dark',
+    values: Record<string, string>,
+    stylesheets?: (string | URL)[],
+    onActivate?: () => void,
+    onDeactivate?: () => void
+});
+```
+
+Here’s an example of how to register a light theme:
+
+```ts
+import { UIX } from "uix";
+
 UIX.Theme.registerTheme({
+    // unique theme name
     name: 'my-custom-light-theme',
-    // light or dark mode (can be undefined if the theme doesn't respect dark/light mode preferences)
-    mode: 'light', 
-    // custom css variables (e.g. var(--border-color-1))
+
+    // light or dark (can be undefined if the theme doesn't respect dark/light mode preferences)
+    mode: 'light',
+    
+    // custom CSS variables (e.g. var(--border-color-1))
     values: {
         'text': '#eeffee',
         'border-color-1': '#ffaa00'
     },
+
     // custom globally applied stylesheets
     stylesheets: [
         'https://example.com/style.css'
     ],
+
     onActivate() {
         // called when theme is activated
     },
+    
     onDeactivate() {
         // called when theme is deactivted
     }
-})
+});
 ```
 ### Activating themes
 

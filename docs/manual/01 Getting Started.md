@@ -1,8 +1,10 @@
 # Getting Started with UIX
 
+*Welcome to the UIX documentation! We’re glad you’re here  <3*
+
 ## What is UIX?
 
-UIX is a state-of-the-art TypeScript framework for building full-stack web applications.
+[UIX](https://github.com/unyt-org/uix) is a state-of-the-art TypeScript framework for building full-stack web applications.
 With UIX, you can write frontend and backend code in a single [Deno](https://docs.deno.com/runtime/manual) project.
 UIX abstracts away the complexity of communicating between servers and clients - there is no need to think about APIs, data serialization, or data storage.
 
@@ -10,10 +12,10 @@ The [DATEX JavaScript Library](https://docs.unyt.org/manual/datex/introduction) 
 
 UIX works out of the box with TypeScript and JSX requiring no additional tools or build steps.
 
-UIX encourages the use of standard web APIs wherever possible, and provides a simple and intuitive abstraction layer for more advanced functionality.
+The framework encourages the use of standard web APIs wherever possible, and provides a simple and intuitive abstraction layer for more advanced functionality.
 
 > [!NOTE]
-> The [UIX Guide](./18%20Guide.md) provides a comprehensive overview for developers new to UIX.
+> The [UIX Guide](https://docs.unyt.org/guide) provides a comprehensive overview for developers new to UIX.
 
 
 ## Main Features
@@ -30,7 +32,7 @@ UIX encourages the use of standard web APIs wherever possible, and provides a si
 UIX aims to simplify all phases of the application development cycle, including design, development, testing and deployment, in order to make the developer experience as convenient as possible. 
 For this reason, UIX ships with built-in features such as
 
- * Hot reloading
+ * [Hot reloading](#the-uix-cli)
  * [Stage management](./09%20Configuration.md#app-deployment-stages)
  * [Automated deployment](./15%20Deployment.md)
  * [Testing library](https://github.com/unyt-org/unyt-tests/)
@@ -163,7 +165,7 @@ interface UIX {
     cacheDir: Path;                  // URL pointing to the local UIX cache directory
     context: 'backend' | 'frontend'; // current context in which the process is running
     language: string;                // language ('de' | 'en' | ...)
-    version: string;                 // UIX version ('beta' | '0.2.0' | ...)
+    version: string;                 // UIX version ('beta' | '0.3.0' | ...)
 }
 ```
 
@@ -174,17 +176,17 @@ By default, a UIX application starts up in the development (`dev`) stage.
 This is the stage where special development features are enabled:
  * You can completely reset the current page state with `CTRL+R`
  * Error stacks for backend errors thrown during routing are displayed in the browser
- * Source maps for TypeScript files are available in the browser
+ * [Source maps](https://github.com/mozilla/source-map) for TypeScript files are available in the browser
 
-### Run UIX applications locally
+### Running UIX apps locally
 
-UIX applications run on `http://localhost:80` by default.
+By default, UIX applications run on `http://localhost:80`.
 If the port 80 on the host system is already in use, UIX will automatically select a free port.
 
 With the `--port` argument, the UIX CLI lets you specify a custom port on which to start the UIX application. This can be useful if you plan to run multiple UIX instances in parallel.
 
 > [!WARNING]
-> Note that HTTP cookies are shared between all localhost applications, regardless of port.
+> Note that HTTP cookies are shared between all localhost applications, regardless of the port.
 > This can lead to unexpected behavior when opening multiple apps that are running on different ports in the same browser (e.g. client endpoints and theme data might get overridden).
 
 

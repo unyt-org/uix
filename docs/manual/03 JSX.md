@@ -93,12 +93,16 @@ const myDiv = <div class={myClass}>Hello, UIX!</div>
 myClass.val = "abc"; // myDiv class is now "abc"
 ```
 
-### Reactive attributes
+### Input attribute binding
+
+To manage data binding between reactive `Refs` and input elements, we can use the `attr`, `attr:in`, and `attr:out` attributes for greater of data flow. These attributes allow for either **bidirectional** or **unidirectional** data binding, depending on the desired interaction between the `Ref` and the input.
+
+Input reactivity works with native attributes such as [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#value) or [`checked`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#checked) for [`HTMLInputElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement), [`HTMLTextAreaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLTextAreaElement), and [`<select>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/select) elements.
+
+#### Bidirectional binding (`attr`)
 
 Per default, all attributes are reactive and updated *bidirectionally*.
-This means that if the attribute value is a `Ref`, the attribute will be updated when the `Ref` value is changed externally, and the Ref value itself will be updated when the attribute is changed, e.g. by user interaction in an input field.
-
-Bidirectional reactivity works with certain native attributes such as [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#value) or [`checked`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#checked):
+This means that if the attribute value is a `Ref`, the attribute will be updated when the `Ref` value is changed externally, and the `Ref` value itself will be updated when the attribute is changed, e.g. by user interaction in an input field:
 
 ```tsx
 const inputText = $("Hello");
@@ -115,6 +119,29 @@ observe(
 );
 ```
 
+#### Unidirectional binding (`attr:in`)
+You can opt for *unidirectional* data binding to restrict how changes flow between the input element and the Ref.
+
+The `value:in` and `checked:in` attributes only bind the value of the input element to the reactive `Ref`. The flow of data is one-way: when the `Ref` is updated, the value of the input or textarea element is updated, but changes in the input field made by the user do not modify the `Ref`'s value.
+
+```tsx
+const inputText = $("Hello");
+
+// inputText updates will flow into the input field, but typing will not affect inputText
+<input type="text" value:in={inputText}/>;
+
+inputText.val = "Hello, UIX!";
+```
+
+### Unidirectional binding (`attr:out`)
+The `value:out` and `checked:out` attributes bind the input element to the reactive `Ref`, but in this case, only changes from the input element will update the `Ref`'s value. Changes made to the `Ref` won't reflect in the input field.
+
+```tsx
+const inputText = $("Hello");
+
+// typing in the input will update inputText, but changes to inputText will not reflect in the input field
+<input type="text" value:out={inputText}/>;
+```
 
 ### Reactive expressions
 
@@ -124,12 +151,11 @@ Reactive expressions are automatically recalculated when one of the dependencies
 ```tsx
 const radius = $(0);
 
-export default
-    <div>
-        <h1>Circle Area Calculator</h1>
-        <input type="number" placeholder="Radius" value={radius}/>
-        <p>Area = { Math.PI * radius ** 2 }</p>
-    </div>;
+<div>
+    <h1>Circle Area Calculator</h1>
+    <input type="number" placeholder="Radius" value={radius}/>
+    <p>Area = { Math.PI * radius ** 2 }</p>
+</div>;
 ```
 
 ### Conditional rendering
@@ -364,7 +390,7 @@ const myClasses = ["main", "big"];
 Reactive class object:
 ```tsx
 const enableBig = $(false);
-export default <div class={{main: true, big: enableBig}}/>; // class is set to "main"
+<div class={{main: true, big: enableBig}}/>; // class is set to "main"
 
 // ...
 enableBig.val = true; // class is now "main big"

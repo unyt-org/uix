@@ -3,7 +3,7 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { logger } from "../utils/global-values.ts";
-import { PageProvider } from "../html/entrypoint-providers.tsx";
+import { PageProvider } from "../providers/common.tsx";
 import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
 import { Entrypoint } from "../html/entrypoints.ts";
 import type { normalizedAppOptions } from "./options.ts";

@@ -9,9 +9,9 @@ import { BackendManager } from "./backend-manager.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file-utils.ts";
 import { logger } from "../utils/global-values.ts";
 import { extractedData, generateHTMLPage, getOuterHTML } from "../html/render.ts";
-import { HTMLProvider } from "../html/html-provider.ts";
+import { HTMLProvider } from "../providers/html.ts";
 
-import { provideValue } from "../html/entrypoint-providers.tsx";
+import { provideValue } from "../providers/common.tsx";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
 import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "datex-core-legacy/utils/interface-generator.ts"

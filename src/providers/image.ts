@@ -4,7 +4,7 @@ import { initStreaming } from "https://esm.sh/yoga-wasm-web@0.3.0";
 import { render as convertSVGToPNG } from "https://deno.land/x/resvg_wasm@0.2.0/mod.ts";
 import { html } from "https://cdn.jsdelivr.net/npm/satori-html@0.3.2/+esm";
 import { type Yoga } from "https://esm.sh/v135/yoga-wasm-web@0.3.3/dist/index.js";
-import { provideContent } from "../html/entrypoint-providers.tsx";
+import { provideContent } from "./common.tsx";
 import { getOuterHTML } from "../html/render.ts";
 
 const DEFAULT_SIZE = 200;

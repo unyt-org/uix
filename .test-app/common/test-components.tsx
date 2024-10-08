@@ -8,7 +8,7 @@ import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { bindToDisplayContext } from "uix/app/datex-over-http.ts";
 import { Component } from "uix/components/Component.ts";
-import { lazy, provideError } from "uix/html/entrypoint-providers.tsx";
+import { lazy, provideError } from "uix/providers/common.tsx";
 import { unsafeHTML } from "uix/uix-short.ts";
 import { enableOverlayScrollbars } from "uix/utils/overlay-scrollbars.ts";
 import { FormComponent } from "../common/FormComponent.tsx";

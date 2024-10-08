@@ -1,7 +1,7 @@
 import { Datex } from "datex-core-legacy";
 import { OpenGraphInformation } from "../base/open-graph.ts";
 import { indent } from "datex-core-legacy/utils/indent.ts";
-import type { HTMLProvider } from "./html-provider.ts";
+import type { HTMLProvider } from "../providers/html.ts";
 import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_properties.ts";
 import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";

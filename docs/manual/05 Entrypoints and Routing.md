@@ -167,7 +167,7 @@ In a Deno environment, `Deno.FSFile` values can be returned as entrypoint values
 The `provideFile()` function can also be used to return files from the local file system.
 
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
-import { provideFile } from "uix/html/entrypoint-providers.tsx";
+import { provideFile } from "uix/providers/common.tsx";
 
 export default provideFile('./image.png') satisfies Entrypoint;
 ```
@@ -199,7 +199,7 @@ provideImage(
 You can render your favicon using following code:
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
 import type { Entrypoint } from "uix/html/entrypoints.ts";
-import { provideImage } from "uix/providers/image-provider.ts";
+import { provideImage } from "uix/providers/image.ts";
 import { app } from "uix/app/app.ts";
 
 export default {
@@ -242,7 +242,7 @@ export default {
 This can also be achieved with `provideRedirect()`:
 
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
-import { provideRedirect } from "uix/html/entrypoint-providers.tsx";
+import { provideRedirect } from "uix/providers/common.tsx";
 
 export default {
     '/github': new URL('https://github.com/unyt-org'),
@@ -256,7 +256,7 @@ export default {
 Virtual redirects are similar to normal redirects, but they directly return a response with the content of the redirect URL, not a redirect response (HTTP Status **304**).
 
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
-import { provideVirtualRedirect } from "uix/html/entrypoint-providers.tsx";
+import { provideVirtualRedirect } from "uix/providers/common.tsx";
 
 export default provideVirtualRedirect('/example/home') satisfies Entrypoint;
 ```

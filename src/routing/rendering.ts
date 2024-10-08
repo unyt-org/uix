@@ -14,7 +14,7 @@ import { logger } from "../utils/global-values.ts";
 import { domContext } from "../app/dom-context.ts";
 import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
-import { FileHandle } from "../html/entrypoint-providers.tsx";
+import { FileHandle } from "../providers/common.tsx";
 
 // URLPattern polyfill
 // @ts-ignore

@@ -13,7 +13,7 @@ export function getData() {
 }
 
 export const map = new Map<string,string>();
-map.set("a", "Value for A");
+map.set('a', 'Value for A');
 ```
 
 ```typescript
@@ -21,7 +21,7 @@ map.set("a", "Value for A");
 
 import {map, getData} from "../backend/public.ts";
 
-console.log(map); // Map {"a"->"Value for A"}
+console.log(map); // Map {'a'->'Value for A'}
 console.log(await getData()); // [1,2,3]
 ```
 

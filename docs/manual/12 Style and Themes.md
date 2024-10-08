@@ -103,14 +103,14 @@ Element-scoped styles can also be used inside function components, which do not 
 The `css` function creates a `CSSStylesheet` from any valid CSS string (*@import directives are not allowed*). Additionally, it supports reactive properties:
 
 ```ts
-const fontSize: Ref<string> = $("10px");
+const fontSize: Ref<string> = $('10px');
 const stylesheet: CSSStylesheet = css `
   h1.big {
     font-size: ${fontSize};
     color: ${it => it.myColor};
   }
 `;
-fontSize.val = "20px"
+fontSize.val = '20px';
 ```
 
 In this example, the `font-size` property is bound to a pointer, and the color is bound to a computed value, where `it` references an element for which the selector is applied.
@@ -186,7 +186,7 @@ When `useThemes` is called, all previously activated themes are removed.
 import { UIX } from "uix";
 
 // activate themes - the current theme is selected depending on the dark/light mode preference
-UIX.Theme.useThemes("my-custom-dark-theme", "uix-light-plain");
+UIX.Theme.useThemes('my-custom-dark-theme', 'uix-light-plain');
 ```
 
 > [!NOTE]
@@ -241,9 +241,9 @@ effect(() => console.log(`Mode changed to ${UIX.Theme.mode}`));
 ```tsx
 <div>
     {always(() =>
-      UIX.Theme.mode == "dark" ?
-        "Dark mode" :
-        "Light mode"
+      UIX.Theme.mode == 'dark' ?
+        'Dark mode' :
+        'Light mode'
     )}
 </div>
 ```

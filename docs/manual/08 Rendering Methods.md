@@ -57,11 +57,11 @@ If `onDisplay` is marked with `@frontend`, it will be called as soon as the comp
 export class ButtonComponent extends Component {
 
     onCreate() {
-        console.log("created") // called on the backend
+        console.log('created') // called on the backend
     }
  
     @frontend onDisplay() {
-        console.log("displayed") // called on the frontend
+        console.log('displayed') // called on the frontend
     }
 
 }

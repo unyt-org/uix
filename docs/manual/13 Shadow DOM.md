@@ -1,5 +1,4 @@
 # Shadow DOM
-## Using shadow roots in components
 
 For more control over the location of child elements, shadow roots and slots can be used.
 To add a shadow root to the root element add a `<shadow-root>` element as the first child of the outer element.
@@ -26,13 +25,16 @@ const CustomComponentWithSlots2 = template(<div>
 </div>);
 
 // create element:
-const comp3 = <CustomComponentWithSlots id='c1'>
+<CustomComponentWithSlots id="c1">
     <div>Child 1</div>
-    {"Child 2"}
+    {'Child 2'}
 </CustomComponentWithSlots>;
+````
 
-/* returns:
-<div id='c1'>
+will render as:
+
+```html
+<div id="c1">
     #shadow-root
         Before children
         <slot>
@@ -41,9 +43,7 @@ const comp3 = <CustomComponentWithSlots id='c1'>
         </slot>
         After children
 </div>
-*/
 ```
-
 
 <!-- 
 ## The `@content` decorator

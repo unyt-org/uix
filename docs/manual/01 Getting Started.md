@@ -152,18 +152,18 @@ Files in the `common` directory can be accessed from both the `frontend` and `ba
 The `UIX` namespace can be imported
 with
 ```ts
-import { UIX } from "uix"
+import { UIX } from "uix";
 ```
 
 The `UIX` namespace contains the following properties:
 
 ```ts
 interface UIX {
-    Theme: ThemeManager;           // UIX Theme manager to register and activate themes and dark/light mode
-    cacheDir: Path;                // URL pointing to the local UIX cache directory
-    context: "backend"|"frontend"; // current context in which the process is running
-    language: string;              // language ("de" | "en" | ...)
-    version: string;               // UIX version ("beta" | "0.2.0" | ...)
+    Theme: ThemeManager;             // UIX Theme manager to register and activate themes and dark/light mode
+    cacheDir: Path;                  // URL pointing to the local UIX cache directory
+    context: 'backend' | 'frontend'; // current context in which the process is running
+    language: string;                // language ('de' | 'en' | ...)
+    version: string;                 // UIX version ('beta' | '0.2.0' | ...)
 }
 ```
 

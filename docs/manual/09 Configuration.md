@@ -89,7 +89,7 @@ By default configuration, running a UIX app in a different stage has no noticeab
 The current stage can be accessed via `app.stage`:
 ```ts
 import { app } from "uix/app/app.ts";
-const stage = app.stage // "production"
+const stage = app.stage // 'production'
 ```
 
 In `app.dx` files, the `#public.uix.stage` helper function can be used to access the stage, enabling custom [deployment configurations](./15%20Deployment.md).

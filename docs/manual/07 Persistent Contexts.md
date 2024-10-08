@@ -38,13 +38,13 @@ export default {
     '/get-name': async (ctx) => {
         // load sharedData object for this context
         const sharedData = await ctx.getSharedData()
-        // return "name" entry
+        // return 'name' entry
         return sharedData.name
     },
     '/set-name/:name': async (ctx, {name}) => {
         // load sharedData object for this context
         const sharedData = await ctx.getSharedData()
-        // set "name" entry
+        // set 'name' entry
         sharedData.name = name;
         return name;
     }

@@ -271,7 +271,19 @@ myValue.assert((val) => val < 42);
 <input type="number" value={myValue}/>;
 ```
 
-If a user enters an invalid value — such as a number that doesn't satisfy the validation rule *(e.g. 69)* — the input state becomes invalid, and the browser will display an error message. You can enhance and customize this behavior using [`defaultInputValidation`](#default-input-validation), which provides more control over how validation errors are presented to the user.
+If a user enters an invalid value — such as a number that doesn't satisfy the validation rule *(e.g. 69)* — the input state becomes invalid, and the browser will display an error message. 
+
+<img src="./res/number-input-invalid.png">
+
+You can enhance and customize this behavior using [`defaultInputValidation`](#default-input-validation), which provides more control over how validation errors are presented to the user.
+
+To display custom assertion messages for invalid states, the `assert` method and decorator allow returning strings to be displayed as error messages:
+
+```ts
+assert(val => 
+    val < 42 || "Not in range!"
+);
+```
 
 #### Class component input validation
 You can use the `@assert` decorator to apply custom validation logic to your [Class component’s](./04%20Components.md#class-template-components) instance properties. This allows you to enforce specific rules by providing a callback function that acts as the assertion. Here's an example:
@@ -280,7 +292,7 @@ You can use the `@assert` decorator to apply custom validation logic to your [Cl
 
 ```tsx
 @template(function() {
-	return <input type={"text"} value={this.myEmail}/>;
+	return <input type="text" value={this.myEmail}/>;
 })
 class MyForm extends Component {
 	@assert(val => /\S+@\S+\.\S+/.test(val))

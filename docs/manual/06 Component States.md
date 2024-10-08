@@ -17,12 +17,12 @@ import { Component } from "uix/components/Component.ts";
 
 @template(() => {
     return <div>
-         <input value={this.$.myVal}/>
+         <input value={this.myVal}/>
     </div>;
 })
 class CustomComponent extends Component {
     // declare property
-    @poperty myVal = "myValue";
+    @poperty myVal = 'myValue';
 }
 ```
 

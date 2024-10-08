@@ -15,32 +15,32 @@ To define a new template, call the `template` function and pass in an element va
 import { template } from "uix/html/template.ts";
 
 // Define the template
-const SimpleComponent = template(<div class='simple'/>);
+const SimpleComponent = template(<div class="simple"/>);
 
 // Instantiate the component
-export default <SimpleComponent id='c1'/>;
+export default <SimpleComponent id="c1"/>;
 ```
 
 will render as:
 ```html
-<div class='simple' id='c1'/>
+<div class="simple" id="c1"/>
 ```
 
 The `template` method can also take properties (user defined attributes):
 
 ```tsx
 const ComplexComponent = template<{customAttr: number}>(({customAttr}) =>
-    <div class='complex'>
+    <div class="complex">
         <b>Answer is: {customAttr}</b>
     </div>
 );
 
-<ComplexComponent id='c2' customAttr={42}/>
+<ComplexComponent id="c2" customAttr={42}/>
 ```
 
 will render as:
 ```html
-<div class='complex' id='c2'>
+<div class="complex" id="c2">
     <b>Answer is: 42</b>
 </div>
 ```
@@ -51,17 +51,17 @@ Default element attributes (e.g. `id` and `style`) are assigned to the root elem
 Children defined in JSX are also appended to the root element by default:
 
 ```tsx
-const CustomComponent = template(<div class='class1'/>);
+const CustomComponent = template(<div class="class1"/>);
 
-<CustomComponent id='c1'>
+<CustomComponent id="c1">
     <div>Child 1</div>
-    {"Child 2"}
+    {'Child 2'}
 </CustomComponent>
 ```
 
 will be rendered as:
 ```html
-<div class='class1' id='c1'>
+<div class="class1" id="c1">
     <div>Child 1</div>
     Child 2
 </div>
@@ -147,7 +147,7 @@ import { Component } from "uix/components/Component.ts";
 // register the component and set default options
 @template()
 class MyCustomComponent extends Component {
-    @content helloText = "Hello from my custom component";
+    @content helloText = 'Hello from my custom component';
 }
 ```
 
@@ -272,7 +272,7 @@ class MyApp extends Component {
     @id myInput!: HTMLInputElement;
 
     // declare id explicitly if property name does not match id
-    @id("parent") myParent!: HTMLDivElement;
+    @id('parent') myParent!: HTMLDivElement;
 }
 ```
 Note that, when the property is overridden, the element with the matching id is also replaced with the new property. 

@@ -46,7 +46,7 @@ In UIX, you can define attributes directly on HTML elements. For example, the cl
 You can use dynamic values within curly braces `{}` in your attributes. This allows you to pass variables or expressions into the element attributes:
 
 ```tsx
-const className = "my-div";
+const className = 'my-div';
 
 <div class={className}>
     Hello, UIX!
@@ -66,7 +66,7 @@ Per default common HTML attributes are type safe to use, if you want to define c
 ```tsx
 const myArticle = {
     id: 42,
-    title: "My article #1"
+    title: 'My article #1'
 };
 
 <h1 data-article={myArticle.id}>
@@ -81,27 +81,31 @@ JSX elements accept plain JavaScript values *or* DATEX Refs as attribute values 
 Passing plain values does not dynamically update the component:
 
 ```tsx
-let myClass = "xyz";
+let myClass = 'xyz';
 const myDiv = <div class={myClass}>Hello, UIX!</div>
-myClass = "abc"; // myDiv class is still "xyz"
+myClass = 'abc'; // myDiv class is still 'xyz'
 ```
 
 To achieve reactive behavior, you can pass in a `Ref` value:
 ```tsx
-let myClass = $("xyz");
+let myClass = $('xyz');
 const myDiv = <div class={myClass}>Hello, UIX!</div>
-myClass.val = "abc"; // myDiv class is now "abc"
+myClass.val = 'abc'; // myDiv class is now 'abc'
 ```
 
-### Reactive attributes
+### Input attribute binding
+
+To manage data binding between reactive `Refs` and input elements, we can use the `attr`, `attr:in`, and `attr:out` attributes for greater of data flow. These attributes allow for either **bidirectional** or **unidirectional** data binding, depending on the desired interaction between the `Ref` and the input.
+
+Input reactivity works with native attributes such as [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#value) or [`checked`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#checked) for [`HTMLInputElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement), [`HTMLTextAreaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLTextAreaElement), and [`<select>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/select) elements.
+
+#### Bidirectional binding (`attr`)
 
 Per default, all attributes are reactive and updated *bidirectionally*.
-This means that if the attribute value is a `Ref`, the attribute will be updated when the `Ref` value is changed externally, and the Ref value itself will be updated when the attribute is changed, e.g. by user interaction in an input field.
-
-Bidirectional reactivity works with certain native attributes such as [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#value) or [`checked`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#checked):
+This means that if the attribute value is a `Ref`, the attribute will be updated when the `Ref` value is changed externally, and the `Ref` value itself will be updated when the attribute is changed, e.g. by user interaction in an input field:
 
 ```tsx
-const inputText = $("Hello");
+const inputText = $('Hello');
 
 // add input element to the DOM
 document.body.append(
@@ -111,10 +115,33 @@ document.body.append(
 // observe inputText changes, log every time the input value changes
 observe(
     inputText, 
-    val => console.log("Text changed to: " + val)
+    val => console.log('Text changed to: ' + val)
 );
 ```
 
+#### Unidirectional binding (`attr:in`)
+You can opt for *unidirectional* data binding to restrict how changes flow between the input element and the Ref.
+
+The `value:in` and `checked:in` attributes only bind the value of the input element to the reactive `Ref`. The flow of data is one-way: when the `Ref` is updated, the value of the input or textarea element is updated, but changes in the input field made by the user do not modify the `Ref`'s value.
+
+```tsx
+const inputText = $('Hello');
+
+// inputText updates will flow into the input field, but typing will not affect inputText
+<input type="text" value:in={inputText}/>;
+
+inputText.val = 'Hello, UIX!';
+```
+
+### Unidirectional binding (`attr:out`)
+The `value:out` and `checked:out` attributes bind the input element to the reactive `Ref`, but in this case, only changes from the input element will update the `Ref`'s value. Changes made to the `Ref` won't reflect in the input field.
+
+```tsx
+const inputText = $('Hello');
+
+// typing in the input will update inputText, but changes to inputText will not reflect in the input field
+<input type="text" value:out={inputText}/>;
+```
 
 ### Reactive expressions
 
@@ -124,12 +151,11 @@ Reactive expressions are automatically recalculated when one of the dependencies
 ```tsx
 const radius = $(0);
 
-export default
-    <div>
-        <h1>Circle Area Calculator</h1>
-        <input type="number" placeholder="Radius" value={radius}/>
-        <p>Area = { Math.PI * radius ** 2 }</p>
-    </div>;
+<div>
+    <h1>Circle Area Calculator</h1>
+    <input type="number" placeholder="Radius" value={radius}/>
+    <p>Area = { Math.PI * radius ** 2 }</p>
+</div>;
 ```
 
 ### Conditional rendering
@@ -210,7 +236,7 @@ Otherwise, `display` is `block` and the div is visible.
 To render a list of elements, you can use the [`map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) function on an array and map it to return an array of JSX elements:
 
 ```tsx
-const items = ["Item 1", "Item 2", "Item 3"];
+const items = ['Item 1', 'Item 2', 'Item 3'];
 
 <ul>
     {items.map(item => <li>{item}</li>)}
@@ -220,7 +246,7 @@ const items = ["Item 1", "Item 2", "Item 3"];
 This also works with reactive arrays:
 
 ```tsx
-const items = $(["Item 1", "Item 2", "Item 3"]);
+const items = $(['Item 1', 'Item 2', 'Item 3']);
 
 const list = <ul>
     {items.map(item => <li>{item}</li>)}
@@ -250,11 +276,11 @@ To disable the default input validation behaviour or change the validity message
 ```ts
 import { domUtils } from "uix/app/dom-context.ts";
 
-// Disable validation for <input type='number'/>
+// Disable validation for <input type="number"/>
 domUtils.defaultInputValidation.number.enabled = false;
 
 // Override the validation message (depends on the browser)
-domUtils.defaultInputValidation.bigint.message = "Why, just why?";
+domUtils.defaultInputValidation.bigint.message = 'Why, just why?';
 ```
 
 ### Custom input validation
@@ -281,12 +307,12 @@ To display custom assertion messages for invalid states, the `assert` method and
 
 ```ts
 assert(val => 
-    val < 42 || "Not in range!"
+    val < 42 || 'Not in range!'
 );
 ```
 
 #### Class component input validation
-You can use the `@assert` decorator to apply custom validation logic to your [Class component’s](./04%20Components.md#class-template-components) instance properties. This allows you to enforce specific rules by providing a callback function that acts as the assertion. Here's an example:
+You can use the `@assert` decorator to apply custom validation logic to your [Class component’s](./04%20Components.md#class-template-components) reactive [instance properties](./06%20Component%20States.md#the-property-decorator). This allows you to enforce specific rules by providing a callback function that acts as the assertion. Here's an example:
 
 
 
@@ -357,14 +383,14 @@ Simple class string:
 
 Simple array list:
 ```tsx
-const myClasses = ["main", "big"];
+const myClasses = ['main', 'big'];
 <div class={myClasses}/>;
 ```
 
 Reactive class object:
 ```tsx
 const enableBig = $(false);
-export default <div class={{main: true, big: enableBig}}/>; // class is set to "main"
+<div class={{main: true, big: enableBig}}/>; // class is set to "main"
 
 // ...
 enableBig.val = true; // class is now "main big"
@@ -393,8 +419,8 @@ You can use the special `href:route` attribute if you need paths that are relati
 
 ```tsx title="frontend/entrypoint.tsx" icon="fa-file"
 export default {
-    '/some/path' : <a href:route="./other-path"/>, // resolves to "/some/other-path"
-    '/some/other-path': "Hello there"
+    '/some/path' : <a href:route="./other-path"/>, // resolves to '/some/other-path'
+    '/some/other-path': 'Hello there'
 };
 ```
 
@@ -407,12 +433,12 @@ The special `checked` attribute of a checkbox element can be used to set or get 
 ```tsx title="frontend/entrypoint.tsx" icon="fa-file"
 const isChecked = $(false);
 
-// Bind the "checked" state of the checkbox to the isChecked pointer
+// Bind the 'checked' state of the checkbox to the isChecked pointer
 export default <input type="checkbox" checked={isChecked}/>;
 
 // Observe the pointer
 isChecked.observe(checked => 
-    console.log("checkbox is checked: " + checked)
+    console.log('checkbox is checked: ' + checked)
 );
 ```
 

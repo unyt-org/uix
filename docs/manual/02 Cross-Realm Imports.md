@@ -5,23 +5,21 @@ Under the hood, this is achieved using DATEX messaging between the frontend and 
 
 **Cross-Realm Import Example**:
 
-```typescript
-// file: backend/public.ts - running on the backend (Deno)
-
+```tsx title="backend/public.ts" icon="fa-file"
+// Deno backend
 export function getData() {
     return [1,2,3];
 }
 
-export const map = new Map<string,string>();
-map.set("a", "Value for A");
+export const map = new Map<string, string>();
+map.set('a', 'Value for A');
 ```
 
-```typescript
-// file: frontend/entrypoint.ts - running on the frontend (browser client)
+```tsx title="frontend/entrypoint.ts" icon="fa-file"
+// Browser client
+import { map, getData } from "backend/public.ts";
 
-import {map, getData} from "../backend/public.ts";
-
-console.log(map); // Map {"a"->"Value for A"}
+console.log(map); // Map {'a'->'Value for A'}
 console.log(await getData()); // [1,2,3]
 ```
 
@@ -52,4 +50,3 @@ Only values that are explicitly imported into the frontend module's source code 
 All of the other exports are still only accessible within the backend context.
 
 Even if values are exported from the backend because they are needed on the frontend, the backend module source code is never exposed.
-Source code is never exposed to the public - only the exported values can be made accessible.

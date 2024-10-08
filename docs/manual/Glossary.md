@@ -37,5 +37,5 @@ This allows the backend to reliably associate HTTP requests with endpoints.
 Whenever a UIX page is opened, a new endpoint session is created if there is no active session.
 The session endpoint can be accessed from the `Context` object: 
 ```ts
-export default ctx => console.log("session endpoint: " + ctx.endpoint) satisfies Entrypoint;
+export default ctx => console.log('session endpoint: ' + ctx.endpoint) satisfies Entrypoint;
 ```

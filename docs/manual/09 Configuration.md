@@ -24,6 +24,7 @@ To learn more about DATEX Script, check out the [DATEX documentation](https://do
 
 
 ## The app.dx file
+The `app.dx` file serves as the main configuration file for a UIX application. It defines essential settings, metadata, and optional features that shape how your app behaves and appears.
 
 ### General Options
 
@@ -46,16 +47,16 @@ The following options provide some general information or behavior of the app.
 ### Experimental Features
 
 Experimental features are subject to change and might be enabled by default in future versions of UIX.
-To enable experimental features, add them to the `experimental_features` list in the `app.dx` file.
+To enable specific features, add them to the `experimental_features` list in the `app.dx` file.
 
 Available experimental features:
 
+* `indirect-references`: Sets the `INDIRECT_REFERENCES` flag for the DATEX Runtime, which enables for indirect references to pointers from other pointers.
+* `view-transitions`: Enables [CSS view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for backend navigations and frontend navigations.
+<!-- * `"frontend-navigation"`: Enables the new frontend navigation system, which allows for client-side routing without full page reloads.
 * `"embedded-reactivity"`: Enables compile-time reactivity features for JSX templates and the `$()` syntax
 * `"protect-pointers"`: Sets the `PROTECT_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints by default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.
-* `"indirect-references"`: Sets the `INDIRECT_REFERENCES` DATEX Runtime, which enables for indirect references to pointers from other pointers.
-* `"view-transitions"`: Enables [CSS view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for backend navigations and frontend navigations.
-<!-- * `"frontend-navigation"`: Enables the new frontend navigation system, which allows for client-side routing without full page reloads. -->
-
+ -->
 ### Paths
 
 The paths for frontend, backend and common files can be explicitly set in the `app.dx` files.
@@ -70,8 +71,7 @@ By default, the frontend path is `./frontend/`, the backend path is `./backend/`
 ```datex title="app.dx"
 name: "My App",
 description: "I made a thing",
-icon: "https://example.org/icon.ico",
-common: [./lib, ./common]; // multiple common paths
+icon: "https://example.org/icon.ico";
 ```
 
 ## App Deployment Stages
@@ -89,7 +89,7 @@ By default configuration, running a UIX app in a different stage has no noticeab
 The current stage can be accessed via `app.stage`:
 ```ts
 import { app } from "uix/app/app.ts";
-const stage = app.stage // "production"
+const stage = app.stage // 'production'
 ```
 
 In `app.dx` files, the `#public.uix.stage` helper function can be used to access the stage, enabling custom [deployment configurations](./15%20Deployment.md).

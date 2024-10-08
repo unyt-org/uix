@@ -7,8 +7,8 @@ It is recommended to use the `redirect` utility function when redirecting to a n
 The `redirect` function guarantees that all scheduled DATEX updates are sent before leaving the current page. This prevents inconsistencies for shared pointer values:
 
 ```ts
-// safe navigation to "/home"
-redirect("/home"); 
+// safe navigation to '/home'
+redirect('/home'); 
 ```
 
 This is equivalent to
@@ -16,7 +16,7 @@ This is equivalent to
 // wait until all scheduled DATEX updates are sent
 await Datex.Runtime.synchronized; 
 // navigate to "/home"
-globalThis.location.href = "/home"
+globalThis.location.href = '/home';
 ```
 
 The `redirect` function is available in the global scope by default, but can also be imported from `"uix/utils/window-apis.ts"`.

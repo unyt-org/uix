@@ -51,11 +51,11 @@ import { AppPlugin } from "uix/app/app-plugin.ts";
 
 export default class MyPlugin implements AppPlugin<{text: string}> {
     // the identifier used to refer to this plugin in a DATEX file 
-    name = "my_plugin"
+    name = 'my_plugin'
 
     // this method is called when the plugin is used in a DATEX file
     apply(data: {text: string}) {
-      console.log("my plugin text: " + data.text);
+      console.log('my plugin text: ' + data.text);
     }
 }
 ```

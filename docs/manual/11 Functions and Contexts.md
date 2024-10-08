@@ -63,12 +63,12 @@ However, they can still be *called* from other endpoints - the function executio
 As a simple example, let's call an exported backend function from the client (frontend):
 ```ts title="backend/entrypoint.ts" icon="fa-file"
 export function callMe() {
-    return "thanks";
+    return 'thanks';
 }
 ```
 ```ts title="frontend/entrypoint.ts" icon="fa-file"
 import { callMe } from "backend/entrypoint.ts";
-const result = await callMe(); // "thanks"
+const result = await callMe(); // 'thanks'
 ```
 
 This is almost identical to the more trivial example of 
@@ -92,7 +92,7 @@ export default
         I was clicked {counter} times
     </button>;
 ```
-In this example, `"button was clicked"` is logged on the backend when the button is clicked in the browser.
+In this example, `'button was clicked'` is logged on the backend when the button is clicked in the browser.
 
 > [!NOTE]
 > If the exact same entrypoint module was a frontend module, the logs would be shown in the frontend, since the origin context is also the frontend context.
@@ -114,7 +114,7 @@ const counter = $(0);
 
 export default 
     <button onclick:frontend={() => { // add a :frontend label
-        console.log("button was clicked")
+        console.log('button was clicked')
         counter.val++
     }}>
         I was clicked {counter} times
@@ -132,7 +132,7 @@ const counter = $(0);
 export default 
     <button onclick:frontend={() => {
         use (counter) // use the counter variable from the origin context
-        console.log("button was clicked")
+        console.log('button was clicked')
         counter.val++
     }}>
         I was clicked {counter} times
@@ -221,8 +221,8 @@ export default (
     <div>
         <button onclick:frontend={async () => {
             use (getData); // enable access to getData in the frontend context (browser client)
-            const data = await getData("alex", 99999999n); // call getData() on backend and get result
-            document.getElementById("data").innerText = data.map.get("data"); // update dom element content
+            const data = await getData('alex', 99999999n); // call getData() on backend and get result
+            document.getElementById("data").innerText = data.map.get('data'); // update dom element content
         }}>Load Data</button>
         <p id="data"/>
     </div>
@@ -251,8 +251,8 @@ export default renderBackend(
     <div>
         <button onclick:frontend={async () => {
             use ("standalone", getData); // enable access to getData in the frontend context (browser client)
-            const data = await getData("alex", 99999999); // call getData() on backend and get result
-            document.getElementById("data").innerText = data.map["data"]; // update dom element content
+            const data = await getData('alex', 99999999); // call getData() on backend and get result
+            document.getElementById('data').innerText = data.map["data"]; // update dom element content
         }}>Load Data</button>
         <p id="data"/>
     </div>

@@ -22,7 +22,7 @@ The exported `plane` pointer now contains a text value that changes depending on
 
 The exported `plane` value from the DATEX Script file can be imported with `datex.get`:
 ```ts
-const { plane } = await datex.get("./localized.dx");
+const { plane } = await datex.get('./localized.dx');
 export default <h1>{plane}</h1>;
 ```
 

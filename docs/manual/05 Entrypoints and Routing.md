@@ -62,15 +62,15 @@ Strings are displayed as text appended to the document body (color and backgroun
 
 Examples:
 ```tsx title="entrypoint.tsx" icon="fa-file"
-export default "Hi World" satisfies Entrypoint;
+export default 'Hi World' satisfies Entrypoint;
 ```
 ```tsx title="entrypoint.tsx" icon="fa-file"
 const content = $("content");
 export default content satisfies Entrypoint;
-content.val = "new content";
+content.val = 'new content';
 ```
 
-If you only want to display plain text without a parent HTML document and CSS styles, you can use `provideContent("text content")`.
+If you only want to display plain text without a parent HTML document and CSS styles, you can use `provideContent('text content')`.
 
 
 ### Route maps
@@ -190,7 +190,7 @@ provideImage(
       style?: 'normal' | 'italic',
       lang?: string
     }[]
-    contentType?: "png" | "svg" = "svg",
+    contentType?: 'png' | 'svg' = 'svg',
     // Options that will be passed to the UIX HTTP response
     status?: number = 200
   }
@@ -204,30 +204,30 @@ import { app } from "uix/app/app.ts";
 
 export default {
     '/favicon.png': provideImage(<div style={{
-            color: "white",
-            height: "100%",
+            color: 'white',
+            height: '100%',
             fontSize: 30,
-            background: app.stage === "dev" ? 
-                "orange" :
-                "black",
-            display: "flex",
+            background: app.stage === 'dev' ? 
+                'orange' :
+                'black',
+            display: 'flex',
             lineHeight: 2,
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "column"
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexDirection: 'column'
         }}>
             <h1>My App</h1>
             <span>
-                <i style={{color: app.stage=="dev" ?
-                    "black" :
-                    "orange"}}>
+                <i style={{color: app.stage === 'dev' ?
+                    'black' :
+                    'orange'}}>
                     {app.stage}
                 </i>-Stage
             </span>
         </div>, {
             width: 250,
             height: 250,
-            contentType: "png"
+            contentType: 'png'
         })
     )
 } satisfies Entrypoint;
@@ -332,9 +332,9 @@ Values that are thrown with `throw` from an entrypoint function are treated simi
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
 export default {
     '/:id': (_, { id }) => {
-         if (id !== "4269420")
-             throw "Invalid login"; // displays "Invalid login" with status code 500
-         return "The secret is 42!"; // displays "The secret is 42!" with status code 200
+         if (id !== '4269420')
+             throw 'Invalid login'; // displays 'Invalid login' with status code 500
+         return 'The secret is 42!'; // displays 'The secret is 42!' with status code 200
      }
 } satisfies Entrypoint;
 ```
@@ -346,9 +346,9 @@ Instances of `Error` that are thrown or returned b an entrypoint function will b
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
 export default {
     '/:id': (_, { id }) => {
-         if (id !== "4269420")
-             throw new Error("Invalid login"); // displays an error info box (with stack trace)
-         return "The secret is 42!";
+         if (id !== '4269420')
+             throw new Error('Invalid login'); // displays an error info box (with stack trace)
+         return 'The secret is 42!';
      }
 } satisfies Entrypoint;
 ```
@@ -362,8 +362,8 @@ Additionally, custom content can be returned using the `with` method:
 import { HTTPStatus } from "uix/html/http-status.ts";
 export default {
     '/:id': (_, { id }) => {
-         if (id !== "4269420")
-             throw HTTPStatus.BAD_REQUEST.with("MyCustomMessage"); // displays "MyCustomMessage" with status code 400 (Bad Request)
+         if (id !== '4269420')
+             throw HTTPStatus.BAD_REQUEST.with('MyCustomMessage'); // displays "MyCustomMessage" with status code 400 (Bad Request)
          return "The secret is 42!";
      }
 } satisfies Entrypoint;
@@ -385,7 +385,7 @@ UIX provider utility functions allow the backend entrypoint to return HTTP respo
    This function returns a HTTP Response with the mime type `application/json`,
    containing the serialized value. The value must be JSON-compatible.
  * ```typescript
-   function provideContent(content: string | ArrayBuffer, type: mime_type = "text/plain;charset=utf-8", status?: number)
+   function provideContent(content: string | ArrayBuffer, type: mime_type = 'text/plain;charset=utf-8', status?: number)
    ```
    Returns a HTTP Response with custom content and a custom mime type and status code.
 

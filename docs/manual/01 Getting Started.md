@@ -88,7 +88,7 @@ This will create a new [UIX Base Project](https://github.com/unyt-org/uix-base-p
 
 > [!NOTE]
 > We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for UIX development.<br/>
-> For syntax highlighting and language support (DATEX, Typescript, Deno), the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> can be used.
+> For syntax highlighting and language support (DATEX, Typescript, Deno), the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> can be used. Find more information [here](./20%20DATEX%20Workbench.md).
 
 
 ## The UIX CLI

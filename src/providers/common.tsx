@@ -6,7 +6,7 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { setCookie, Cookie } from "../lib/cookie/cookie.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "../app/app.ts";
-import { Entrypoint, RouteHandler, html_generator } from "../html/entrypoints.ts";
+import { Entrypoint, RouteHandler, html_generator } from "./entrypoints.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { HTTPStatus } from "../html/http-status.ts";
 import { createErrorHTML } from "../html/errors.tsx";

@@ -1,7 +1,7 @@
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { Datex } from "datex-core-legacy";
 import {evaluateFilter, filter} from "./route-filter.ts";
-import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_generator } from "../html/entrypoints.ts"
+import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_generator } from "../providers/entrypoints.ts"
 
 import { CACHED_CONTENT, getOuterHTML } from "../html/render.ts";
 import { HTTPStatus } from "../html/http-status.ts";

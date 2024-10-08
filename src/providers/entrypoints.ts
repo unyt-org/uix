@@ -1,9 +1,9 @@
 import { Datex } from "datex-core-legacy";
 import { Context } from "../routing/context.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-import { HTTPStatus } from "./http-status.ts";
+import { HTTPStatus } from "../html/http-status.ts";
 import { RenderPreset, RenderMethod } from "../base/render-methods.ts";
-import { FileHandle, KEEP_CONTENT } from "../providers/common.tsx";
+import { FileHandle, KEEP_CONTENT } from "./common.tsx";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { filter } from "../routing/route-filter.ts";
 

@@ -1,5 +1,5 @@
 import { Logger } from "datex-core-legacy/utils/logger.ts";
-import { Entrypoint } from "../html/entrypoints.ts";
+import { Entrypoint } from "../providers/entrypoints.ts";
 import { Path } from "../utils/path.ts";
 import { ContextBuilder } from "./context.ts";
 import { resolveEntrypointRoute } from "./rendering.ts";

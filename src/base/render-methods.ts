@@ -1,6 +1,6 @@
 import { UIX } from "../../uix.ts";
 import { logger } from "../utils/global-values.ts";
-import { Entrypoint, html_content, html_content_or_generator, html_generator } from "../html/entrypoints.ts";
+import { Entrypoint, html_content, html_content_or_generator, html_generator } from "../providers/entrypoints.ts";
 import { DX_IGNORE, DX_SERIALIZED, DX_SOURCE } from "datex-core-legacy/runtime/constants.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";

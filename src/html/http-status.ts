@@ -1,5 +1,5 @@
 import { Datex } from "datex-core-legacy/mod.ts";
-import { Entrypoint } from "./entrypoints.ts";
+import { Entrypoint } from "../providers/entrypoints.ts";
 
 export class HTTPStatus<Code extends number = number, T extends Entrypoint = Entrypoint> {
 

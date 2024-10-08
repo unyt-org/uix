@@ -5,7 +5,7 @@ import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { logger } from "../utils/global-values.ts";
 import { PageProvider } from "../providers/common.tsx";
 import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
-import { Entrypoint } from "../html/entrypoints.ts";
+import { Entrypoint } from "../providers/entrypoints.ts";
 import type { normalizedAppOptions } from "./options.ts";
 import { createBackendEntrypointProxy } from "../routing/backend-entrypoint-proxy.ts";
 import { eternalExts, updateEternalFile } from "./module-mapping.ts";

@@ -19,7 +19,7 @@ import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
 import { RenderMethod } from "../base/render-methods.ts";
 import { Context, ContextBuilder, ContextGenerator, getHTTPRequestEndpoint } from "../routing/context.ts";
-import { Entrypoint, raw_content } from "../html/entrypoints.ts";
+import { Entrypoint, raw_content } from "../providers/entrypoints.ts";
 import { createErrorHTML } from "../html/errors.tsx";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { domUtils } from "./dom-context.ts";

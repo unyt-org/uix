@@ -349,7 +349,10 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 			opts?.requiredPointers?.add(ptr);
 
 			let type: "string" | "number" | "bigint" | "boolean" | "Date" = "string";
-			if (ptr.type.matchesType(Datex.Type.std.boolean)) type = "boolean";
+			if (!(ptr.type instanceof Datex.Type)) {
+				console.warn("Cannot correctly infer type for datex binding for pointer");
+			}
+			else if (ptr.type.matchesType(Datex.Type.std.boolean)) type = "boolean";
 			else if (ptr.type.matchesType(Datex.Type.std.decimal)) type = "number";
 			else if (ptr.type.matchesType(Datex.Type.std.integer)) type = "bigint";
 			else if (ptr.type.matchesType(Datex.Type.std.time)) type = "Date";

@@ -182,9 +182,13 @@ export class FileHandle {
  * @param path local file path
  * @returns content FSFile
  */
-export function provideFile(path:string|URL) {
+export function provideFile(path: string | URL) {
 	const resolvedPath = new Path(path, getCallerFile());
-	return () => new FileHandle(resolvedPath) //Deno.open(resolvedPath);
+	return async () => {
+		if (await resolvedPath.exists())
+			return new FileHandle(resolvedPath);
+		return new HTTPError(HTTPStatus.NOT_FOUND);
+	}
 }
 
 /**

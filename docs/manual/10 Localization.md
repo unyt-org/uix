@@ -3,7 +3,7 @@ UIX allows easy adaptation depending on the user's selected language.
 
 Localized text content can be implemented using dynamic [text pointers](https://docs.unyt.org/manual/datex/pointers#pointers-for-primitive-values) that change their value depending on the user language.
 
-You can get the current user language with `DATEX.Runtime.ENV.LANG` or `UIX.language`.
+You can get the current user language with `DATEX.Runtime.ENV.LANG` or [`UIX.language`](./01%20Getting%20Started.md#the-uix-namespace).
 
 ## Using resource scripts
 The easiest way to create and load localizations is to define texts for multiple languages in a [DATEX Script](https://docs.unyt.org/manual/datex/important-datex-concepts) (*.dx*) file using the `localtext` helper function:

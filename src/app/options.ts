@@ -2,8 +2,8 @@ import type { Tuple } from "datex-core-legacy/types/tuple.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { isDenoForUIX } from "../utils/version.ts";
-import { KnownError } from "./errors.ts";
-import { handleError } from "datex-core-legacy/utils/error-handling.ts";
+import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
+
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 

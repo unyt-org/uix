@@ -77,19 +77,26 @@ uix --version
 
 Please make sure to have the [`git`](https://git-scm.com/downloads) utility installed on your system since it is used for the deployment of UIX apps.
 
+## Development environment
+While you can use any editor or integrated development environment (IDE) for UIX development, we recommend using one with support for `Deno` and `TypeScript`. This will provide useful features like syntax highlighting, code completion, and linting, which can improve productivity and help avoid common errors. 
+
+
+We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for UIX development. For syntax highlighting and language support *(DATEX, Typescript, Deno)*, the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> for Visual Studio can be used. Find more information [here](./20%20DATEX%20Workbench.md).
+
 ## Create a new UIX project
 
 You can initialize a new UIX project by running
 ```bash
-uix --init <PROJECT_NAME>
+uix --init <name>
 ```
 
 This will create a new [UIX Base Project](https://github.com/unyt-org/uix-base-project.git) in the given directory and launch the application locally.
 
-> [!NOTE]
-> We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for UIX development.<br/>
-> For syntax highlighting and language support (DATEX, Typescript, Deno), the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> can be used. Find more information [here](./20%20DATEX%20Workbench.md).
+You can also select a predefined template such as [`base`](https://github.com/unyt-org/uix-base-project), [`deployment`](https://github.com/unyt-org/uix-deployment-base-project) or [`routing`](https://github.com/unyt-org/uix-base-project-routing) when passing the `template` flag:
 
+```bash
+uix --init <name> --template [template]
+```
 
 ## The UIX CLI
 To launch your UIX application, make sure that a [app.dx](./09%20Configuration.md#the-app-dx-file) configuration file exists in the project root.
@@ -99,27 +106,36 @@ Execute the `uix` command in the root directory of the application to initialize
 uix
 ```
 
-You can pass the following args to the UIX command line utility:
-* `-p {PORT}`, `--port {PORT}`  - Specify the port
-* `-b`, `--watch-backend`       - Automatically reload the backend deno process when backend files are modified
-* `-l`, `--live`                - Automatically reload connected browsers tabs when files are modified
-* `-w`, `--watch`               - Recompile frontend scripts when files are modified
-* `-d`, `--detach`              - Keep the app running in background
-* `-r`, `--reload`              - Force reload deno caches
-* `-h`, `--help`                - Show the help page
 
+You can pass the following args to the UIX command line utility:
+
+### Default options
+
+| Option | Description |
+|-|-|
+| `-p <port>`, `--port <port>` | Specify the port |
+| `-b`, `--watch-backend` | Automatically reload the backend Deno process when backend files are modified |
+| `-l`, `--live`         | Automatically reload connected browser tabs when files are modified |
+| `-w`, `--watch`        | Recompile frontend scripts when files are modified |
+| `-d`, `--detach`       | Keep the app running in the background |
+| `-r`, `--reload`       | Force reload Deno caches |
+| `-h`, `--help`         | Show the help page |
 ---
 
-* `--hod`, `--http-over-datex`  - Enable HTTP-over-DATEX (default: true)
-* `--stage {STAGE}`             - Current deployment stage (default: dev)
-* `--env {NAME=VAL}`            - Exposed environment variables (for remote deployment)
-* `--clear`                     - Clear all eternal states on the backend
-* `--version`                   - Get the version of your UIX installation
-* `--init`                      - Inititialize a new UIX project
-* `--import-map {PATH}`         - Import map path
-* `--enable-tls`                - Run the web server with TLS
-* `--inspect`                   - Enable debugging for the deno process
-* `--unstable`                  - Enable unstable deno features
+### Advanced options
+| Option | Description |
+|-|-|
+| `--hod`, `--http-over-datex`   | Enable HTTP-over-DATEX (default: true) |
+| `--stage <stage>`              | Current deployment stage *(default: dev)* |
+| `--env <name=value>`           | Exposed environment variables (for remote deployment) |
+| `--clear`                      | Clear all eternal states on the backend |
+| `--version`                    | Get the version of your UIX installation |
+| `--init [name]`                | Initialize a new UIX project |
+| `--template <name>`            | Selects a predefined template when used with `--init` |
+| `--import-map <path>`          | Import map path |
+| `--enable-tls`                 | Run the web server with TLS |
+| `--inspect`                    | Enable debugging for the Deno process |
+| `--unstable`                   | Enable unstable Deno features |
 
 
 To run your UIX project without installing the UIX CLI first, you can alternatively run the following command in the project root directory:

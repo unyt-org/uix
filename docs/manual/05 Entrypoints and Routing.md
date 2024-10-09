@@ -282,11 +282,11 @@ When a component is encountered in the route chain, the `onRoute` method is call
 ```typescript
 class Component {
     // return the child element to which the route is resolved
-    // if the route contains more sections, onRoute is called on this child element with the next route
-    // section as the identifier
-    onRoute(identifier:string, is_initial_route:boolean): Component | boolean |void
+    // if the route contains more sections, onRoute is called on this child element with the next route section as the identifier
+    onRoute(identifier: string, is_initial_route: boolean): Component | boolean | void;
+
     // return internal state of last resolved route
-    getInternalRoute(): Path.route_representation | Promise<Path.route_representation> 
+    getInternalRoute(): Path.route_representation | Promise<Path.route_representation>;
 }
 ```
 
@@ -375,12 +375,12 @@ UIX provider utility functions allow the backend entrypoint to return HTTP respo
 
 ### List of UIX providers:
  * ```typescript
-   function provideValue(value:unknown, options? :{ type?: Datex.DATEX_FILE_TYPE, formatted?: boolean})
+   function provideValue(value: unknown, options?: { type?: Datex.DATEX_FILE_TYPE, formatted?: boolean})
    ```
    This function returns a HTTP Response with the mime type `application/json`, `application/datex` or `text/datex`,
    containing the serialized value. When the `options.type` is `Datex.DATEX_FILE_TYPE.JSON`, the value must be serializable with JSON.stringify. The default value for `options.type` is `Datex.FILE_TYPE.DATEX_SCRIPT`. In this configuration, any DATEX-compatible value can be provided.
  * ```typescript
-   function provideJSON(value:unknown, options?: { formatted?: boolean })
+   function provideJSON(value: unknown, options?: { formatted?: boolean })
    ```
    This function returns a HTTP Response with the mime type `application/json`,
    containing the serialized value. The value must be JSON-compatible.
@@ -398,7 +398,7 @@ Unlike a dynamic entrypoint function, which only takes a UIX context as a parame
 ```typescript
 export interface RouteHandler {
     // return entrypoint for a route
-    getRoute(route:Path.Route, context:Context): Entrypoint|Promise<Entrypoint> 
+    getRoute(route: Path.Route, context: Context): Entrypoint | Promise<Entrypoint>;
 }
 ```
 
@@ -417,9 +417,10 @@ The `RouteManager` interface is implemented by UIX components.
 ```typescript
 interface RouteManager {
     // return part of route that could be resolved
-    resolveRoute(route: Path.Route, context: Context): Path.route_representation | Promise<Path.route_representation> 
+    resolveRoute(route: Path.Route, context: Context): Path.route_representation | Promise<Path.route_representation>;
+
     // return internal state of last resolved route
-    getInternalRoute(): Path.route_representation | Promise<Path.route_representation> 
+    getInternalRoute(): Path.route_representation | Promise<Path.route_representation>;
 }
 ```
 
@@ -441,7 +442,7 @@ abstract class EntrypointProxy implements RouteHandler {
      * @param context UIX context
      * @returns entrypoint override or null
      */
-    abstract intercept?(route: Path.Route, context: Context): void|Entrypoint|Promise<void|Entrypoint>
+    abstract intercept?(route: Path.Route, context: Context): void | Entrypoint | Promise<void | Entrypoint>;
 
     /**
      * This method is called after a route was resolved by the entrypoint
@@ -455,7 +456,7 @@ abstract class EntrypointProxy implements RouteHandler {
      * @param context UIX context
      * @returns entrypoint override or null
      */
-    abstract transform?(content: Entrypoint, render_method: RenderMethod, route: Path.Route, context: Context): void | Entrypoint | Promise<void | Entrypoint>
+    abstract transform?(content: Entrypoint, render_method: RenderMethod, route: Path.Route, context: Context): void | Entrypoint | Promise<void | Entrypoint>;
 }
 ```
 
@@ -472,7 +473,7 @@ interface Context {
     }
 
     path: string
-    params: Record<string,string>;
+    params: Record<string,string>
     urlPattern?: URLPatternResult
     searchParams: URLSearchParams
 

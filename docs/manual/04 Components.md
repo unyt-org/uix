@@ -206,25 +206,43 @@ class MyCustomComponent extends Component<{title:string}> {
 }
 ```
 
-## Children handling
+### OpenGraph meta tags
+UIX allows you to add [OpenGraph](https://ogp.me) meta tags to your custom class components to improve SEO and social media sharing. Meta tags such as title, description, and preview images are auto generated when rendering the component on the backend. The tags will be picked up by platforms like Twitter, Instagram, etc., automatically.
 
-Children can be added to components just like any other HTML element:
+To apply custom OpenGraph metadata, create a instance of the `OpenGraphInformation` class and add override the `[OPEN_GRAPH]` symbol of the component.
+
+```ts
+class OpenGraphInformation {
+    constructor(
+        openGraphData: {
+            title?: string;
+            description?: string;
+        },
+        openGraphOptions?: {
+            getImageURL: () => string;
+        }
+    );
+}
+```
+Here’s an example of how to implement it within a custom class component:
+
+
 ```tsx
-// add children with DOM APIs
-const comp1 = new CustomComponent();
-comp1.append(<div>content 1</div>);
-comp1.append("text content");
+import { OPEN_GRAPH, OpenGraphInformation } from "uix/base/open-graph.ts";
+import { Component } from "uix/components/Component.ts";
 
-// add children with JSX
-const comp2 = 
-    <CustomComponent>
-        <div>Child 1</div>
-        <div>Child 2</div>
-    </CustomComponent>;
+class MyCustomComponent extends Component {
+    override [OPEN_GRAPH] = new OpenGraphInformation({
+        title: "Hello, UIX!",
+        description: "This is the description of my UIX page."
+    }, {
+        getImageURL() {
+            return "https://example.com/preview.png";
+        }
+    });
+}
 ```
 
-
-Component children are part of the component state and are restored when the component is recreated.
 <!-- 
 ## Defining the internal component layout
 
@@ -255,7 +273,7 @@ export default
     </ParentComponent>
 ``` -->
 
-## The `@id` decorator
+### The `@id` decorator
 With the `@id` decorator, component properties can be bound to the element inside the component that has an [`id`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/id) attribute set that matches the properties name.
 
 To access elements defined in the template layout consider assigning an unique id attribute to the corresponding elements:
@@ -296,7 +314,7 @@ const parent =
     </ParentComponent>
 ``` -->
 
-## Component lifecycle
+### Component lifecycle
 Class components extending the `Component` class will expose methods to handle the components lifecyle. 
 
 ```typescript
@@ -320,6 +338,25 @@ class CustomComponent extends Component {
 ```
 
 It is recommended to use the `onDisplay` method to run user code that should be executed when the component has has finished rendering in the browser.
+
+## Children handling
+
+Children can be added to components just like any other HTML element:
+```tsx
+// add children with DOM APIs
+const comp1 = new CustomComponent();
+comp1.append(<div>content 1</div>);
+comp1.append("text content");
+
+// add children with JSX
+const comp2 = 
+    <CustomComponent>
+        <div>Child 1</div>
+        <div>Child 2</div>
+    </CustomComponent>;
+```
+
+Component children are part of the component state and are restored when the component is recreated.
 
 ## Component styling
 

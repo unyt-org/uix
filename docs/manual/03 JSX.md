@@ -472,6 +472,7 @@ There are a few special attributes for UIX-specific functionality:
      ```
     This is only required for compatibility with Safari. In other runtime environments (e.g. Deno), the `import.meta.url` is always automatically inferred and does not have to be explicitly set.
  * `datex-pointer` - A boolean set to true if the element should be bound to a pointer. Pointers are automatically created for elements that are sent over DATEX. By default, only [class components](./04%20Components.md) are automatically bound to a pointer.
+ * `uix-title` - A string that can be set on a JSX Element to override the title and description meta tags in the `<head>` section of the DOM and auto generate [OpenGraph](./05%20Entrypoints%20and%20Routing.md#opengraph-meta-tags) meta tags.
 
 ## Creating components
 

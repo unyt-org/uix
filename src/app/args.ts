@@ -30,6 +30,7 @@ export const allowNone = command_line_options.option("allow-none", {type:"boolea
 
 export const login = command_line_options.option("login", {type:"boolean", description: "Show login dialog"});
 export const init = command_line_options.option("init", {type:"string", description: "Inititialize a new UIX project"});
+export const template = command_line_options.option("template", {allowEmptyString: true, type:"string", description: "Pass a template to the UIX init call to create your project from"});
 
 // TODO: aliases:["p"],  -p xxxx not working
 export const port = command_line_options.option("port", {default: 80, type:"number", description: "The port for the HTTP server"});

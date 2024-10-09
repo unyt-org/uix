@@ -6,7 +6,14 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { handleError } from "./handle-issue.ts";
 import { KnownError } from "../app/errors.ts"
 
-export async function initBaseProject(name?: string) {
+export const templates = {
+	base: "uix-base-project",
+	deployment: "uix-deployment-base-project",
+	routing: "uix-base-project-routing"
+} as const;
+
+export async function initBaseProject(name?: string, template: string = "base") {
+	template = template.toLowerCase();
 
 	if (!isGitInstalled()) {
 		handleError(
@@ -19,18 +26,27 @@ export async function initBaseProject(name?: string) {
 			logger
 		);
 	}
-	
-	const gitRepo = "https://github.com/unyt-org/uix-base-project.git"
+	if (!(template in templates)) {
+		handleError(
+			new KnownError(
+				`UIX Template with name '${template}' is not available.`,
+				`Please ensure that you select a template from the list below:\n${Object.keys(templates).map(e => `  ➜ ${e}`).join("\n")}`
+			),
+			logger
+		);
+	}
+
+	const baseProjectName = templates[(template as keyof typeof templates)];
+	const gitRepo = `https://github.com/unyt-org/${baseProjectName}.git`;
 	const cwd = new Path(path??'./', 'file://' + Deno.cwd() + '/');
 	let projectName: string|undefined = undefined;
 	let projectPath: Path;
-
 	if (!name) {
 		while (!projectName) {
-			projectName = prompt(ESCAPE_SEQUENCES.BOLD+"Enter the name of the new project:"+ESCAPE_SEQUENCES.RESET)!;
+			projectName = prompt(ESCAPE_SEQUENCES.BOLD+"Choose a name for your project:"+ESCAPE_SEQUENCES.RESET, baseProjectName)!;
 		}
 		do {
-			name = prompt(ESCAPE_SEQUENCES.BOLD+"Enter the name of the project directory:"+ESCAPE_SEQUENCES.RESET, projectName?.toLowerCase().replace(/[^\w]/g, "-") ?? "new-project")!;
+			name = prompt(ESCAPE_SEQUENCES.BOLD+"Enter a name for the project directory:"+ESCAPE_SEQUENCES.RESET, projectName?.toLowerCase().replace(/[^\w]/g, "-") ?? "new-project")!;
 			projectPath = cwd.getChildPath(name).asDir();
 		}
 		while (projectPath.fs_exists && 

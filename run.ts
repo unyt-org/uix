@@ -6,7 +6,7 @@ import { Datex, datex } from "datex-core-legacy/no_init.ts"; // required by getA
 import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppConfig
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
-import { command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live, reload } from "./src/app/args.ts";
+import { command_line_options, enableTLS, login, template, init, rootPath, stage, watch, watch_backend, live, reload } from "./src/app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
@@ -38,10 +38,13 @@ enableUnhandledRejectionHandler(logger);
 if (login) await triggerLogin();
 // init
 if (init != undefined) {
-	if (rootPath) {
+	if (rootPath)
 		handleError("A UIX Project exists already in this location", logger);
+	else {
+		await initBaseProject(init, template || undefined);
 	}
-	else await initBaseProject(init);
+} else if (template === '') {
+	handleError("Please call UIX with the --init flag if you want to create a project from a template", logger);
 }
 
 // allow unyt.org diagnostics?

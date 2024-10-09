@@ -1,10 +1,9 @@
-import { ESCAPE_SEQUENCES, LOG_FORMATTING } from "datex-core-legacy/datex_all.ts";
+import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
 import { path, updatePath, updateRootPath } from "../app/args.ts";
 import { isGitInstalled } from "./git.ts";
 import { logger } from "./global-values.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-import { handleError } from "./handle-issue.ts";
-import { KnownError } from "../app/errors.ts"
+import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
 
 export const templates = {
 	base: "uix-base-project",
@@ -19,9 +18,11 @@ export async function initBaseProject(name?: string, template: string = "base") 
 		handleError(
 			new KnownError(
 				"Git is required to initialize a new project. However, UIX is not able to execute it.",
-				"Make sure that Git is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
-				"Ensure that the 'git' executable is in your PATH environment variable",
-				"Verify the correctness of your Git installation"
+				[
+					"Make sure that Git is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
+					"Ensure that the 'git' executable is in your PATH environment variable",
+					"Verify the correctness of your Git installation"
+				]
 			),
 			logger
 		);
@@ -30,7 +31,7 @@ export async function initBaseProject(name?: string, template: string = "base") 
 		handleError(
 			new KnownError(
 				`UIX Template with name '${template}' is not available.`,
-				`Please ensure that you select a template from the list below:\n${Object.keys(templates).map(e => `  ➜ ${e}`).join("\n")}`
+				[`Please ensure that you select a template from the list below:\n${Object.keys(templates).map(e => `  ➜ ${e}`).join("\n")}`]
 			),
 			logger
 		);
@@ -77,8 +78,10 @@ export async function initBaseProject(name?: string, template: string = "base") 
 			handleError(
 				new KnownError(
 					"Could not clone the base project repository.",
-					"Check your internet connection",
-					`Try to clone it manually (${gitRepo})`
+					[
+						"Check your internet connection",
+						`Try to clone it manually (${gitRepo})`
+					]
 				),
 				logger
 			);
@@ -106,7 +109,9 @@ export async function initBaseProject(name?: string, template: string = "base") 
 			handleError(
 				new KnownError(
 					"The base project cannot be initialized using 'git init'.",
-					"Try to initialize it manually"
+					[
+						"Try to initialize it manually"
+					]
 				),
 				logger
 			);

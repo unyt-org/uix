@@ -28,8 +28,7 @@ import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskFor
 import { isCIRunner } from "./src/utils/check-ci.ts";
 import { logger, runParams } from "./src/runners/runner.ts";
 import { applyPlugins } from "./src/app/config-files.ts";
-import { handleError } from "./src/utils/handle-issue.ts";
-import { Transpiler } from "./src/server/transpiler.ts";
+import { handleError } from "datex-core-legacy/utils/error-handling.ts";
 
 // catch unhandledrejections
 enableUnhandledRejectionHandler(logger);

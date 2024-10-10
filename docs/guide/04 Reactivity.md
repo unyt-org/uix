@@ -78,7 +78,7 @@ const isLoggedIn = $(false);
 </div>
 ```
 
-Above example is transpiled to something like:
+Above code is transpiled to something like:
 
 ```tsx
 const isLoggedIn = $(false);

@@ -63,7 +63,36 @@ are transpiled by JUSIX into that:
 <p>Counter + 1 = {_$(() => counter + 1)}</p>
 ```
 
-### Reactivity for attributes
+### Reactivity examples
+
+Reactive tenary statements to allow for updating the DOMs children based on conditions can be written like this:
+```tsx
+const isLoggedIn = $(false);
+<div>
+  <button onclick={() => isLoggedIn.val = true}>Click to login!</button>
+  {
+      isLoggedIn ? 
+          <HelloComponent/> : 
+          <span>Please login first</span>
+  }
+</div>
+```
+
+Above example is transpiled to something like:
+
+```tsx
+const isLoggedIn = $(false);
+<div>
+  <button onclick={() => isLoggedIn.val = true}>Click to login!</button>
+  {
+      _$(() => isLoggedIn ? 
+          <HelloComponent/> : 
+          <span>Please login first</span>)
+  }
+</div>
+```
+
+#### Reactivity for attributes
 The reactivity does not only work for HTML children or content but also for HTML attribute values:
 
 ```tsx

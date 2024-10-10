@@ -63,4 +63,21 @@ are transpiled by JUSIX into that:
 <p>Counter + 1 = {_$(() => counter + 1)}</p>
 ```
 
+### Reactivity for attributes
+The reactivity does not only work for HTML children or content but also for HTML attribute values:
 
+```tsx
+const counter = $(0);
+<button
+  value={"Clicked:" + myValue}
+  onclick={() => counter.val++}/>;
+```
+
+is transpiled to:
+
+```tsx
+const counter = $(0);
+<button
+  value={_$(() => "Clicked:" + myValue)}
+  onclick={() => counter.val++}/>;
+```

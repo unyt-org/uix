@@ -35,21 +35,21 @@ document.querySelector('#some-element').innerText = myVar + 5;
 In regular JavaScript, the DOM is static unless you explicitly manipulate it with DOM APIs. This is where UIX introduces its powerful reactivity system, which automates the whole process of updating DOM based on state updates.
 
 ## The Role of the always method
-JSX in UIX can also handle dynamic expressions using the `always` method provided by DATEX:
+JSX in UIX can handle dynamic expressions and reactive updates using the `always` method provided by DATEX:
 ```tsx
 const myVar = $(4);
 <div>always(() => myVar + 1)</div>;
 ```
-This tells UIX to automatically update the DOM whenever the value of the `myVar` Ref changes. The expression inside `always` creates a "reactive computation" that updates the DOM when its dependencies change.
+This tells UIX to automatically update the div's content whenever the value of the `myVar` Ref changes. The expression inside `always` creates a "smart transform" that updates the value and therefore the DOM when its dependencies change.
 
-You can use the always method to manually control reactivity when needed. However, to make the developer experience smoother, UIX automatically wraps certain expressions in always. This eliminates the need for developers to write always explicitly every time they want reactivity.
+You can use the `always` method to manually control reactivity when needed.
 
 
 ## JUSIX: The module behind the "magic"
-However, to make the developer experience smoother, UIX can automatically wrap certain expressions in `always` calls. This eliminates the need for developers to write always explicitly every time they want reactivity. This is basicially the magic we have seen in the `counter` example in the introduction.
+However, to make the developer experience smoother, UIX can automatically wrap certain expressions in `always` calls. This eliminates the need for developers to write `always` explicitly every time they want reactivity. This is basicially the magic we have seen in the introduction's `counter` example.
 
-UIX uses a Rust module called [JUSIX](https://github.com/unyt-org/jusix), which handles the transpilation of JSX code into reactive JavaScript. When you build a UIX application, JUSIX transforms expressions into their reactive counterparts.
-UIX uses a custom version of Deno as backend runtime (more info [here](https://github.com/unyt-org/deno)). JUSIX is integrated into the `deno_ast` parser, which transpiles JSX expressions into reactive code. DATEX introduces the `_$` method, which is essentially a shorthand for `always`. It comes with optimizations and performance enhancements tailored to JSX.
+UIX uses a Rust module called [JUSIX](https://github.com/unyt-org/jusix), which handles the transpilation of JSX code into reactive JavaScript.
+UIX uses a custom version of Deno as backend runtime (more info [here](https://github.com/unyt-org/deno)). JUSIX is integrated into the `deno_ast` parser, which transpiles JSX expressions into reactive code. DATEX introduces the `_$` method, which is essentially a shorthand for `always`. It comes with optimizations and performance enhancements tailored to JSX. JUSIX transpilation is also applied to modules loaded in the frontend to allow the browser to handle reactivity the same way as the backend does.
 
 For instance, JSX expressions like:
 ```tsx
@@ -63,5 +63,4 @@ are transpiled by JUSIX into that:
 <p>Counter + 1 = {_$(() => counter + 1)}</p>
 ```
 
-JUSIX transpilation is also applied to modules loaded in the frontend to allow the browser to handle reactivity the same way as the backend does.
 

@@ -53,14 +53,14 @@ UIX uses a custom version of Deno as backend runtime (more info [here](https://g
 
 For instance, JSX expressions like:
 ```tsx
-<p>Counter + 1 = {counter + 1}</p>
+<p>Counter + 1 = {counter + 1}</p>;
 ```
 
 are transpiled by JUSIX into that:
 
 
 ```tsx
-<p>Counter + 1 = {_$(() => counter + 1)}</p>
+<p>Counter + 1 = {_$(() => counter + 1)}</p>;
 ```
 
 ### Reactivity examples
@@ -75,7 +75,7 @@ const isLoggedIn = $(false);
           <HelloComponent/> : 
           <span>Please login first</span>
   }
-</div>
+</div>;
 ```
 
 Above code is transpiled to something like:
@@ -89,7 +89,7 @@ const isLoggedIn = $(false);
           <HelloComponent/> : 
           <span>Please login first</span>)
   }
-</div>
+</div>;
 ```
 
 #### Reactivity for attributes
@@ -98,7 +98,7 @@ The reactivity does not only work for HTML children or content but also for HTML
 ```tsx
 const counter = $(0);
 <button
-  value={"Clicked:" + myValue}
+  value={'Clicked:' + myValue}
   onclick={() => counter.val++}/>;
 ```
 
@@ -107,6 +107,29 @@ is transpiled to:
 ```tsx
 const counter = $(0);
 <button
-  value={_$(() => "Clicked:" + myValue)}
+  value={_$(() => 'Clicked:' + myValue)}
   onclick={() => counter.val++}/>;
 ```
+
+
+### Reactive properties
+To improve performance when updating properties of complex objects, such as arrays or JavaScript objects, DATEX propagates updates for an object's pointer properties. JUSIX will optimize the handling of the updates to use special accessors instead of the `always` call.
+
+Properties of an object can be accessed using the `prop(ref, key)` call.
+
+```tsx
+const myForm = $({name: 'John'});
+<input value={myForm.name}/>;
+```
+
+will transpile to:
+
+```tsx
+<input value={prop(myForm, 'name')}/>;
+```
+
+This will also work when using nested property access such as `myComplexForm.user.name` and transpile to something like:
+```tsx
+<input value={prop(prop(myComplexForm, 'user'), 'name')}/>;
+```
+

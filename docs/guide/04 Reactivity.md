@@ -1,5 +1,7 @@
 # Reactivity
 
+UIX is reactive! That is because UIX utilizes the powerfull DATEX Pointers under the hood. Pointers can contain any kind of JavaScript value, including strings, numbers, objects, arrays, functions and many more. DOM elements can also be bound to pointers, making them reactive. 
+
 UIX’s reactivity system can look like magic when you see it in action the first time. Take this simple app made with UIX:
 
 ```tsx
@@ -12,18 +14,54 @@ setInterval(() => counter.val++, 1000);
 </div>
 ```
 
+Somehow UIX just knows that if the value of the counter changes, it should do these things:
+1. Update the counter in the first paragraph to the correct value
+2. Recalculate the expression `counter + 1`
+3. Update the counter in the second paragraph to the expressions value
 
-UIX is reactive! That is because UIX utilizes the powerfull DATEX Pointers under the hood. Pointers can contain any kind of JavaScript value, including strings, numbers, objects, arrays, functions and many more. DOM elements can also be bound to pointers, making them reactive.
 
+It's obvious - this isn't how JavaScript traditionally behaves. Let's introduce you to the magic behind UIX!
 
-When creating a DOM element with JSX, it is automatically bound to a pointer.
+Consider this simple expression:
+```js
+const myVar = 4;
+<div>{myVar + 5}</div>;
+```
+In plain JavaScript, this wouldn't work without manual DOM updates. You would have to write explicit logic to update the DOM when the value of myVar changes. For example:
+```js
+const myVar = 4;
+document.querySelector('#some-element').innerText = myVar + 5;
+```
+In regular JavaScript, the DOM is static unless you explicitly manipulate it with DOM APIs. This is where UIX introduces its powerful reactivity system, which automates the whole process of updating DOM based on state updates.
 
+## The Role of the always method
+JSX in UIX can also handle dynamic expressions using the `always` method provided by DATEX:
 ```tsx
-const counter = $(0); // create a reactive pointer with initial value 0
-const counterDisplay = <div>{counter}</div>; // bind the pointer to a DOM element
-document.body.appendChild(counterDisplay); // append the element to the DOM
-counter.val++; // increment the pointer value - updates the DOM element
+const myVar = $(4);
+<div>always(() => myVar + 1)</div>;
+```
+This tells UIX to automatically update the DOM whenever the value of the `myVar` Ref changes. The expression inside `always` creates a "reactive computation" that updates the DOM when its dependencies change.
+
+You can use the always method to manually control reactivity when needed. However, to make the developer experience smoother, UIX automatically wraps certain expressions in always. This eliminates the need for developers to write always explicitly every time they want reactivity.
+
+
+## JUSIX: The module behind the "magic"
+However, to make the developer experience smoother, UIX can automatically wrap certain expressions in `always` calls. This eliminates the need for developers to write always explicitly every time they want reactivity. This is basicially the magic we have seen in the `counter` example in the introduction.
+
+UIX uses a Rust module called [JUSIX](https://github.com/unyt-org/jusix), which handles the transpilation of JSX code into reactive JavaScript. When you build a UIX application, JUSIX transforms expressions into their reactive counterparts.
+UIX uses a custom version of Deno as backend runtime (more info [here](https://github.com/unyt-org/deno)). JUSIX is integrated into the `deno_ast` parser, which transpiles JSX expressions into reactive code. DATEX introduces the `_$` method, which is essentially a shorthand for `always`. It comes with optimizations and performance enhancements tailored to JSX.
+
+For instance, JSX expressions like:
+```tsx
+<p>Counter + 1 = {counter + 1}</p>
 ```
 
-Reactivity in UIX works cross-network by default.
-You can share and synchronize pointers with other endpoints.
+are transpiled by JUSIX into that:
+
+
+```tsx
+<p>Counter + 1 = {_$(() => counter + 1)}</p>
+```
+
+JUSIX transpilation is also applied to modules loaded in the frontend to allow the browser to handle reactivity the same way as the backend does.
+

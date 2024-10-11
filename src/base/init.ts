@@ -15,7 +15,7 @@ import "../html/light-root.ts"
 // import { overrideEventTargetPrototype } from "datex-core-legacy/utils/persistent-listeners.ts";
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference } from "../utils/error-reporting-preference.ts";
-import { enableUnhandledRejectionHandler } from "../utils/handle-issue.ts";
+import { enableUnhandledRejectionHandler } from "datex-core-legacy/utils/error-handling.ts";
 
 if (client_type == "browser") {
 	await initSession();

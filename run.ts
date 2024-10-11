@@ -22,7 +22,7 @@ import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 
 import { addUIXNamespace } from "./src/base/uix-datex-module.ts"
 
-import { enableUnhandledRejectionHandler } from "./src/utils/handle-issue.ts";
+import { enableUnhandledRejectionHandler } from "datex-core-legacy/utils/error-handling.ts";
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
 import { isCIRunner } from "./src/utils/check-ci.ts";

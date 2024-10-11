@@ -102,7 +102,7 @@ export const STANDALONE_PROPS: unique symbol = Symbol("STANDALONE_PROPS");
 export const ORIGIN_PROPS: unique symbol = Symbol("ORIGIN_PROPS");
 
 /** \@id to automatically assign a element id to a component property */
-export function id(id?:string): (value: undefined, context: ClassFieldDecoratorContext) => void
+export function id(id:string): (value: undefined, context: ClassFieldDecoratorContext) => void
 export function id(value: undefined, context: ClassFieldDecoratorContext): void
 export function id(id:string|undefined, context?: ClassFieldDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([id], context, ([id], context) => {
@@ -112,7 +112,7 @@ export function id(id:string|undefined, context?: ClassFieldDecoratorContext) {
 
 
 /** \@content to automatically assign a element id to a component property and add element to component content (#content) */
-export function content(id?:string): (value: undefined, context: ClassFieldDecoratorContext) => void
+export function content(id:string): (value: undefined, context: ClassFieldDecoratorContext) => void
 export function content(value: undefined, context: ClassFieldDecoratorContext): void
 export function content(id:string|undefined, context?: ClassFieldDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([id], context, ([id], context) => {
@@ -122,7 +122,7 @@ export function content(id:string|undefined, context?: ClassFieldDecoratorContex
 
 
 /** @layout to automatically assign a element id to a component property and add element to component content container layout (#layout) */
-export function layout(id?:string): (value: undefined, context: ClassFieldDecoratorContext) => void
+export function layout(id:string): (value: undefined, context: ClassFieldDecoratorContext) => void
 export function layout(value: undefined, context: ClassFieldDecoratorContext): void
 export function layout(id:string|undefined, context?: ClassFieldDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([id], context, ([id], context) => {
@@ -132,7 +132,7 @@ export function layout(id:string|undefined, context?: ClassFieldDecoratorContext
 
 
 /** \@child to automatically assign a element id to a component property and add element as a component child */
-export function child(id?:string): (value: undefined, context: ClassFieldDecoratorContext) => void
+export function child(id:string): (value: undefined, context: ClassFieldDecoratorContext) => void
 export function child(value: undefined, context: ClassFieldDecoratorContext): void
 export function child(id:string|undefined, context?: ClassFieldDecoratorContext) {
 	return handleClassFieldDecoratorWithOptionalArgs([id], context, ([id], context) => {

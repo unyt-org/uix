@@ -108,7 +108,6 @@ export async function initBaseProject(name?: string, template: string = "base") 
 		if (name === '.') {
 			projectName = templateRepo.repo;
 			projectPath = cwd;
-			console.log("init here", projectName, projectPath.normal_pathname)
 		} else {
 			projectName = name;
 			projectPath = cwd.getChildPath(name).asDir();

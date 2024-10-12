@@ -6,6 +6,7 @@ In UIX, JSX is used to create native DOM elements and components in a declarativ
 > [!NOTE]
 > UIX uses a custom JSX flavor called [JUSIX](https://github.com/unyt-org/jusix)
 > which allows writing reactive code in a less verbose way. 
+> In order for that to work, make sure to have the [Deno for UIX](https://github.com/unyt-org/deno) selected as your Deno runtime.
 
 
 ## Creating elements

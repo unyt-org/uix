@@ -98,6 +98,8 @@ You can also select a predefined template such as [`hello-uix`](https://github.c
 uix --init <name> --template [template]
 ```
 
+You can find the full list of available templates [here](https://github.com/orgs/unyt-org/repositories?type=source&q=uix-template-+template%3Atrue).
+
 ## The UIX CLI
 To launch your UIX application, make sure that a [app.dx](./09%20Configuration.md#the-app-dx-file) configuration file exists in the project root.
 Execute the `uix` command in the root directory of the application to initialize and run the project.

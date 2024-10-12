@@ -5,11 +5,43 @@ import { logger } from "./global-values.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
 
-export const templates = {
-	base: "uix-base-project",
-	deployment: "uix-deployment-base-project",
-	routing: "uix-base-project-routing"
+type Repo = {
+	repo: string,
+	url: string
+}
+const fallbackTemplateRepoList: Record<string, Repo> = {
+	base: {
+		repo: "template-uix-base",
+		url: "https://github.com/unyt-org/template-uix-base.git"
+	}
 } as const;
+
+async function loadTemplates(): Promise<Record<string, Repo>> {
+	const prefix = "uix-template-";
+	const list = (await datex.get<{items: {
+		name: string,
+		clone_url: string
+	}[]}>(`https://api.github.com/search/repositories?q=${prefix}+in:name+org:unyt-org`)).items;
+	if (list && list.length)
+		return Object.fromEntries(
+			list.map(({name, clone_url}) => [name.replace(prefix, ''), {
+				repo: name,
+				url: clone_url
+			} as Repo])
+		);
+	else {
+		handleError(
+			new KnownError(
+				"No template repositories found.",
+				[
+					"Please report this error to https://github.com/unyt-org/uix"
+				]
+			),
+			logger
+		);
+		return {};
+	}
+}
 
 export async function initBaseProject(name?: string, template: string = "base") {
 	template = template.toLowerCase();
@@ -27,6 +59,24 @@ export async function initBaseProject(name?: string, template: string = "base") 
 			logger
 		);
 	}
+	
+	let templates = fallbackTemplateRepoList;
+	try {
+		templates = await loadTemplates();
+	} catch (error) {
+		logger.error(error);
+		if (!(template in templates))
+			handleError(
+				new KnownError(
+					"Could not load repositories from GitHub.",
+					[
+						"Make sure that you have an active internet connection"
+					]
+				),
+				logger
+			);
+	}
+
 	if (!(template in templates)) {
 		handleError(
 			new KnownError(
@@ -37,17 +87,17 @@ export async function initBaseProject(name?: string, template: string = "base") 
 		);
 	}
 
-	const baseProjectName = templates[(template as keyof typeof templates)];
-	const gitRepo = `https://github.com/unyt-org/${baseProjectName}.git`;
+	const templateRepo = templates[(template as keyof typeof templates)];
+	const gitRepo = templateRepo.url;
 	const cwd = new Path(path??'./', 'file://' + Deno.cwd() + '/');
 	let projectName: string|undefined = undefined;
 	let projectPath: Path;
 	if (!name) {
 		while (!projectName) {
-			projectName = prompt(ESCAPE_SEQUENCES.BOLD+"Choose a name for your project:"+ESCAPE_SEQUENCES.RESET, baseProjectName)!;
+			projectName = prompt(ESCAPE_SEQUENCES.BOLD+"Choose a name for your project:"+ESCAPE_SEQUENCES.RESET, templateRepo.repo)!;
 		}
 		do {
-			name = prompt(ESCAPE_SEQUENCES.BOLD+"Enter a name for the project directory:"+ESCAPE_SEQUENCES.RESET, projectName?.toLowerCase().replace(/[^\w]/g, "-") ?? "new-project")!;
+			name = prompt(ESCAPE_SEQUENCES.BOLD+"Enter a name for the project directory:"+ESCAPE_SEQUENCES.RESET, projectName?.toLowerCase().replace(/[^\w]/g, "-") || "uix-project")!;
 			projectPath = cwd.getChildPath(name).asDir();
 		}
 		while (projectPath.fs_exists && 
@@ -55,10 +105,16 @@ export async function initBaseProject(name?: string, template: string = "base") 
 		)
 	}
 	else {
-		projectName = name;
-		projectPath = cwd.getChildPath(name).asDir();
-		if (projectPath.fs_exists)
-			handleError(`The directory ${projectPath.normal_pathname} exists already. Please choose a different name.`, logger);
+		if (name === '.') {
+			projectName = templateRepo.repo;
+			projectPath = cwd;
+			console.log("init here", projectName, projectPath.normal_pathname)
+		} else {
+			projectName = name;
+			projectPath = cwd.getChildPath(name).asDir();
+			if (projectPath.fs_exists)
+				handleError(`The directory ${projectPath.normal_pathname} exists already. Please choose a different name.`, logger);
+		}
 	}
 
 	logger.success(`Initializing new UIX project "${projectName}"`);

@@ -90,9 +90,9 @@ You can initialize a new UIX project by running
 uix --init <name>
 ```
 
-This will create a new [UIX Base Project](https://github.com/unyt-org/uix-base-project.git) in the given directory and launch the application locally.
+This will create a new [Hello UIX](https://github.com/unyt-org/uix-template-hello-uix) project in the given directory and launch the application locally.
 
-You can also select a predefined template such as [`base`](https://github.com/unyt-org/uix-base-project), [`deployment`](https://github.com/unyt-org/uix-deployment-base-project) or [`routing`](https://github.com/unyt-org/uix-base-project-routing) when passing the `template` flag:
+You can also select a predefined template such as [`hello-uix`](https://github.com/unyt-org/uix-template-hello-uix), [`base`](https://github.com/unyt-org/uix-template-base), [`deployment`](https://github.com/unyt-org/uix-template-deployment) or [`routing`](https://github.com/unyt-org/uix-template-routing) when passing the `template` flag:
 
 ```bash
 uix --init <name> --template [template]

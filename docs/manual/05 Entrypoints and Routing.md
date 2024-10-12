@@ -484,3 +484,58 @@ interface Context {
     getPrivateData(): Promise<Record<string, unknown>>
 }
 ```
+
+## OpenGraph meta tags
+UIX allows you to add auto generated [OpenGraph](https://ogp.me) meta tags to your DOM to improve SEO and social media sharing. Meta tags such as title, description, and preview images are generated when rendering the DOM of an element or component where the meta tags are applied to on the backend. The tags will be picked up by platforms like Twitter, Instagram, etc., automatically.
+
+To apply custom OpenGraph metadata, create a instance of the `OpenGraphInformation` class and add override the `[OPEN_GRAPH]` symbol of the [Class component](./04%20Components.md) or JSX Element:
+
+```ts
+class OpenGraphInformation {
+    constructor(
+        openGraphData: {
+            title?: string;
+            description?: string;
+        },
+        openGraphOptions?: {
+            getImageURL: () => string;
+        }
+    );
+}
+```
+
+Here’s an example of how to integrate the auto generated metadata on a backend route's entrypoint value that is a HTMLElement:
+
+```tsx title="backend/entrypoint.tsx" icon="fa-file"
+import { OPEN_GRAPH, OpenGraphInformation } from "uix/base/open-graph.ts";
+
+export default {
+    '/home': () => {
+        const dom = <div>Hello, UIX!</div>;
+        dom[OPEN_GRAPH] = new OpenGraphInformation({
+            title: "My custom title",
+            description: "My description ..."
+        });
+        return dom;
+    }
+}
+```
+
+Here’s an example of how to implement it within a custom class component:
+
+
+```tsx
+import { OPEN_GRAPH, OpenGraphInformation } from "uix/base/open-graph.ts";
+import { Component } from "uix/components/Component.ts";
+
+class MyCustomComponent extends Component {
+    override [OPEN_GRAPH] = new OpenGraphInformation({
+        title: "Hello, UIX!",
+        description: "This is the description of my UIX page."
+    }, {
+        getImageURL() {
+            return "https://example.com/preview.png";
+        }
+    });
+}
+```

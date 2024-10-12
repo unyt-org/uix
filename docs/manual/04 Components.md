@@ -206,42 +206,7 @@ class MyCustomComponent extends Component<{title:string}> {
 }
 ```
 
-### OpenGraph meta tags
-UIX allows you to add [OpenGraph](https://ogp.me) meta tags to your custom class components to improve SEO and social media sharing. Meta tags such as title, description, and preview images are auto generated when rendering the component on the backend. The tags will be picked up by platforms like Twitter, Instagram, etc., automatically.
 
-To apply custom OpenGraph metadata, create a instance of the `OpenGraphInformation` class and add override the `[OPEN_GRAPH]` symbol of the component.
-
-```ts
-class OpenGraphInformation {
-    constructor(
-        openGraphData: {
-            title?: string;
-            description?: string;
-        },
-        openGraphOptions?: {
-            getImageURL: () => string;
-        }
-    );
-}
-```
-Here’s an example of how to implement it within a custom class component:
-
-
-```tsx
-import { OPEN_GRAPH, OpenGraphInformation } from "uix/base/open-graph.ts";
-import { Component } from "uix/components/Component.ts";
-
-class MyCustomComponent extends Component {
-    override [OPEN_GRAPH] = new OpenGraphInformation({
-        title: "Hello, UIX!",
-        description: "This is the description of my UIX page."
-    }, {
-        getImageURL() {
-            return "https://example.com/preview.png";
-        }
-    });
-}
-```
 
 <!-- 
 ## Defining the internal component layout

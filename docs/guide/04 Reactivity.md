@@ -136,4 +136,6 @@ This will also work when using nested property access such as `myComplexForm.use
 ```
 
 ### App configuration
-JUSIX is optional.
+JUSIX is optional. It can be disabled or enabled by the [`jusix` property](https://docs.unyt.org/manual/uix/configuration#general-options) of the `app.dx`.
+
+When running UIX without having [Deno for UIX](https://github.com/unyt-org/deno) installed, the app will terminate with an exception. To disable JUSIX and allow the UIX app to run with the original [denoland/deno](https://github.com/denoland/deno) build, make sure to set the `jusix` option to `false`. Keep in mind that this will disable all reactivity for your UIX app.

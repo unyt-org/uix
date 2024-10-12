@@ -10,9 +10,9 @@ type Repo = {
 	url: string
 }
 const fallbackTemplateRepoList: Record<string, Repo> = {
-	base: {
-		repo: "template-uix-base",
-		url: "https://github.com/unyt-org/template-uix-base.git"
+	"hello-uix": {
+		repo: "uix-template-hello-uix",
+		url: "https://github.com/unyt-org/uix-template-hello-uix.git"
 	}
 } as const;
 
@@ -43,7 +43,7 @@ async function loadTemplates(): Promise<Record<string, Repo>> {
 	}
 }
 
-export async function initBaseProject(name?: string, template: string = "base") {
+export async function initBaseProject(name?: string, template: string = "hello-uix") {
 	template = template.toLowerCase();
 
 	if (!isGitInstalled()) {

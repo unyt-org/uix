@@ -83,6 +83,8 @@ While you can use any editor or integrated development environment (IDE) for UIX
 
 We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for UIX development. For syntax highlighting and language support *(DATEX, Typescript, Deno)*, the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> for Visual Studio can be used. Find more information [here](./20%20DATEX%20Workbench.md).
 
+Make sure to load the [Deno extension](vscode:extension/denoland.vscode-deno) and [initialize the Deno Workbench configuration](https://docs.deno.com/runtime/reference/vscode/#enabling-deno-in-a-vs-code-workspace) for your UIX project to enable syntax highlighting and import resolution.
+
 ## Create a new UIX project
 
 You can initialize a new UIX project by running

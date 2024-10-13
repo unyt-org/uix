@@ -1,5 +1,5 @@
 import { getInferredRunPaths, normalizedAppOptions } from "../app/options.ts";
-import { stage, env, watch, clear, transpileCachePathRaw, hostToken } from "../app/args.ts";
+import { stage, env, watch, clear, transpileCachePathRaw } from "../app/args.ts";
 import { ESCAPE_SEQUENCES, verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { GitRepo } from "../utils/git.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";

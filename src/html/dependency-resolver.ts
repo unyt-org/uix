@@ -97,7 +97,7 @@ async function resolveDependenciesFromSource(file: Path, source:string|undefined
 
 	for (const [_, pre, path1, path2, path3] of imports) {
 		const path = path1 ?? path2 ?? path3;
-		if (pre?.match(importTypeRegex) || path.startsWith("https://deno.land/") || path.startsWith("npm:")) {
+		if (pre?.match(importTypeRegex) || path.startsWith("https://deno.land/") || path.startsWith("npm:") || path.startsWith("jsr:")) {
 			continue;
 		}
 		const normalizedPath = path.startsWith('/') || path.startsWith('./') || path.startsWith('../') ? new Path(path, file).toString() : path;

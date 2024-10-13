@@ -154,7 +154,10 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				run_script_abs_url,
 				...config_params, // pass --import-map and --config also as runtime args to reconstruct the command when the backend restarts
 				...args,
-			]
+			],
+			env: {
+				SQLITE_STORAGE: options.experimental_features.includes("sqlite-storage") ? "1" : "0",
+			}
 		})
 
 		process = command.spawn();

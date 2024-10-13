@@ -55,7 +55,7 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
 		const html_interface = Datex.Type.get('html').interface_config!;
 		datex_type.interface_config.cast_no_tuple = html_interface.cast_no_tuple; // handle casts from object
 		
-		Object.assign(datex_type.interface_config, transformWrapper)
+		//Object.assign(datex_type.interface_config, transformWrapper)
 		
 
 		datex_type.interface_config.serialize = (value) => {
@@ -63,14 +63,16 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
 			// serialize html part (style, attr, content)
 			const html_serialized = <Record<string,any>> html_interface.serialize!(value);
 
+			html_serialized.p = {};
+
 			// add additional properties (same as in Datex.Runtime.serializeValue)
             const pointer = Datex.Pointer.getByValue(value)
             for (const key of datex_type.visible_children){
-				if (!html_serialized.p) html_serialized.p = {};
 				html_serialized.p[key] = pointer?.shadow_object?.[key] ?? value[key];
-				// add props object
-				html_serialized.p['props'] = pointer?.shadow_object?.props ?? value.props;
             }
+
+			// add props object
+			html_serialized.p['props'] = pointer?.shadow_object?.props ?? value.props;
 
 			return html_serialized;
 		}

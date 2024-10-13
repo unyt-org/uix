@@ -254,7 +254,7 @@ class App {
 		this.frontends = frontends;
 
 		// log enabled experimental features
-		const allowedFeatures = ['indirect-references', 'view-transitions'];
+		const allowedFeatures = ['indirect-references', 'view-transitions', 'sqlite-storage'];
 		for (const feature of this.options.experimental_features) {
 			if (allowedFeatures.includes(feature)) logger.info(`experimental feature "${feature}" enabled`)
 			else logger.error(`unknown experimental feature "${feature}"`)

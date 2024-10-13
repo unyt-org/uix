@@ -6,6 +6,7 @@
 
         "uix": "http://localhost:4242/uix.ts",
         "uix/": "http://localhost:4242/src/",
-        "uix/jsx-runtime": "http://localhost:4242/src/jsx-runtime/jsx.ts"
+        "uix/jsx-runtime": "http://localhost:4242/src/jsx-runtime/jsx.ts",
+        "jusix/jsx-runtime": "http://localhost:4242/src/jsx-runtime/jsx.ts"
     }
 }

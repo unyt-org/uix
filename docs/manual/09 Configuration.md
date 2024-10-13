@@ -54,6 +54,7 @@ Available experimental features:
 
 * `indirect-references`: Sets the `INDIRECT_REFERENCES` flag for the DATEX Runtime, which enables for indirect references to pointers from other pointers.
 * `view-transitions`: Enables [CSS view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for backend navigations and frontend navigations.
+* `sqlite-storage`: Uses the SQLite [storage location](https://docs.unyt.org/guide/storage) on the backend for storing persistent data. The SQLite storage is faster, has more storage capacity and better support for [pattern matching](https://docs.unyt.org/manual/datex/storage-collections#pattern-matching).
 <!-- * `"frontend-navigation"`: Enables the new frontend navigation system, which allows for client-side routing without full page reloads.
 * `"embedded-reactivity"`: Enables compile-time reactivity features for JSX templates and the `$()` syntax
 * `"protect-pointers"`: Sets the `PROTECT_POINTERS` DATEX Runtime flag, which disables pointer read/write access for remote endpoints by default. Backend exports and pointers returned from backend functions are still publicly accessible by all endpoints.

@@ -159,6 +159,8 @@ const radius = $(0);
 </div>;
 ```
 
+The same is true for complex reactive data such as arrays. More information [here](#rendering-lists).
+
 ### Conditional rendering
 
 With conditional rendering, specific elements are only rendered if a certain condition is met.

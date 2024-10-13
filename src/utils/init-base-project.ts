@@ -1,9 +1,9 @@
-import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
 import { path, updatePath, updateRootPath } from "../app/args.ts";
 import { isGitInstalled } from "./git.ts";
 import { logger } from "./global-values.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
+import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";
 
 type Repo = {
 	repo: string,

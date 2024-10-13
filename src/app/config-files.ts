@@ -55,32 +55,41 @@ export async function getAppOptions(root_path:URL) {
 
 	// set import map from deno.json if exists
 	const deno_path = getExistingFile(root_path, './deno.json', './deno.jsonc');
-	if (!config.import_map_path && !config.import_map && deno_path) {
+
+	if (deno_path) {
 
 		try {
 			const deno = JSON.parse(await Deno.readTextFile(new Path(deno_path).normal_pathname));
 
-			// error if using experimental decorators
-			if (deno.compilerOptions?.experimentalDecorators) {
-				logger.error("UIX uses ECMAScript Decorators, but you have the legacy experimental decorators enabled. Please remove the 'experimentalDecorators' option from your deno.json config.");
-				Deno.exit(1)
+			// jusix
+			if (deno.compilerOptions?.jsxImportSource == "jusix") {
+				config.jusix = true;
 			}
 
-			// imports
-			if (deno.imports) {
-				//config.import_map = {imports:deno.imports};
-				config.import_map_path = new URL(deno_path);
-			}
-			// _publicImportMap path
-			else if (deno._publicImportMap) {
-				config.import_map_path = new URL(deno._publicImportMap, root_path);
-			}
-			// importMap path
-			else if (deno.importMap) {
-				config.import_map_path = new URL(deno.importMap, root_path);
-			}
+			if (!config.import_map_path && !config.import_map) {			
+				// error if using experimental decorators
+				if (deno.compilerOptions?.experimentalDecorators) {
+					logger.error("UIX uses ECMAScript Decorators, but you have the legacy experimental decorators enabled. Please remove the 'experimentalDecorators' option from your deno.json config.");
+					Deno.exit(1)
+				}
+	
+				// imports
+				if (deno.imports) {
+					//config.import_map = {imports:deno.imports};
+					config.import_map_path = new URL(deno_path);
+				}
+				// _publicImportMap path
+				else if (deno._publicImportMap) {
+					config.import_map_path = new URL(deno._publicImportMap, root_path);
+				}
+				// importMap path
+				else if (deno.importMap) {
+					config.import_map_path = new URL(deno.importMap, root_path);
+				}
+			} 
 		} catch {}
-	} 
+	}
+	
 
 	if (!config.import_map && !config.import_map_path) config.import_map_path = default_importmap;
 	// if (config.import_map) throw "embeded import maps are not yet supported for uix apps";

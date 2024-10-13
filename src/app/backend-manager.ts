@@ -127,15 +127,15 @@ export class BackendManager {
 		if (this.#entrypoint) {
 			const module = this.#module = <any> await datex.get(this.#entrypoint);
 			this.#content_provider = module.default ?? (Object.getPrototypeOf(module) !== null ? module : null);
+			//await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			// default ts export, or just the result if DX and not ts module
-			await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			return this.#content_provider;
 		}
 		else if (this.#pagesDir) {
 			logger.debug(`Using ${this.#pagesDir} as pages for backend entrypoint`)
 			this.#content_provider = new PageProvider(this.#pagesDir);
+			//await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			// default ts export, or just the result if DX and not ts module
-			await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			return this.#content_provider;
 		}
 		return null;

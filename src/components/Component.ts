@@ -571,7 +571,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
 
     private readonly props!: Readonly<Props & {children?:ChildElement|ChildElement[]} & JSX._IntrinsicAttributes<this>>
 
-    public get properties() {
+    public get properties(): Readonly<Props> {
         return this.props
     }
 

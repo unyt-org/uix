@@ -1,5 +1,3 @@
-import { getBaseDirectory } from "./uix-base-directory.ts";
-
 /**
  * get version from ./version file
  */
@@ -18,7 +16,5 @@ export const version = _version;
  * returns true if running custom Deno for UIX build
  */
 export function isDenoForUIX() {
-	const baseDir = getBaseDirectory();
-	// base directory includes .uix -> custom install
-	return baseDir.pathname.includes(".uix");
+	return (Deno as any).uix
 }

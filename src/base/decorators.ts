@@ -60,7 +60,6 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
 
 		datex_type.interface_config.serialize = (value) => {
 
-
 			// serialize html part (style, attr, content)
 			const html_serialized = <Record<string,any>> html_interface.serialize!(value);
 
@@ -69,6 +68,8 @@ export function initDefaultOptions<T extends Record<string, unknown>>(url:string
             for (const key of datex_type.visible_children){
 				if (!html_serialized.p) html_serialized.p = {};
 				html_serialized.p[key] = pointer?.shadow_object?.[key] ?? value[key];
+				// add props object
+				html_serialized.p['props'] = pointer?.shadow_object?.props ?? value.props;
             }
 
 			return html_serialized;

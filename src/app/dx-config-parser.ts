@@ -1,4 +1,4 @@
-import { Datex, datex } from "datex-core-legacy/no_init.ts"; // required by getAppConfig
+import { Datex } from "datex-core-legacy/no_init.ts"; // required by getAppConfig
 import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppConfig
 
 import type {Datex as DatexType} from "datex-core-legacy";

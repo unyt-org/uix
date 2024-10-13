@@ -567,7 +567,7 @@ const div =
     </div> as HTMLDivElement;
 ```
 
-If we don't want to use JSX, we can treat the DOM as template string and pass it to the `HTML` helper function:
+If we [don't want to use JSX](./01%20Getting%20Started.md#denojson), we can treat the DOM as template string and pass it to the `HTML` helper function:
 ```tsx
 const count = $(0);
 const div = HTML `

@@ -37,9 +37,9 @@ The following options provide some general information or behavior of the app.
 * `meta`: *(Record<string,string>)* - Custom `<meta>` tags (name and content) that wille be added to the HTML head
 * `manifest`: *Record<string,any>* - Custom web manifest options that override the defaults set by UIX
 * `experimental_features`: *string[]* - List of [experimental UIX features](#experimental-features) that should be activated
-* `jusix`: *boolean* - Enable or disable [JUSIX reactivity](https://docs.unyt.org/guide/reactivity). Default to `true`.
 
 <!--
+* `jusix`: *boolean* - Enable or disable [JUSIX reactivity](https://docs.unyt.org/guide/reactivity). Default to `true`.
 * `installable`: *(boolean)* - The app can be installed as standalone web app
 * `offline_support`: *(boolean)* - Adds a service worker with offline cache
 * `expose_deno`: *(boolean)* - Experimental, allows access for the Deno namespace from frontend contexts

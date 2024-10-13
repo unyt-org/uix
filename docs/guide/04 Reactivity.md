@@ -136,6 +136,21 @@ This will also work when using nested property access such as `myComplexForm.use
 ```
 
 ### App configuration
-JUSIX is optional. It can be disabled or enabled by the [`jusix` property](https://docs.unyt.org/manual/uix/configuration#general-options) of the `app.dx`.
+JUSIX is optional. JUSIX can be activated by settings the compiler options [`jsxImportSource` property](https://docs.unyt.org/manual/uix/getting-started#deno-configuration) in the `deno.json` to `jusix`, or disabled when setting it to be `uix`.
 
-When running UIX without having [Deno for UIX](https://github.com/unyt-org/deno) installed, the app will terminate with an exception. To disable JUSIX and allow the UIX app to run with the original [denoland/deno](https://github.com/denoland/deno) build, make sure to set the `jusix` option to `false`. Keep in mind that this will disable all reactivity for your UIX app.
+
+```json title="deno.json" icon="fa-file"
+{
+    "importMap": "./importmap.json",
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "jsxImportSource": "jusix", // "uix" or "jusix"
+        "lib": [
+            "dom",
+            "deno.window"
+        ]
+    }
+}
+```
+
+When running UIX without having [Deno for UIX](https://github.com/unyt-org/deno) installed, the app will terminate with an exception. To disable JUSIX or allow the UIX app to run with the original [denoland/deno](https://github.com/denoland/deno) build, make sure to set the `jsxImportSource` option to `uix`. Keep in mind that this will disable all reactivity for your UIX app.

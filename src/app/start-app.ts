@@ -12,7 +12,7 @@ import { WebSocketServerInterface } from "datex-core-legacy/network/communicatio
 import { HTTPServerInterface } from "datex-core-legacy/network/communication-interfaces/http-server-interface.ts"
 import { communicationHub } from "datex-core-legacy/network/communication-hub.ts";
 import { resolveDependencies } from "../html/dependency-resolver.ts";
-import { Ref } from "datex-core-legacy/runtime/pointers.ts";
+import { ReactiveValue } from "datex-core-legacy/runtime/pointers.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -37,7 +37,6 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 
 
 	// enable experimental features
-	if (app.options?.experimental_features.includes("protect-pointers")) Datex.Runtime.OPTIONS.PROTECT_POINTERS = true;
 	if (app.options?.experimental_features.includes("indirect-references")) Datex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;
 
 	// for unyt log
@@ -70,7 +69,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 	if (backend_with_default_export) {
 		Datex.Runtime.endpoint_entrypoint = backend_with_default_export.entrypointProxy;
 		const content_provider = backend_with_default_export.content_provider;
-		if ((content_provider && typeof content_provider == "object" && !(content_provider instanceof Ref)) || typeof content_provider == "function")
+		if ((content_provider && typeof content_provider == "object" && !(content_provider instanceof ReactiveValue)) || typeof content_provider == "function")
 			(content_provider as any)[Datex.DX_SOURCE] = Datex.Runtime.endpoint.toString(); // use @@local::#entrypoint as dx source
 	}
 
@@ -173,7 +172,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 			}
 		}
 		// ignore cdn urls, assumes that the modules are already imported on all clients
-		// TODO: improve, what if type modules are not all loaded per default?
+		// TODO: improve, what if type modules are not all loaded by default?
 		if (webPath.startsWith("https://dev.cdn.unyt.org/") || webPath.startsWith("https://cdn.unyt.org/")) return;
 		// ignore local clones of the core libs
 		else if (webPath.toString().includes("/datex-core-js-legacy/") || webPath.toString().includes("/uix/")) return;

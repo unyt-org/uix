@@ -14,7 +14,7 @@ console.log("lazy loaded module")
 }
 
 const test = new Test() as Datex.ObjectRef<Test>;
-Datex.Ref.observe(test.$.sum, (x)=>console.log("sum changed: " + x))
+Datex.ReactiveValue.observe(test.$.sum, (x)=>console.log("sum changed: " + x))
 console.log(test)
 console.log(test.a,test.b,test.sum)
 

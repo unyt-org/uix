@@ -1,15 +1,14 @@
 # Localization
-UIX allows for simple text content adaption depending on the user's selected language.
+UIX allows easy adaptation depending on the user's selected language.
 
-Localized text content can be realized with the help of dynamic [text pointers](https://docs.unyt.org/manual/datex/pointers#pointers-for-primitive-values) that change their value depending on the user language.
+Localized text content can be implemented using dynamic [text pointers](https://docs.unyt.org/manual/datex/pointers#pointers-for-primitive-values) that change their value depending on the user language.
 
-You can get the current user language with`DATEX.Runtime.ENV.LANG` or `UIX.language`.
+You can get the current user language with `DATEX.Runtime.ENV.LANG` or [`UIX.language`](./01%20Getting%20Started.md#the-uix-namespace).
 
-## Defining localized text in DATEX resource scripts
+## Using resource scripts
 The easiest way to create and load localizations is to define texts for multiple languages in a [DATEX Script](https://docs.unyt.org/manual/datex/important-datex-concepts) (*.dx*) file using the `localtext` helper function:
 
-```datex
-// file: localized.dx
+```datex title="localized.dx"
 use localtext from #std;
 
 export const plane = localtext {
@@ -23,7 +22,7 @@ The exported `plane` pointer now contains a text value that changes depending on
 
 The exported `plane` value from the DATEX Script file can be imported with `datex.get`:
 ```ts
-const { plane } = await datex.get("./localized.dx");
+const { plane } = await datex.get('./localized.dx');
 export default <h1>{plane}</h1>;
 ```
 
@@ -42,9 +41,9 @@ export class MyApp extends Component {
 }
 ```
 
-## Defining localized texts with TypeScript
+## Using TypeScript
 
-Localized texts can also be defined in TypeScript with the `localtext` method.
+Localized texts can also be defined in TypeScript using the `localtext` method.
 ```tsx
 import { localtext } from "unyt_core/datex_short.ts";
 
@@ -66,4 +65,3 @@ function myApp() {
     </>;
 )
 ```
-

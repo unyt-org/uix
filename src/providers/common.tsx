@@ -8,9 +8,9 @@ import { setCookie, Cookie } from "../lib/cookie/cookie.ts";
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "../app/app.ts";
 import { Entrypoint, RouteHandler, html_generator } from "./entrypoints.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { HTTPStatus } from "./http-status.ts";
-import { createErrorHTML } from "./errors.tsx";
-import { HTTPError } from "./http-error.ts";
+import { HTTPStatus } from "../html/http-status.ts";
+import { createErrorHTML } from "../html/errors.tsx";
+import { HTTPError } from "../html/http-error.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
 import { getJSONCompatibleSerializedValue } from "../utils/serialize-js.ts";
 
@@ -182,9 +182,13 @@ export class FileHandle {
  * @param path local file path
  * @returns content FSFile
  */
-export function provideFile(path:string|URL) {
+export function provideFile(path: string | URL) {
 	const resolvedPath = new Path(path, getCallerFile());
-	return () => new FileHandle(resolvedPath) //Deno.open(resolvedPath);
+	return async () => {
+		if (await resolvedPath.exists())
+			return new FileHandle(resolvedPath);
+		return new HTTPError(HTTPStatus.NOT_FOUND);
+	}
 }
 
 /**

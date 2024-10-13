@@ -8,7 +8,7 @@ import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
 import { bindToDisplayContext } from "uix/app/datex-over-http.ts";
 import { Component } from "uix/components/Component.ts";
-import { lazy, provideError } from "uix/html/entrypoint-providers.tsx";
+import { lazy, provideError } from "uix/providers/common.tsx";
 import { unsafeHTML } from "uix/uix-short.ts";
 import { enableOverlayScrollbars } from "uix/utils/overlay-scrollbars.ts";
 import { FormComponent } from "../common/FormComponent.tsx";
@@ -26,10 +26,10 @@ import { FormComponent } from "../common/FormComponent.tsx";
 
 const Container = template(<div style={{display:"flex", gap:5, margin:5}}></div>)
 
-const a = $$(0);
-const b = $$(0);
+const a = $(0);
+const b = $(0);
 
-const toggle1 = $$(true);
+const toggle1 = $(true);
 
 setInterval(()=>a.val = Math.round(Math.random()*100), 1000);
 setInterval(()=>b.val = Math.round(Math.random()*100), 2000);
@@ -152,8 +152,8 @@ const list = [
 
 let count = 2;
 let deleteCounter = 0;
-const entryList = $$([
-	$$({
+const entryList = $([
+	$({
 		name: 'Example 1',
 		description: 'The first example',
 		color: 'green'
@@ -161,7 +161,7 @@ const entryList = $$([
 ])
 
 setInterval(()=>{
-	entryList.push($$({
+	entryList.push($({
 		name: `The ${count++}. example`,
 		description: "Some description text",
 		color: 'green'
@@ -193,11 +193,11 @@ const ListView = template(()=>{
 })
 
 
-const likesCheese = $$(true);
+const likesCheese = $(true);
 
 
 const ExampleImage = () => <img src="https://picsum.photos/536/354"/> as HTMLImageElement;
-const exampleObject = $$({
+const exampleObject = $({
 	map: new Map<string, string>([['a','b']])
 })
 
@@ -279,7 +279,7 @@ export const testComponents = {
 	/** 
 	 * Contexts demo:
 	 * 
-	 * Per default, event listeners are always called in the *original context*
+	 * By default, event listeners are always called in the *original context*
 	 * -> When the button is created on the backend and displayed in standalone mode 
 	 *    on the frontend, the onclick handler is still called on the *backend*
 	 * -> When the button is created and rendered on the frontend, the onclick
@@ -336,7 +336,7 @@ export const testComponents = {
 				 <li style={{color:entry.$.color}} onclick={()=>entry.color="blue"}>{entry.name}</li>
 			)}
 		</ul>
-		<button onclick={()=>entryList.push($$({name:'New Item ' + new Date(), description: "", color: "orange"}))}>Add Entry</button>
+		<button onclick={()=>entryList.push($({name:'New Item ' + new Date(), description: "", color: "orange"}))}>Add Entry</button>
 	</div>),
 
 	// same as dynamicList, but using always and the built-in array map method (less efficient)
@@ -347,7 +347,7 @@ export const testComponents = {
 				<li style={{color:entry.$.color}} onclick={()=>entry.color="blue"}>{entry.name}</li>
 			))}
 		</ul>
-		<button onclick={()=>entryList.push($$({name:'New Item ' + new Date(), description: "", color: "orange"}))}>Add Entry</button>
+		<button onclick={()=>entryList.push($({name:'New Item ' + new Date(), description: "", color: "orange"}))}>Add Entry</button>
 	</div>),
 
 	paths: <ul>

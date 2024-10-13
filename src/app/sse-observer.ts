@@ -5,7 +5,7 @@ const elementObservers = new WeakMap<Element, {cancel:()=>void, eventTarget:Even
 
 export function observeElementforSSE(element: Element) {
 
-	if (!Datex.Ref.isRef(element)) throw new Error("Element is not a pointer")
+	if (!Datex.ReactiveValue.isRef(element)) throw new Error("Element is not a pointer")
 
 	// return existing
 	if (elementObservers.has(element)) {
@@ -17,7 +17,7 @@ export function observeElementforSSE(element: Element) {
 
 	const eventTarget = new EventTarget()
 
-	// Datex.Ref.observe(element, (...args)=>{
+	// Datex.ReactiveValue.observe(element, (...args)=>{
 	// 	console.log(">>OB", ...args);
 	// }, undefined, undefined, {
 	// 	recursive: true

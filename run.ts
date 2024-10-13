@@ -6,7 +6,7 @@ import { Datex, datex } from "datex-core-legacy/no_init.ts"; // required by getA
 import type { Datex as _Datex } from "datex-core-legacy"; // required by getAppConfig
 import { getAppOptions } from "./src/app/config-files.ts";
 import { getExistingFile } from "./src/utils/file-utils.ts";
-import { command_line_options, enableTLS, login, init, rootPath, stage, watch, watch_backend, live } from "./src/app/args.ts";
+import { command_line_options, enableTLS, login, template, init, rootPath, stage, watch, watch_backend, live, reload } from "./src/app/args.ts";
 import { normalizeAppOptions, normalizedAppOptions } from "./src/app/options.ts";
 import { runLocal } from "./src/runners/run-local.ts";
 import { runRemote } from "./src/runners/run-remote.ts";
@@ -22,13 +22,13 @@ import { handleAutoUpdate, updateCache } from "./auto-update.ts";
 
 import { addUIXNamespace } from "./src/base/uix-datex-module.ts"
 
-import { enableUnhandledRejectionHandler } from "./src/utils/handle-issue.ts";
+import { enableUnhandledRejectionHandler } from "datex-core-legacy/utils/error-handling.ts";
 import { enableErrorReporting } from "datex-core-legacy/utils/error-reporting.ts";
 import { getErrorReportingPreference, saveErrorReportingPreference, shouldAskForErrorReportingPreference } from "./src/utils/error-reporting-preference.ts";
 import { isCIRunner } from "./src/utils/check-ci.ts";
 import { logger, runParams } from "./src/runners/runner.ts";
 import { applyPlugins } from "./src/app/config-files.ts";
-import { handleError } from "./src/utils/handle-issue.ts";
+import { handleError } from "datex-core-legacy/utils/error-handling.ts";
 
 // catch unhandledrejections
 enableUnhandledRejectionHandler(logger);
@@ -37,10 +37,13 @@ enableUnhandledRejectionHandler(logger);
 if (login) await triggerLogin();
 // init
 if (init != undefined) {
-	if (rootPath) {
+	if (rootPath)
 		handleError("A UIX Project exists already in this location", logger);
+	else {
+		await initBaseProject(init, template || undefined);
 	}
-	else await initBaseProject(init);
+} else if (template === '') {
+	handleError("Please call UIX with the --init flag if you want to create a project from a template", logger);
 }
 
 // allow unyt.org diagnostics?
@@ -91,7 +94,7 @@ Datex.Logger.production_log_level = Datex.LOG_LEVEL.WARNING
 const isWatching = live || watch_backend;
 
 const params: runParams = {
-	reload: forceUpdate || command_line_options.option("reload", {type:"boolean", aliases:["r"], description: "Force reload deno caches"}),
+	reload: forceUpdate || reload,
 	enableTLS: enableTLS,
 	inspect: command_line_options.option("inspect", {type:"string", description: "Enable debugging for the deno process"}),
 	unstable: command_line_options.option("unstable", {type:"boolean", description: "Enable unstable deno features"}),

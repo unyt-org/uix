@@ -12,7 +12,7 @@ export class BackgroundRunner {
 
 	// declare thread: ThreadModule<typeof import("./runner-script.ts")>
 	// async #init() {
-	// 	this.thread = await getServiceWorkerThread<typeof import("./runner-script.ts")>("./runner-script.ts", window.location.origin + "/@uix/thread-worker.ts");
+	// 	this.thread = await getServiceWorkerThread<typeof import("./runner-script.ts")>("./runner-script.ts", globalThis.location.origin + "/@uix/thread-worker.ts");
 	// 	console.log("thread",this.thread)
 	// }
 
@@ -41,7 +41,7 @@ export class BackgroundRunner {
 			() => logger.debug("listening to server side events (usid: "+usid+")")
 		)
 		// reload window on RELOAD command
-		this.#hotReloadListener.handleSSECommand("RELOAD", () => window.location.reload())
+		this.#hotReloadListener.handleSSECommand("RELOAD", () => globalThis.location.reload())
 		return true;
 	}
 

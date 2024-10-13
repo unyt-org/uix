@@ -312,7 +312,7 @@ export class Server {
                     let handled:boolean|void = false;
                     if (this.connectionHandler) handled = await this.connectionHandler(conn) // custom handling
                     // handle default
-                    if (handled===false) this.handleConnectionAsHTTP(conn) // handle as http per default
+                    if (handled===false) this.handleConnectionAsHTTP(conn) // handle as http by default
                 }
             }
             catch (e){

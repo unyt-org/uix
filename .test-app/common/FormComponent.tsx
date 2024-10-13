@@ -3,7 +3,7 @@ import { Component } from "uix/components/Component.ts";
 import { template } from "uix/html/template.ts";
 
 
-const count = $$(0);
+const count = $(0);
 
 function log() {
 	console.log("log")

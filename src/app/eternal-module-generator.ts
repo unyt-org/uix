@@ -25,8 +25,8 @@ export async function getEternalModule(filePath: Path, specifier: string) {
 		" */\n\n",
 	].join("\n");
 	for (const exportName of exportNames) {
-		if (exportName == "default") source += `export default await lazyEternalVar("${exportName}") ?? $$((await import("${specifier}"))["${exportName}"]);\n`;
-		else source += `export const ${exportName} = await lazyEternalVar("${exportName}") ?? $$((await import("${specifier}"))["${exportName}"]);\n`;
+		if (exportName == "default") source += `export default await lazyEternalVar("${exportName}") ?? $((await import("${specifier}"))["${exportName}"]);\n`;
+		else source += `export const ${exportName} = await lazyEternalVar("${exportName}") ?? $((await import("${specifier}"))["${exportName}"]);\n`;
 	}
 
 	return source;

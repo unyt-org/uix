@@ -7,6 +7,8 @@ import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { getDependencyTree, loadDependencyList } from "../html/dependency-resolver.ts";
 import { UIX } from "../../uix.ts";
+import { reload } from "../app/args.ts";
+import { getBaseDirectory } from "../utils/uix-base-directory.ts";
 
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
@@ -595,67 +597,43 @@ export class Transpiler {
 
         if (!valid) throw new Error("the typescript file cannot be transpiled - not a valid file extension");
 
-        // return this.transpileToJSDenoEmit(ts_dist_path)
-        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.experimental_features.includes('embedded-reactivity'));
+        return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.jusix);
     }
+
+    static #jusixLoading?: Promise<string>
   
-    private async transpileToJSDenoEmit(ts_dist_path:Path.File) {
-        const {transpile} = await import("https://deno.land/x/ts_transpiler@v0.0.2/mod.ts");
-
-        const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
-        try {
-            const jsxOptions = ts_dist_path.hasFileExtension("tsx") ? {
-                jsx: "react-jsx",
-                jsxImportSource: "uix"
-            } as const : null;
-            // TODO: remove jsxAutomatic:true, currently only because of caching problems
-            const transpiled = await transpile(await Deno.readTextFile(ts_dist_path.normal_pathname), {
-                inlineSourceMap: !!this.#options.sourceMaps, 
-                inlineSources: !!this.#options.sourceMaps,
-                ...jsxOptions
-            });
-            if (transpiled != undefined) await Deno.writeTextFile(js_dist_path.normal_pathname, 
-                this.#options.minifyJS ? 
-                    await this.minifyJS(transpiled) : 
-                    transpiled
-                );
-            else throw "unknown error"
-        }
-        catch (e) {
-            logger.error("could not transpile " + ts_dist_path + ": " + e.message??e);
-        }
-       
-        return js_dist_path;
-    }
-
     public static async getJusix(update = false) {
-        const cacheDir = UIX.cacheDir.asDir().getChildPath("jusix").asDir();
-        cacheDir.fsCreateIfNotExists();
+        if (this.#jusixLoading) return this.#jusixLoading;
+        const {promise, resolve} = Promise.withResolvers<string>()
+        this.#jusixLoading = promise;
 
-        const wasmPath = cacheDir.getChildPath("jusix.wasm");
+        const wasmPath = getBaseDirectory().getChildPath("jusix.wasm");
 
         // if wasm file does not exist or update is forced, download
         if (update || !await wasmPath.fsExists()) {
+            logger.info("updating JUSIX...");
             // download jusix
             const JUSIX_WASM_URL = "https://github.com/unyt-org/jusix/raw/wasm-plugin/jusix.wasm";
             const response = await fetch(JUSIX_WASM_URL);
             // save in deno dir
             const bin = await response.arrayBuffer();
             await Deno.writeFile(wasmPath.normal_pathname, new Uint8Array(bin));
+            logger.success("JUSIX updated");
         }
-
+        resolve(wasmPath.normal_pathname);
         return wasmPath.normal_pathname;
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, src_path: Path.File, useJusix = false) {
         const {transform} = await import("npm:@swc/core@1.7.23");
 
-        const jusixPath = await Transpiler.getJusix();
+        const jusixPath = useJusix && await Transpiler.getJusix(reload);
 
         const experimentalPlugins = useJusix ? {
             plugins: [
                 [jusixPath, {}]
-            ]
+            ],
+            cacheRoot: UIX.cacheDir.asDir().getChildPath("jusix/cache/").normal_pathname
         } as Record<string, any> : undefined;
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
@@ -674,6 +652,7 @@ export class Transpiler {
             const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
             let {code: transpiled, map} = await transform(file, {
                 sourceMaps: !!this.#options.sourceMaps,
+                minify: false,
                 jsc: {
                     parser: {
                         tsx: !!ts_dist_path.hasFileExtension("tsx"),
@@ -698,13 +677,11 @@ export class Transpiler {
                             module: true,
                             compress: {
                                 unused: true,
-                                drop_debugger: false
-                            },
-                            mangle: {
-                                toplevel: true,
+                                drop_debugger: false,
                                 keep_classnames: true,
-                                keep_fnames: false
-                            }
+                                keep_fnames: true
+                            },
+                            mangle: false
                         } : 
                         undefined
                 }

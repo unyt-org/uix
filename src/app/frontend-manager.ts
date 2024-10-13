@@ -9,9 +9,9 @@ import { BackendManager } from "./backend-manager.ts";
 import { getExistingFile, getExistingFileExclusive } from "../utils/file-utils.ts";
 import { logger } from "../utils/global-values.ts";
 import { extractedData, generateHTMLPage, getOuterHTML } from "../html/render.ts";
-import { HTMLProvider } from "../html/html-provider.ts";
+import { HTMLProvider } from "../providers/html.ts";
 
-import { provideValue } from "../html/entrypoint-providers.tsx";
+import { provideValue } from "../providers/common.tsx";
 import type { normalizedAppOptions } from "./options.ts";
 import { getDirType } from "./utils.ts";
 import { generateTSModuleForRemoteAccess, generateDTSModuleForRemoteAccess } from "datex-core-legacy/utils/interface-generator.ts"
@@ -19,7 +19,7 @@ import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
 import { RenderMethod } from "../base/render-methods.ts";
 import { Context, ContextBuilder, ContextGenerator, getHTTPRequestEndpoint } from "../routing/context.ts";
-import { Entrypoint, raw_content } from "../html/entrypoints.ts";
+import { Entrypoint, raw_content } from "../providers/entrypoints.ts";
 import { createErrorHTML } from "../html/errors.tsx";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { domUtils } from "./dom-context.ts";
@@ -30,7 +30,7 @@ import { observeElementforSSE } from "./sse-observer.ts";
 import { eternalExts, getEternalModuleProxyPath } from "./module-mapping.ts";
 import { rootPath, transpileCachePath } from "./args.ts";
 import { isSafariClient } from "../utils/safari.ts";
-import { Ref } from "datex-core-legacy/runtime/pointers.ts";
+import { waitForBuildLocks } from "./build-lock.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
@@ -781,7 +781,7 @@ export class FrontendManager extends HTMLProvider {
 		this.#logger.success("hot reloading enabled");
 		const script = `
 ${"import"} {BackgroundRunner} from "uix/background-runner/background-runner.ts";
-if (!window.location.origin.endsWith(".unyt.app")) {
+if (!globalThis.location.origin.endsWith(".unyt.app")) {
 	const runner = BackgroundRunner.get();
 	runner.enableHotReloading();
 }
@@ -809,11 +809,12 @@ if (!window.location.origin.endsWith(".unyt.app")) {
 
 	#ignore_reload = false;
 
-	private handleFrontendReload(){
+	private async handleFrontendReload(){
 		if (!this.live) return;
 		if (this.#ignore_reload) return;
 
 		// new hot reloading via sse
+		await waitForBuildLocks();
 		this.sendGlobalSSECommand("RELOAD");
 
 		setTimeout(()=>this.#ignore_reload=false, 500); // wait some time until next update triggered

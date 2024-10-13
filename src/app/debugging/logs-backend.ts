@@ -6,7 +6,7 @@ import { LOG_LEVEL } from "datex-core-legacy/utils/logger.ts";
 		
 		const timeout = 60; // 60 minutes
 
-		const stream = $$(new Datex.Stream<string|ArrayBuffer>());
+		const stream = $(new Datex.Stream<string|ArrayBuffer>());
 		Datex.Logger.logToStream(stream);
 
 		// close stream after timeout

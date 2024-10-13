@@ -1,6 +1,6 @@
 import { transferable } from "datex-core-legacy/types/js-function.ts";
 
-const count = $$(0);
+const count = $(0);
 
 const helloWorld = transferable(() => {
 	alert("HELLOW ROLD");

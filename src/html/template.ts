@@ -1,4 +1,3 @@
-import { Datex } from "datex-core-legacy";
 import { getCallerFile } from "datex-core-legacy/utils/caller_metadata.ts";
 import { IS_TEMPLATE, SET_DEFAULT_ATTRIBUTES, SET_DEFAULT_CHILDREN } from "../uix-dom/jsx/parser.ts";
 import { Component } from "../components/Component.ts";
@@ -60,7 +59,7 @@ type Equals<X, Y> =
     (<T>() => T extends Y ? 1 : 2) ? true : false;
 
 
-type Props<Options extends Record<string,unknown>, Children, handleAllProps = true, optionalChildren = false> = JSX.DatexValueObject<Options> & 
+type Props<Options extends Record<string,unknown>, Children, handleAllProps = true, optionalChildren = false> = Options & 
 (
 	handleAllProps extends true ? 
 		(JSX._IntrinsicAttributes & 
@@ -73,14 +72,9 @@ type Props<Options extends Record<string,unknown>, Children, handleAllProps = tr
 		) : unknown
 )
 
-
-type ObjectWithCollapsedValues<O extends Record<string, unknown>> = {
-	[K in keyof O]: O[K] extends Datex.RefOrValue<infer T> ? T : O[K]
-}
-
 export type jsxInputGenerator<
 	Return, 
-	Options extends Record<string,unknown>, 
+	_Props extends Record<string,unknown>, 
 	Children, 
 	handleAllProps = true, 
 	optionalChildren = true, 
@@ -90,12 +84,8 @@ export type jsxInputGenerator<
 		this: Context,
 		props: Props<
 			// inferred options:
-			Context extends {options:unknown} ? Omit<(Context)['options'], '$'|'$$'> : Options
+			Context extends {properties: unknown} ? Context['properties'] : _Props
 			, Children, handleAllProps, optionalChildren>,
-		propsValues: ObjectWithCollapsedValues<Props<
-			// inferred options:
-			Context extends {options:unknown} ? Omit<(Context)['options'], '$'|'$$'> : Options
-			, Children, handleAllProps, optionalChildren>>
 	) => Return;
 
 
@@ -109,7 +99,7 @@ export type jsxInputGenerator<
  * // create:
  * const comp = <CustomComponent id="c1" color="green"/>
  * ```
- * Per default, children are just appended to the root element of the template.
+ * By default, children are just appended to the root element of the template.
  * You can create a template with a shadow root by adding the 'shadow-root' attribute to the root element.
  * Children are appended to the <slot> element inside the root:
  * @example
@@ -187,16 +177,8 @@ export function createTemplateGenerator(templateOrGenerator?:JSX.Element|jsxInpu
 		}
 		// jsx
 		else {
-
-			const collapsedPropsProxy = new Proxy(propsOrClass??{}, {
-				get(target,p) {
-					return val(target[p]);
-				},
-			});
-
-			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass, collapsedPropsProxy)
-			else return templateOrGenerator(propsOrClass, collapsedPropsProxy);
-
+			if (context && templateOrGenerator.call) return templateOrGenerator.call(context, propsOrClass, propsOrClass)
+			else return templateOrGenerator(propsOrClass, propsOrClass);
 		}
 	}
 	else if (templateOrGenerator) {
@@ -280,14 +262,8 @@ export function blankTemplate<
 		}
 
 		else {
-			const collapsedPropsProxy = new Proxy(propsOrClass??{}, {
-				get(target,p) {
-					return val(target[p])
-				},
-			});
-	
-			if (context && elementGenerator.call) return elementGenerator.call(context, propsOrClass, collapsedPropsProxy)
-			else return elementGenerator(propsOrClass, collapsedPropsProxy);
+			if (context && elementGenerator.call) return elementGenerator.call(context, propsOrClass, propsOrClass)
+			else return elementGenerator(propsOrClass, propsOrClass);
 		}
 
 	}

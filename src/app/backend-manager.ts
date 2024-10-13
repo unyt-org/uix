@@ -3,9 +3,9 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { logger } from "../utils/global-values.ts";
-import { PageProvider } from "../html/entrypoint-providers.tsx";
+import { PageProvider } from "../providers/common.tsx";
 import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
-import { Entrypoint } from "../html/entrypoints.ts";
+import { Entrypoint } from "../providers/entrypoints.ts";
 import type { normalizedAppOptions } from "./options.ts";
 import { createBackendEntrypointProxy } from "../routing/backend-entrypoint-proxy.ts";
 import { eternalExts, updateEternalFile } from "./module-mapping.ts";
@@ -127,15 +127,15 @@ export class BackendManager {
 		if (this.#entrypoint) {
 			const module = this.#module = <any> await datex.get(this.#entrypoint);
 			this.#content_provider = module.default ?? (Object.getPrototypeOf(module) !== null ? module : null);
+			//await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			// default ts export, or just the result if DX and not ts module
-			await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			return this.#content_provider;
 		}
 		else if (this.#pagesDir) {
 			logger.debug(`Using ${this.#pagesDir} as pages for backend entrypoint`)
 			this.#content_provider = new PageProvider(this.#pagesDir);
+			//await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			// default ts export, or just the result if DX and not ts module
-			await resolveEntrypointRoute({entrypoint: this.#content_provider}); // load fully
 			return this.#content_provider;
 		}
 		return null;

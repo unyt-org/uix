@@ -12,7 +12,7 @@ export const BOUND_TO_ORIGIN = Symbol("BOUND_TO_ORIGIN")
  * 
  * In standalone mode, the function is always called on the backend endpoint.
  * 
- * This is the default behaviour when setting event listeners in JSX.
+ * This is the default behavior when setting event listeners in JSX.
  * 
  * - uses datex-over-http when DATEX is not available
  * - parameters must be json compatible
@@ -31,7 +31,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
 	if (context && !fn.bind) throw new Error("bindToOrigin: Cannot bind arrow function to context");
 
 	// @ts-ignore
-	fn = $$(Datex.Function.createFromJSFunction(fn, context));
+	fn = $(Datex.Function.createFromJSFunction(fn, context));
 
 	// @ts-ignore
 	const ptr:Datex.Pointer = (globalThis.Datex ? Datex.Pointer.getByValue(fn) : fn[DX_PTR]) ?? fn.ntarget?.[DX_PTR];
@@ -73,7 +73,7 @@ export function bindToOrigin<F extends (...args:unknown[])=>unknown>(fn: F, cont
  */
 export function getValueInitializer(value:any, forceDatex = false): string {
 	
-	value = $$(value);
+	value = $(value);
 	// @ts-ignore
 	const ptr:Datex.Pointer = value.idString ? value : (globalThis.Datex ? Datex.Pointer.getByValue(value) : value[DX_PTR]);
 	if (!ptr) throw new Error("getValueInitializer: value must be bound to a DATEX pointer");
@@ -117,7 +117,7 @@ export function getValueInitializer(value:any, forceDatex = false): string {
  * - uses datex-over-http when DATEX is not available
  * @param fn
  */
-export function getValueUpdater(ref:Datex.Ref, forceDatex = false, keepAlive = false): string {
+export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, keepAlive = false, type: "number"|"string"|"bigint"|"boolean"|"Date"): string {
 	
 	// prevent garbage collection
 	if (ref instanceof Datex.Pointer) ref.is_persistent = true;
@@ -136,6 +136,15 @@ export function getValueUpdater(ref:Datex.Ref, forceDatex = false, keepAlive = f
 	else {
 		// TODO: remove sendBeacon as fallback for firefox if keepAlive needed
 		return `async (val) => {
+			// cast value
+			${
+				type == "number" ? "val = Number(val)":
+				type == "bigint" ? "val = BigInt(val)":
+				type == "boolean" ? "val = Boolean(val)":
+				type == "Date" ? "val = new Date(val)":
+				type == "string" ? "val = String(val)":
+				""
+			}
 			// use datex
 			if (globalThis.datex && globalThis.Datex) {
 				await Datex.Supranet.connect();

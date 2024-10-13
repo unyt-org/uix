@@ -78,8 +78,8 @@ export default class GitDeployPlugin implements AppPlugin {
 
 			if (!config.secrets) config.secrets = []
 
-			// expose GITHUB_TOKEN;
-			env["GITHUB_TOKEN"] = `$\{{secrets.GITHUB_TOKEN}}`
+			env["GITHUB_TOKEN"] = `$\{{secrets.GITHUB_TOKEN}}`;
+			env["HOST_TOKEN"] = `$\{{secrets.HOST_TOKEN}}`;
 
 			for (const secret of config.secrets) {
 				env[secret] = `$\{{secrets.${secret}}}`

@@ -198,7 +198,7 @@ export async function addGlobalStyleSheetLink(url:URL) {
 
 async function insertGlobalStyleSheetLink(url:URL, allowIfAlreadyInGlobalStylesheets = false) {
     // removes origin, if current origin (to match style sheet hrefs from SSR)
-    const normalizedUrl = url.origin === window.location.origin ? url.pathname + url.search : url.toString()
+    const normalizedUrl = url.origin === globalThis.location.origin ? url.pathname + url.search : url.toString()
     if (!allowIfAlreadyInGlobalStylesheets && (document.head?.querySelector('link[href="'+normalizedUrl+'"]') || globalStyleSheets.has(url.toString()))) return;
     const link = await addStyleSheetLink(document.head, url);
     link.classList.add("global-style");

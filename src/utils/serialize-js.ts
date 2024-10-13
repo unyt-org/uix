@@ -1,4 +1,4 @@
-import { Pointer, Ref, Value } from "datex-core-legacy/runtime/pointers.ts";
+import { Pointer, ReactiveValue } from "datex-core-legacy/runtime/pointers.ts";
 
 export function serializeJSValue(val:any):string {
 	let serialized = JSON.stringify(val);
@@ -27,7 +27,7 @@ export function serializeJSValue(val:any):string {
 
 export function getJSONCompatibleSerializedValue(value: any) {
 	if (typeof value == "object") {
-		if (value instanceof Ref) return {val: value.val}
+		if (value instanceof ReactiveValue) return {val: value.val}
 
 		const newValue:Record<string,any>|any[] = value instanceof Array ? [] : {};
 	

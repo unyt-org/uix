@@ -1,8 +1,8 @@
 import { Datex } from "datex-core-legacy/mod.ts";
 import { Context } from "../routing/context.ts";
-import { provideJSON } from "../html/entrypoint-providers.tsx";
+import { provideJSON } from "../providers/common.tsx";
 import { HTTPStatus } from "../html/http-status.ts";
-import { Entrypoint } from "../html/entrypoints.ts";
+import { Entrypoint } from "../providers/entrypoints.ts";
 import { StructuralTypeDefIn, collapseTypeDef } from "datex-core-legacy/types/struct.ts"
 
 /**

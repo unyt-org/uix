@@ -5,7 +5,7 @@ import { GitRepo } from "../utils/git.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { runParams } from "./runner.ts";
 import { logger } from "../utils/global-values.ts";
-import { gitToken } from "../app/args.ts";
+import { gitToken, hostToken } from "../app/args.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 type Endpoint = any
@@ -107,9 +107,8 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 
 		const {importMapPath, uixRunPath} = getInferredRunPaths(options.import_map, root_path)
 		
-		// tell docker host to use uix v.0.1
-		env.push(`UIX_VERSION=0.1`)
-
+		// tell docker host to use uix v.0.3
+		env.push(`UIX_VERSION=0.3`)
 		const container = await datex<any> `
 			use ContainerManager from ${requiredLocation};
 			ContainerManager.createUIXAppContainer(

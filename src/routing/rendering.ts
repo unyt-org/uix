@@ -1,7 +1,7 @@
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { Datex } from "datex-core-legacy";
 import {evaluateFilter, filter} from "./route-filter.ts";
-import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_generator } from "../html/entrypoints.ts"
+import { Entrypoint, EntrypointRouteMap, RouteHandler, RouteManager, html_generator } from "../providers/entrypoints.ts"
 
 import { CACHED_CONTENT, getOuterHTML } from "../html/render.ts";
 import { HTTPStatus } from "../html/http-status.ts";
@@ -14,7 +14,7 @@ import { logger } from "../utils/global-values.ts";
 import { domContext } from "../app/dom-context.ts";
 import { UIX } from "../../uix.ts";
 import { convertToWebPath } from "../app/convert-to-web-path.ts";
-import { FileHandle } from "../html/entrypoint-providers.tsx";
+import { FileHandle } from "../providers/common.tsx";
 
 // URLPattern polyfill
 // @ts-ignore
@@ -307,7 +307,7 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 	
 	if (closest_match_key!==null) {
 		let val = <any> entrypointData.entrypoint.$ ? (<any>entrypointData.entrypoint.$)[closest_match_key] : (<EntrypointRouteMap>entrypointData.entrypoint)[closest_match_key];
-		if (val instanceof Datex.Ref && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
+		if (val instanceof Datex.ReactiveValue && !(val instanceof Datex.Pointer && val.is_js_primitive)) val = val.val; // only keep primitive pointer references
 		val = await val;
 		// only update route if a string key, symbol keys don't mutate the route
 		const new_path = matchingSymbol ? entrypointData.route : closest_match_route ? Path.Route(entrypointData.route!.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");
@@ -376,7 +376,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		resolved.content = new Response(entrypointData.entrypoint.readable)
 		// TODO: get mime type from FsFile
 		logger.warn("Mime type cannot be determined for FsFile");
-		// cors headers (TODO: more general way to define cors behaviour)
+		// cors headers (TODO: more general way to define cors behavior)
 		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
 		resolved.content.headers.set("Access-Control-Allow-Headers", "*");
 	}
@@ -388,7 +388,7 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 		const mimeType = mime.getType(entrypointData.entrypoint.path.name);
 
 		resolved.content = new Response(file.readable)
-		// cors headers (TODO: more general way to define cors behaviour)
+		// cors headers (TODO: more general way to define cors behavior)
 		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
 		resolved.content.headers.set("Access-Control-Allow-Headers", "*");
 		if (mimeType) resolved.content.headers.set("Content-Type", mimeType);

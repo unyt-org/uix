@@ -1,6 +1,6 @@
 import { UIX } from "../../uix.ts";
 import { logger } from "../utils/global-values.ts";
-import { Entrypoint, html_content, html_content_or_generator, html_generator } from "../html/entrypoints.ts";
+import { Entrypoint, html_content, html_content_or_generator, html_generator } from "../providers/entrypoints.ts";
 import { DX_IGNORE, DX_SERIALIZED, DX_SOURCE } from "datex-core-legacy/runtime/constants.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
@@ -76,11 +76,11 @@ export function renderFrontend(content_generator:() => JSX.singleChild|Promise<J
 	else {
 		const fn = JSTransferableFunction.functionIsAsync(content_generator) ?
 			JSTransferableFunction.createAsync(content_generator).then(fn=>{
-				fn = $$(fn);
+				fn = $(fn);
 				(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder ?? "";
 				return fn;
 			}) :
-			$$(JSTransferableFunction.create(content_generator));
+			$(JSTransferableFunction.create(content_generator));
 		(fn as any)[DOMUtils.PLACEHOLDER_CONTENT] = placeholder ?? "";
 		return fn
 	}

@@ -6,9 +6,9 @@ import { UIX } from "../../../uix.ts";
 
 UIX.Theme.useTheme("uix-dark");
 
-const messageLoggerEnabled = $$(false);
-const verboseLogsEnabled = $$(false);
-const logFilter = $$("");
+const messageLoggerEnabled = $(false);
+const verboseLogsEnabled = $(false);
+const logFilter = $("");
 
 const logsContainer = <div style="width:100%;overflow:scroll;"></div>
 const component = <div style="height:100vh;overflow: hidden;padding:20px;display: flex;flex-direction: column;">

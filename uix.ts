@@ -28,10 +28,10 @@ export const UIX = {
 		if (themeManager) return themeManager;
 
 		themeManager = getThemeManager() as ReactiveThemeManager;
-		const mode = $$(UIX.Theme.mode)
+		const mode = $(UIX.Theme.mode)
 		UIX.Theme.onModeChange(m => mode.val = m)
 
-		const theme = $$(UIX.Theme.theme)
+		const theme = $(UIX.Theme.theme)
 		UIX.Theme.onThemeChange(m => theme.val = m)
 
 		// define UIX.Theme.$.theme, UIX.Theme.$.mode
@@ -75,7 +75,7 @@ export const UIX = {
 
 if (client_type == "browser") {
 	// update uix-language cookie (only works if runtime initialized!)
-	Datex.Ref.observe(Datex.Runtime.ENV.$.LANG, lang => {
+	observe(Datex.Runtime.ENV.$.LANG, lang => {
 		setCookie(UIX_COOKIE.language, lang)
 		document.documentElement?.setAttribute("lang", lang)
 	})

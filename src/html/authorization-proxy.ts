@@ -1,6 +1,6 @@
 import { Context } from "../routing/context.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-import { Entrypoint, EntrypointProxy } from "./entrypoints.ts";
+import { Entrypoint, EntrypointProxy } from "../providers/entrypoints.ts";
 
 export type Credentials = {
 	username: string,

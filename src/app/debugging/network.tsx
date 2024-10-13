@@ -5,7 +5,7 @@ import { UIX } from "../../../uix.ts";
 
 UIX.Theme.useTheme("uix-dark");
 
-const endpoint = $$("")
+const endpoint = $("")
 
 const status = <div style="background: var(--accent-bg);border-radius: 10px;padding: 15px;"></div>;
 const endpointSockets = <div></div>

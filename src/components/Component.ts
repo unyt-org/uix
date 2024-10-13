@@ -4,7 +4,7 @@ import { logger } from "../utils/global-values.ts"
 import { Class, Logger, METADATA, ValueError } from "datex-core-legacy/datex_all.ts"
 import { CHILD_PROPS, CONTENT_PROPS, ID_PROPS, IMPORT_PROPS, LAYOUT_PROPS, ORIGIN_PROPS, STANDALONE_PROPS } from "../base/decorators.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-import { RouteManager } from "../html/entrypoints.ts";
+import { RouteManager } from "../providers/entrypoints.ts";
 import { Context } from "../routing/context.ts";
 import { makeScrollContainer, scrollContext, scrollToBottom, scrollToTop, updateScrollPosition } from "../standalone/scroll_container.ts";
 import { OpenGraphInformation, OpenGraphPreviewImageGenerator, OPEN_GRAPH } from "../base/open-graph.ts";
@@ -33,10 +33,10 @@ export type standalonePropertyData = {type:'prop'}
 export type standaloneProperties = Record<string, (standaloneContentPropertyData | standalonePropertyData) & {init?:propInit }>;
 
 // deno-lint-ignore no-empty-interface
-interface Options {}
+interface DefaultProps {}
 
 // @template("uix:component") 
-export abstract class Component<O extends Options = Options, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
+export abstract class Component<Props extends DefaultProps = DefaultProps, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -48,7 +48,6 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     ]
     
 
-    static DEFAULT_OPTIONS = {};
     static CLONE_OPTION_KEYS: Set<string> // list of all default option keys that need to be cloned when options are initialized (non-primitive options)
 
     // guessing module stylesheets, get added to normal stylesheets array after successful fetch
@@ -144,7 +143,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
                 if (!valid_dx_files.length) {
                     if (!this._use_resources) throw new Error(`Could not load export '${exprt}' for component class '${this.name}' - external resources are disabled. Either remove the @NoResources decorator and create a corresponding DATEX file next to the TypeScript module file, or specifiy a different resource location in the @include decorator.`)
-                    else if (!this._module) throw new Error(`Could not load export '${exprt}' for component class '${this.name}'. The component module could not be initialized correctly (missing @defaultOptions decorator?)`);  // this.module could not be set for whatever reason
+                    else if (!this._module) throw new Error(`Could not load export '${exprt}' for component class '${this.name}'. The component module could not be initialized correctly (missing @template decorator?)`);  // this.module could not be set for whatever reason
                     else throw new Error(`No corresponding DATEX module file found for export '${exprt}' in component class '${this.name}'. Please create a DATEX file '${this._module.replace(/\.m?(ts|js)x?$/, '.dx')} or specifiy a resource location in the @include decorator.`)
                 }
 
@@ -243,7 +242,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
             }
             // (standalone) transferable function
             else if (Object.keys(useDeclaration.vars).length) {
-                (this.prototype as any)[name] = $$(JSTransferableFunction.create(method, undefined, useDeclaration)); 
+                (this.prototype as any)[name] = $(JSTransferableFunction.create(method, undefined, useDeclaration)); 
                 if (useDeclaration.flags?.includes("standalone")) this.addStandaloneMethod(name, (this.prototype as any)[name]);
                 // also override type template to add overridden transferable function as datex property
                 type.template[name] = Datex.Type.js.TransferableFunction;
@@ -494,7 +493,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
         // response was okay
         if (res.ok) {
-            const stylesheet = <CSSStyleSheet> new window.CSSStyleSheet();
+            const stylesheet = <CSSStyleSheet> new globalThis.CSSStyleSheet();
             const style = await res.text();
             await stylesheet.replace(style);
     
@@ -563,9 +562,18 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     /************************************ END STATIC ***************************************/
 
     // options
-    @property declare options:Datex.ObjectRef<O>; // uses element.DEFAULT_OPTIONS as default options (also for all child elements)
+    /**
+     * @deprecated use props instead
+     */
+    get options() {
+        return this.props;
+    }; 
 
-    declare public readonly props: Datex.DatexObjectInit<O> & {children?:ChildElement|ChildElement[]} & JSX._IntrinsicAttributes<this>
+    private readonly props!: Readonly<Props & {children?:ChildElement|ChildElement[]} & JSX._IntrinsicAttributes<this>>
+
+    public get properties(): Readonly<Props> {
+        return this.props
+    }
 
     declare $:Datex.Proxy$<this> // reference to value (might generate pointer property, if no underlying pointer reference)
     declare $$:Datex.PropertyProxy$<this> // always returns a pointer property reference
@@ -588,20 +596,20 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     protected reconstructed_from_dom = false
 
     constructor()
-    constructor(options?:Datex.DatexObjectInit<O>)
-    constructor(options?:Datex.DatexObjectInit<O>) {
+    constructor(props?:Props)
+    constructor(props?:Props) {
         // constructor arguments handlded by DATEX @constructor, constructor declaration only for IDE / typescript
         super()
 
 
         // pre-init options before other DATEX state is initialized 
         // (this should not happen when reconstructing, because options are undefined or have [INIT_PROPS])
-        if (options && !options[INIT_PROPS]) this.initOptions(options);
+        if (props && !props[INIT_PROPS]) this.initProps(props);
 
         // handle special case: was created from DOM
         if (!Datex.Type.isConstructing(this)) {
             // @ts-ignore preemptive [INIT_PROPS], because construct is called - normally handled by js interface (TODO: better solution?)
-            if (options?.[INIT_PROPS]) options[INIT_PROPS](this);
+            if (props?.[INIT_PROPS]) props[INIT_PROPS](this);
 
             const classType = Datex.Type.getClassDatexType(this.constructor as typeof Component);
             if (classType.name !== "uix") {
@@ -616,7 +624,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
                 this.is_skeleton = true;
                 logger.debug("hydrating component " + classType);
                 // throw error if option properties are access during class instance member initialization (can't know options at this point)
-                this.options = new Proxy({}, {
+                this.props = new Proxy({}, {
                     get: (target, prop) => {
                         throw new Error(`Tried to access uninitialized option property '${String(prop)}' during class instance member initialization of hydrated component. Please put the property initialization in the onConstruct() method.`)
                     }
@@ -727,13 +735,9 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
     }
 
     // default constructor
-    async construct(options?:Datex.DatexObjectInit<O>): Promise<void> {
+    async construct(options?:Datex.DatexObjectInit<Props>): Promise<void> {
         // options already handled in constructor
 
-        // handle default component options (class, ...)
-        if (this.options?.class) 
-            domUtils.setElementAttribute(this, "class", this.options.$.class);
-        
         await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in Component.init
  
         if (!((<typeof Component>this.constructor).prototype instanceof Component)) {
@@ -772,9 +776,8 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
      */
     private async loadTemplate() {
         if ((<typeof Component> this.constructor).template) {
-            // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
             const templateFn = (<typeof Component> this.constructor).template!;
-            const template = await templateFn(Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options, this);
+            const template = await templateFn(this.props, this);
             domUtils.append(this, template);
         }
     }
@@ -784,9 +787,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
      */
     private loadDefaultStyle() {
         for (const templateFn of (<typeof Component> this.constructor).style_templates??[]) {
-            // don't get proxied options where primitive props are collapsed by default - always get pointers refs for primitive options in template generator
-            const options = Datex.Pointer.getByValue(this.options)?.shadow_object ?? this.options
-            const stylesheet = templateFn(options, this)
+            const stylesheet = templateFn(this.props, this)
             // invalid scoped stylesheet
             if (stylesheet.scope && stylesheet.scope !== this.tagName.toLowerCase()) throw new Error(`Stylesheet uses multiple component scopes (<${stylesheet.scope.toLowerCase()}>, <${this.tagName.toLowerCase()}>). Make sure you don't use the same stylesheet for multiple components.`)
             // inject css scoping if component has no shadow root
@@ -805,34 +806,31 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         }
     }
 
-    private initOptions(options?: Datex.DatexObjectInit<O>){
-        if (this.options) {
-            console.log("already has options");
+    private initProps(props?: Props){
+        if (this.props) {
+            console.log("already has props");
             return;
         }
-        const default_options = (<any>this.constructor).DEFAULT_OPTIONS;
-        const clone_option_keys = (<any>this.constructor).CLONE_OPTION_KEYS;
 
         // get options from html attributes
-        if (!options) options = <O>{}; 
-        options = <Datex.DatexObjectInit<O>> $$(options);           
-        for (let i=0;i < this.attributes.length; i++) {
+        if (!props) props = <Props>{}; 
+        for (let i=0; i < this.attributes.length; i++) {
             const name = this.attributes[i].name;
             // don't override provided options object
-            if (!(name in options)) {
-                // json (number, array, ...) - for attributes written in html (strings per default, must be converted to the right type)
+            if (!(name in props)) {
+                // json (number, array, ...) - for attributes written in html (strings by default, must be converted to the right type)
                 try {
-                    options[<keyof typeof options>name] = JSON.parse(this.attributes[i].value);
+                    props[<keyof typeof props>name] = JSON.parse(this.attributes[i].value);
                 } 
                 // string
                 catch {
-                    options[<keyof typeof options>name] = <Datex.RefOrValue<O>> this.attributes[i].value;
+                    props[<keyof typeof props>name] = <Datex.RefOrValue<Props>> this.attributes[i].value;
                 }
             }
         }
 
         // assign default options as prototype
-        this.options = assignDefaultPrototype(default_options, options, clone_option_keys);
+        this.props = props;
     }
 
     /**
@@ -867,13 +865,13 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
         Datex.Pointer.onPointerForValueCreated(this, () => {
             const pointer = Datex.Pointer.getByValue(this)!
-            if (!this.hasAttribute("uix-ptr")) this.setAttribute("uix-ptr", pointer.id);
+            if (!this.hasAttribute("uix-ptr") && client_type == "deno") this.setAttribute("uix-ptr", pointer.id);
 
             if (this.is_skeleton && UIX.context == "frontend") {
                 this.logger.debug("hybrid initialization")
                 if (!standaloneOnDisplayWasTriggered) this.onDisplay?.();
             }
-            // TODO: required? should probably not be called per default
+            // TODO: required? should probably not be called by default
             // bindObserver(this)
         })
 
@@ -898,8 +896,8 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         if (this[OPEN_GRAPH]) return; // already overridden
         Object.defineProperty(this, OPEN_GRAPH, {
             get() {return new OpenGraphInformation({
-                title: this.title ?? app.options?.name,
-                description: this.options.description ?? app.options?.description
+                title: this.getAttribute("title") ?? app.options?.name,
+                description: app.options?.description
             }, this.openGraphImageGenerator)}
         })
     }
@@ -1020,7 +1018,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
         // continue component lifecycle
         const type = Datex.Type.ofValue(this);
-        type.initProperties(this, {options:$$({})});
+        type.initProperties(this, {options:$({})});
         // trigger UIX lifecycle (onReplicate)
         type.construct(this, undefined, false, true);
 
@@ -1096,13 +1094,6 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
         await this.#datex_lifecycle_ready; // wait for onConstruct, init
 
-        // // wait until lazy loaded if added to group component
-        // if (this.options.lazy_load && this.parentElement instanceof Component) {
-        //     // wait until first focus
-        //     await this.#first_focus
-        //     this.logger.info("Lazy loading")
-        // }
-
         const new_create = !this.#created;
         this.#created = true;
 
@@ -1131,7 +1122,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
     private route_initialized = false;
 
-    // implements resolveRoute per default, can be overriden for more custom routing behaviour
+    // implements resolveRoute by default, can be overriden for more custom routing behavior
     public async resolveRoute(route:Path.Route, context:Context):Promise<Path.route_representation> {
         const {Path} = await import("uix/utils/path.ts");
 
@@ -1144,7 +1135,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         const initial_route = !this.route_initialized;
         this.route_initialized = true;
 
-        const child = await (<Component<O, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
+        const child = await (<Component<Props, ChildElement>>delegate).onRoute?.(route.route[0]??"", initial_route);
 
         if (child == false) return []; // route not valid
         else if (typeof (<any>child)?.focus == "function") {
@@ -1196,13 +1187,6 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         super.remove();
     }
 
-    public observeOption(key:keyof O, handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
-        Datex.Ref.observeAndInit(this.options.$$[key as keyof typeof this.options.$$], handler, this);
-    }
-    public observeOptions(keys:(keyof O)[], handler: (value: unknown, key?: unknown, type?: Datex.Ref.UPDATE_TYPE) => void) {
-        for (const key of keys) this.observeOption(key, handler);
-    }
-
     protected style_sheets_urls:string[] = [];
 
     /**
@@ -1231,7 +1215,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
                 const stylesheet = Component.getURLStyleSheet(url, allow_fail);
 
                 // is sync
-                if (stylesheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet) {
+                if (stylesheet instanceof <typeof CSSStyleSheet>globalThis.CSSStyleSheet) {
                     this.adoptStyle(stylesheet, false, url);
                 }
                 else if (stylesheet) return new Promise<void>(async resolve=>{
@@ -1252,7 +1236,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
             })()
         }
 
-        else if (url_or_style_sheet instanceof <typeof CSSStyleSheet>window.CSSStyleSheet){
+        else if (url_or_style_sheet instanceof <typeof CSSStyleSheet>globalThis.CSSStyleSheet){
             this.adoptStyle(url_or_style_sheet)
         }
     }
@@ -1283,7 +1267,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
             // @ts-ignore CSSStyleSheet
 
             // safari compat
-            if (window.CSSStyleSheet.name == "ConstructedStyleSheet") {
+            if (globalThis.CSSStyleSheet.name == "ConstructedStyleSheet") {
                 this.#adopted_root_style = new Proxy((<CSSStyleRule>stylesheet.cssRules[0]).style, {
                     set(target, p, value) {
                         (<any>target)[p] = value;
@@ -1308,7 +1292,7 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 
             // deno server compat, just use normal CSSStyleDeclaration
             // @ts-ignore
-            else if (window.CSSStyleSheet.IS_COMPAT) {
+            else if (globalThis.CSSStyleSheet.IS_COMPAT) {
                 this.#adopted_root_style = new CSSStyleDeclaration();
             }
 
@@ -1338,9 +1322,9 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
         // add to component style sheets list
         if (url) this.style_sheets_urls.push(url.toString());
 
-        if (style instanceof window.CSSStyleSheet) stylesheet = style;
+        if (style instanceof globalThis.CSSStyleSheet) stylesheet = style;
         else {
-            stylesheet = new window.CSSStyleSheet();
+            stylesheet = new globalThis.CSSStyleSheet();
             stylesheet.replaceSync(style);
         }
         this.#style_sheets.push(stylesheet);
@@ -1455,9 +1439,6 @@ export abstract class Component<O extends Options = Options, ChildElement = JSX.
 const type = Datex.Type.get("uixcomponent")
 Component[DX_TYPE] = type;
 Component[DX_ROOT] = true
-type.setTemplate({
-    options: any
-})
 
 // get object-like keys that need to be cloned from the prototype
 export function getCloneKeys(object:any):Set<string> {
@@ -1467,36 +1448,3 @@ export function getCloneKeys(object:any):Set<string> {
     }
     return clone_keys;
 }
-
-
-// required for DEFAULT_OPTIONS prototype
-function assignDefaultPrototype<T extends object>(default_object:T, object:T, clone_keys:Iterable<string> = getCloneKeys(default_object)):T {
-    let res_object:T;
-
-    // use provided object
-    if (object && Object.keys(object).length) {
-        if (default_object && !default_object.isPrototypeOf(object)) Object.setPrototypeOf(object, default_object);
-        res_object = object;
-    } 
-    // default
-    else {
-        res_object = Object.create(default_object??{});
-    }
-
-    // clone non-primitive properties (if only in prototype and not in created object) - ignore DatexValues and pointers
-    for (let key of clone_keys) {
-        // @ts-ignore
-        if (!res_object.hasOwnProperty(key) && res_object[key] === default_object[key] &&  !(
-            // don't clone fake primitives
-            res_object[key] instanceof Datex.Ref || 
-            res_object[key] instanceof Datex.Type ||
-            res_object[key] instanceof Datex.Target ||
-            res_object[key] instanceof Datex.Quantity
-        ) && !Datex.Pointer.getByValue(res_object[key])) {
-            res_object[key] = structuredClone(res_object[key])
-        }
-    }
-
-    return res_object;
-}
-

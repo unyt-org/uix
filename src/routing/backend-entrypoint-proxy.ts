@@ -1,6 +1,6 @@
 import { Datex } from "datex-core-legacy/mod.ts";
 import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
-import { Entrypoint } from "../html/entrypoints.ts";
+import { Entrypoint } from "../providers/entrypoints.ts";
 import { logger } from "../utils/global-values.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { Context, ContextBuilder } from "./context.ts";
@@ -19,7 +19,7 @@ import { HTTPStatus } from "../html/http-status.ts";
  * @returns 
  */
 export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
-	const fn = $$(async function(_ctx: Context, _params:Record<string,string>) {
+	const fn = $(async function(_ctx: Context, _params:Record<string,string>) {
 
 		// set endpoint from datex meta
 		const path = Path.Route(_ctx.path);

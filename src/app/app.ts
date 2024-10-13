@@ -42,7 +42,7 @@ if (client_type === "deno") {
 // enable DATEX CLI
 if (enable_datex_cli && client_type === "deno") Datex.enableCLI();
 
-const version = eternal ?? $$("unknown");
+const version = eternal ?? $("unknown");
 
 
 export type appMetadata = {
@@ -197,7 +197,7 @@ class App {
             logger.info("app version changed from " + from + " to " + to);
             await ServiceWorker.clearCache();
             if (this.#current_version_change_handler) await this.#current_version_change_handler(from, to);
-            window.location.reload();
+            globalThis.location.reload();
         }
         if (this.#current_version_change_handler) this.#waiting_version_change(); // call if handler available
         // show ui
@@ -254,7 +254,7 @@ class App {
 		this.frontends = frontends;
 
 		// log enabled experimental features
-		const allowedFeatures = ['embedded-reactivity', 'protect-pointers', 'indirect-references', 'frontend-navigation', 'view-transitions'];
+		const allowedFeatures = ['indirect-references', 'view-transitions', 'sqlite-storage'];
 		for (const feature of this.options.experimental_features) {
 			if (allowedFeatures.includes(feature)) logger.info(`experimental feature "${feature}" enabled`)
 			else logger.error(`unknown experimental feature "${feature}"`)
@@ -319,7 +319,7 @@ if (app.stage !== "dev") {
 	Datex.Runtime.OPTIONS.NATIVE_ERROR_STACK_TRACES = false
 }
 
-// load DATEX WASM / Decompiler, only in backend per default
+// load DATEX WASM / Decompiler, only in backend by default
 if (client_type === "deno") {
 	await wasm_init();
 	init_runtime();

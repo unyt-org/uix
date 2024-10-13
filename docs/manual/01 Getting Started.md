@@ -81,7 +81,9 @@ Please make sure to have the [`git`](https://git-scm.com/downloads) utility inst
 While you can use any editor or integrated development environment (IDE) for UIX development, we recommend using one with support for `Deno` and `TypeScript`. This will provide useful features like syntax highlighting, code completion, and linting, which can improve productivity and help avoid common errors. 
 
 
-We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for UIX development. For syntax highlighting and language support *(DATEX, Typescript, Deno)*, the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> for Visual Studio can be used. Find more information [here](./20%20DATEX%20Workbench.md).
+We recommend using <a target="_blank" href="https://code.visualstudio.com/download">Visual Studio Code</a> for UIX development. Make sure to load the [Deno extension](vscode:extension/denoland.vscode-deno) and [initialize the Deno Workbench configuration](https://docs.deno.com/runtime/reference/vscode/#enabling-deno-in-a-vs-code-workspace) for your UIX project to enable syntax highlighting and import resolution.
+
+For advanced syntax highlighting and language support *(for DATEX and JSX)*, the <a target="_blank" href="https://marketplace.visualstudio.com/items?itemName=unytorg.datex-workbench">DATEX Workbench extension</a> for Visual Studio can be used. Find more information [here](./20%20DATEX%20Workbench.md).
 
 ## Create a new UIX project
 
@@ -90,13 +92,15 @@ You can initialize a new UIX project by running
 uix --init <name>
 ```
 
-This will create a new [UIX Base Project](https://github.com/unyt-org/uix-base-project.git) in the given directory and launch the application locally.
+This will create a new [Hello UIX](https://github.com/unyt-org/uix-template-hello-uix) project in the given directory and launch the application locally.
 
-You can also select a predefined template such as [`base`](https://github.com/unyt-org/uix-base-project), [`deployment`](https://github.com/unyt-org/uix-deployment-base-project) or [`routing`](https://github.com/unyt-org/uix-base-project-routing) when passing the `template` flag:
+You can also select a predefined template such as [`hello-uix`](https://github.com/unyt-org/uix-template-hello-uix), [`base`](https://github.com/unyt-org/uix-template-base), [`deployment`](https://github.com/unyt-org/uix-template-deployment) or [`routing`](https://github.com/unyt-org/uix-template-routing) when passing the `template` flag:
 
 ```bash
 uix --init <name> --template [template]
 ```
+
+You can find the full list of available templates [here](https://github.com/orgs/unyt-org/repositories?type=source&q=uix-template-+template%3Atrue).
 
 ## The UIX CLI
 To launch your UIX application, make sure that a [app.dx](./09%20Configuration.md#the-app-dx-file) configuration file exists in the project root.
@@ -165,6 +169,51 @@ By default, all files in the `frontend` directory are only available to browser 
 UIX [Cross-Realm Imports](./02%20Cross-Realm%20Imports.md#cross-realm-imports) allow crossing this boundary between frontend and backend. You can directly import TypeScript modules from the backend in frontend modules and access exported functions and values.
 
 Files in the `common` directory can be accessed from both the `frontend` and `backend` realm and can contain shared logic, types, components or resources.
+
+## Deno configuration
+In order to run your UIX application, you need to provide a [`deno.json`](#denojson) configuration file and a [`importmap`](#importmapjson) in the toplevel of your project.
+
+### deno.json
+The [`deno.json`](https://docs.deno.com/runtime/fundamentals/configuration/) should contain a reference to the importmap that should be used for your application and will allow JSX to work. For advanced language support, the compiler options `lib` should include `dom` and `deno.window`.
+
+Reactivity in UIX is handled by [`JUSIX`](https://docs.unyt.org/guide/reactivity). It can be enabled by setting the compiler options `jsxImportSource` property in `deno.json` to `jusix`, or disabled by setting it to `uix`.
+
+```json title="deno.json" icon="fa-file"
+{
+    "importMap": "./importmap.json",
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "jsxImportSource": "jusix",
+        "lib": [
+            "dom",
+            "deno.window"
+        ]
+    }
+}
+```
+
+### importmap.json
+Typing out the module name with the full URL and version specifier can become tedious when importing them in your UIX project.
+
+The [`importmap.json`](https://docs.deno.com/runtime/fundamentals/modules/), which is based on the [Import Maps Standard](https://github.com/WICG/import-maps), is required for your UIX project to resolve import specifiers such as `uix` or `datex-core-legacy`, and to allow UIX-style JSX.
+
+
+```json title="importmap.json" icon="fa-file"
+{
+    "imports": {
+        "datex-core-legacy": "https://cdn.unyt.org/datex-core-js-legacy@0.2.x/datex.ts",
+        "datex-core-legacy/": "https://cdn.unyt.org/datex-core-js-legacy@0.2.x/",
+        "uix": "https://cdn.unyt.org/uix@0.3.x/uix.ts",
+        "uix/": "https://cdn.unyt.org/uix@0.3.x/src/",
+        "uix/jsx-runtime": "https://cdn.unyt.org/uix@0.3.x/src/jsx-runtime/jsx.ts",
+        "jusix/jsx-runtime": "https://cdn.unyt.org/uix@0.3.x/src/jsx-runtime/jsx.ts",
+        "unyt-tests/": "https://cdn.unyt.org/unyt_tests/"
+    }
+}
+```
+
+> [!NOTE]
+> We recommend using pinned versions of the modules imported from the [unyt.org CDN](https://cdn.unyt.org) to protect your UIX project from breaking changes in upcoming releases. In this case, even with a [UIX CLI](#the-uix-cli) update, your app will be started with the pinned versions specified in the importmap.
 
 ## The UIX namespace
 The `UIX` namespace can be imported

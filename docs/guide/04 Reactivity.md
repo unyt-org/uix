@@ -48,15 +48,17 @@ You can use the `always` method to manually control reactivity when needed.
 ## JUSIX: The module behind the "magic"
 However, to make the developer experience smoother, UIX can automatically wrap certain expressions in `always` calls. This eliminates the need for developers to write `always` explicitly every time they want reactivity. This is basicially the magic we have seen in the introduction's `counter` example.
 
-UIX uses a Rust module called [JUSIX](https://github.com/unyt-org/jusix), which handles the transpilation of JSX code into reactive JavaScript.
-UIX uses a custom version of Deno as backend runtime (more info [here](https://github.com/unyt-org/deno)). JUSIX is integrated into the `deno_ast` parser, which transpiles JSX expressions into reactive code. DATEX introduces the `_$` method, which is essentially a shorthand for `always`. It comes with optimizations and performance enhancements tailored to JSX. JUSIX transpilation is also applied to modules loaded in the frontend to allow the browser to handle reactivity the same way as the backend does.
+UIX uses a Rust module called [JUSIX](https://github.com/unyt-org/jusix), which handles the interpretation of JSX code as reactive JavaScript.
+UIX uses a custom version of Deno as backend runtime called [Deno for UIX](https://github.com/unyt-org/deno). JUSIX is integrated into the [`deno_ast` parser](https://github.com/unyt-org/deno_ast) of the custom Deno build, which allows for running JSX expressions as reactive code. JUSIX does also work for frontend *(browser)* code by transpiling the frontend modules to plain JavaScript using SWC with a [JUSIX WASM plugin](https://github.com/unyt-org/jusix/tree/wasm-plugin) enabled. That allows the browser to treat reactivity the same way as the backend does. Additionally SWC does handle the conversion of TypeScript and JSX *(TS/TSX)* into plain JavaScript as browser have no native support for TypeScript nor JSX.
+
+DATEX introduces the `_$` method, which is essentially a shorthand for `always`. It comes with optimizations and performance enhancements tailored to JSX.
 
 For instance, JSX expressions like:
 ```tsx
 <p>Counter + 1 = {counter + 1}</p>;
 ```
 
-are transpiled by JUSIX into that:
+are transpiled by JUSIX into JavaScript code that looks like that:
 
 
 ```tsx
@@ -133,3 +135,22 @@ This will also work when using nested property access such as `myComplexForm.use
 <input value={prop(prop(myComplexForm, 'user'), 'name')}/>;
 ```
 
+### App configuration
+JUSIX is optional. JUSIX can be activated by settings the compiler options [`jsxImportSource` property](https://docs.unyt.org/manual/uix/getting-started#deno-configuration) in the `deno.json` to `jusix`, or disabled when setting it to be `uix`.
+
+
+```json title="deno.json" icon="fa-file"
+{
+    "importMap": "./importmap.json",
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "jsxImportSource": "jusix", // "uix" or "jusix"
+        "lib": [
+            "dom",
+            "deno.window"
+        ]
+    }
+}
+```
+
+When running UIX without having [Deno for UIX](https://github.com/unyt-org/deno) installed, the app will terminate with an exception. To disable JUSIX or allow the UIX app to run with the original [denoland/deno](https://github.com/denoland/deno) build, make sure to set the `jsxImportSource` option to `uix`. Keep in mind that this will disable all reactivity for your UIX app.

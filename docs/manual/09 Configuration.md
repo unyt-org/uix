@@ -33,12 +33,13 @@ The following options provide some general information or behavior of the app.
 * `name`: *(text)* - The name of the app
 * `description`: *(text)* - Short description for the app
 * `icon`: *(text or url)* - URL path to an app icon image - can also be a relative path, e.g. `./common/res/icon.png`
-* `installable`: *(boolean)* - The app can be installed as standalone web app
-* `meta`: *(Record<string,string>)* - Custom `<meta>` tags (name and content) that are added to the HTML head on each page
+* `installable`: *(boolean)* - Tells UIX to make the app installable as standalone web app
+* `meta`: *(Record<string,string>)* - Custom `<meta>` tags (name and content) that wille be added to the HTML head
 * `manifest`: *Record<string,any>* - Custom web manifest options that override the defaults set by UIX
-* `experimental_features`: *string[]* - List of [experimental UIX features](#experimental-features) that should be enabled
+* `experimental_features`: *string[]* - List of [experimental UIX features](#experimental-features) that should be activated
 
 <!--
+* `jusix`: *boolean* - Enable or disable [JUSIX reactivity](https://docs.unyt.org/guide/reactivity). Default to `true`.
 * `installable`: *(boolean)* - The app can be installed as standalone web app
 * `offline_support`: *(boolean)* - Adds a service worker with offline cache
 * `expose_deno`: *(boolean)* - Experimental, allows access for the Deno namespace from frontend contexts

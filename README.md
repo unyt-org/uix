@@ -34,11 +34,11 @@ The UIX library is designed with  a modular approach that makes it easy for deve
 
 UIX aims to simplify all phases of the app development cycle, including design, development, testing and distribution, in order to make the developer experience as convenient as possible. 
 This is why UIX ships with integrated features such as:
- * Hot reloading
  * [Testing library](https://github.com/unyt-org/unyt-tests/)
  * [Stage management](./docs/manual/09%20Configuration.md#app-deployment-stages)
- * Version management
  * [Automated deployment](./docs/manual/15%20Deployment.md)
+ * Version management
+ * Hot reloading
 
 ## Documentation
 
@@ -66,19 +66,21 @@ This is why UIX ships with integrated features such as:
 18. [Rendering](./docs/manual/18%20Rendering.md)
 19. [App Communication](./docs/manual/19%20App%20Communication.md)
 
-## Examples
+## Templates and Examples
 Feel free to browse a collection of UIX projects on [uix.unyt.org/templates](https://uix.unyt.org/templates).
-* [UIX Base Project](https://github.com/unyt-org/uix-base-project)
-* [UIX Base Project + Routing](https://github.com/unyt-org/uix-base-project-routing)
-* [UIX Base Project + Login](https://github.com/unyt-org/uix-login-project)
-* [Localization](https://github.com/unyt-org/example-localization)
-* [Simple Messenger](https://github.com/unyt-org/example-simple-messenger)
-* [Shopping List](https://github.com/unyt-org/example-shared-list)
-* [Website Screenshot Tool](https://github.com/unyt-org/example-website-screenshot)
-* [Tic-Tac-Toe](https://github.com/unyt-org/example-tic-tac-toe)
-* [Weather App](https://github.com/unyt-org/example-weather-app)
-* [Artwall](https://github.com/unyt-org/example-artwall)
-* [Video Call](https://github.com/unyt-org/example-video-call)
+* [Template Hello UIX](https://github.com/unyt-org/uix-template-hello-uix)
+* [Template Base](https://github.com/unyt-org/uix-template-base)
+* [Template Routing](https://github.com/unyt-org/uix-template-routing)
+* [Template Deployment](https://github.com/unyt-org/uix-template-deployment)
+---
+* [Example Localization](https://github.com/unyt-org/example-localization)
+* [Example Simple Messenger](https://github.com/unyt-org/example-simple-messenger)
+* [Example Shopping List](https://github.com/unyt-org/example-shared-list)
+* [Example Website Screenshot Tool](https://github.com/unyt-org/example-website-screenshot)
+* [Example Tic-Tac-Toe](https://github.com/unyt-org/example-tic-tac-toe)
+* [Example Weather App](https://github.com/unyt-org/example-weather-app)
+* [Example Artwall](https://github.com/unyt-org/example-artwall)
+* [Example Video Call](https://github.com/unyt-org/example-video-call)
 
 ## Browsers support
 *Certain features of UIX are also supported in legacy browser versions. The following overview is for general guidance in order to show the major browsers and their minimum version number required to use **all** of UIX's features.*

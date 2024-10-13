@@ -6,6 +6,7 @@ In UIX, JSX is used to create native DOM elements and components in a declarativ
 > [!NOTE]
 > UIX uses a custom JSX flavor called [JUSIX](https://github.com/unyt-org/jusix)
 > which allows writing reactive code in a less verbose way. 
+> In order for that to work, make sure to have the [Deno for UIX](https://github.com/unyt-org/deno) selected as your Deno runtime.
 
 
 ## Creating elements
@@ -157,6 +158,8 @@ const radius = $(0);
     <p>Area = { Math.PI * radius ** 2 }</p>
 </div>;
 ```
+
+The same is true for complex reactive data such as arrays. More information [here](#rendering-lists).
 
 ### Conditional rendering
 
@@ -564,7 +567,7 @@ const div =
     </div> as HTMLDivElement;
 ```
 
-If we don't want to use JSX, we can treat the DOM as template string and pass it to the `HTML` helper function:
+If we [don't want to use JSX](./01%20Getting%20Started.md#denojson), we can treat the DOM as template string and pass it to the `HTML` helper function:
 ```tsx
 const count = $(0);
 const div = HTML `

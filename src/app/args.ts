@@ -37,6 +37,7 @@ export const port = command_line_options.option("port", {default: 80, type:"numb
 export const enableTLS = command_line_options.option("enable-tls", {type:"boolean", description: "Enable TLS for the HTTP server"});
 
 export const gitToken = command_line_options.option("git-token", {type:"string", description: "GitHub/GitLab token for running in remote location"});
+export const hostToken = command_line_options.option("host-token", {type:"string", description: "GitHub/GitLab token for running in remote location"});
 
 // clear
 export const clear = command_line_options.option("clear", {type:"boolean", description: "Clear all eternal states on the backend"});

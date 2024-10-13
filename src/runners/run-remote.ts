@@ -5,7 +5,7 @@ import { GitRepo } from "../utils/git.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { runParams } from "./runner.ts";
 import { logger } from "../utils/global-values.ts";
-import { gitToken } from "../app/args.ts";
+import { gitToken, hostToken } from "../app/args.ts";
 
 declare const Datex: any; // cannot import Datex here, circular dependency problems
 type Endpoint = any
@@ -122,7 +122,8 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 				${args},
 				${normalizedVolumes},
 				${gitToken ?? Deno.env.get("GITHUB_TOKEN")},
-				${{importMapPath, uixRunPath}}
+				${{importMapPath, uixRunPath}},
+				${hostToken ?? Deno.env.get("HOST_TOKEN")}
 			)
 		`
 		// console.log("");

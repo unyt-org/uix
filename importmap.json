@@ -1,7 +1,7 @@
 {
 	"imports": {
-        "datex-core-legacy" : "https://cdn.unyt.org/datex-core-js-legacy@0.1.x/datex.ts",
-		"datex-core-legacy/" : "https://cdn.unyt.org/datex-core-js-legacy@0.1.x/",
+        "datex-core-legacy" : "https://cdn.unyt.org/datex-core-js-legacy@0.2.x/datex.ts",
+		"datex-core-legacy/" : "https://cdn.unyt.org/datex-core-js-legacy@0.2.x/",
         "unyt-tests/": "https://cdn.unyt.org/unyt-tests/",
 
 		"uix": "./uix.ts",

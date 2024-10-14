@@ -51,3 +51,32 @@ As an alternative, you can use an SQL database, which is more suitable for large
 Switching to SQL storage *does not require any changes in your application code* - it just changes the underlying storage mechanism.
 
 On the frontend, eternal data is stored in the browser's local storage and IndexedDB.
+
+
+### Using a custom storage location
+
+You can override the default storage location for the backend by registering a new storage location in the `backend/storage.ts` file.
+
+The following example shows how to register a new storage location using a MySQL database:
+
+```tsx title="backend/storage.ts" icon="fa-file"
+import { Storage } from "datex-core-legacy/storage/storage.ts";
+import { MySQLStorageLocation } from "datex-core-legacy/storage/storage-locations/mysql-db.ts"
+
+// create a new storage location using a MySQL database
+const sqlStorage = new MySQLStorageLocation({
+	hostname: "localhost",
+	port: 3306,
+	username: "root",
+	password: "1234",
+	db: "my-db"
+});
+
+// register the new storage location
+await Storage.addLocation(sqlStorage, {
+    // set this location as the default for all eternal modules
+	primary: true,
+    // save changes to the database immediately
+	modes: [Storage.Mode.SAVE_ON_CHANGE]
+})
+```

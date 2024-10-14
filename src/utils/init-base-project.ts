@@ -94,7 +94,7 @@ export async function initBaseProject(name?: string, template: string = "hello-u
 	let projectPath: Path;
 	if (!name) {
 		while (!projectName) {
-			projectName = prompt(ESCAPE_SEQUENCES.BOLD+"Choose a name for your project:"+ESCAPE_SEQUENCES.RESET, templateRepo.repo)!;
+			projectName = prompt(ESCAPE_SEQUENCES.BOLD+"Choose a name for your project:"+ESCAPE_SEQUENCES.RESET)!;
 		}
 		do {
 			name = prompt(ESCAPE_SEQUENCES.BOLD+"Enter a name for the project directory:"+ESCAPE_SEQUENCES.RESET, projectName?.toLowerCase().replace(/[^\w]/g, "-") || "uix-project")!;

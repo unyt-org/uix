@@ -1,5 +1,0 @@
-## class **Semaphore**
-### Constructors
-### Properties
-
-

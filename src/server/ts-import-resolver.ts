@@ -3,7 +3,6 @@ import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import "datex-core-legacy/utils/auto_map.ts";
-import { client_type } from "datex-core-legacy/utils/constants.ts";
 
 const logger = new Logger("ts import resolver");
 
@@ -72,8 +71,8 @@ export class TypescriptImportResolver {
             return resolved
         }
         
-        catch {
-            logger.error("Could not resolve import specifier '"+specifier+"'");
+        catch (e) {
+            logger.error("Could not resolve import specifier '"+specifier.slice(0, 60)+"'");
             return specifier;
         }
 	}

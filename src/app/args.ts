@@ -4,7 +4,6 @@ import { getExistingFile } from "../utils/file-utils.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/utils/logger.ts";
 import { isDenoForUIX, version as UIX_VERSION } from "../utils/version.ts";
 import { _updateProjectRootURL } from "datex-core-legacy/utils/global_values.ts"
-import { handleError, KnownError } from "datex-core-legacy/utils/error-handling.ts";
 
 export const command_line_options = new CommandLineOptions("UIX", "Fullstack Web Framework with DATEX Integration.\nVisit https://unyt.org/uix for more information", "../RUN.md");
 
@@ -75,17 +74,7 @@ export async function updateRootPath(allowFail = false) {
 	const config_path = getExistingFile(_path, './app.dx', './app.json', './src/app.dx', './src/app.json');
 
 	if (!config_path && !allowFail) {
-		handleError(
-			new KnownError(
-				`The directory does not appear to be a UIX project.\n(No app.dx or app.json file was found in ${_path.normal_pathname})`,
-				[
-					"Initialize a new project by running 'uix --init'",
-					"Change directory to a project that contains an 'app.dx' or 'src/app.dx' file",
-					"Change directory to a project that contains an 'app.json' or 'src/app.json' file",
-					"Create an 'app.dx' file with the project fields 'name' and 'description'"
-				]
-			)
-		);
+		throw `The directory does not appear to be a UIX project.\n(No app.dx or app.json file was found in ${_path.normal_pathname})`;
 	}
 
 	rootPath = (config_path ? new Path(config_path).parent_dir : null) as Path.File;

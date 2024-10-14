@@ -88,7 +88,7 @@ export const tailwindcss = {
 			Deno.writeTextFileSync(inFile.normal_pathname, '@tailwind base;\n@tailwind components;\n@tailwind utilities;')
 		}
 		if (!configFile.fs_exists) {	
-			Deno.writeTextFileSync(configFile.normal_pathname, 'export default {\n  content: ["**/*.{html,tsx,ts,jsx,js}"],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}')
+			Deno.writeTextFileSync(configFile.normal_pathname, 'export default {\n  content: ["./**/*.{html,tsx,ts,jsx,js}"],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}')
 		}
 
 		try {
@@ -99,6 +99,8 @@ export const tailwindcss = {
 			const args =  [
 				"-i",
 				inFile.normal_pathname,
+				"-c",
+				configFile.normal_pathname,
 				"-o",
 				outFile.normal_pathname
 			]

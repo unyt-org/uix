@@ -3,7 +3,6 @@ import { UIX } from "../../uix.ts";
 import type { Theme } from "../base/theme-manager.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
-import { runCommand } from "../utils/run-command.ts";
 import { getBaseDirectory, getOS } from "../utils/uix-base-directory.ts";
 import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
 import { registerBuildLock } from "../app/build-lock.ts";

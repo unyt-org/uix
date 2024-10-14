@@ -19,7 +19,7 @@ export const tailwindcss = {
 
 		const logger = new Logger("tailwindcss")
 
-		// install tailwindcss via npm if not available
+		// install tailwindcss via GitHub Releases if not available
 		const executableTarget = getBaseDirectory().getChildPath("tailwindcss");
 		let tailwindCssCmd = "tailwindcss"
 		let cmdAvailable = commandExists(tailwindCssCmd);
@@ -42,16 +42,13 @@ export const tailwindcss = {
 				handleError(
 					new KnownError(
 						`TailwindCSS executable could not be installed for your platform (${os}).`,
-						[
-							"Please open an issue on github.com/unyt-org/uix providing your platform details",
-							"Make sure that TailwindCSS is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
-							"Ensure that the 'tailwindcss' executable is in your PATH environment variable"
-						]
+						["Please open an issue on https://www.github.com/unyt-org/uix providing your platform details"]
 					),
 					logger
 				);
 			
 			try {
+				logger.info("Downloading TailwindCSS. HTTP requests / page loads will be deferred until the installation is complete.");
 				const downloadMap = await datex.get<{assets: {browser_download_url: string, name: string}[]}>("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest");
 				const releaseURL = downloadMap.assets.find(e => e.name === executableName)?.browser_download_url;
 				if (!releaseURL)
@@ -71,13 +68,12 @@ export const tailwindcss = {
 				);
 				logger.success(`TailwindCSS was installed to ${executableTarget}`);
 			} catch (e) {
-				logger.error(e);
 				handleError(
 					new KnownError(
-						"TailwindCSS executable could not be downloaded",
+						`The TailwindCSS executable could not be downloaded\n(${e})`,
 						[
-							"Make sure that TailwindCSS is installed on your computer (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)",
-							"Ensure that the 'tailwindcss' executable is in your PATH environment variable"
+							"Check your internet connectivity",
+							"Ensure that you have enough disk space and that the directory is writable"
 						]
 					),
 					logger

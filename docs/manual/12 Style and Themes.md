@@ -194,18 +194,32 @@ UIX.Theme.useThemes('my-custom-dark-theme', 'uix-light-plain');
 > To avoid duplicate code, put the theme activation in a common module and import it from both the backend and the frontend. Make sure that custom themes are also registered in a common module. 
 
 ### Predefined Themes
-UIX provides two predefined themes out-of-the-box that are selected if no theme is set: [`uix-light`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-light.ts) and [`uix-dark`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-dark.ts). These themes are designed with a clean, professional look that fits a wide variety of applications, making them an excellent starting point for most UI projects.
+
+UIX provides a set of predefined themes that can be used out of the box.
+
+#### Default UIX themes
+Per default, the UIX themes [`uix-light`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-light.ts) and [`uix-dark`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-dark.ts) are activated.
+These themes are designed with a clean, professional look that fits a wide variety of applications, making them an excellent starting point for most UI projects.
+
+#### Plain UIX themes
+If you don't want any predefined styles, you can use the plain themes [`uix-light-plain`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-light-plain.ts) and [`uix-dark-plain`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-dark-plain.ts). They only define basic text and background colors for dark and light mode, everything else is up to you.
 
 #### Tailwind CSS
 UIX also offers full support for [Tailwind CSS](https://tailwindcss.com/), a popular utility-first CSS framework that allows developers to rapidly build modern UIs using predefined CSS classes.
 
-To use TailwindCSS in your UIX application, import the theme and apply it:
+To use TailwindCSS in your UIX application, import the theme and apply it on both the frontend and backend:
 
-```ts
+```ts title="common/theme.ts" icon="fa-file"
 import { UIX } from "uix";
 import { tailwindcss } from "uix/themes/tailwindcss.ts";
 
 UIX.Theme.useTheme(tailwindcss);
+```
+```ts title="backend/entrypoint.tsx" icon="fa-file"
+import "common/theme.ts";
+```
+```ts title="frontend/entrypoint.tsx" icon="fa-file"
+import "common/theme.ts";
 ```
 
 This will activate the `TailwindCSS` theme, enabling you to write JSX with Tailwind utility classes:
@@ -215,10 +229,11 @@ export default <div class="text-red-500">
     Hello, UIX!
 </div>;
 ```
+
 More information can be found in the [Tailwind CSS documentation](https://tailwindcss.com/docs).
 
 > [!NOTE]
-> UIX does support live reloading for TailwindCSS themes when starting UIX with the [`-l` flag](./01%20Getting%20Started.md#the-uix-cli).
+> We recommend using live reloading ([`uix -l`](./01%20Getting%20Started.md#the-uix-cli)) during development to update Tailwind CSS styles and automatically reload the pages when changes are made.
 
 ### Manually overriding the mode
 

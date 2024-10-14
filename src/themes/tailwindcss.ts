@@ -97,8 +97,8 @@ export const tailwindcss = {
 		}
 
 		try {
-
-			const version = new TextDecoder().decode((await runCommand(tailwindCssCmd, {args: cmdAvailable ? ['--help'] : ['tailwindcss', '--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
+			console.log("running", tailwindCssCmd)
+			const version = new TextDecoder().decode((await new Deno.Command(tailwindCssCmd, {args: ['--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
 			logger.info("using", version);
 	
 			const args =  [
@@ -113,7 +113,7 @@ export const tailwindcss = {
 			}
 	
 
-			const status = runCommand(tailwindCssCmd, {args, stderr: "piped", stdout: "piped"}).spawn();
+			const status = new Deno.Command(tailwindCssCmd, {args, stderr: "piped", stdout: "piped"}).spawn();
 			const decoder = new TextDecoder();
 			let resolver: (() => void) | undefined = undefined;
 			let isResolved = false;
@@ -149,7 +149,7 @@ export const tailwindcss = {
 
 function commandExists(cmd: string, arg = "-h") {
 	try {
-		console.log(new TextDecoder().decode(runCommand(cmd, {args:[arg]}).outputSync().stderr));
+		console.log(new TextDecoder().decode(new Deno.Command(cmd, {args:[arg]}).outputSync().stderr));
 		return true;
 	}
 	catch {

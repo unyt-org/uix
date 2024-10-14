@@ -35,7 +35,7 @@ export function getUser(userName: string) {
 ```
 
 ```tsx title="frontend/age.tsx" icon="fa-file"
-import { getUser from "backend/age.ts"
+import { getUser } from "backend/age.ts"
 
 const userA = await getUser("1234");
 console.log(userA.age); // get age

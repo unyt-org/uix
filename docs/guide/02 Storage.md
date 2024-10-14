@@ -9,8 +9,7 @@ The most important point to take away is that you don't have to think about a da
 In UIX, you can simply write your application code as if the application would run forever and all your data would be available in application memory.
 Need to store a list of user data? Just think about how you would normally do that in JavaScript:
 
-```tsx
-// file: data.ts
+```tsx title="data.ts" icon="fa-file"
 interface UserData {
     name: string,
     email: string
@@ -19,8 +18,7 @@ export const users = new Set<UserData>()
 ```
 
 Now make the module containing the `users` Set eternal by using the `eternal.ts` file extension:
-```tsx
-// file: data.eternal.ts
+```tsx title="data.eternal.ts" icon="fa-file"
 // The code stays the same:
 interface UserData {
     name: string,
@@ -33,8 +31,7 @@ The exported `users` set is now stored persistently and the current state is sti
 
 This works out of the box without any special functions or data types. For larger data sets, you can optimize this
 by using a special storage collection instead of a native `Set`:
-```tsx
-// data.eternal.ts
+```tsx title="data.eternal.ts" icon="fa-file"
 interface UserData {
     name: string,
     email: string

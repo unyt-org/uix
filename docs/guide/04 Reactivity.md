@@ -34,7 +34,7 @@ document.querySelector('#some-element').innerText = myVar + 5;
 ```
 In regular JavaScript, the DOM is static unless you explicitly manipulate it with DOM APIs. This is where UIX introduces its powerful reactivity system, which automates the whole process of updating DOM based on state updates.
 
-## The Role of the always method
+## The Role of the "always" method
 JSX in UIX can handle dynamic expressions and reactive updates using the `always` method provided by DATEX:
 ```tsx
 const myVar = $(4);
@@ -48,18 +48,20 @@ You can use the `always` method to manually control reactivity when needed.
 ## JUSIX: The module behind the "magic"
 However, to make the developer experience smoother, UIX can automatically wrap certain expressions in `always` calls. This eliminates the need for developers to write `always` explicitly every time they want reactivity. This is basicially the magic we have seen in the introduction's `counter` example.
 
-UIX uses a Rust module called [JUSIX](https://github.com/unyt-org/jusix), which handles the interpretation of JSX code as reactive JavaScript.
-UIX uses a custom version of Deno as backend runtime called [Deno for UIX](https://github.com/unyt-org/deno). JUSIX is integrated into the [`deno_ast` parser](https://github.com/unyt-org/deno_ast) of the custom Deno build, which allows for running JSX expressions as reactive code. JUSIX does also work for frontend *(browser)* code by transpiling the frontend modules to plain JavaScript using SWC with a [JUSIX WASM plugin](https://github.com/unyt-org/jusix/tree/wasm-plugin) enabled. That allows the browser to treat reactivity the same way as the backend does. Additionally SWC does handle the conversion of TypeScript and JSX *(TS/TSX)* into plain JavaScript as browser have no native support for TypeScript nor JSX.
+UIX uses the SWC transpiler to convert TypeScript and JSX code into plain JavaScript for both the frontend and backend.
+Our custom SWC plugin called [JUSIX](https://github.com/unyt-org/jusix) handles the interpretation of JSX code as reactive JavaScript.
 
-DATEX introduces the `_$` method, which is essentially a shorthand for `always`. It comes with optimizations and performance enhancements tailored to JSX.
+JUSIX is integrated in our custom version of Deno, called [Deno for UIX](https://github.com/unyt-org/deno), as part of the [`deno_ast` parser](https://github.com/unyt-org/deno_ast).
+Additionally, the [JUSIX WASM plugin](https://github.com/unyt-org/jusix/tree/wasm-plugin) transpiles the frontend code to plain JavaScript for the browser.
+
+JUSIX uses the `_$` method, which is essentially a shorthand for `always`. It comes with optimizations and performance enhancements tailored to JSX.
 
 For instance, JSX expressions like:
 ```tsx
 <p>Counter + 1 = {counter + 1}</p>;
 ```
 
-are transpiled by JUSIX into JavaScript code that looks like that:
-
+are transpiled by JUSIX into JavaScript code that looks like this:
 
 ```tsx
 <p>Counter + 1 = {_$(() => counter + 1)}</p>;
@@ -100,7 +102,7 @@ The reactivity does not only work for HTML children or content but also for HTML
 ```tsx
 const counter = $(0);
 <button
-  value={'Clicked:' + myValue}
+  value={'Clicks:' + myValue}
   onclick={() => counter.val++}/>;
 ```
 
@@ -109,7 +111,7 @@ is transpiled to:
 ```tsx
 const counter = $(0);
 <button
-  value={_$(() => 'Clicked:' + myValue)}
+  value={_$(() => 'Clicks:' + myValue)}
   onclick={() => counter.val++}/>;
 ```
 

@@ -83,15 +83,21 @@ export class BackendManager {
 
 	async watchFiles(){
 		let handling = false;
-		for await (const event of Deno.watchFs(this.#scope.normal_pathname, {recursive: true})) {
-			if (handling) continue;
-
-			handling = true;
-			for (const path of event.paths) {
-				this.handleFileUpdate(Path.File(path));
-			} 
-			this.handleUpdate();
-			setTimeout(() => handling = false, 500)
+		try {
+			for await (const event of Deno.watchFs(this.#scope.normal_pathname, {recursive: true})) {
+				if (handling) continue;
+	
+				handling = true;
+				for (const path of event.paths) {
+					this.handleFileUpdate(Path.File(path));
+				} 
+				this.handleUpdate();
+				setTimeout(() => handling = false, 500)
+			}
+		}
+		catch (e) {
+			if (e.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
+			else throw e;
 		}
 	}
 

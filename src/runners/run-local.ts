@@ -182,8 +182,14 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		else if (isWatching) {
 			console.log("waiting until files are updated...");
 			// error - wait until a file was modified before restart
-			for await (const _event of Deno.watchFs(new Path(root_path).normal_pathname, {recursive: true})) {
-				break;
+			try {
+				for await (const _event of Deno.watchFs(new Path(root_path).normal_pathname, {recursive: true})) {
+					break;
+				}
+			}
+			catch (e) {
+				if (e.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
+				else throw e;
 			}
 			await run();
 		}

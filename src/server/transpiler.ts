@@ -230,16 +230,21 @@ export class Transpiler {
         if (!this.#src_dir) throw new Error("no src directory set");
 
         // logger.info("file watcher activated for " + this.src_dir.pathname);
-
-        for await (const event of this.#main_fs_watcher = Deno.watchFs(this.src_dir.normal_pathname, {recursive: true})) {
-            try {
-				for (const path of event.paths) {
-					this.handleFileWatchUpdate(path);
-				}
+        try {
+            for await (const event of this.#main_fs_watcher = Deno.watchFs(this.src_dir.normal_pathname, {recursive: true})) {
+                try {
+                    for (const path of event.paths) {
+                        this.handleFileWatchUpdate(path);
+                    }
+                }
+                catch (e) {
+                    console.log("file update error:",e);
+                }
             }
-            catch (e) {
-                console.log("file update error:",e);
-            }
+        }
+        catch (e) {
+            if (e.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
+            else throw e;
         }
     }
 
@@ -512,21 +517,27 @@ export class Transpiler {
 
 
     private async syncVirtualFile(virtual_path:Path.File, src_path:Path.File){
-        const watcher = Deno.watchFs(src_path.pathname);
-        this.#fs_watchers.set(virtual_path.toString(), watcher);
+        try {
+            const watcher = Deno.watchFs(src_path.pathname);
+            this.#fs_watchers.set(virtual_path.toString(), watcher);
 
-        for await (const event of watcher) {
-            try {
-				for (const path of event.paths) {
-					const src_path = new Path(path);
+            for await (const event of watcher) {
+                try {
+                    for (const path of event.paths) {
+                        const src_path = new Path(path);
 
-                    logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
-                    await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
-				}
+                        logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
+                        await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
+                    }
+                }
+                catch (e) {
+                    console.log("file update error:",e);
+                }
             }
-            catch (e) {
-                console.log("file update error:",e);
-            }
+        }
+        catch (e) {
+            if (e.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
+            else throw e;
         }
     }
 

@@ -256,11 +256,23 @@ const list = <ul>
 </ul>;
 
 // add an item to the list
-items.val.push("Item 4");
+items.push("Item 4");
 ```
 
 You can use other array functions such as [`filter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter), [`reduce`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce), [`forEach`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach) or [`find`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find) in the same way.
 
+To map over other structures like Sets, which do not natively support the `map` method like Arrays, you can use the [`map` function from DATEX](https://docs.unyt.org/manual/datex/functional-programming#map) to achieve a similar and reactive outcome. Pass the structure as the first argument, and the callback function for the transformation as the second argument.
+
+```tsx
+const items = $(new Set());
+
+const list = <ul>
+    {map(items, item => <li>{item}</li>)}
+</ul>;
+
+// add an item to the list
+items.add("Item 4");
+```
 
 ## Input validation
 

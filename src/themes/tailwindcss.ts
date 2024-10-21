@@ -32,8 +32,8 @@ export const tailwindcss = {
 			const executableName = {
 				'linux-x86_64': "tailwindcss-linux-x64",
 				'linux-aarm': "tailwindcss-linux-arm64",
-				'windows-x86_64': "tailwindcss-windows-x64",
-				'windows-aarch64': "tailwindcss-windows-arm64",
+				'windows-x86_64': "tailwindcss-windows-x64.exe",
+				'windows-aarch64': "tailwindcss-windows-arm64.exe",
 				'darwin-x86_64': "tailwindcss-macos-arm64",
 				'darwin-aarch64': "tailwindcss-macos-x64"
 			}[os];
@@ -61,10 +61,15 @@ export const tailwindcss = {
 					}
 				);
 
-				await Deno.chmod(
-					executableTarget.normal_pathname,
-					0o777
-				);
+				try {
+					await Deno.chmod(
+						executableTarget.normal_pathname,
+						0o777
+					);
+				}
+				catch  {
+					// ignore if chmod fails on Windows
+				}
 				logger.success(`TailwindCSS was installed to ${executableTarget}`);
 			} catch (e) {
 				handleError(

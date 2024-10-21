@@ -184,11 +184,7 @@ export class FileHandle {
  */
 export function provideFile(path: string | URL) {
 	const resolvedPath = new Path(path, getCallerFile());
-	return async () => {
-		if (await resolvedPath.exists())
-			return new FileHandle(resolvedPath);
-		return new HTTPError(HTTPStatus.NOT_FOUND);
-	}
+	return new FileHandle(resolvedPath);
 }
 
 /**

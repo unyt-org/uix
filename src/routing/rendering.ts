@@ -383,15 +383,20 @@ export async function resolveEntrypointRoute<T extends Entrypoint>(entrypointDat
 
 	// handle FileHandle
 	else if (client_type === "deno" && entrypointData.entrypoint instanceof FileHandle) {
-		const file = await Deno.open(entrypointData.entrypoint.path.normal_pathname);
-		const { mime } = await import("https://deno.land/x/mimetypes@v1.0.0/mod.ts");
-		const mimeType = mime.getType(entrypointData.entrypoint.path.name);
+		try {
+			const file = await Deno.open(entrypointData.entrypoint.path.normal_pathname);
+			const { mime } = await import("https://deno.land/x/mimetypes@v1.0.0/mod.ts");
+			const mimeType = mime.getType(entrypointData.entrypoint.path.name);
 
-		resolved.content = new Response(file.readable)
-		// cors headers (TODO: more general way to define cors behavior)
-		resolved.content.headers.set("Access-Control-Allow-Origin", "*");
-		resolved.content.headers.set("Access-Control-Allow-Headers", "*");
-		if (mimeType) resolved.content.headers.set("Content-Type", mimeType);
+			resolved.content = new Response(file.readable)
+			// cors headers (TODO: more general way to define cors behavior)
+			resolved.content.headers.set("Access-Control-Allow-Origin", "*");
+			resolved.content.headers.set("Access-Control-Allow-Headers", "*");
+			if (mimeType) resolved.content.headers.set("Content-Type", mimeType);
+		}
+		catch {
+			throw HTTPStatus.NOT_FOUND
+		}
 	}
 
 

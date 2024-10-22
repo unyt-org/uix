@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run -A --lock=tools/deno.lock.json
+#!/usr/bin/env -S deno run -A --lock=tools/deno.lock
 import { walk } from "jsr:@std/fs/walk";
 import * as path from "jsr:@std/path";
 

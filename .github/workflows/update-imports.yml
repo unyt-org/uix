@@ -1,4 +1,4 @@
-name: update_imports
+name: Update Imports
 
 on:
   workflow_dispatch:

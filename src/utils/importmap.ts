@@ -105,7 +105,7 @@ export class ImportMap {
 	resolvePinned(path: string|URL) {
 		const resolved = import.meta.resolve(path.toString());
 		// check if resolved path is a CDN library
-		const lib = (path instanceof URL ? path : new URL(path)).pathname.split("/")[1];
+		const lib = URL.canParse(resolved) && new URL(resolved).pathname.split("/")[1];
 		if (lib && this.#libVersions[lib]) {
 			return this.#getPinnedUrl(resolved, lib);
 		}

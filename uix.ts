@@ -7,6 +7,9 @@ import { Datex } from "datex-core-legacy";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { version } from "./src/utils/version.ts";
 
+/* <module> */
+/* </module> */
+
 /**
  * get UIX cache path
  */

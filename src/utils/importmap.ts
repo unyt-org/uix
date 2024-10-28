@@ -78,11 +78,39 @@ export class ImportMap {
 
 				// set pinned version for URL
 				if (this.#libVersions[lib]) {
-					this.#pinnedVersions[specifier] = url.replace(/(?<=https?:\/\/[^/]*\/)[^/]*/, (v)=> {
-						return v.replace(/@.*/, '') + "@" + this.#libVersions[lib];
-					})
+					this.#pinnedVersions[specifier] = this.#getPinnedUrl(url, lib);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Returns the URL with the pinned version if available
+	 * @param url the original URL
+	 * @param lib the library name
+	 * @returns 
+	 */
+	#getPinnedUrl(url: string, lib: string) {
+		if (!this.#libVersions[lib]) return url;
+		return url.replace(/(?<=https?:\/\/[^/]*\/)[^/]*/, (v)=> {
+			return v.replace(/@.*/, '') + "@" + this.#libVersions[lib];
+		})
+	}
+
+
+	/**
+	 * Same as import.meta.resolve, but uses pinned versions for CDN libraries if available
+	 * @param path 
+	 */
+	resolvePinned(path: string|URL) {
+		const resolved = import.meta.resolve(path.toString());
+		// check if resolved path is a CDN library
+		const lib = (path instanceof URL ? path : new URL(path)).pathname.split("/")[1];
+		if (lib && this.#libVersions[lib]) {
+			return this.#getPinnedUrl(resolved, lib);
+		}
+		else {
+			return resolved;
 		}
 	}
 

@@ -37,7 +37,7 @@ export async function resolveDependencies(file: Path|string, appOptions: normali
 			const response = await fetch(file.toString());
 			// has X-Module-Dependencies header
 			if (response.headers.get("X-Module-Dependencies") == "true") {
-				return await resolveDependenciesFromDependencyFile(file);
+				return await resolveDependenciesFromDependencyFile(file, appOptions);
 			}
 			// http file without X-Module-Dependencies header
 			else return await resolveDependenciesFromSource(file, await response.text(), appOptions, tree, FrontendManager);
@@ -59,28 +59,28 @@ export async function resolveDependencies(file: Path|string, appOptions: normali
 	}
 }
 
-async function resolveDependenciesFromDependencyFile(file: Path) {
+async function resolveDependenciesFromDependencyFile(file: Path, appOptions: normalizedAppOptions) {
 	const depsTree = await (await fetch(file.getWithFileExtension(file.ext + '.dependencies'))).json()
 
 	const allDeps = new Set<string>();
-	resolveFileMap(depsTree, allDeps, file);
+	resolveFileMap(depsTree, allDeps, file, appOptions);
 
 	return allDeps;
 }
 
-function resolveFileMap(tree: Exclude<Tree, null>, allDeps: Set<string>, rootPath: Path) {
+function resolveFileMap(tree: Exclude<Tree, null>, allDeps: Set<string>, rootPath: Path, appOptions: normalizedAppOptions) {
 	const topLevelDeps = new Set<string>();
 	for (const [key, value] of Object.entries(tree)) {
 		const keyFile = Path.pathIsURL(key) ? 
 			key :
 			key.startsWith('./') || key.startsWith('../') ?
 				new Path(key, rootPath):
-				import.meta.resolve(key);
+				appOptions.import_map.resolvePinned(key);
 		
 		topLevelDeps.add(keyFile.toString());
 		allDeps.add(keyFile.toString());
 		if (value) {
-			const deps = resolveFileMap(value, allDeps, rootPath);
+			const deps = resolveFileMap(value, allDeps, rootPath, appOptions);
 			cachedDependencies.set(keyFile.toString(), deps);
 		}
 	}
@@ -101,7 +101,7 @@ async function resolveDependenciesFromSource(file: Path, source:string|undefined
 			continue;
 		}
 		const normalizedPath = path.startsWith('/') || path.startsWith('./') || path.startsWith('../') ? new Path(path, file).toString() : path;
-		const resolvedPath = import.meta.resolve(normalizedPath);
+		const resolvedPath = appOptions.import_map.resolvePinned(normalizedPath);
 
 		// ignore backend modules that are not exposed to the frontend
 		const resolvedPathObj = new Path(resolvedPath);

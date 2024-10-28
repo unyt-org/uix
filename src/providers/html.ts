@@ -25,7 +25,9 @@ export class HTMLProvider {
 		// uix:// paths are absolute web paths without a domain -> return absolute path without protocol
 		if (path instanceof URL && path.protocol == "uix:") return path.pathname + path.search;
 		// first try to resolve import specifiers
-		const resolved = compat_import_map && !Path.pathIsURL(path) ? this.import_resolver.resolveImportSpecifier(path.toString(), this.base_path) : path.toString();
+		const resolved = compat_import_map && !Path.pathIsURL(path) ? 
+			this.app_options.import_map.resolvePinned(this.import_resolver.resolveImportSpecifier(path.toString())) : 
+			path.toString();
 		// make sure all paths are converted to web paths
 		if (map_to_web_path) {
 			return convertToWebPath(resolved);

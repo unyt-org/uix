@@ -695,6 +695,9 @@ export async function generateHTMLPage({
 	includeImportMap ??= true;
 	preloadDependencies ??= true;
 
+	// make sure pinned imports are resolved
+	await app.options?.import_map.init();
+
 	const modulePreloadUrls = new Set<string>();
 	const addPreloadUrl = async (url:string|URL) => {
 		if (preloadDependencies) {

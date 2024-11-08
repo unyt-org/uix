@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-async-promise-executor
 import { UIX } from "../../uix.ts";
 import type { Theme } from "../base/theme-manager.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";

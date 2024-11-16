@@ -33,8 +33,8 @@ export const tailwindcss = {
 				'linux-aarm': "tailwindcss-linux-arm64",
 				'windows-x86_64': "tailwindcss-windows-x64.exe",
 				'windows-aarch64': "tailwindcss-windows-arm64.exe",
-				'darwin-x86_64': "tailwindcss-macos-arm64",
-				'darwin-aarch64': "tailwindcss-macos-x64"
+				'darwin-x86_64': "tailwindcss-macos-x64",
+				'darwin-aarch64': "tailwindcss-macos-arm64"
 			}[os];
 			if (!executableName)
 				handleError(

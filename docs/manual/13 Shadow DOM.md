@@ -68,8 +68,8 @@ and will render as:
     #shadow-root
         Before children
         <slot>
-            <div>Child 1</div>
-            Child 2
+            ⮑ <div>Child 1</div>
+            ⮑ Child 2
         </slot>
         After children
 </div>

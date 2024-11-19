@@ -45,9 +45,6 @@ will be rendered as:
 The `shadow-root` attribute can be used like the following:
 
 ```tsx
-import { template } from "uix/html/template.ts";
-
-// define template:
 const ShadowTemplateWithSlot = template(<div shadow-root>
     Before children
     <slot/>
@@ -81,8 +78,6 @@ The Light DOM uses a `<light-root>` element to explicitly manage content placeme
 As a result, global styles, scripts, and DOM behavior can directly affect the content inside a light root.
 
 ```tsx
-import { template } from "uix/html/template.ts";
-
 @template(() => <light-root>
     <slot name="heading"/>
     <hr/>

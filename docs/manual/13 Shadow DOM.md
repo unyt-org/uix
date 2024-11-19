@@ -20,18 +20,18 @@ import { template } from "uix/html/template.ts";
 	<slot/>
 	<p>Footer</p>
 </shadow-root>)
-class CustomComponentWithSlot extends Component {}
+class ShadowComponentWithSlot extends Component {}
 
 // Create the component and add children
-<CustomComponentWithSlot id="c1">
+<ShadowComponentWithSlot id="c1">
     <div>Child 1</div>
     {'Child 2'}
-</CustomComponentWithSlot>;
+</ShadowComponentWithSlot>;
 ```
 
 will render as
 ```html
-<uix-custom-component-with-slot id="c1">
+<uix-shadow-component-with-slot id="c1">
     #shadow-root
         <h1>Heading</h1>
         <slot>
@@ -39,7 +39,38 @@ will render as
             ⮑ Child 2
         </slot>
         <p>Footer</p>
-</uix-custom-component-with-slot>
+</uix-shadow-component-with-slot>
+```
+
+```
+import { template } from "uix/html/template.ts";
+
+// define template:
+const ShadowTemplateWithSlot = template(<div shadow-root>
+    Before children
+    <slot/>
+    After children
+</div>);
+
+// create the element
+<ShadowTemplateWithSlot id="c2">
+    <div>Child 1</div>
+    {'Child 2'}
+</ShadowTemplateWithSlot>;
+```
+
+will render as:
+
+```html
+<div id="c2">
+    #shadow-root
+        Before children
+        <slot>
+            <div>Child 1</div>
+            Child 2
+        </slot>
+        After children
+</div>
 ```
 
 ## Light Root
@@ -54,7 +85,7 @@ import { template } from "uix/html/template.ts";
     <slot name="heading"/>
     <hr/>
     <slot name="content"/>
-	<p>Footer</p>
+    <p>Footer</p>
 </light-root>)
 class LightComponentWithSlots extends Component {}
 

@@ -29,7 +29,7 @@ class ShadowComponentWithSlot extends Component {}
 </ShadowComponentWithSlot>;
 ```
 
-will render as
+will be rendered as:
 ```html
 <uix-shadow-component-with-slot id="c1">
     #shadow-root
@@ -61,7 +61,7 @@ const ShadowTemplateWithSlot = template(<div shadow-root>
 </ShadowTemplateWithSlot>;
 ```
 
-will render as:
+and will render as:
 
 ```html
 <div id="c2">
@@ -92,7 +92,7 @@ import { template } from "uix/html/template.ts";
 class LightComponentWithSlots extends Component {}
 
 // Create the component and add children
-<LightComponentWithSlots id="c2">
+<LightComponentWithSlots id="c3">
     <h1 slot="heading">Heading</h1>
     <div slot="content">
         My content!
@@ -102,7 +102,7 @@ class LightComponentWithSlots extends Component {}
 
 will render as
 ```html
-<uix-light-component-with-slots id="c2">
+<uix-light-component-with-slots id="c3">
     <light-root>
         <slot name="heading">
             <h1 slot="heading">Heading</h1>

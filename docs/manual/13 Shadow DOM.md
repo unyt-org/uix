@@ -42,7 +42,9 @@ will render as
 </uix-shadow-component-with-slot>
 ```
 
-```
+The `shadow-root` attribute can be used like the following:
+
+```tsx
 import { template } from "uix/html/template.ts";
 
 // define template:

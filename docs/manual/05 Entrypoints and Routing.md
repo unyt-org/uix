@@ -43,7 +43,7 @@ The route `/home/about` is resolved on the *backend* to `About us`.
 ### HTML elements
 HTML elements are appended directly to the body of the document. They can be created using the built-in DOM APIs (`document.createElement()`) or using JSX syntax:
 ```tsx title="entrypoint.tsx" icon="fa-file"
-import { Entrypoint } from "uix/html/entrypoints.ts";
+import { Entrypoint } from "uix/providers/entrypoints.ts";
 export default <div>Content</div> satisfies Entrypoint;
 ```
 
@@ -198,7 +198,7 @@ provideImage(
 ```
 You can render your favicon using following code:
 ```tsx title="backend/entrypoint.tsx" icon="fa-file"
-import type { Entrypoint } from "uix/html/entrypoints.ts";
+import type { Entrypoint } from "uix/providers/entrypoints.ts";
 import { provideImage } from "uix/providers/image.ts";
 import { app } from "uix/app/app.ts";
 

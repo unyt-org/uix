@@ -13,11 +13,11 @@ In UIX, you can create a `<form>` element with JSX and just bind the input value
 }
 
 // <UpdateUserData/> form template
-const UpdateUserData = template<{user:User}>((_, {user}) => 
+const UpdateUserData = template<{user:User}>(({user}) => 
     <form>
         Update User Data:
-        <input type="text"   value={user.$.name}/>
-        <input type="number" value={user.$.age}/>
+        <input type="text"   value={user.name}/>
+        <input type="number" value={user.age}/>
     </form>
 )
 
@@ -39,11 +39,11 @@ event was triggered, you can set `datex-update` to `"onsubmit"`:
 
 ```tsx
 // <UpdateUserData/> form template with submit button
-const UpdateUserData = template<{user:User}>((_, {user}) => 
+const UpdateUserData = template<{user:User}>(({user}) => 
     <form datex-update="onsubmit">
         Update User Data:
-        <input type="text" value={user.$.name}/>
-        <input type="number" value={user.$.age}/>
+        <input type="text" value={user.name}/>
+        <input type="number" value={user.age}/>
         <button type="submit">Save</button>
     </form>
 )
@@ -74,8 +74,8 @@ const NewUserForm = template(() => {
     const user = new User()
     return <form action={() => handleNewUser(user)}>
         Register User:
-        <input type="text"   value={user.$.name}/>
-        <input type="number" value={user.$.age}/><
+        <input type="text" value={user.name}/>
+        <input type="number" value={user.age}/>
         <button type="submit">Speichern</button>
     </form>
 })

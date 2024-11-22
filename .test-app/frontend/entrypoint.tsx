@@ -2,7 +2,7 @@ import { testComponents } from "../common/test-components.tsx";
 import { invalid } from "../common/errors.tsx";
 import { HTTPError } from "uix/html/http-error.ts";
 import { HTTPStatus } from "uix/html/http-status.ts";
-import { Entrypoint } from "uix/html/entrypoints.ts";
+import { Entrypoint } from "uix/providers/entrypoints.ts";
 import { renderBackend } from "uix/base/render-methods.ts";
 
 

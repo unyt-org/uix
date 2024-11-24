@@ -1,8 +1,8 @@
 # Shadow DOM and Light DOM
-UIX provides mechanisms to encapsulate styles and manage child elements using [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM) and [Light DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction). These features allow developers to build modular and reusable components while ensuring precise control over how child elements are rendered within the DOM.
+UIX provides mechanisms to place child elements in slots inside [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM) and Light DOM elements.
+While the Shadow DOM creates a completely encapsulated DOM which isolates all CSS styles from the parent DOM, the Light DOM also supports slots like the Shadow DOM, but is still part of the normal DOM.
 
-
-Slots are a powerful feature in the Shadow DOM and Light DOM, allowing developers to inject children into specific placeholders within a UIX component. By assigning a name attribute to a <slot> element and a matching slot attribute to child elements, you can control which content appears in which slot. If the slot within the template definition has no name attribute set, all children will be injected into the first slot of the component.
+Slots are a powerful feature in the Shadow DOM and Light DOM, allowing developers to inject children into specific placeholders within a UIX component. By assigning a name attribute to a `<slot/>` element and a matching slot attribute to child elements, you can control which content appears in which slot. If the slot within the template definition has no name attribute set, all children will be injected into the first slot of the component.
 
 To define a shadow or light root for a component, you can use:
 
@@ -15,11 +15,13 @@ The Shadow DOM provides encapsulation for a component, separating its internal s
 ```tsx
 import { template } from "uix/html/template.ts";
 
-@template(() => <shadow-root>
-	<h1>Heading</h1>
+@template(
+    <shadow-root>
+        <h1>Heading</h1>
 	<slot/>
-	<p>Footer</p>
-</shadow-root>)
+        <p>Footer</p>
+    </shadow-root>
+)
 class ShadowComponentWithSlot extends Component {}
 
 // Create the component and add children
@@ -45,11 +47,13 @@ will be rendered as:
 The `shadow-root` attribute can be used like the following:
 
 ```tsx
-const ShadowTemplateWithSlot = template(<div shadow-root>
-    Before children
-    <slot/>
-    After children
-</div>);
+const ShadowTemplateWithSlot = template(
+    <div shadow-root>
+        Before children
+        <slot/>
+        After children
+    </div>
+);
 
 // create the element
 <ShadowTemplateWithSlot id="c2">
@@ -78,12 +82,14 @@ The Light DOM uses a `<light-root>` element to explicitly manage content placeme
 As a result, global styles, scripts, and DOM behavior can directly affect the content inside a light root.
 
 ```tsx
-@template(() => <light-root>
-    <slot name="heading"/>
-    <hr/>
-    <slot name="content"/>
-    <p>Footer</p>
-</light-root>)
+@template(
+    <light-root>
+        <slot name="heading"/>
+        <hr/>
+        <slot name="content"/>
+        <p>Footer</p>
+    </light-root>
+)
 class LightComponentWithSlots extends Component {}
 
 // Create the component and add children
@@ -109,4 +115,27 @@ will render as
         <p>Footer</p>
     </light-root>
 </uix-light-component-with-slots>
+```
+
+##  Slot placeholder content
+
+Slots can also can also contain default content that is display until child elements are inserted:
+
+```tsx
+const ItemList = template(
+    <div shadow-root>
+        <slot>
+	   No items added
+	</slo>
+    </div>
+);
+
+// renders placeholder content "No items added" inside the slot
+const list1 = <ItemList/>;
+
+// renders list items inside the slot
+const list2 = <ItemList>
+    <div>Item 1</div>
+    <div>Item 2</div>
+</ItemList>
 ```

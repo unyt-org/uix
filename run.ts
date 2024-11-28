@@ -77,6 +77,9 @@ if (await handleAutoUpdate(new Path(import.meta.url).parent_dir, "UIX")) {
 		updateCache(import.meta.resolve("./src/app/start.ts")),
 		updateCache("https://cdn.unyt.org/uix/run.ts")
 	)
+	// update JUSIX
+	const { getJusix } = await import("./src/server/jusix.ts");
+	updatePromises.push(getJusix(true));
 	forceUpdate = true
 }
 if (await handleAutoUpdate(new Path(import.meta.resolve("datex-core-legacy")).parent_dir, "DATEX Core")) {

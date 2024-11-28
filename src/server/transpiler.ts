@@ -1,22 +1,21 @@
 import { Path } from "datex-core-legacy/utils/path.ts"; 
-import { Datex } from "datex-core-legacy";
 import { TypescriptImportResolver } from "./ts-import-resolver.ts";
 import { getCallerDir } from "datex-core-legacy/utils/caller_metadata.ts";
 import { eternalExts, updateEternalFile } from "../app/module-mapping.ts";
 import { app } from "../app/app.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
-import { getDependencyTree, loadDependencyList } from "../html/dependency-resolver.ts";
+import { loadDependencyList } from "../html/dependency-resolver.ts";
 import { UIX } from "../../uix.ts";
 import { reload } from "../app/args.ts";
-import { getBaseDirectory } from "../utils/uix-base-directory.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
+import { getJusix } from "./jusix.ts";
 
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
 const sass = client_type === "deno" ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
 
 
-
-const logger = new Datex.Logger("transpiler");
+const logger = new Logger("transpiler");
 
 /**
  * Directory structure:
@@ -611,34 +610,10 @@ export class Transpiler {
         return this.transpileToJSSWC(ts_dist_path, src_path, app.options?.jusix);
     }
 
-    static #jusixLoading?: Promise<string>
-  
-    public static async getJusix(update = false) {
-        if (this.#jusixLoading) return this.#jusixLoading;
-        const {promise, resolve} = Promise.withResolvers<string>()
-        this.#jusixLoading = promise;
-
-        const wasmPath = getBaseDirectory().getChildPath("jusix.wasm");
-
-        // if wasm file does not exist or update is forced, download
-        if (update || !await wasmPath.fsExists()) {
-            logger.info("updating JUSIX...");
-            // download jusix
-            const JUSIX_WASM_URL = "https://github.com/unyt-org/jusix/raw/wasm-plugin/jusix.wasm";
-            const response = await fetch(JUSIX_WASM_URL);
-            // save in deno dir
-            const bin = await response.arrayBuffer();
-            await Deno.writeFile(wasmPath.normal_pathname, new Uint8Array(bin));
-            logger.success("JUSIX updated");
-        }
-        resolve(wasmPath.normal_pathname);
-        return wasmPath.normal_pathname;
-    }
-
     private async transpileToJSSWC(ts_dist_path: Path.File, src_path: Path.File, useJusix = false) {
         const {transform} = await import("npm:@swc/core@1.7.23");
 
-        const jusixPath = useJusix && await Transpiler.getJusix(reload);
+        const jusixPath = useJusix && await getJusix(reload);
 
         const experimentalPlugins = useJusix ? {
             plugins: [

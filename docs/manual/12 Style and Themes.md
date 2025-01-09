@@ -10,7 +10,7 @@ UIX supports different ways of styling your application, including:
 * **Sass** (*deprecated*): A popular CSS preprocessor that extends CSS with features like variables, nested rules, and mixins.
 
 ## Global style sheets
-You can define general global styles in an `entrypoint.css` file next to the `entrypoint.ts` file for backend or frontend.
+You can define general global styles in an `entrypoint.css` file next to the `entrypoint.ts` file in the frontend directory.
 
 > [!NOTE]
 > Although SCSS is supported natively by UIX, we recommend using CSS files rather than SCSS files. Modern CSS already includes most of the features that are provided by SCSS.

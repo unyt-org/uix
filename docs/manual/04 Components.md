@@ -283,22 +283,22 @@ const parent =
 Class components extending the `Component` class will expose methods to handle the components lifecyle. 
 
 ```typescript
-@Component
+@template
 class CustomComponent extends Component {
     // called when component is constructed
-    onConstruct() {}
+    protected override onConstruct(): Promise<void> | void { }
 
     // called after component is constructed or restored
-    onInit() {}
+    protected override onInit(): Promise<void> | void { }
 
     // called once before onAnchor
-    onCreate() {}
+    protected override onCreate(): void | Promise<void> { }
 
     // called every time the component is added to a new parent in the DOM
-    onAnchor() {}
+    protected override onAnchor(): void | Promise<void> { }
 
     // called after onAnchor when the component is displayed in a browser context
-    onDisplay() {}
+    protected override onDisplay(): void | Promise<void> { }
 }
 ```
 

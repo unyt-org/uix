@@ -32,28 +32,48 @@ export function css(template:TemplateStringsArray|string, ...params:cssParam[]):
 	// template
 	else {
 
-		const globalCSSVars = new Map<string, any>();
-		const localCSSVars = new Map<string, cssGeneratorFunction>();
+		const globalCSSVars = new Map<string, [any, string?]>();
+		const localCSSVars = new Map<string, [cssGeneratorFunction, string?]>();
 		const cssVarsBySelector = new Map<string, Set<string>>();
+
+		const templateRaw = [...(template as unknown as TemplateStringsArray).raw];
 
 		// combine css
 		let css = "";
 		let c = 0;
 		const time = performance.now().toString().replace(".","");
-		for (const raw of (template as unknown as TemplateStringsArray).raw) {
+		for (const raw of templateRaw) {
 			css += raw;
-			if (c<(template as unknown as TemplateStringsArray).raw.length-1) {
-				// is (arrow) function - if no parameters passed (()=>...), it can be used as a global var, because there is no difference between elements
-				if (typeof params[c] == "function" && !(params[c].toString().startsWith('()'))) {
-					const name = `${LOCAL_VAR_PREFIX}${time}-${c}`;
-					localCSSVars.set(name, params[c])
-					css += `var(${name})`;
+			if (c<templateRaw.length-1) {
+
+				// is dynamic value
+				if (params[c] instanceof Datex.ReactiveValue) {
+					// is (arrow) function - if no parameters passed (()=>...), it can be used as a global var, because there is no difference between elements
+					if (typeof params[c] == "function" && !(params[c].toString().startsWith('()'))) {
+						const name = `${LOCAL_VAR_PREFIX}${time}-${c}`;
+						const unit = templateRaw[c+1].match(/(.*)[;(){}, ]/)?.[1];
+						// remove unit from template
+						if (unit) {
+							templateRaw[c+1] = templateRaw[c+1].replace(unit, "");
+						}
+						localCSSVars.set(name, [params[c], unit]);
+						css += `var(${name})`;
+					}
+					else {
+						const name = `${GLOBAL_VAR_PREFIX}${time}-${c}`;
+						const unit = templateRaw[c+1].match(/(.*)[;(){}, ]/)?.[1];
+						// remove unit from template
+						if (unit) {
+							templateRaw[c+1] = templateRaw[c+1].replace(unit, "");
+						}
+						globalCSSVars.set(name, [params[c], unit])
+						css += `var(${name})`;
+					}
 				}
+				// is static value
 				else {
-					const name = `${GLOBAL_VAR_PREFIX}${time}-${c}`;
-					globalCSSVars.set(name, params[c])
-					css += `var(${name})`;
-				}
+					css += domUtils.escapeCSSValue(params[c]);
+				}		
 			}
 			c++;
 		}
@@ -78,20 +98,22 @@ export function css(template:TemplateStringsArray|string, ...params:cssParam[]):
 			document.adoptedStyleSheets = [...(document.adoptedStyleSheets??[]), styleSheet];
 
 			// set all global css vars for document
-			for (const [prop, val] of globalCSSVars) {
+			for (const [prop, [val, unit]] of globalCSSVars) {
 				const evaluatedVal = typeof val == "function" ? always(val) : val;
-				domUtils.setCSSProperty((document as Document).documentElement ?? document, prop, evaluatedVal);
+				domUtils.setCSSProperty((document as Document).documentElement ?? document, prop, evaluatedVal, undefined, unit);
 			}
 			
 			// set required local css vars for existing elements in document
 			for (const [element, varName] of elementsDynamicProperties(iterateDOMTree(document), cssVarsBySelector)) {
-				domUtils.setCSSProperty(element, varName, always(()=>localCSSVars.get(varName)!(element)));
+				const [generator, unit] = localCSSVars.get(varName)!;
+				domUtils.setCSSProperty(element, varName, always(()=>generator(element)), undefined, unit);
 			}
 
 			// observe when new child elements added
 			const observer = new domContext.MutationObserver(mutations => {
 				for (const [element, varName] of elementsDynamicProperties(iterateAddedNodes(mutations), cssVarsBySelector)) {
-					domUtils.setCSSProperty(element, varName, always(()=>localCSSVars.get(varName)!(element)));
+					const [generator, unit] = localCSSVars.get(varName)!;
+					domUtils.setCSSProperty(element, varName, always(()=>generator(element)), unit);
 				}
 				// TODO: on remove
 			});
@@ -106,6 +128,7 @@ export function css(template:TemplateStringsArray|string, ...params:cssParam[]):
 }
 
 export const SCSS = css;
+
 
 function* elementsDynamicProperties(elements: Iterable<Element>, cssVarsBySelector: Map<string, Set<string>>) {
 	// find all nodes that where added in mutation

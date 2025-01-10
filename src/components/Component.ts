@@ -788,21 +788,24 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
     private loadDefaultStyle() {
         for (const templateFn of (<typeof Component> this.constructor).style_templates??[]) {
             const stylesheet = templateFn(this.props, this)
-            // invalid scoped stylesheet
-            if (stylesheet.scope && stylesheet.scope !== this.tagName.toLowerCase()) throw new Error(`Stylesheet uses multiple component scopes (<${stylesheet.scope.toLowerCase()}>, <${this.tagName.toLowerCase()}>). Make sure you don't use the same stylesheet for multiple components.`)
-            // inject css scoping if component has no shadow root
-            if (stylesheet instanceof CSSStyleSheet && !this.shadowRoot && !stylesheet.scope) {
-                const css = stylesheet._cached_css ?? [...(stylesheet.cssRules as any)].map(r=>r.cssText).join("\n");
-                const scopedCSS = addCSSScopeSelector(css, this.tagName.toLowerCase())
-                stylesheet.replaceSync(scopedCSS)
-                stylesheet.scope = this.tagName.toLowerCase();
+            const stylesheets = stylesheet instanceof Array ? stylesheet : [stylesheet];
+            for (const stylesheet of stylesheets) {
+                // invalid scoped stylesheet
+                if (stylesheet.scope && stylesheet.scope !== this.tagName.toLowerCase()) throw new Error(`Stylesheet uses multiple component scopes (<${stylesheet.scope.toLowerCase()}>, <${this.tagName.toLowerCase()}>). Make sure you don't use the same stylesheet for multiple components.`)
+                // inject css scoping if component has no shadow root
+                if (stylesheet instanceof CSSStyleSheet && !this.shadowRoot && !stylesheet.scope) {
+                    const css = stylesheet._cached_css ?? [...(stylesheet.cssRules as any)].map(r=>r.cssText).join("\n");
+                    const scopedCSS = addCSSScopeSelector(css, this.tagName.toLowerCase())
+                    stylesheet.replaceSync(scopedCSS)
+                    stylesheet.scope = this.tagName.toLowerCase();
+                }
+                if (stylesheet instanceof CSSStyleSheet && stylesheet.activate) {
+                    stylesheet.activate(this.shadowRoot??document);
+                    this.activatedScopedStyles.add(stylesheet)
+                }
+                else if (stylesheet instanceof CSSStyleSheet) this.addStyleSheet(stylesheet)
+                else this.addStyleSheet(stylesheet)
             }
-            if (stylesheet instanceof CSSStyleSheet && stylesheet.activate) {
-                stylesheet.activate(this.shadowRoot??document);
-                this.activatedScopedStyles.add(stylesheet)
-            }
-            else if (stylesheet instanceof CSSStyleSheet) this.addStyleSheet(stylesheet)
-            else this.addStyleSheet(stylesheet)
         }
     }
 

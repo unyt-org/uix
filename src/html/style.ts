@@ -40,7 +40,7 @@ export function style<
  * ```
  * @param styleGenerator 
  */
-export function style(style:CSSStyleSheet):((cl:typeof HTMLElement, context: ClassDecoratorContext)=>any)
+export function style(...stylesheets:CSSStyleSheet[]):((cl:typeof HTMLElement, context: ClassDecoratorContext)=>any)
 
 /**
  * \@style decorator
@@ -59,6 +59,8 @@ export function style(file:string|URL):((cl:typeof HTMLElement, context: ClassDe
 export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGenerator<CSSStyleSheet, any, any, any>) {
 	let generator:any;
 	const module = getCallerFile();
+
+	const args = [...arguments]
 
 	// string to url
 	if (typeof templateOrGenerator == "string") templateOrGenerator = new URL(templateOrGenerator, module)
@@ -87,9 +89,9 @@ export function style(templateOrGenerator:string|URL|CSSStyleSheet|jsxInputGener
 			if (!propsOrClass.style_templates) propsOrClass.style_templates = new Set()
 			propsOrClass.style_templates.add(generator)
 		}
-		// evaluate
+		// evaluate (use arguments because multiple stylesheets can be passed to @style)
 		else {
-			return templateOrGenerator;
+			return args as CSSStyleSheet[];
 		}
 	}
 

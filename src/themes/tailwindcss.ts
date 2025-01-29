@@ -47,7 +47,8 @@ export const tailwindcss = {
 			
 			try {
 				logger.info("Downloading TailwindCSS. HTTP requests / page loads will be deferred until the installation is complete.");
-				const downloadMap = await datex.get<{assets: {browser_download_url: string, name: string}[]}>("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest");
+				// fixed to tailwindcss v3.4.17 (v4 does not work)
+				const downloadMap = await datex.get<{assets: {browser_download_url: string, name: string}[]}>("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/191250475");
 				const releaseURL = downloadMap.assets.find(e => e.name === executableName)?.browser_download_url;
 				if (!releaseURL)
 					throw new Error(`Could not get release URL for ${executableName}`);
@@ -138,8 +139,11 @@ export const tailwindcss = {
 					]));
 				}
 			}
-			if ((await status.status).code != 0)
+			if ((await status.status).code != 0) {
 				logger.error("Error running tailwindcss");
+				const output = (await status.output());
+				console.error(decoder.decode(output.stdout).trim() + "\n" + decoder.decode(output.stderr).trim());
+			}
 		}
 		catch (e) {
 			logger.error(e);

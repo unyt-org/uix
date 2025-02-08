@@ -23,7 +23,11 @@ export const UIX_COOKIE = {
 } as const;
 export type UIX_COOKIE = typeof UIX_COOKIE[keyof typeof UIX_COOKIE];
 
-const browserIsSafariLocalhost = globalThis.location?.hostname == "localhost" && (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+const browserIsSafariLocalhost = (/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) && (
+	globalThis.location?.hostname == "localhost" ||
+	globalThis.location?.hostname.startsWith("127.") ||
+	globalThis.location?.hostname.startsWith("192.")
+);
 
 export function deleteCookie(name: UIX_COOKIE | string, headers?: Headers, port?:string, isSafariLocalhost = false) {
 

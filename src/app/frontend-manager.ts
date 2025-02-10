@@ -290,7 +290,6 @@ export class FrontendManager extends HTMLProvider {
 		// handled default web paths
 		this.server.path("/", (req, path, con, metadata)=>this.handleRequest(req, path, con, metadata));
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
-		this.server.path("/robots.txt", (req, path)=>this.handleRobotsTXT(req, path));
 
 		this.server.path(/^\/@uix\/cache\/.*$/, async (req, path)=>{
 			await req.respondWith(await serveDir!(req.request, {fsRoot:UIX.cacheDir.normal_pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
@@ -1086,15 +1085,6 @@ if (!globalThis.location.origin.endsWith(".unyt.app")) {
 		try {
 			const path = new Path(this.resolveImport(this.app_options.icon, true, false), this.base_path);
 			await this.server.serveContent(requestEvent, "image/*", await path.getTextContent());
-		} catch (e) {
-			console.log(e)
-			await this.server.sendError(requestEvent, 500);
-		}			
-	}
-
-	private async handleRobotsTXT(requestEvent: Deno.RequestEvent, _path:string) {
-		try {
-			await this.server.serveContent(requestEvent, "text/plain", "User-agent: *\nAllow: /");
 		} catch (e) {
 			console.log(e)
 			await this.server.sendError(requestEvent, 500);

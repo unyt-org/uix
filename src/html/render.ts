@@ -901,11 +901,6 @@ export async function generateHTMLPage({
 				${global_style}
 				${files}
 				${prerendered_content instanceof Array ? prerendered_content[0] : ''}
-				<script>
-					(globalThis.addEventListenerOnce ?? globalThis.addEventListener)("DOMContentLoaded", () => {
-						document.body.style.visibility = "visible"
-					});
-				</script>
 				${
 					app.options?.experimental_features.includes("view-transitions") ? `
 					<meta name="view-transition" content="same-origin" />
@@ -916,15 +911,10 @@ export async function generateHTMLPage({
 					</style>` : ''
 				}
 				<noscript>
-					<style>
-						body {
-							visibility: visible!important;
-						}
-					</style>
 					<link rel="stylesheet" href="${provider.resolveImport("uix/style/noscript.css", true)}">
 				</noscript>
 			</head>
-			<body style="visibility:hidden;" data-color-scheme="${color_scheme}">
+			<body data-color-scheme="${color_scheme}">
 			` +
 (prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')) + `
 			</body>

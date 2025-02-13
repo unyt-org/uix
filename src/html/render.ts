@@ -902,6 +902,14 @@ export async function generateHTMLPage({
 				${files}
 				${prerendered_content instanceof Array ? prerendered_content[0] : ''}
 				${
+					render_method != RenderMethod.HYBRID ? 
+					`<script>
+						(globalThis.addEventListenerOnce ?? globalThis.addEventListener)("DOMContentLoaded", () => {
+							document.body.style.visibility = "visible"
+						});
+					</script>` : ''
+				}
+				${
 					app.options?.experimental_features.includes("view-transitions") ? `
 					<meta name="view-transition" content="same-origin" />
 					<style>
@@ -911,10 +919,18 @@ export async function generateHTMLPage({
 					</style>` : ''
 				}
 				<noscript>
+					${
+						render_method != RenderMethod.HYBRID ?
+						`<style>
+							body {
+								visibility: visible!important;
+							}
+						</style>` : ''
+					}
 					<link rel="stylesheet" href="${provider.resolveImport("uix/style/noscript.css", true)}">
 				</noscript>
 			</head>
-			<body data-color-scheme="${color_scheme}">
+			<body ${render_method != RenderMethod.HYBRID ? 'style="visibility:hidden;"' : ''} data-color-scheme="${color_scheme}">
 			` +
 (prerendered_content instanceof Array ? prerendered_content[1] : (prerendered_content??'')) + `
 			</body>

@@ -62,7 +62,7 @@ For setting [inline styles](#style), UIX allows the use of an object notation wi
 </div>
 ```
 
-Per default common HTML attributes are type safe to use, if you want to define custom data attributes, you can use the `data-*` notation. This is useful for embedding custom data that can later be accessed via your applications code. For example:
+By default, common HTML attributes are type safe to use, if you want to define custom data attributes, you can use the `data-*` notation. This is useful for embedding custom data that can later be accessed via your applications code. For example:
 
 ```tsx
 const myArticle = {
@@ -100,9 +100,9 @@ To manage data binding between reactive `Refs` and input elements, we can use th
 
 Input reactivity works with native attributes such as [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#value) or [`checked`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#checked) for [`HTMLInputElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement), [`HTMLTextAreaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLTextAreaElement), and [`<select>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/select) elements.
 
-#### Bidirectional binding (`attr`)
+#### Bidirectional binding (`value`)
 
-Per default, all attributes are reactive and updated *bidirectionally*.
+By default, all attributes are reactive and updated *bidirectionally*.
 This means that if the attribute value is a `Ref`, the attribute will be updated when the `Ref` value is changed externally, and the `Ref` value itself will be updated when the attribute is changed, e.g. by user interaction in an input field:
 
 ```tsx
@@ -120,10 +120,10 @@ observe(
 );
 ```
 
-#### Unidirectional binding (`attr:in`)
+#### Unidirectional binding (`value:in`)
 You can opt for *unidirectional* data binding to restrict how changes flow between the input element and the Ref.
 
-The `value:in` and `checked:in` attributes only bind the value of the input element to the reactive `Ref`. The flow of data is one-way: when the `Ref` is updated, the value of the input or textarea element is updated, but changes in the input field made by the user do not modify the `Ref`'s value.
+The `value:in` (respectively `checked:in` for checkbox inputs) attribute only binds the value of the input element to the reactive `Ref`. The flow of data is one-way: when the `Ref` is updated, the value of the input or textarea element is updated, but changes in the input field made by the user do not modify the `Ref`'s value.
 
 ```tsx
 const inputText = $('Hello');
@@ -134,14 +134,41 @@ const inputText = $('Hello');
 inputText.val = 'Hello, UIX!';
 ```
 
-### Unidirectional binding (`attr:out`)
-The `value:out` and `checked:out` attributes bind the input element to the reactive `Ref`, but in this case, only changes from the input element will update the `Ref`'s value. Changes made to the `Ref` won't reflect in the input field.
+### Unidirectional binding (`value:out`)
+The `value:out` and (respectively `checked:out` for checkbox inputs) attribute binds the input element to the reactive `Ref`, but in this case, only changes from the input element will update the `Ref`'s value. Changes made to the `Ref` won't reflect in the input field.
 
 ```tsx
 const inputText = $('Hello');
 
 // typing in the input will update inputText, but changes to inputText will not reflect in the input field
 <input type="text" value:out={inputText}/>;
+```
+
+### Radio inputs and `value:selected`
+
+For radio inputs, there is a special attribute `value:selected` that is not directly bound to the `value` attribute of the radio input, but instead binds the value of the selected radio input to the `Ref` value.
+
+When a specific radio input is selected, the `Ref` value is updated to the value of the selected radio input. Changes to the `Ref` value affect which radio input is selected.
+Normally, `value:selected` is used in combination with a normal `value` or `value:in` attribute, which holds the actual value of the radio input:
+
+```tsx
+const selectedValue = $('option_a');
+
+export default(
+    <div>
+        <input type="radio" name="option" value="option_a" value:selected={selectedValue}/>
+        <input type="radio" name="option" value="option_b" value:selected={selectedValue}/>
+    </div>
+);
+
+// select the second radio input
+selectedValue.val = 'option_b'; 
+
+// the observer is triggered when the selected radio input changes
+observe(
+    selectedValue, 
+    val => console.log('Selected value: ' + val)
+);
 ```
 
 ### Reactive expressions

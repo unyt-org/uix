@@ -359,7 +359,9 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 				const val = el.${propName};
 				if (diff && val == __original__) return;
 				try {
-					const res = await __f1__(val);
+					const valid = el.checkValidity();
+					if (!valid) console.log("preventing data updates due to invalid form data");
+					const res = valid ? await __f1__(val) : null;
 					el.setCustomValidity("")
 					el.reportValidity()
 					return res;

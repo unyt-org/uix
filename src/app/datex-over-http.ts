@@ -127,6 +127,10 @@ export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, kee
 	if (forceDatex) {
 		if (keepAlive) throw new Error("Cannot use keepAlive=true with forceDatex=true")
 		return `async (val) => {
+			if (globalThis._prevent_uix_form_value_updates) {
+ 				console.warn("Prevented form value updates");
+ 				return;
+ 			};
 			await import("datex-core-legacy" /*lazy*/);
 			await Datex.Supranet.connect();
 			return datex('${ptrString}=?', [val]);
@@ -136,6 +140,10 @@ export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, kee
 	else {
 		// TODO: remove sendBeacon as fallback for firefox if keepAlive needed
 		return `async (val) => {
+			if (globalThis._prevent_uix_form_value_updates) {
+ 				console.warn("Prevented form value updates");
+ 				return;
+ 			};
 			// cast value
 			${
 				type == "number" ? "val = Number(val)":

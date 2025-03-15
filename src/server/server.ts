@@ -301,7 +301,7 @@ export class Server {
         // logger.info("starting web server...");
 
         const loaders = []
-        Transpiler.updateTypeInferenceGenerators();
+        await Transpiler.updateTypeInferenceGenerators();
         for (const [_path, transpiler] of this.transpilers) loaders.push(transpiler.init())
         await Promise.all(loaders)
 

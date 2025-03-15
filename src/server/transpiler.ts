@@ -183,16 +183,18 @@ export class Transpiler {
                 sourcePaths: [entrypoint],
                 importMapPath,
                 imports,
-                watch
+                watch,
+                detectRefMarkers: true
             })
         );
     }
 
-    static updateTypeInferenceGenerators() {
+    static async updateTypeInferenceGenerators() {
         this.#type_inference_positions = [];
         for (const generator of this.#type_inference_generators) {
-            this.#type_inference_positions.push(...generator.getReactivePositions());
+            this.#type_inference_positions.push(...await generator.getReactivePositions());
         }
+        // console.log("updated type inference positions", this.#type_inference_positions);
     }
 
     static #getTypeInferencePositionsForFile(file: string) {
@@ -314,7 +316,7 @@ export class Transpiler {
                 logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
 
                 // update type inference positions
-                Transpiler.updateTypeInferenceGenerators();
+                await Transpiler.updateTypeInferenceGenerators();
     
                 // is eternal file, update
                 if (src_path.hasFileExtension(...eternalExts)) {
@@ -583,7 +585,7 @@ export class Transpiler {
                         logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
 
                         // update type inference positions
-                        Transpiler.updateTypeInferenceGenerators();
+                        await Transpiler.updateTypeInferenceGenerators();
 
                         await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
                     }
@@ -702,7 +704,9 @@ export class Transpiler {
             let file = await Deno.readTextFile(ts_dist_path.normal_pathname)
 
             if (positions?.length) {
-                logger.info("reactive uix positions for " + src_path.normal_pathname + ": ", positions)
+                logger.debug("reactive uix positions for " + src_path.normal_pathname + ": ", positions)
+            }
+            if (positions) {
                 file = `const __UIX_REACTIVE_POSITIONS=[${positions.join(",")}];\n` + file;
             }
 

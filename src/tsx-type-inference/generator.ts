@@ -1,4 +1,10 @@
 import ts from "npm:typescript";
+import { SourceFile } from "npm:typescript";
+import { CompilerOptions } from "npm:typescript";
+import { ResolvedProjectReference } from "npm:typescript";
+import { StringLiteralLike } from "npm:typescript";
+import { encodeHex } from "jsr:@std/encoding/hex";
+import { sha256 } from "./sha256.js";
 
 export type TypeInferenceOptions = {
 	/**
@@ -12,7 +18,6 @@ export type TypeInferenceOptions = {
 	/**
 	 * When enabled, reactivity is determined by the presence of a special #__ref__ marker property in the type of the attribute
 	 * Otherwise, reactivity is determined by the presence of a type with the name "Ref", "RefLike" or "ReactiveValue".
-	 * Note: Currently, detectRefMarkers is not supported in deno modules because the type definitions of http modules cannot be resolved.
 	 */
 	detectRefMarkers?: boolean,
 	/**
@@ -44,6 +49,8 @@ export class TSXTypeInferenceGenerator {
 	#sourcePaths: string[];
 	#typeChecker!: ts.TypeChecker;
 
+	#intiializePromise: Promise<void> | undefined;
+
 	static refTypes = ["Ref", "RefLike", "ReactiveValue"];
 
 	constructor(options: TypeInferenceOptions) {
@@ -56,6 +63,7 @@ export class TSXTypeInferenceGenerator {
 
 		this.#compilerOptions = {
 			jsx: ts.JsxEmit.ReactJSX,
+			jsxImportSource: "jusix",
 			allowImportingTsExtensions: true,
 			module: ts.ModuleKind.NodeNext,
 			noEmit: true,
@@ -67,12 +75,50 @@ export class TSXTypeInferenceGenerator {
 			paths
 		};
 		
-		// Read the TypeScript file
 		this.#sourcePaths = this.#options.sourcePaths.map((sourcePath) => {
 			if (sourcePath instanceof URL) return sourcePath.pathname;
 			else return sourcePath;
 		});
-		
+	
+	}
+
+
+	/**
+	 * Finds all code positions of JSX attribute assignments that require reactive updates
+	 * Reactivity is determined by the presence of a special #__ref__ marker property in the type of the attribute
+	 * 
+	 * @returns Array with file paths and positions 
+	 */
+	public async getReactivePositions(): Promise<Positions> {
+		await this.#init();
+
+		const positions: Positions = [];
+
+		const program = this.#watchProgram ?
+			this.#watchProgram.getProgram().getProgram() :
+			ts.createProgram(this.#sourcePaths, this.#compilerOptions, this.#getCompilerHost());
+		this.#typeChecker = program.getTypeChecker();
+
+		program.getSourceFiles().forEach((sourceFile) => {
+			// skip non-tsx files
+			if (sourceFile.languageVariant !== ts.LanguageVariant.JSX) return;
+			console.log("\nSearching " + sourceFile.fileName);
+
+			const positionsData: PositionsData = { attrIndex: 0, positions: positions };
+
+			this.#visit(sourceFile, positionsData);
+		});
+		return positions;
+	}
+
+
+	async #init() {
+		if (this.#intiializePromise) return this.#intiializePromise;
+		const {promise, resolve} = Promise.withResolvers<void>();
+		this.#intiializePromise = promise;
+
+		this.#denoRemoteModulesCacheDir = await this.#getDenoRemoteModulesCacheDir();
+
 		if (this.#options.watch) {
 			const host = ts.createWatchCompilerHost(
 				this.#sourcePaths, 
@@ -82,35 +128,93 @@ export class TSXTypeInferenceGenerator {
 				() => {}, // Empty diagnostic reporter (no logging)
 				() => {}  // Empty watch status reporter (no logging)
 			);
+			host.resolveModuleNameLiterals = (moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined) =>
+				this.#customModuleResolver(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, reusedNames);
 
 			this.#watchProgram = ts.createWatchProgram(host);
 		}
+
+		resolve();
 	}
 
-	/**
-	 * Finds all code positions of JSX attribute assignments that require reactive updates
-	 * Reactivity is determined by the presence of a special #__ref__ marker property in the type of the attribute
-	 * 
-	 * @returns Array with file paths and positions 
-	 */
-	public getReactivePositions(): Positions {
-		const positions: Positions = [];
+	#denoRemoteModulesCacheDir!: string;
+	#denoCacheFileUrls = new Map<string, string>();
 
-		const program = this.#watchProgram ?
-			this.#watchProgram.getProgram().getProgram() :
-			ts.createProgram(this.#sourcePaths, this.#compilerOptions);
-		this.#typeChecker = program.getTypeChecker();
+	async #getDenoRemoteModulesCacheDir() {
+		const output = await new Deno.Command("deno", {args: ["info", "--json"]}).output();
+		const info = JSON.parse(new TextDecoder().decode(output.stdout));
+		return info["modulesCache"];
+	}
 
-		program.getSourceFiles().forEach((sourceFile) => {
-			// skip non-tsx files
-			if (sourceFile.languageVariant !== ts.LanguageVariant.JSX) return;
-			//console.log("\nSearching " + sourceFile.fileName);
+	#getLocalDenoCacheFile(moduleURL: string) {
+		// check if Url can be parsed
+		if (!URL.canParse(moduleURL)) return;
+		const resolvedModuleURL = new URL(moduleURL);
+		const basePath = this.#denoRemoteModulesCacheDir;
+		const pathHash = encodeHex(sha256(resolvedModuleURL.pathname) as Uint8Array);
+		const fullPath = `${basePath}/${resolvedModuleURL.protocol.slice(0,-1)}/${resolvedModuleURL.host}/${pathHash}`;
+		
+		this.#denoCacheFileUrls.set(fullPath, moduleURL);
+		
+		return fullPath;
+	}
 
-			const positionsData: PositionsData = { attrIndex: 0, positions: positions };
+	#resolveModule(moduleName: string, containingFile: string) {
+		// resovle specifier path
+		// already an http path
+		if (moduleName.startsWith("http://") || moduleName.startsWith("https://")) return moduleName;
 
-			this.#visit(sourceFile, positionsData);
-		});
-		return positions;
+		// if relative path, try to resolve
+		if (moduleName.startsWith("./") || moduleName.startsWith("../")) {
+			const parentFile = this.#denoCacheFileUrls.get(containingFile);
+			if (!parentFile) return;
+			const resolvedPath = new URL(moduleName, parentFile).toString();
+			return resolvedPath;
+		}
+
+		// get first part of path and check if in imports
+		const firstPart = moduleName.split("/")[0] + "/";
+		const resolvedPath = this.#options.imports![firstPart];
+		if (resolvedPath) {
+			const res =  new URL("./" + moduleName.replace(firstPart, ""), resolvedPath).toString();
+			//console.log("resolved:", moduleName, res);
+			return res;
+		}
+	}
+
+	#customModuleResolver(moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined): readonly ts.ResolvedModuleWithFailedLookupLocations[] {
+		//console.log("resolve moduleLiterals", moduleLiterals);
+		return moduleLiterals.map((moduleLiteral) => {
+			if (moduleLiteral.text.startsWith("sap/") || moduleLiteral.text.startsWith("node:")) return {
+				resolvedModule: {
+					extension: ts.Extension.Ts,
+					resolvedFileName: moduleLiteral.text,
+				}
+			}
+
+			const mod = this.#resolveModule(moduleLiteral.text, containingFile)??moduleLiteral.text;
+			const resolvedPath = this.#getLocalDenoCacheFile(mod);
+			//if (resolvedPath) console.log("cache:", moduleLiteral.text, resolvedPath);
+			return {
+				resolvedModule: {
+					extension: ts.Extension.Ts,
+					resolvedFileName: resolvedPath || moduleLiteral.text,
+					moduleName: moduleLiteral.text
+				}
+			}
+		})
+	}
+
+	#compilerHost?: ts.CompilerHost;
+	#getCompilerHost() {
+		if (this.#compilerHost) return this.#compilerHost;
+
+		// Create a custom compiler host
+		const compilerHost: ts.CompilerHost = ts.createCompilerHost({});
+		compilerHost.resolveModuleNameLiterals = (moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined) =>
+			this.#customModuleResolver(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, reusedNames);
+		this.#compilerHost = compilerHost;
+		return compilerHost
 	}
 
 	/**
@@ -158,6 +262,7 @@ export class TSXTypeInferenceGenerator {
 
 	#visitAttribute(node: ts.Node, isBoolNode: boolean, positionsData: PositionsData) {
 
+
 		if (ts.isJsxExpression(node) || ts.isStringLiteral(node) || isBoolNode) {
 
 			const requiredType = this.#typeChecker.getContextualType(node as ts.Expression);
@@ -176,7 +281,7 @@ export class TSXTypeInferenceGenerator {
 			let hasRefMarker = false;
 			if (requiredType?.isUnion()) {
 				hasRefMarker = requiredType!.types.some((type) => {
-					this.#isRef(type)
+					return this.#isRef(type)
 				});
 			}
 			else {

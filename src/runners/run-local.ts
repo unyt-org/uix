@@ -5,6 +5,7 @@ import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { logger, runParams } from "./runner.ts";
 import { verboseArg } from "datex-core-legacy/utils/logger.ts";
+import { generateReactiveIndices } from "./reactive-index-generation.ts";
 
 
 export const CSI = '\u001b['
@@ -115,7 +116,20 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	// handle clear state when live reloading
 	let isClearingState = clear;
 	let stateCleared = false;
-	
+	let initialRun = true;
+
+	// handle reactive index updates
+	let indicesUpdatedPromise!: Promise<void>;
+	let indicesUpdatedResolve!: () => void;
+	const resetIndexUpdate = () => {
+		const {promise, resolve} = Promise.withResolvers<void>();
+		indicesUpdatedPromise = promise;
+		indicesUpdatedResolve = resolve;
+	}
+	resetIndexUpdate();
+	await generateReactiveIndices(options, () => {
+		indicesUpdatedResolve();
+	});
 
 	await run();
 	
@@ -124,6 +138,20 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
 			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
 		}
+
+		let timeout;
+		const promises = [indicesUpdatedPromise];
+		// wait until reactive index update, or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
+		if (!initialRun) promises.push(
+			new Promise<void>((resolve) => timeout = setTimeout(() => {
+				console.log("[NOTE] no reactive index update detected, continuing...");
+				resolve()
+			}, 5000))
+		)
+		await Promise.race(promises)
+		clearTimeout(timeout);
+		resetIndexUpdate();
+		initialRun = false;
 		
 		if (stateCleared) {
 			stateCleared = false;
@@ -157,6 +185,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			],
 			env: {
 				SQLITE_STORAGE: options.experimental_features.includes("sqlite-storage") ? "1" : "0",
+				UIX_METADATA_DIR: new Path("./uix/jusix/metadata", cache_path).normal_pathname,
 			}
 		})
 

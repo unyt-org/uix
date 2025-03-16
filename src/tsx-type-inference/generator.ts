@@ -28,13 +28,14 @@ export type TypeInferenceOptions = {
 	 * Path to the import map file
 	 */
 	importMapPath?: string,
+	/**
+	 * jsxImportSource compiler option
+	 */
+	jsxImportSource?: string
 }
 
 
-export type Positions = {
-	file: string,
-	pos: number
-}[]
+export type Positions = Map<string, number[]>;
 
 export type PositionsData = {
 	attrIndex: number,
@@ -46,7 +47,7 @@ export class TSXTypeInferenceGenerator {
 	#options: TypeInferenceOptions;
 	#compilerOptions: ts.CompilerOptions;
 	#watchProgram?: ts.WatchOfFilesAndCompilerOptions<ts.BuilderProgram>;
-	#sourcePaths: string[];
+	#sourcePaths!: string[];
 	#typeChecker!: ts.TypeChecker;
 
 	#intiializePromise: Promise<void> | undefined;
@@ -59,11 +60,10 @@ export class TSXTypeInferenceGenerator {
 		const paths = this.#options.imports ?
 			this.#importMapToPaths(this.#options.imports!, this.#options.importMapPath) :
 			{};
-		//console.log("paths", paths);
 
 		this.#compilerOptions = {
 			jsx: ts.JsxEmit.ReactJSX,
-			jsxImportSource: "jusix",
+			jsxImportSource: this.#options.jsxImportSource,
 			allowImportingTsExtensions: true,
 			module: ts.ModuleKind.NodeNext,
 			noEmit: true,
@@ -75,13 +75,13 @@ export class TSXTypeInferenceGenerator {
 			paths
 		};
 		
-		this.#sourcePaths = this.#options.sourcePaths.map((sourcePath) => {
-			if (sourcePath instanceof URL) return sourcePath.pathname;
-			else return sourcePath;
-		});
-	
 	}
 
+	#updatHandlers: Set<(positions: Positions) => void> = new Set();
+
+	public onUpdate(callback: (positions: Positions) => void) {
+		this.#updatHandlers.add(callback);
+	}
 
 	/**
 	 * Finds all code positions of JSX attribute assignments that require reactive updates
@@ -92,25 +92,29 @@ export class TSXTypeInferenceGenerator {
 	public async getReactivePositions(): Promise<Positions> {
 		await this.#init();
 
-		const positions: Positions = [];
-
 		const program = this.#watchProgram ?
 			this.#watchProgram.getProgram().getProgram() :
 			ts.createProgram(this.#sourcePaths, this.#compilerOptions, this.#getCompilerHost());
 		this.#typeChecker = program.getTypeChecker();
 
+		return this.#getReactivePositionsForProgram(program);
+	}
+
+	#getReactivePositionsForProgram(program: ts.Program): Positions {
+		const positions: Positions = new Map();
+
 		program.getSourceFiles().forEach((sourceFile) => {
 			// skip non-tsx files
 			if (sourceFile.languageVariant !== ts.LanguageVariant.JSX) return;
-			console.log("\nSearching " + sourceFile.fileName);
+			// console.log("Searching " + sourceFile.fileName);
 
+			positions.set(sourceFile.fileName, []);
 			const positionsData: PositionsData = { attrIndex: 0, positions: positions };
 
 			this.#visit(sourceFile, positionsData);
 		});
 		return positions;
 	}
-
 
 	async #init() {
 		if (this.#intiializePromise) return this.#intiializePromise;
@@ -119,17 +123,34 @@ export class TSXTypeInferenceGenerator {
 
 		this.#denoRemoteModulesCacheDir = await this.#getDenoRemoteModulesCacheDir();
 
+		this.#sourcePaths = this.#options.sourcePaths.map((sourcePath) => {
+			if (sourcePath instanceof URL) return sourcePath.pathname;
+			else return sourcePath
+		});
+
 		if (this.#options.watch) {
 			const host = ts.createWatchCompilerHost(
 				this.#sourcePaths, 
 				this.#compilerOptions, 
 				ts.sys,
-				undefined, // Default compiler host
+				undefined,
 				() => {}, // Empty diagnostic reporter (no logging)
 				() => {}  // Empty watch status reporter (no logging)
 			);
 			host.resolveModuleNameLiterals = (moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined) =>
 				this.#customModuleResolver(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, reusedNames);
+
+			const originalAfterProgramCreate = host.afterProgramCreate;
+
+			host.afterProgramCreate = program => {
+			  	originalAfterProgramCreate!(program);
+			  	if (this.#updatHandlers.size > 0) {
+					const positions = this.#getReactivePositionsForProgram(program.getProgram());
+					for (const handler of this.#updatHandlers) {
+						handler(positions);
+					}
+				}
+			};
 
 			this.#watchProgram = ts.createWatchProgram(host);
 		}
@@ -147,6 +168,8 @@ export class TSXTypeInferenceGenerator {
 	}
 
 	#getLocalDenoCacheFile(moduleURL: string) {
+		// file urls must not be resolved
+		if (moduleURL.startsWith("file://")) return;
 		// check if Url can be parsed
 		if (!URL.canParse(moduleURL)) return;
 		const resolvedModuleURL = new URL(moduleURL);
@@ -159,46 +182,65 @@ export class TSXTypeInferenceGenerator {
 		return fullPath;
 	}
 
-	#resolveModule(moduleName: string, containingFile: string) {
+	#resolveModule(moduleName: string, containingFile?: string) {
 		// resovle specifier path
 		// already an http path
 		if (moduleName.startsWith("http://") || moduleName.startsWith("https://")) return moduleName;
 
 		// if relative path, try to resolve
 		if (moduleName.startsWith("./") || moduleName.startsWith("../")) {
-			const parentFile = this.#denoCacheFileUrls.get(containingFile);
-			if (!parentFile) return;
+			if (!containingFile) throw new Error("containing file required for relative paths");
+			let parentFile = this.#denoCacheFileUrls.get(containingFile) || containingFile;
+			if (parentFile.startsWith("/")) parentFile = "file://" + parentFile;
 			const resolvedPath = new URL(moduleName, parentFile).toString();
 			return resolvedPath;
 		}
 
 		// get first part of path and check if in imports
 		const firstPart = moduleName.split("/")[0] + "/";
-		const resolvedPath = this.#options.imports![firstPart];
+
+		// find direct match in import map
+		const importMapValue = this.#options.imports![moduleName];
+		if (importMapValue) {
+			return importMapValue;
+		}
+
+		let resolvedPath = this.#options.imports![firstPart];
 		if (resolvedPath) {
-			const res =  new URL("./" + moduleName.replace(firstPart, ""), resolvedPath).toString();
+			// if path is relative, resolve
+			if (resolvedPath.startsWith("./") || resolvedPath.startsWith("../")) {
+				if (!this.#options.importMapPath) throw new Error("importMapPath required for relative paths");
+				const importMapPath = this.#options.importMapPath.startsWith("file://") ? this.#options.importMapPath : 'file://' + this.#options.importMapPath;
+				resolvedPath = new URL(resolvedPath, importMapPath).toString();
+			}
+			const res = new URL("./" + moduleName.replace(firstPart, ""), resolvedPath).toString();
 			//console.log("resolved:", moduleName, res);
 			return res;
 		}
+
+		
 	}
 
 	#customModuleResolver(moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined): readonly ts.ResolvedModuleWithFailedLookupLocations[] {
-		//console.log("resolve moduleLiterals", moduleLiterals);
 		return moduleLiterals.map((moduleLiteral) => {
-			if (moduleLiteral.text.startsWith("sap/") || moduleLiteral.text.startsWith("node:")) return {
-				resolvedModule: {
-					extension: ts.Extension.Ts,
-					resolvedFileName: moduleLiteral.text,
+
+			if (moduleLiteral.text.startsWith("node:") || moduleLiteral.text.startsWith("npm:") || moduleLiteral.text.startsWith("jsr:")) {
+				return {
+					resolvedModule: {
+						extension: ts.Extension.Ts,
+						resolvedFileName: moduleLiteral.text,
+					}
 				}
 			}
 
+
 			const mod = this.#resolveModule(moduleLiteral.text, containingFile)??moduleLiteral.text;
-			const resolvedPath = this.#getLocalDenoCacheFile(mod);
-			//if (resolvedPath) console.log("cache:", moduleLiteral.text, resolvedPath);
+			const resolvedPath = this.#getLocalDenoCacheFile(mod) || mod.replace("file://", "");
+
 			return {
 				resolvedModule: {
-					extension: ts.Extension.Ts,
-					resolvedFileName: resolvedPath || moduleLiteral.text,
+					extension: resolvedPath.endsWith(".tsx") ? ts.Extension.Tsx : ts.Extension.Ts,
+					resolvedFileName: resolvedPath,
 					moduleName: moduleLiteral.text
 				}
 			}
@@ -260,13 +302,32 @@ export class TSXTypeInferenceGenerator {
 		}
 	}
 
+	#jsxAttributeIsLiteral(node: ts.Node) {
+		if (ts.isStringLiteral(node)) return true;
+		if (ts.isJsxExpression(node) && node.expression) {
+			return (
+				ts.isStringLiteral(node.expression) ||
+				ts.isNumericLiteral(node.expression) ||
+				ts.isBigIntLiteral(node.expression) ||
+				ts.isIdentifier(node.expression) ||
+				node.expression.kind == ts.SyntaxKind.TrueKeyword ||
+				node.expression.kind == ts.SyntaxKind.FalseKeyword ||
+				node.expression.kind == ts.SyntaxKind.NullKeyword || 
+				node.expression.kind == ts.SyntaxKind.UndefinedKeyword ||
+				ts.isFunctionExpression(node.expression) ||
+				ts.isArrowFunction(node.expression)
+			)
+		}
+	}
+
 	#visitAttribute(node: ts.Node, isBoolNode: boolean, positionsData: PositionsData) {
 
 
 		if (ts.isJsxExpression(node) || ts.isStringLiteral(node) || isBoolNode) {
 
+			const jsxEl = node.parent.parent.parent as ts.JsxOpeningElement||ts.isJsxSelfClosingElement;
 			const requiredType = this.#typeChecker.getContextualType(node as ts.Expression);
-			const isCustomComponent = /[A-Z]/.test((node.parent?.parent as ts.JsxOpeningElement).tagName?.getText()[0]);
+			const isCustomComponent = /[A-Z]/.test(jsxEl.tagName?.getText()[0]);
 
 			// attribute type error/warning - only for custom compenents, not built-in elements like div
 			if (!requiredType && isCustomComponent) {
@@ -274,7 +335,7 @@ export class TSXTypeInferenceGenerator {
 				if (isBoolNode) {
 					console.warn("Warning: reactivity for boolean attributes without initializers can not yet be determined (attribute \"" + node.getText() + "\"). Please use " + node.getText() + "={true} instead.");
 				}
-				else console.error("Error: no type found for node " + positionsData.attrIndex + " in " + node.getSourceFile().fileName);
+				else throw new Error(""+node.getSourceFile().fileName+": Could not find type for attribute " + node.parent.getText());
 			}
 	
 			// if union, iterate over types
@@ -288,11 +349,16 @@ export class TSXTypeInferenceGenerator {
 				hasRefMarker = requiredType ? this.#isRef(requiredType) : false;
 			}
 	
-			if (hasRefMarker) {
+			// optimization: skip ref for internal elements if literal value (they all accept either refs or const values, so we can just skip them)
+			const skipRefForInternalElement = hasRefMarker && !isCustomComponent && this.#jsxAttributeIsLiteral(node);
+
+			if (hasRefMarker && !skipRefForInternalElement) {
+
 				//console.log(this.#typeChecker.typeToString(requiredType!), node.pos, node.getText());
 				// append pos as new line to file
 				const sourceFile = node.getSourceFile();
-				positionsData.positions.push({ file: sourceFile.fileName, pos: positionsData.attrIndex });
+				if (!positionsData.positions.has(sourceFile.fileName)) positionsData.positions.set(sourceFile.fileName, []);
+				positionsData.positions.get(sourceFile.fileName)!.push(positionsData.attrIndex);
 				if (this.#typeChecker.typeToString(requiredType!) == "unknown") {
 					console.error("Error: unknown type at " + sourceFile.fileName + ":" + node.pos);
 				}

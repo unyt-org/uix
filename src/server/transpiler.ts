@@ -9,8 +9,6 @@ import { UIX } from "../../uix.ts";
 import { reload } from "../app/args.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getJusix } from "./jusix.ts";
-import { Positions, TSXTypeInferenceGenerator } from "../tsx-type-inference/generator.ts";
-import { getExistingFileExclusive } from "../utils/file-utils.ts";
 
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
@@ -72,9 +70,6 @@ export class Transpiler {
     #virtual_files = new Set<string>()
 
     #import_resolver?: TypescriptImportResolver
-
-    static #type_inference_generators: TSXTypeInferenceGenerator[] = []
-    static #type_inference_positions: Positions = []
 
     get import_resolver() {return this.#import_resolver}
 
@@ -149,56 +144,13 @@ export class Transpiler {
 
 		this.#src_dir = src_dir;
         this.setOptions(options);
-
-        // type inference only required for JUSIX
-        if (app.options?.jusix) {
-            const entrypoint = this.#getEntrypoint();
-            if (entrypoint) {
-                Transpiler.#addTypeInferenceGenerator(
-                    entrypoint,
-                    this.#options.import_resolver.import_map?.path?.normal_pathname,
-                    this.#options.import_resolver.import_map?.imports,
-                    this.#options.watch
-                );
-            }
-        }
 	}
 
     #initialized = false;
 
-    #getEntrypoint() {
-        // gets entrypoint.ts or entrypoint.tsx from src dir if exists
-        const file = getExistingFileExclusive(this.#src_dir, "entrypoint.ts", "entrypoint.tsx");
-        return file ? new Path(file).normal_pathname : null;
-    }
-
-    static #addTypeInferenceGenerator(
-        entrypoint: string,
-        importMapPath?: string,
-        imports?: Record<string, string>,
-        watch?: boolean
-    ) {
-        this.#type_inference_generators.push(
-            new TSXTypeInferenceGenerator({
-                sourcePaths: [entrypoint],
-                importMapPath,
-                imports,
-                watch,
-                detectRefMarkers: true
-            })
-        );
-    }
-
-    static async updateTypeInferenceGenerators() {
-        this.#type_inference_positions = [];
-        for (const generator of this.#type_inference_generators) {
-            this.#type_inference_positions.push(...await generator.getReactivePositions());
-        }
-        // console.log("updated type inference positions", this.#type_inference_positions);
-    }
-
     static #getTypeInferencePositionsForFile(file: string) {
-        return this.#type_inference_positions.filter((pos) => pos.file === file).map((pos) => pos.pos);
+        // TODO:
+        return [];
     }    
 
     public async init(){
@@ -314,9 +266,6 @@ export class Transpiler {
                 const src_path_string = src_path.toString();
 
                 logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
-
-                // update type inference positions
-                await Transpiler.updateTypeInferenceGenerators();
     
                 // is eternal file, update
                 if (src_path.hasFileExtension(...eternalExts)) {
@@ -583,10 +532,6 @@ export class Transpiler {
                         const src_path = new Path(path);
 
                         logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
-
-                        // update type inference positions
-                        await Transpiler.updateTypeInferenceGenerators();
-
                         await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
                     }
                 }

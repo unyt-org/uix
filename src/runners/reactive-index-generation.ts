@@ -115,7 +115,7 @@ async function initRequestListener(generator: TSXTypeInferenceGenerator) {
 
 
 async function handleReactiveIndices(reactiveIndices: Positions) {
-	console.log("inidices", reactiveIndices)
+	//console.log("reactiveIndices", reactiveIndices)
 	const promises = [];
 	for (const [modulePath, indices] of reactiveIndices) {
 		promises.push(saveReactiveIndices(modulePath, indices));

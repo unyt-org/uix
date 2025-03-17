@@ -1,7 +1,6 @@
 import { ALLOWED_ENTRYPOINT_FILE_NAMES, app } from "./app.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { getExistingFileExclusive } from "../utils/file-utils.ts";
-import { resolveEntrypointRoute } from "../routing/rendering.ts";
 import { logger } from "../utils/global-values.ts";
 import { PageProvider } from "../providers/common.tsx";
 import { RenderMethod, RenderPreset } from "../base/render-methods.ts";
@@ -9,6 +8,12 @@ import { Entrypoint } from "../providers/entrypoints.ts";
 import type { normalizedAppOptions } from "./options.ts";
 import { createBackendEntrypointProxy } from "../routing/backend-entrypoint-proxy.ts";
 import { eternalExts, updateEternalFile } from "./module-mapping.ts";
+import { debounce } from "https://deno.land/std@0.104.0/async/debounce.ts";
+
+const logBackendRestartNote = debounce((type: string) =>
+	logger.warn("A "+type+" file was updated. Restart the backend with [Ctrl+R] to apply the latest changes."),
+	100
+)
 
 /**
  * Manages a backend endpoint deno instance
@@ -115,7 +120,7 @@ export class BackendManager {
 		if (!this.#watch) return;
 
 		// only log info for developer
-		if (this.#watch == "info") logger.warn("A "+type+" file was updated, "+(type=="backend"?"":"backend ")+"restart might be required. Start uix with -b to automatically restart the backend.")
+		if (this.#watch == "info") logBackendRestartNote(type);
 		// restart backend
 		else this.restart()
 	}

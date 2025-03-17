@@ -120,6 +120,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	let tscWatching = watch || watch_backend || live;
 	let updateReactiveIndices = await generateReactiveIndices(options, tscWatching);
 
+	// Enable raw mode to capture key events
+	const createCtrlPromise = listenForKeyShortcuts();
 	await run();
 
 	async function reRun() {
@@ -185,8 +187,25 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			console.log(`UIX App running in background (PID ${process.pid})`);
 			Deno.exit(0);
 		}
-		const exitStatus = await process.output();
-		if (exitStatus.code == 42) {
+		  
+		// Start listening to Ctrl+R and Ctrl+C in the background
+		const exitStatus = await Promise.race([
+			createCtrlPromise(),
+			process.output()
+		]);
+
+		// CTRL+R
+		if (exitStatus.code == 420) {
+			try {
+				process.kill()
+			}
+			catch {
+				// ignore
+			}
+			await reRun();
+		}
+		// Restart triggered from child process
+		else if (exitStatus.code == 42) {
 			await reRun();
 		}
 		else if (isClearingState) {
@@ -213,4 +232,36 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 		Deno.exit(exitStatus.code);
 	}
+}
+
+
+function listenForKeyShortcuts() {
+	const decoder = new TextDecoder();
+	Deno.stdin.setRaw(true); 
+
+	const resolvers = new Set<((value: {code: number}) => void)>();
+
+	const createCtrlPromise = () => new Promise<{code: number}>((resolve) => {
+		resolvers.add(resolve);
+	});
+
+	(async () => {
+		for await (const chunk of Deno.stdin.readable) {
+			const key = decoder.decode(chunk);
+			// Ctrl+R (ASCII 18)
+			if (key === "\x12") { 
+				console.log("Restarting backend...");
+				for (const resolve of resolvers) {
+					resolve({code: 420});
+				};
+				resolvers.clear();
+			}
+			// CTRL+C - exit
+			else if (key === "\x03") {
+				Deno.exit();
+			}
+		}
+	})();
+
+	return createCtrlPromise;
 }

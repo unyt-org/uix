@@ -1,27 +1,4 @@
-import { Ref } from "datex-core-legacy/runtime/pointers.ts";
-
-type primitive = string | number | boolean | bigint;
-
-type ExactValue<T, X> = (
-	X extends T ? (
-		X extends primitive ? (
-			X extends Ref<primitive> ?
-				never :
-				(
-					X extends number ? number :
-					X extends string ? string :
-					X extends boolean ? boolean :
-					X extends bigint ? bigint :
-					never
-				)
-		) : (
-			T extends X ? X
-			: never
-		)
-		
-	)
-	: never
-);
+import type { Ref } from "datex-core-legacy/runtime/pointers.ts";
 
 type Contra<T> =
 	T extends any 
@@ -41,24 +18,20 @@ type Union2Tuple<T> =
 		: [...Union2Tuple<Exclude<T, U>>, U]    // recursion
 	: never;
 
-type IndexOf<T extends readonly any[], V, A extends any[] = []> =
-	T extends [infer First, ...infer Rest]
-		? First extends V
-			? A['length']
-			: IndexOf<Rest, V, [...A, First]>
-		: never;
+interface NotRef {
+	__ref__?: void
+}
 
-type ExtendsRef<T> = (Union2Tuple<T>)[0] extends Ref<infer U> ? true : false;
-type a = ExtendsRef<Ref<number> | number>;
-
-
-export type MappedProps<Props extends Record<string, any>, Xs extends any[]> = {
+export type MappedProps<Props extends Record<string, unknown>> = {
 	[K in keyof Props]: 
-		// makes sure any of the potential union type e.g. Ref<number> | number is a Ref<number>
-		Union2Tuple<Props[K]>[0] extends Ref<infer T> ? T | Ref<T>
-		: Union2Tuple<Props[K]>[1] extends Ref<infer T> ? T | Ref<T>
-		// when the assigned attribute value is an exact match of the property type, it is valid
-		: Xs[IndexOf<Union2Tuple<keyof Props>, K>] extends ExactValue<Props[K], Xs[IndexOf<Union2Tuple<keyof Props>, K>]> ? 
-		Xs[IndexOf<Union2Tuple<keyof Props>, K>]
-		: never;
+		Props[K] extends Ref<infer T> ? T | Ref<T>
+		: (
+			// if Props[K] allows Ref values (only for unions up to 4)
+			Union2Tuple<Props[K]>[0] extends Ref<infer T> ? Props[K]|T :
+			Union2Tuple<Props[K]>[1] extends Ref<infer T> ? Props[K]|T :
+			Union2Tuple<Props[K]>[2] extends Ref<infer T> ? Props[K]|T :
+			Union2Tuple<Props[K]>[3] extends Ref<infer T> ? Props[K]|T :
+			// else if Props[K] does not allow Ref values
+			Props[K] & NotRef
+		)
 };

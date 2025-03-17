@@ -129,11 +129,7 @@ export function template<
 > (
 	elementGenerator: jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Props, never, false, false, InstanceType<Context>>
 ):
-	(
-		<X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X17, X18, X19, X20>(this: Context, props: MappedProps<Props, [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X17, X18, X19, X20]>) => JSX.Element
-	)
-	& ((cl: Context, context: ClassDecoratorContext<Context>)=>any)
-	//jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl: Context, context: ClassDecoratorContext<Context>)=>any)
+	jsxInputGenerator<JSX.Element, MappedProps<Props>, Children> & ((cl: Context, context: ClassDecoratorContext<Context>)=>any)
 
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
@@ -160,7 +156,7 @@ export function template<Options extends Record<string, any> = {}, Children = JS
 export function template():jsxInputGenerator<JSX.Element, Record<string, never>, never>&((cl: Class, context: ClassDecoratorContext)=>any)
 
 
-export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.Element|Promise<JSX.Element>, any, any, any>) {
+export function template(templateOrGenerator?: any): any {
 	const module = getCallerFile();
 	return createTemplateGenerator(templateOrGenerator, module);
 }

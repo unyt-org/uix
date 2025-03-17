@@ -26,17 +26,15 @@ import { fileExists } from "../utils/files.ts";
 import { DISPOSE_BOUND_PROTOTYPE } from "../standalone/get_prototype_properties.ts";
 import { getDeclaredExternalVariables, getDeclaredExternalVariablesAsync } from "datex-core-legacy/types/function-utils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
+import { MappedProps } from "../html/template-types.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};
 export type standalonePropertyData = {type:'prop'}
 export type standaloneProperties = Record<string, (standaloneContentPropertyData | standalonePropertyData) & {init?:propInit }>;
 
-// deno-lint-ignore no-empty-interface
-interface DefaultProps {}
-
 // @template("uix:component") 
-export abstract class Component<Props extends DefaultProps = DefaultProps, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
+export abstract class Component<Props extends Record<string,unknown> = Record<string,unknown>, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 
@@ -569,7 +567,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
         return this.props;
     }; 
 
-    private readonly props!: Readonly<Props & {children?:ChildElement|ChildElement[]} & JSX._IntrinsicAttributes<this>>
+    private readonly props!: Readonly<MappedProps<Props> & {children?:ChildElement|ChildElement[]} & JSX._IntrinsicAttributes<this>>
 
     public get properties(): Readonly<Props> {
         return this.props

@@ -53,7 +53,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	const cmd = [
 		"run",
 		"-Aq",
-		"--unstable-ffi" // required for sqlite3
+		"--unstable-ffi", // required for sqlite3
+		//"--check",
 	];
 
 	const args = [...Deno.args];
@@ -135,14 +136,22 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			// wait until reactive index update, or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
 			await updateReactiveIndices();
 		}
-		await run();
+		await run(true);
 	}
 	
-	async function run() {
+	async function run(restart = false) {
 		if (!verboseArg) {
 			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
 			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
 		}
+
+		if (restart) {
+			console.log("[Restarting backend...]");
+		}
+		else {
+			console.log("[Starting backend...]");
+		}
+
 		if (stateCleared) {
 			stateCleared = false;
 			logger.warn("Cleared all eternal states on the backend");
@@ -250,7 +259,6 @@ function listenForKeyShortcuts() {
 			const key = decoder.decode(chunk);
 			// Ctrl+R (ASCII 18)
 			if (key === "\x12") { 
-				console.log("Restarting backend...");
 				for (const resolve of resolvers) {
 					resolve({code: 420});
 				};
@@ -258,6 +266,7 @@ function listenForKeyShortcuts() {
 			}
 			// CTRL+C - exit
 			else if (key === "\x03") {
+				console.log("CTRL+C pressed, exiting...");
 				Deno.exit();
 			}
 		}

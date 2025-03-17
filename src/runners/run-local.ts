@@ -1,5 +1,5 @@
-import { cache_path, ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
-import { clear, path, rootPath } from "../app/args.ts";
+import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
+import { clear, live, rootPath, watch, watch_backend } from "../app/args.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
@@ -116,43 +116,31 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	// handle clear state when live reloading
 	let isClearingState = clear;
 	let stateCleared = false;
-	let initialRun = true;
 
-	// handle reactive index updates
-	let indicesUpdatedPromise!: Promise<void>;
-	let indicesUpdatedResolve!: () => void;
-	const resetIndexUpdate = () => {
-		const {promise, resolve} = Promise.withResolvers<void>();
-		indicesUpdatedPromise = promise;
-		indicesUpdatedResolve = resolve;
-	}
-	resetIndexUpdate();
-	await generateReactiveIndices(options, () => {
-		indicesUpdatedResolve();
-	});
+	let tscWatching = watch || watch_backend || live;
+	let updateReactiveIndices = await generateReactiveIndices(options, tscWatching);
 
 	await run();
+
+	async function reRun() {
+		// init watch based TSC if not yet watching
+		if (!tscWatching) {
+			tscWatching = true;
+			// wait for reactive index update before restarting
+			updateReactiveIndices = await generateReactiveIndices(options, tscWatching);
+		}
+		else {
+			// wait until reactive index update, or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
+			await updateReactiveIndices();
+		}
+		await run();
+	}
 	
 	async function run() {
 		if (!verboseArg) {
 			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
 			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
 		}
-
-		let timeout;
-		const promises = [indicesUpdatedPromise];
-		// wait until reactive index update, or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
-		if (!initialRun) promises.push(
-			new Promise<void>((resolve) => timeout = setTimeout(() => {
-				console.log("[NOTE] no reactive index update detected, continuing...");
-				resolve()
-			}, 5000))
-		)
-		await Promise.race(promises)
-		clearTimeout(timeout);
-		resetIndexUpdate();
-		initialRun = false;
-		
 		if (stateCleared) {
 			stateCleared = false;
 			logger.warn("Cleared all eternal states on the backend");
@@ -199,14 +187,14 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		}
 		const exitStatus = await process.output();
 		if (exitStatus.code == 42) {
-			await run();
+			await reRun();
 		}
 		else if (isClearingState) {
 			stateCleared = true;
 			isClearingState = false;
 			// restart without --clear
 			args.splice(args.indexOf("--clear"), 1);
-			await run();
+			await reRun();
 		}
 		else if (isWatching) {
 			console.log("waiting until files are updated...");
@@ -220,7 +208,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				if (e.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
 				else throw e;
 			}
-			await run();
+			await reRun();
 		}
 
 		Deno.exit(exitStatus.code);

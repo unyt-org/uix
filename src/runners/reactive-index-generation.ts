@@ -5,15 +5,17 @@ import { normalizedAppOptions } from "../app/options.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
-import { watch } from "../app/args.ts";
-import { live } from "../app/args.ts";
-import { watch_backend } from "../app/args.ts";
 import { stdout } from "node:process";
+import { debounce } from "https://deno.land/std@0.104.0/async/debounce.ts";
 
 const metadataDir = new Path("./uix/jusix/metadata/", cache_path).asDir();
-if (!metadataDir.fs_exists) Deno.mkdirSync(metadataDir, {recursive: true})
+// reset metadata directory
+Deno.removeSync(metadataDir, {recursive: true});
+Deno.mkdirSync(metadataDir, {recursive: true})
+const requestPath = metadataDir.getChildPath("_request");
+Deno.writeTextFile(requestPath, "");
 
-export async function generateReactiveIndices(options: normalizedAppOptions, onUpdate?: () => void) {
+export async function generateReactiveIndices(options: normalizedAppOptions, watch: boolean): Promise<() => Promise<void>> {
 	if (!options.import_map.path) throw new Error("Import map path must be defined")
 
 	await cacheDependencies();
@@ -29,27 +31,20 @@ export async function generateReactiveIndices(options: normalizedAppOptions, onU
 		if (entrypoint) entrypoints.push(entrypoint.normal_pathname)
 	}
 	
-	const watchEnabled = watch || watch_backend || live;
-
-	// entrypoints.push("uix/html/template.ts")
-
-	await generateReactiveIndicesForEntrypoints(
+	return await generateReactiveIndicesForEntrypoints(
 		entrypoints,
 		options.import_map.path.toString(),
 		options.import_map.imports,
-		watchEnabled,
-		onUpdate
+		watch
 	)
 }
 
 // make sure all required depencency modules are cached locally by Deno
+// TODO: this works for known dependencies (e.g. template.ts), but not all remote dependencies are cached or up to date - this is definitely a problem
 async function cacheDependencies() {
 	const templatePath = new Path("../html/template.ts", import.meta.url);
 	stdout.write("[JUSIX] Loading dependencies into cache...")
-	await new Deno.Command("deno", {
-		args: ["cache", templatePath.toString()],
-		stdout: "piped",
-	}).output();
+	await TSXTypeInferenceGenerator.cacheDependencies([templatePath])
 	stdout.write("done\n")
 }
 
@@ -65,8 +60,7 @@ async function generateReactiveIndicesForEntrypoints(
 	importMapPath: string,
 	imports: Record<string, string>,
 	watch: boolean,
-	onUpdate?: () => void
-) {
+): Promise<() => Promise<void>> {
 	const generator = new TSXTypeInferenceGenerator({
 		sourcePaths: entrypoints,
 		importMapPath,
@@ -80,36 +74,69 @@ async function generateReactiveIndicesForEntrypoints(
 	const reactiveIndices = await generator.getReactivePositions();
 	stdout.write("done\n")	
 	handleReactiveIndices(reactiveIndices);
-	onUpdate?.();
 
 	if (watch) {
-		const handler = (reactiveIndices: Positions) => {
-			console.log("[JUSIX] Updated reactive indices")
-			handleReactiveIndices(reactiveIndices);
-			onUpdate?.();
+		initRequestListener(generator);
+	}
+
+	return async () => {
+		stdout.write("[JUSIX] Updating reactive indices...")
+		const reactiveIndices = await generator.getReactivePositions();
+		stdout.write("done\n")	
+		await handleReactiveIndices(reactiveIndices);
+	};
+}
+
+const handleRequest = debounce(async (generator: TSXTypeInferenceGenerator) => {
+	const timestamp = Deno.readTextFileSync(requestPath);
+	if (timestamp) {
+		stdout.write("[JUSIX] Updating reactive indices...")
+		const reactiveIndices = await generator.getReactivePositions();
+		stdout.write("done\n")	
+		await handleReactiveIndices(reactiveIndices);
+		// check if timestamp has not changed during processing
+		if (timestamp == Deno.readTextFileSync(requestPath)) {
+			Deno.writeTextFileSync(requestPath, "");
 		}
-		generator.onUpdate(handler);
 	}
+}, 200);
 
+async function initRequestListener(generator: TSXTypeInferenceGenerator) {
+	// watch _request file for changes
+	if (requestPath.fs_exists) {
+		const watcher = Deno.watchFs(requestPath.normal_pathname);
+		for await (const event of watcher) {
+			if (event.kind == "modify") {
+				handleRequest(generator);
+			}
+		}
+	}
 }
 
-function handleReactiveIndices(reactiveIndices: Positions) {
+
+async function handleReactiveIndices(reactiveIndices: Positions) {
 	console.log("inidices", reactiveIndices)
-	for (const [file, indices] of reactiveIndices) {
-		saveReactiveIndices(file, indices);
+	const promises = [];
+	for (const [modulePath, indices] of reactiveIndices) {
+		promises.push(saveReactiveIndices(modulePath, indices));
 	}
+	await Promise.all(promises);
 }
 
 
-function saveReactiveIndices(modulePath: string, indices: number[]) {
-	const hash = encodeHex(sha256('file://' + modulePath) as Uint8Array);
+async function saveReactiveIndices(modulePath: string, indices: number[]) {
+	const hash = encodeHex(sha256(modulePath) as Uint8Array);
 	const path = metadataDir.getChildPath(hash);
 	// save indices to path
 	if (indices.length) {
-		Deno.writeTextFile(path, indices.join(","))
+		// create parent directory if not exists
+		if (!await path.parent_dir.fsExists()) {
+			await Deno.mkdir(path.parent_dir, {recursive: true})
+		}
+		await Deno.writeTextFile(path, indices.join(","))
 	}
 	// delete file if no indices
 	else if (path.fs_exists) {
-		Deno.remove(path)
+		await Deno.remove(path)
 	}
 }

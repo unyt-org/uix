@@ -5,6 +5,7 @@ import { ResolvedProjectReference } from "npm:typescript";
 import { StringLiteralLike } from "npm:typescript";
 import { encodeHex } from "jsr:@std/encoding/hex";
 import { sha256 } from "./sha256.js";
+import { stdout } from "node:process";
 
 export type TypeInferenceOptions = {
 	/**
@@ -39,7 +40,7 @@ export type Positions = Map<string, number[]>;
 
 export type PositionsData = {
 	attrIndex: number,
-	positions: Positions
+	positions: Positions,
 }
 
 export class TSXTypeInferenceGenerator {
@@ -51,6 +52,8 @@ export class TSXTypeInferenceGenerator {
 	#typeChecker!: ts.TypeChecker;
 
 	#intiializePromise: Promise<void> | undefined;
+
+	#unresolvedFiles = new Set<string>();
 
 	static refTypes = ["Ref", "RefLike", "ReactiveValue"];
 
@@ -77,19 +80,13 @@ export class TSXTypeInferenceGenerator {
 		
 	}
 
-	#updatHandlers: Set<(positions: Positions) => void> = new Set();
-
-	public onUpdate(callback: (positions: Positions) => void) {
-		this.#updatHandlers.add(callback);
-	}
-
 	/**
 	 * Finds all code positions of JSX attribute assignments that require reactive updates
 	 * Reactivity is determined by the presence of a special #__ref__ marker property in the type of the attribute
 	 * 
 	 * @returns Array with file paths and positions 
 	 */
-	public async getReactivePositions(): Promise<Positions> {
+	public async getReactivePositions(tryCache = true): Promise<Positions> {
 		await this.#init();
 
 		const program = this.#watchProgram ?
@@ -97,7 +94,32 @@ export class TSXTypeInferenceGenerator {
 			ts.createProgram(this.#sourcePaths, this.#compilerOptions, this.#getCompilerHost());
 		this.#typeChecker = program.getTypeChecker();
 
-		return this.#getReactivePositionsForProgram(program);
+		const positions = this.#getReactivePositionsForProgram(program);
+
+		// cache missing dependencies
+		if (this.#unresolvedFiles.size > 0 && tryCache) {
+			stdout.write("Caching " + this.#unresolvedFiles.size + (this.#unresolvedFiles.size == 1 ? " dependency" : " dependencies") + "...");
+			await TSXTypeInferenceGenerator.cacheDependencies([...this.#unresolvedFiles]);
+			this.#unresolvedFiles.clear();
+			// completely reset watch program
+			if (this.#options.watch) {
+				this.#initWatchProgram();
+			}
+			return this.getReactivePositions(false);
+		}
+		else if (this.#unresolvedFiles.size > 0) {
+			console.warn("Could not resolve the following files:", this.#unresolvedFiles);
+		}
+
+
+		return positions;
+	}
+
+	public static async cacheDependencies(dependencies: (URL|string)[]) {
+		await new Deno.Command("deno", {
+			args: ["cache", "-I", ...dependencies.map((dep) => dep.toString())],
+			stdout: "piped",
+		}).output();
 	}
 
 	#getReactivePositionsForProgram(program: ts.Program): Positions {
@@ -106,14 +128,36 @@ export class TSXTypeInferenceGenerator {
 		program.getSourceFiles().forEach((sourceFile) => {
 			// skip non-tsx files
 			if (sourceFile.languageVariant !== ts.LanguageVariant.JSX) return;
-			// console.log("Searching " + sourceFile.fileName);
 
-			positions.set(sourceFile.fileName, []);
+			const fileIdentifier = this.#denoCacheFileUrls.get(sourceFile.fileName) || ('file://' + sourceFile.fileName);
+
+			positions.set(fileIdentifier, []);
 			const positionsData: PositionsData = { attrIndex: 0, positions: positions };
 
 			this.#visit(sourceFile, positionsData);
 		});
+
+		// for (const [file] of positions) {
+		// 	// fix for remote cached modules: remove transpile cache for each file to force recompilation
+		// 	if (file.startsWith("http://") || file.startsWith("https://")) {
+		// 		this.#deleteDenoTranspileCacheForFile(file);
+		// 	}
+		// }
 		return positions;
+	}
+
+	#deleteDenoTranspileCacheForFile(file: string) {
+		const resolvedModuleURL = new URL(file);
+		const basePath = this.#denoCacheDirs.typescriptCache;
+		const pathHash = encodeHex(sha256(resolvedModuleURL.pathname) as Uint8Array);
+		const fullPath = `${basePath}/${resolvedModuleURL.protocol.slice(0,-1)}/${resolvedModuleURL.host}/${pathHash}.js`;
+		console.log("deleting cache for", file, fullPath);
+		try {
+			Deno.removeSync(fullPath);
+		}
+		catch {
+			// ignore
+		}
 	}
 
 	async #init() {
@@ -121,7 +165,7 @@ export class TSXTypeInferenceGenerator {
 		const {promise, resolve} = Promise.withResolvers<void>();
 		this.#intiializePromise = promise;
 
-		this.#denoRemoteModulesCacheDir = await this.#getDenoRemoteModulesCacheDir();
+		this.#denoCacheDirs = await this.#getDenoCacheDir();
 
 		this.#sourcePaths = this.#options.sourcePaths.map((sourcePath) => {
 			if (sourcePath instanceof URL) return sourcePath.pathname;
@@ -129,57 +173,61 @@ export class TSXTypeInferenceGenerator {
 		});
 
 		if (this.#options.watch) {
-			const host = ts.createWatchCompilerHost(
-				this.#sourcePaths, 
-				this.#compilerOptions, 
-				ts.sys,
-				undefined,
-				() => {}, // Empty diagnostic reporter (no logging)
-				() => {}  // Empty watch status reporter (no logging)
-			);
-			host.resolveModuleNameLiterals = (moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined) =>
-				this.#customModuleResolver(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, reusedNames);
-
-			const originalAfterProgramCreate = host.afterProgramCreate;
-
-			host.afterProgramCreate = program => {
-			  	originalAfterProgramCreate!(program);
-			  	if (this.#updatHandlers.size > 0) {
-					const positions = this.#getReactivePositionsForProgram(program.getProgram());
-					for (const handler of this.#updatHandlers) {
-						handler(positions);
-					}
-				}
-			};
-
-			this.#watchProgram = ts.createWatchProgram(host);
+			this.#initWatchProgram();
 		}
 
 		resolve();
 	}
 
-	#denoRemoteModulesCacheDir!: string;
-	#denoCacheFileUrls = new Map<string, string>();
+	#initWatchProgram() {
+		const host = ts.createWatchCompilerHost(
+			this.#sourcePaths, 
+			this.#compilerOptions, 
+			ts.sys,
+			undefined,
+			() => {}, // Empty diagnostic reporter (no logging)
+			() => {} // Empty watch status change handler
+		);
+		host.resolveModuleNameLiterals = (moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined) =>
+			this.#customModuleResolver(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, reusedNames);
 
-	async #getDenoRemoteModulesCacheDir() {
-		const output = await new Deno.Command("deno", {args: ["info", "--json"]}).output();
-		const info = JSON.parse(new TextDecoder().decode(output.stdout));
-		return info["modulesCache"];
+		this.#watchProgram = ts.createWatchProgram(host);
 	}
 
-	#getLocalDenoCacheFile(moduleURL: string) {
+	#denoCacheDirs!: {modulesCache: string, typescriptCache: string};
+	#denoCacheFileUrls = new Map<string, string>();
+
+	async #getDenoCacheDir() {
+		const output = await new Deno.Command("deno", {args: ["info", "--json"]}).output();
+		const info = JSON.parse(new TextDecoder().decode(output.stdout));
+		return info as {modulesCache: string, typescriptCache: string};
+	}
+
+	#getLocalDenoCacheFile(moduleURL: string, extension?: string) {
 		// file urls must not be resolved
 		if (moduleURL.startsWith("file://")) return;
 		// check if Url can be parsed
 		if (!URL.canParse(moduleURL)) return;
 		const resolvedModuleURL = new URL(moduleURL);
-		const basePath = this.#denoRemoteModulesCacheDir;
+		const basePath = this.#denoCacheDirs.modulesCache;
 		const pathHash = encodeHex(sha256(resolvedModuleURL.pathname) as Uint8Array);
 		const fullPath = `${basePath}/${resolvedModuleURL.protocol.slice(0,-1)}/${resolvedModuleURL.host}/${pathHash}`;
+		const newPath = fullPath + (extension||"");
+
+		this.#denoCacheFileUrls.set(newPath, moduleURL);
+		// check if fullPath exists
+		try {
+			Deno.statSync(fullPath);
+			if (extension) {
+				// copy file next with .tsx extension, required for correct parsing
+				Deno.copyFileSync(fullPath, newPath);
+			}
+		}
+		catch {
+			this.#unresolvedFiles.add(moduleURL);
+		}
 		
-		this.#denoCacheFileUrls.set(fullPath, moduleURL);
-		
-		return fullPath;
+		return newPath;
 	}
 
 	#resolveModule(moduleName: string, containingFile?: string) {
@@ -224,7 +272,7 @@ export class TSXTypeInferenceGenerator {
 	#customModuleResolver(moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined): readonly ts.ResolvedModuleWithFailedLookupLocations[] {
 		return moduleLiterals.map((moduleLiteral) => {
 
-			if (moduleLiteral.text.startsWith("node:") || moduleLiteral.text.startsWith("npm:") || moduleLiteral.text.startsWith("jsr:")) {
+			if (moduleLiteral.text.startsWith("node:") || moduleLiteral.text.startsWith("npm:") || moduleLiteral.text.startsWith("jsr:") || moduleLiteral.text.startsWith("https://deno.land/") || moduleLiteral.text.startsWith("https://jsr.io/")) {
 				return {
 					resolvedModule: {
 						extension: ts.Extension.Ts,
@@ -235,13 +283,14 @@ export class TSXTypeInferenceGenerator {
 
 
 			const mod = this.#resolveModule(moduleLiteral.text, containingFile)??moduleLiteral.text;
-			const resolvedPath = this.#getLocalDenoCacheFile(mod) || mod.replace("file://", "");
+			const resolvedPath = this.#getLocalDenoCacheFile(mod, mod.endsWith(".tsx") ? '.tsx' : undefined) || mod.replace("file://", "");
 
 			return {
 				resolvedModule: {
-					extension: resolvedPath.endsWith(".tsx") ? ts.Extension.Tsx : ts.Extension.Ts,
+					extension: resolvedPath.endsWith(".tsx") || mod.endsWith(".tsx") ? ts.Extension.Tsx : ts.Extension.Ts,
 					resolvedFileName: resolvedPath,
-					moduleName: moduleLiteral.text
+					moduleName: mod,
+					resolvedUsingTsExtension: false
 				}
 			}
 		})
@@ -357,10 +406,11 @@ export class TSXTypeInferenceGenerator {
 				//console.log(this.#typeChecker.typeToString(requiredType!), node.pos, node.getText());
 				// append pos as new line to file
 				const sourceFile = node.getSourceFile();
-				if (!positionsData.positions.has(sourceFile.fileName)) positionsData.positions.set(sourceFile.fileName, []);
-				positionsData.positions.get(sourceFile.fileName)!.push(positionsData.attrIndex);
+				const fileIdentifier = this.#denoCacheFileUrls.get(sourceFile.fileName) || ('file://' + sourceFile.fileName);
+				if (!positionsData.positions.has(fileIdentifier)) positionsData.positions.set(fileIdentifier, []);
+				positionsData.positions.get(fileIdentifier)!.push(positionsData.attrIndex);
 				if (this.#typeChecker.typeToString(requiredType!) == "unknown") {
-					console.error("Error: unknown type at " + sourceFile.fileName + ":" + node.pos);
+					console.error("Error: unknown type at " + fileIdentifier + ":" + node.pos);
 				}
 			}
 		}

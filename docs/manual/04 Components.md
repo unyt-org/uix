@@ -45,6 +45,40 @@ will render as:
 </div>
 ```
 
+### Reactive attributes
+
+Custom component attributes can also accept `Ref` values to get reactive behavior:
+
+```tsx
+const myValue = $(42);
+const ComplexComponent = template<{customAttr: Ref<number>}>(({customAttr}) =>
+    <div class="complex">
+        <b>Answer is: {customAttr}</b>
+    </div>
+); 
+
+<ComplexComponent id="c2" customAttr={myValue}/>
+```
+
+In this example, the component will automatically update its HTML content when the value of the `myValue` pointer changes,
+since it was passed as a reactive properties.
+
+When declaring properties as `Ref` values, more complex expressions defined inside the JSX instatiation will also be reactive, e.g.:
+
+```tsx
+const myValue = $(42);
+const ComplexComponent = template<{customAttr: Ref<number>}>(({customAttr}) =>
+    <div class="complex">
+        <b>Answer is: {customAttr}</b>
+    </div>
+);
+
+// {myValue * 100} will be passed as a reactive value
+<ComplexComponent id="c2" customAttr={myValue * 100}/>
+```
+
+To learn more about reactive expressions in JSX, check out the [ractivity guide](/guide/uix/reactivity).
+
 ### Child elements
 
 Default element attributes (e.g. `id` and `style`) are assigned to the root element after it is created.

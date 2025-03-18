@@ -13,6 +13,7 @@ import { HTTPServerInterface } from "datex-core-legacy/network/communication-int
 import { communicationHub } from "datex-core-legacy/network/communication-hub.ts";
 import { resolveDependencies } from "../html/dependency-resolver.ts";
 import { ReactiveValue } from "datex-core-legacy/runtime/pointers.ts";
+import { printRunningStatus, updateRunningStatus } from "../utils/logging.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -50,6 +51,8 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 	// connect to supranet
 	if (endpoint_config.connect !== false) await Datex.Supranet.connect();
 	else await Datex.Supranet.init(undefined);
+
+	printRunningStatus("\""+nOptions.name+"\" is running | Press [Ctrl+R] to restart")
 
 	// TODO: map multiple backends to multiple frontends?
 	let backend_with_default_export:BackendManager|undefined;
@@ -152,6 +155,9 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 				return true;
 			}
 		})
+
+		const address = server.getFormattedAddress();
+		updateRunningStatus("\""+nOptions.name+"\" is running | Press [Ctrl+R] to restart | " + address)
 	}
 
 	// js type def module mapping

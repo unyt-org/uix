@@ -6,14 +6,7 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { logger, runParams } from "./runner.ts";
 import { verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { generateReactiveIndices } from "./reactive-index-generation.ts";
-
-
-export const CSI = '\u001b['
-export const CTRLSEQ = {
-	CLEAR_SCREEN:						CSI + '2J',
-	HOME:								CSI + 'H'
-} as const;
-
+import { CTRLSEQ, CSI, printReloadingStatus } from "../utils/logging.ts";
 
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
@@ -86,14 +79,17 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		args.push("--path", rootPath.normal_pathname)
 	}
 
-	let process: Deno.ChildProcess;
+	let process: Deno.ChildProcess | undefined;
 
 	// explicitly kill child process to trigger SIG event on child process
 	// (required for saving state on exit)
 	addEventListener("unload", ()=>{
+		// show cursor again
+		console.log(CSI + "?25h");
 		if (process) {
 			try {
 				process.kill();
+				process = undefined;
 			}
 			catch {/* ignore */}
 		}
@@ -113,6 +109,9 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	catch {
 		/* ignore */
 	}
+
+	// hide cursor
+	console.log(CSI + "?25l");
 	
 	// handle clear state when live reloading
 	let isClearingState = clear;
@@ -126,11 +125,12 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	await run();
 
 	async function reRun() {
+		process = undefined;
 		// init watch based TSC if not yet watching
 		if (!tscWatching) {
 			tscWatching = true;
 			// wait for reactive index update before restarting
-			updateReactiveIndices = await generateReactiveIndices(options, tscWatching);
+			updateReactiveIndices = await generateReactiveIndices(options, tscWatching, false);
 		}
 		else {
 			// wait until reactive index update, or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
@@ -141,15 +141,15 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	
 	async function run(restart = false) {
 		if (!verboseArg) {
-			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
+			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
 			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
 		}
 
 		if (restart) {
-			console.log("[Restarting backend...]");
+			printReloadingStatus("Relauching \"" + options.name + "\"...");
 		}
 		else {
-			console.log("[Starting backend...]");
+			printReloadingStatus("Launching \"" + options.name + "\"...");
 		}
 
 		if (stateCleared) {
@@ -205,6 +205,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 		// CTRL+R
 		if (exitStatus.code == 420) {
+			console.log("CTRL+R pressed, restarting backend...");
 			try {
 				process.kill()
 			}

@@ -293,6 +293,9 @@ export class Server {
         else this.requestHandlers.add(requestHandler) // add to end of line
     }
 
+    public getFormattedAddress() {
+        return `${enable_tls?"https":"http"}://localhost${this.port==80?'':':'+this.port}`;
+    }
 
     // start listening on port
     public async listen(port?:number) {
@@ -305,8 +308,9 @@ export class Server {
         await Promise.all(loaders)
 
         const server = await this.listenWithFallbackPort();
-        if (this.#dir?.name) logger.info(`${this.#dir.name} available on ${enable_tls?"https":"http"}://localhost${this.port==80?'':':'+this.port}`);
-        else logger.info(`available on ${enable_tls?"https":"http"}://localhost${this.port==80?'':':'+this.port}`);
+        // const address = this.getFormattedAddress();
+        // if (this.#dir?.name) logger.info(`${this.#dir.name} available on ${address}`);
+        // else logger.info(`available on ${address}`);
         this.#running = true;
 
         const serve = async () => {

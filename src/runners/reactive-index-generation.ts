@@ -7,6 +7,9 @@ import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { stdout } from "node:process";
 import { debounce } from "https://deno.land/std@0.104.0/async/debounce.ts";
+import { Logger } from "datex-core-legacy/utils/logger.ts";
+
+const logger = new Logger("JUSIX", true)
 
 const metadataDir = new Path("./uix/jusix/metadata/", cache_path).asDir();
 // reset metadata directory
@@ -15,10 +18,10 @@ Deno.mkdirSync(metadataDir, {recursive: true})
 const requestPath = metadataDir.getChildPath("_request");
 Deno.writeTextFile(requestPath, "");
 
-export async function generateReactiveIndices(options: normalizedAppOptions, watch: boolean): Promise<() => Promise<void>> {
+export async function generateReactiveIndices(options: normalizedAppOptions, watch: boolean, loadDependencies = true): Promise<() => Promise<void>> {
 	if (!options.import_map.path) throw new Error("Import map path must be defined")
 
-	await cacheDependencies();
+	if (loadDependencies) await cacheDependencies();
 
 	// get entrypoints
 	const entrypoints = [];
@@ -43,9 +46,9 @@ export async function generateReactiveIndices(options: normalizedAppOptions, wat
 // TODO: this works for known dependencies (e.g. template.ts), but not all remote dependencies are cached or up to date - this is definitely a problem
 async function cacheDependencies() {
 	const templatePath = new Path("../html/template.ts", import.meta.url);
-	stdout.write("[JUSIX] Loading dependencies into cache...")
+	logInfoOneline("Loading dependencies into cache...")
 	await TSXTypeInferenceGenerator.cacheDependencies([templatePath])
-	stdout.write("done\n")
+	logDone();
 }
 
 
@@ -70,9 +73,9 @@ async function generateReactiveIndicesForEntrypoints(
 		detectRefMarkers: true
 	})
 
-	stdout.write("[JUSIX] Generating reactive indices...")
+	logInfoOneline("Generating reactive indices...")
 	const reactiveIndices = await generator.getReactivePositions();
-	stdout.write("done\n")	
+	logDone();
 	handleReactiveIndices(reactiveIndices);
 
 	if (watch) {
@@ -80,9 +83,9 @@ async function generateReactiveIndicesForEntrypoints(
 	}
 
 	return async () => {
-		stdout.write("[JUSIX] Updating reactive indices...")
+		logInfoOneline("Updating reactive indices...")
 		const reactiveIndices = await generator.getReactivePositions();
-		stdout.write("done\n")	
+		logDone();
 		await handleReactiveIndices(reactiveIndices);
 	};
 }
@@ -90,9 +93,9 @@ async function generateReactiveIndicesForEntrypoints(
 const handleRequest = debounce(async (generator: TSXTypeInferenceGenerator) => {
 	const timestamp = Deno.readTextFileSync(requestPath);
 	if (timestamp) {
-		stdout.write("[JUSIX] Updating reactive indices...")
+		logInfoOneline("Updating reactive indices...")
 		const reactiveIndices = await generator.getReactivePositions();
-		stdout.write("done\n")	
+		logDone();
 		await handleReactiveIndices(reactiveIndices);
 		// check if timestamp has not changed during processing
 		if (timestamp == Deno.readTextFileSync(requestPath)) {
@@ -111,6 +114,14 @@ async function initRequestListener(generator: TSXTypeInferenceGenerator) {
 			}
 		}
 	}
+}
+
+function logDone() {
+	stdout.write("done\n");
+}
+
+function logInfoOneline(message: string) {
+	stdout.write(logger.getInfoMessage(message))
 }
 
 

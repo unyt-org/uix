@@ -68,7 +68,7 @@ is transpiled by JUSIX into the following JavaScript code:
 
 ### Reactivity examples
 
-Reactive tenary statements allow updating element children based on conditions can be written like this:
+Reactive tenary statements allow updating an elements children based on logical conditions. These statements can be written like this:
 ```tsx
 const isLoggedIn = $(false);
 <div>

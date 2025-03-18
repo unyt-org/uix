@@ -186,7 +186,48 @@ const radius = $(0);
 </div>;
 ```
 
-The same is true for complex reactive data such as arrays. More information [here](#rendering-lists).
+#### Reactive expressions and custom components
+
+When instantiating custom components, expressions inside an attribute are only reactive if the component explicitly
+marks the attribute as reactive by wrapping it in a `Ref` type. 
+
+```tsx
+const count = $(0);
+
+const StaticCounter = template<{count: number}>(props => 
+    <div>
+        <p>Count: {props.count}</p>
+    </div>
+);
+
+// In this case, the expression {count * 10} is not reactive:
+const staticCounter1 = <StaticCounter count={count * 10}/>;
+
+// ⚠️ If you try to pass a ref value directly into an attribute that is not marked as a reactive,
+// you will get a type error:
+const staticCounter2= <StaticCounter count={count}/>;
+
+
+
+const ReactiveCounter = template<{count: Ref<number>}>(props => 
+    <div>
+        <p>Count: {props.count}</p>
+    </div>
+);
+
+// In this case, the expression {count * 10} is reactive, sind the attribute is marked as a Ref:
+const reactiveCounter = <ReactiveCounter count={count * 10}/>;
+
+// Directly passing a Ref value into an attribute is also possible:
+const reactiveCounter2 = <ReactiveCounter count={count}/>;
+```
+
+> [!NOTE]
+> Reactive expressions that evaluate to **non-primitive values** (e.g. objects or arrays) have only limited support in
+> the current version of UIX. Try to avoid passing reactive expressions that evaluate to non-primitive values as
+> attributes to custom components.
+> Non-primitive values that are bound to a DATEX pointer and are inherently reactive, can still be used as (reactive) attribute values.
+
 
 ### Conditional rendering
 

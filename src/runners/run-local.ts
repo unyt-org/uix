@@ -141,8 +141,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	
 	async function run(restart = false) {
 		if (!verboseArg) {
-			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
-			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
+			Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
+			Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
 		}
 
 		if (restart) {

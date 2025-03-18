@@ -52,7 +52,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 	if (endpoint_config.connect !== false) await Datex.Supranet.connect();
 	else await Datex.Supranet.init(undefined);
 
-	const reloadText = live ? "Hot reloading enabled" : "Press [Ctrl+R] to restart";
+	const reloadText = live ? "Hot reloading enabled" : "Press [CTRL+R] to restart";
 
 	printRunningStatus(`"${nOptions.name}" is running | ${reloadText}`)
 
@@ -158,8 +158,10 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 			}
 		})
 
-		const address = server.getFormattedAddress();
-		printRunningStatus(`"${nOptions.name}" is running | ${reloadText} | ${address}`)
+		setTimeout(() => {
+			const address = server.getFormattedAddress();
+			updateRunningStatus(`"${nOptions.name}" is running | ${reloadText} | ${address}`)
+		}, 200)
 	}
 
 	// js type def module mapping

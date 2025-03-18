@@ -11,7 +11,7 @@ import { eternalExts, updateEternalFile } from "./module-mapping.ts";
 import { debounce } from "https://deno.land/std@0.104.0/async/debounce.ts";
 
 const logBackendRestartNote = debounce((type: string) =>
-	logger.warn("A "+type+" file was updated. Restart the backend with [Ctrl+R] to apply the latest changes."),
+	logger.warn("A "+type+" file was updated. Restart the backend with [CTRL+R] to apply the latest changes."),
 	100
 )
 

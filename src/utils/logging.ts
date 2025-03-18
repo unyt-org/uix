@@ -27,25 +27,27 @@ const statusColors = {
 
 
 export function printStatus(message: string, type: STATUS_TYPE, reset = true, restoreCursor = !reset) {
-	if (!reset) {
-		// save cursor position
-		if (restoreCursor) Deno.stdout.write(textEncoder.encode(CSI + 's'));
-	}
-	Deno.stdout.write(textEncoder.encode(CTRLSEQ.TOP_LEFT));
+	let data = "";
 
-	// log status to std with light blue background, white text
-	Deno.stdout.write(textEncoder.encode(`${statusColors[type]}${ESCAPE_SEQUENCES.BOLD} ${message} ${ESCAPE_SEQUENCES.RESET}\n\n`));
-	
-	if (!reset) {
-		// restore cursor position
-		if (restoreCursor) Deno.stdout.write(textEncoder.encode(CSI + 'u'));
-	}
-	else {
+	// save cursor position
+	if (restoreCursor) data += CSI + 's';
+
+	// move cursor to top left
+	data += CTRLSEQ.TOP_LEFT;
+
+	// status log with formatting
+	data += `${statusColors[type]}${ESCAPE_SEQUENCES.BOLD}${ESCAPE_SEQUENCES.BLACK} ${message} ${CSI}K${ESCAPE_SEQUENCES.RESET}\n\n`;
+
+	// restore cursor position
+	if (restoreCursor) data += CSI + 'u';
+
+	if (reset) {
 		// put cursor back to start to allow overwriting
-		Deno.stdout.write(textEncoder.encode(CTRLSEQ.TOP_LEFT));
+		data += CTRLSEQ.TOP_LEFT;
 	}
-}
 
+	Deno.stdout.writeSync(textEncoder.encode(data));
+}
 
 export function printReloadingStatus(message: string) {
 	printStatus("🚀 " + message, STATUS_TYPE.RELOADING, true, false);

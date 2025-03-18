@@ -47,7 +47,7 @@ You can use the `always` method to manually control reactivity when needed.
 ## JUSIX: The module behind the "magic"
 However, to make the developer experience even smoother, UIX automatically wraps certain expressions in `always` calls. This eliminates the need for developers to write `always` explicitly every time they want reactivity. This is how the `counter` example at the start of this chapter is possible.
 
-UIX uses the SWC transpiler to convert TypeScript and JSX code into plain JavaScript for both frontend and backen modules.
+UIX uses the SWC transpiler to convert TypeScript and JSX code into plain JavaScript for both frontend and backend modules.
 Our custom SWC plugin called [JUSIX](https://github.com/unyt-org/jusix) handles the interpretation of JSX code as reactive JavaScript.
 
 JUSIX is integrated in our custom version of Deno, called [Deno for UIX](https://github.com/unyt-org/deno), as part of the [`deno_ast` parser](https://github.com/unyt-org/deno_ast).
@@ -68,7 +68,7 @@ is transpiled by JUSIX into the following JavaScript code:
 
 ### Reactivity examples
 
-Reactive tenary statements allow updating element children based on conditions can be written like this:
+Reactive tenary statements allow updating an elements children based on logical conditions. These statements can be written like this:
 ```tsx
 const isLoggedIn = $(false);
 <div>
@@ -81,7 +81,7 @@ const isLoggedIn = $(false);
 </div>;
 ```
 
-The above code is transpiled with JUSIX to the following JavaScript code:
+The above code is transpiled with JUSIX and produces the following JavaScript code:
 
 ```tsx
 const isLoggedIn = $(false);

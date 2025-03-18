@@ -161,7 +161,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 		setTimeout(() => {
 			const address = server.getFormattedAddress();
 			updateRunningStatus(`"${nOptions.name}" is running | ${reloadText} | ${address}`)
-		}, 200)
+		}, 100)
 	}
 
 	// js type def module mapping

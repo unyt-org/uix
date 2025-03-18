@@ -13,7 +13,12 @@ const logger = new Logger("JUSIX", true)
 
 const metadataDir = new Path("./uix/jusix/metadata/", cache_path).asDir();
 // reset metadata directory
-Deno.removeSync(metadataDir, {recursive: true});
+try {
+	Deno.removeSync(metadataDir, {recursive: true});
+}
+catch {
+	// ignore
+}
 Deno.mkdirSync(metadataDir, {recursive: true})
 const requestPath = metadataDir.getChildPath("_request");
 Deno.writeTextFile(requestPath, "");

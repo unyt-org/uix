@@ -675,10 +675,9 @@ export class Transpiler {
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, src_path: Path.File, useJusix = false) {
-        const {transform} = await import("npm:@swc/core@1.7.23");
+        const {transform} = await import("npm:@swc/core@1.9.3");
 
-        // TODO: reenable jusix reload
-        const jusixPath = useJusix && await getJusix(false/*reload*/);
+        const jusixPath = useJusix && await getJusix(reload);
 
         const experimentalPlugins = useJusix ? {
             plugins: [

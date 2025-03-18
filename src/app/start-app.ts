@@ -52,7 +52,9 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 	if (endpoint_config.connect !== false) await Datex.Supranet.connect();
 	else await Datex.Supranet.init(undefined);
 
-	printRunningStatus("\""+nOptions.name+"\" is running | Press [Ctrl+R] to restart")
+	const reloadText = live ? "Hot reloading enabled" : "Press [Ctrl+R] to restart";
+
+	printRunningStatus(`"${nOptions.name}" is running | ${reloadText}`)
 
 	// TODO: map multiple backends to multiple frontends?
 	let backend_with_default_export:BackendManager|undefined;
@@ -157,7 +159,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 		})
 
 		const address = server.getFormattedAddress();
-		updateRunningStatus("\""+nOptions.name+"\" is running | Press [Ctrl+R] to restart | " + address)
+		printRunningStatus(`"${nOptions.name}" is running | ${reloadText} | ${address}`)
 	}
 
 	// js type def module mapping

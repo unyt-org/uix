@@ -777,7 +777,7 @@ export class FrontendManager extends HTMLProvider {
 	private async createStaticLiveScript() {
 		if (!this.server) return;
 
-		this.#logger.success("hot reloading enabled");
+		//this.#logger.success("hot reloading enabled");
 		const script = `
 ${"import"} {BackgroundRunner} from "uix/background-runner/background-runner.ts";
 if (!globalThis.location.origin.endsWith(".unyt.app")) {

@@ -7,7 +7,7 @@ import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { stdout } from "node:process";
 import { debounce } from "https://deno.land/std@0.104.0/async/debounce.ts";
-import { Logger } from "datex-core-legacy/utils/logger.ts";
+import { ESCAPE_SEQUENCES, Logger } from "datex-core-legacy/utils/logger.ts";
 
 const logger = new Logger("JUSIX", true)
 
@@ -76,6 +76,8 @@ async function generateReactiveIndicesForEntrypoints(
 	logInfoOneline("Generating reactive indices...")
 	const reactiveIndices = await generator.getReactivePositions();
 	logDone();
+	// wait 50ms to show done message
+	await new Promise(resolve => setTimeout(resolve, 50))
 	handleReactiveIndices(reactiveIndices);
 
 	if (watch) {
@@ -86,6 +88,8 @@ async function generateReactiveIndicesForEntrypoints(
 		logInfoOneline("Updating reactive indices...")
 		const reactiveIndices = await generator.getReactivePositions();
 		logDone();
+		// wait 50ms to show done message
+		await new Promise(resolve => setTimeout(resolve, 50))
 		await handleReactiveIndices(reactiveIndices);
 	};
 }
@@ -117,7 +121,7 @@ async function initRequestListener(generator: TSXTypeInferenceGenerator) {
 }
 
 function logDone() {
-	stdout.write("done\n");
+	stdout.write(`${ESCAPE_SEQUENCES.UNYT_GREEN}done${ESCAPE_SEQUENCES.RESET}\n`)
 }
 
 function logInfoOneline(message: string) {

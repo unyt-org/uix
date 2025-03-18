@@ -81,7 +81,7 @@ const isLoggedIn = $(false);
 </div>;
 ```
 
-The above code is transpiled with JUSIX to the following JavaScript code:
+The above code is transpiled with JUSIX and produces the following JavaScript code:
 
 ```tsx
 const isLoggedIn = $(false);

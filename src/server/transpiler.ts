@@ -778,8 +778,7 @@ export class Transpiler {
             else throw "unknown error"
         }
         catch (e) {
-            console.log(e)
-            logger.error("could not transpile " + ts_dist_path + ": " + (e?.message??e));
+            console.log("Could not transpile " + ts_dist_path + ": ", e);
         }
        
         return js_dist_path;

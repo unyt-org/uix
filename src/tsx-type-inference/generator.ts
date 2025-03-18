@@ -369,8 +369,7 @@ export class TSXTypeInferenceGenerator {
 		}
 	}
 
-	#visitAttribute(node: ts.Node, isBoolNode: boolean, positionsData: PositionsData) {
-
+	#visitAttribute(node: ts.JsxAttribute|ts.JsxAttributeValue, isBoolNode: boolean, positionsData: PositionsData) {
 
 		if (ts.isJsxExpression(node) || ts.isStringLiteral(node) || isBoolNode) {
 

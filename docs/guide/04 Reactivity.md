@@ -1,8 +1,8 @@
 # Reactivity
 
-UIX is reactive! That is because UIX utilizes the powerfull DATEX Pointers under the hood. Pointers can contain any kind of JavaScript value, including strings, numbers, objects, arrays, functions and many more. DOM elements can also be bound to pointers, making them reactive. 
+UIX is reactive! That is because UIX utilizes the powerful DATEX Pointers under the hood. Pointers can contain any kind of JavaScript value, including strings, numbers, objects, arrays, functions and many more. DOM elements can also be bound to pointers, making them reactive. 
 
-UIX’s reactivity system can look like magic when you see it in action the first time. Take this simple app made with UIX:
+UIX's reactivity system can look like magic when you see it in action the first time. Take this simple app made with UIX:
 
 ```tsx
 const counter = $(0);
@@ -19,8 +19,7 @@ Somehow UIX just knows that if the value of the counter changes, it should do th
 2. Recalculate the expression `counter + 1`
 3. Update the counter in the second paragraph to the expressions value
 
-
-It's obvious - this isn't how JavaScript traditionally behaves. Let's introduce you to the magic behind UIX!
+It's obvious - this isn't how JavaScript traditionally behaves. Let's unfold the magic and see how UIX's reactivity system works.
 
 Consider this simple expression:
 ```js
@@ -46,9 +45,9 @@ You can use the `always` method to manually control reactivity when needed.
 
 
 ## JUSIX: The module behind the "magic"
-However, to make the developer experience smoother, UIX can automatically wrap certain expressions in `always` calls. This eliminates the need for developers to write `always` explicitly every time they want reactivity. This is basicially the magic we have seen in the introduction's `counter` example.
+However, to make the developer experience even smoother, UIX automatically wraps certain expressions in `always` calls. This eliminates the need for developers to write `always` explicitly every time they want reactivity. This is how the `counter` example at the start of this chapter is possible.
 
-UIX uses the SWC transpiler to convert TypeScript and JSX code into plain JavaScript for both the frontend and backend.
+UIX uses the SWC transpiler to convert TypeScript and JSX code into plain JavaScript for both frontend and backen modules.
 Our custom SWC plugin called [JUSIX](https://github.com/unyt-org/jusix) handles the interpretation of JSX code as reactive JavaScript.
 
 JUSIX is integrated in our custom version of Deno, called [Deno for UIX](https://github.com/unyt-org/deno), as part of the [`deno_ast` parser](https://github.com/unyt-org/deno_ast).
@@ -56,12 +55,12 @@ Additionally, the [JUSIX WASM plugin](https://github.com/unyt-org/jusix/tree/was
 
 JUSIX uses the `_$` method, which is essentially a shorthand for `always`. It comes with optimizations and performance enhancements tailored to JSX.
 
-For instance, JSX expressions like:
+For instance, a JSX expression like:
 ```tsx
 <p>Counter + 1 = {counter + 1}</p>;
 ```
 
-are transpiled by JUSIX into JavaScript code that looks like this:
+is transpiled by JUSIX into the following JavaScript code:
 
 ```tsx
 <p>Counter + 1 = {_$(() => counter + 1)}</p>;
@@ -69,7 +68,7 @@ are transpiled by JUSIX into JavaScript code that looks like this:
 
 ### Reactivity examples
 
-Reactive tenary statements to allow for updating the DOMs children based on conditions can be written like this:
+Reactive tenary statements allow updating element children based on conditions can be written like this:
 ```tsx
 const isLoggedIn = $(false);
 <div>
@@ -82,7 +81,7 @@ const isLoggedIn = $(false);
 </div>;
 ```
 
-Above code is transpiled to something like:
+The above code is transpiled with JUSIX to the following JavaScript code:
 
 ```tsx
 const isLoggedIn = $(false);
@@ -97,7 +96,7 @@ const isLoggedIn = $(false);
 ```
 
 #### Reactivity for attributes
-The reactivity does not only work for HTML children or content but also for HTML attribute values:
+Reactivity does not only work for element children, but also for attribute values:
 
 ```tsx
 const counter = $(0);
@@ -155,4 +154,4 @@ JUSIX is optional. JUSIX can be activated by settings the compiler options [`jsx
 }
 ```
 
-When running UIX without having [Deno for UIX](https://github.com/unyt-org/deno) installed, the app will terminate with an exception. To disable JUSIX or allow the UIX app to run with the original [denoland/deno](https://github.com/denoland/deno) build, make sure to set the `jsxImportSource` option to `uix`. Keep in mind that this will disable all reactivity for your UIX app.
+When running UIX without having [Deno for UIX](https://github.com/unyt-org/deno) installed, the app will terminate with an exception. To disable JUSIX or allow the UIX app to run with the original [denoland/deno](https://github.com/denoland/deno) build, make sure to set the `jsxImportSource` option to `uix`. Keep in mind that this will disable all automatic reactivity features in your UIX project.

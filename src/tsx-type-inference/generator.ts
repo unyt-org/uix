@@ -374,17 +374,18 @@ export class TSXTypeInferenceGenerator {
 
 		if (ts.isJsxExpression(node) || ts.isStringLiteral(node) || isBoolNode) {
 
-			const jsxEl = node.parent.parent.parent as ts.JsxOpeningElement||ts.isJsxSelfClosingElement;
-			const requiredType = this.#typeChecker.getContextualType(node as ts.Expression);
+			const parent = isBoolNode ? node.parent.parent : node.parent.parent.parent;
+
+			const jsxEl = parent as ts.JsxOpeningElement||ts.isJsxSelfClosingElement;
+			const requiredType = this.#typeChecker.getContextualType(
+				isBoolNode ? 
+					node.getChildAt(0) as ts.Expression :
+					node as ts.Expression
+			);
 			const isCustomComponent = /[A-Z]/.test(jsxEl.tagName?.getText()[0]);
 
-			// attribute type error/warning - only for custom compenents, not built-in elements like div
 			if (!requiredType && isCustomComponent) {
-				// Warning for boolean attributes without initializers
-				if (isBoolNode) {
-					console.warn("Warning: reactivity for boolean attributes without initializers can not yet be determined (attribute \"" + node.getText() + "\"). Please use " + node.getText() + "={true} instead.");
-				}
-				else throw new Error(""+node.getSourceFile().fileName+": Could not find type for attribute " + node.parent.getText());
+				throw new Error(""+node.getSourceFile().fileName+": Could not find type for attribute " + node.parent.getText());
 			}
 	
 			// if union, iterate over types

@@ -25,6 +25,13 @@ const statusColors = {
 	[STATUS_TYPE.ERROR]: ESCAPE_SEQUENCES.UNYT_BG_RED,
 } as const;
 
+const textColors = {
+	[STATUS_TYPE.RELOADING]: ESCAPE_SEQUENCES.BLACK,
+	[STATUS_TYPE.RUNNING]: ESCAPE_SEQUENCES.BLACK,
+	[STATUS_TYPE.WARNING]: ESCAPE_SEQUENCES.BLACK,
+	[STATUS_TYPE.ERROR]: ESCAPE_SEQUENCES.WHITE,
+} as const;
+
 
 export function printStatus(message: string, type: STATUS_TYPE, reset = true, restoreCursor = !reset) {
 	let data = "";
@@ -36,7 +43,7 @@ export function printStatus(message: string, type: STATUS_TYPE, reset = true, re
 	data += CTRLSEQ.TOP_LEFT;
 
 	// status log with formatting
-	data += `${statusColors[type]}${ESCAPE_SEQUENCES.BOLD}${ESCAPE_SEQUENCES.BLACK} ${message} ${CSI}K${ESCAPE_SEQUENCES.RESET}\n\n`;
+	data += `${statusColors[type]}${ESCAPE_SEQUENCES.BOLD}${textColors[type]} ${message} ${CSI}K${ESCAPE_SEQUENCES.RESET}\n\n`;
 
 	// restore cursor position
 	if (restoreCursor) data += CSI + 'u';
@@ -63,4 +70,8 @@ export function updateRunningStatus(message: string) {
 
 export function updateWarningStatus(message: string) {
 	printStatus("🌍  " + message, STATUS_TYPE.WARNING, false, true);
+}
+
+export function printErrorStatus(message: string) {
+	printStatus("🚨 " + message, STATUS_TYPE.ERROR, false, false);
 }

@@ -6,8 +6,7 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { logger, runParams } from "./runner.ts";
 import { verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { generateReactiveIndices } from "./reactive-index-generation.ts";
-import { CTRLSEQ, CSI, printReloadingStatus } from "../utils/logging.ts";
-
+import { CTRLSEQ, CSI, printReloadingStatus, printRunningStatus, printErrorStatus } from "../utils/logging.ts";
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
 
@@ -47,7 +46,6 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		"run",
 		"-Aq",
 		"--unstable-ffi", // required for sqlite3
-		//"--check",
 	];
 
 	const args = [...Deno.args];
@@ -92,9 +90,6 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				process = undefined;
 			}
 			catch {/* ignore */}
-		}
-		else {
-			logger.error("Cannot kill child process")
 		}
 	}, {capture: true});
 
@@ -155,6 +150,18 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		if (stateCleared) {
 			stateCleared = false;
 			logger.warn("Cleared all eternal states on the backend");
+		}
+
+		// run ts code checks
+		if (options.check_ts) {
+			await checkTSCode(root_path);
+		}
+
+		if (restart) {
+			printReloadingStatus("Relauching \"" + options.name + "\"...");
+		}
+		else {
+			printReloadingStatus("Launching \"" + options.name + "\"...");
 		}
 
 		// handle clear state when deployed in docker
@@ -275,3 +282,63 @@ function listenForKeyShortcuts() {
 
 	return createCtrlPromise;
 }
+
+async function checkTSCode(root_path: URL) {
+
+	do {
+		const { valid, stderr } = await getCodeStatus(root_path);
+		if (!valid) {
+			if (!verboseArg) {
+				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
+				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
+			}
+			printErrorStatus("TypeScript code check failed - Please fix all errors in your code");
+			console.error(stderr);
+
+			// watch for changes in root path files
+
+			try {
+				for await (const _event of Deno.watchFs(new Path(root_path).normal_pathname, {recursive: true})) {
+					printErrorStatus("Checking TypeScript code...");
+					break;
+				}
+			}
+			catch (e) {
+				Deno.exit(1);
+			}
+		}
+		else {
+			if (!verboseArg) {
+				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
+				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
+			}
+			break;
+		}
+	} while (true);
+
+}
+
+
+async function getCodeStatus(root_path: URL) {
+	const command = new Deno.Command(Deno.execPath(), {
+		args: [
+			'check',
+			'--allow-import',
+			new Path(root_path).normal_pathname,
+		]
+	});
+	const { code, stderr } = await command.output();
+
+	return {
+		valid: code === 0,
+		// remove preamble from error output
+		// deno-lint-ignore no-control-regex
+		stderr: new TextDecoder().decode(stderr).replace(/^(.|\n)*?(?=\x1b\[0m\x1b\[1m)/, "")
+	}
+}
+
+async function streamToString(stream: ReadableStream<Uint8Array>): Promise<string> {
+	const response = new Response(stream);
+	return await response.text();
+  }
+  

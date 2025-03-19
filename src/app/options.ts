@@ -35,6 +35,7 @@ export type appOptions = {
 	preload_dependencies?: boolean // automatically preload all ts module dependencies, default: true
 	source_maps?: boolean // generate source maps for transpiled javascript modules, default: false, true for dev stage
 	dependency_maps?: boolean // generate dependency maps for js modules, default: false
+	check_ts?: boolean // check typescript files for errors, default: true
 }
 
 export interface normalizedAppOptions extends appOptions {
@@ -76,6 +77,7 @@ export async function normalizeAppOptions(options:appOptions = {}, baseURL?:stri
 	n_options.preload_dependencies = options.preload_dependencies ?? true;
 	n_options.source_maps = options.source_maps;
 	n_options.dependency_maps = options.dependency_maps;
+	n_options.check_ts = options.check_ts ?? true;
 	n_options.jusix = options.jusix ?? false;
 
 	// check if using custom deno for uix if jusix is enabled

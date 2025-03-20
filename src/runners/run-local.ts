@@ -113,7 +113,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	let stateCleared = false;
 
 	let tscWatching = watch || watch_backend || live;
-	let updateReactiveIndices = await generateReactiveIndices(options, tscWatching);
+	let updateReactiveIndices = options.jusix ? await generateReactiveIndices(root_path, options, tscWatching) : null;
 
 	// Enable raw mode to capture key events
 	const createCtrlPromise = listenForKeyShortcuts();
@@ -125,11 +125,11 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		if (!tscWatching) {
 			tscWatching = true;
 			// wait for reactive index update before restarting
-			updateReactiveIndices = await generateReactiveIndices(options, tscWatching, false);
+			updateReactiveIndices = options.jusix ? await generateReactiveIndices(root_path, options, tscWatching, false) : null;
 		}
 		else {
 			// wait until reactive index update, or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
-			await updateReactiveIndices();
+			await updateReactiveIndices?.();
 		}
 		await run(true);
 	}
@@ -240,7 +240,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 					break;
 				}
 			}
-			catch (e) {
+			catch (e: any) {
 				if (e.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
 				else throw e;
 			}

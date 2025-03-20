@@ -3,11 +3,11 @@ import { Positions, TSXTypeInferenceGenerator } from "../tsx-type-inference/gene
 import { sha256 } from "../tsx-type-inference/sha256.js";
 import { normalizedAppOptions } from "../app/options.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-import { getExistingFileExclusive } from "../utils/file-utils.ts";
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { stdout } from "node:process";
 import { debounce } from "https://deno.land/std@0.104.0/async/debounce.ts";
 import { ESCAPE_SEQUENCES, Logger } from "datex-core-legacy/utils/logger.ts";
+import { walk } from "jsr:@std/fs@0.221/walk";
 
 const logger = new Logger("JUSIX", true)
 
@@ -23,24 +23,19 @@ Deno.mkdirSync(metadataDir, {recursive: true})
 const requestPath = metadataDir.getChildPath("_request");
 Deno.writeTextFile(requestPath, "");
 
-export async function generateReactiveIndices(options: normalizedAppOptions, watch: boolean, loadDependencies = true): Promise<() => Promise<void>> {
+export async function generateReactiveIndices(rootPath: URL, options: normalizedAppOptions, watch: boolean, loadDependencies = true): Promise<() => Promise<void>> {
 	if (!options.import_map.path) throw new Error("Import map path must be defined")
 
 	if (loadDependencies) await cacheDependencies();
 
-	// get entrypoints
-	const entrypoints = [];
-	for (const scope of options.backend) {
-		const entrypoint = getEntrypoint(scope)
-		if (entrypoint) entrypoints.push(entrypoint.normal_pathname)
+	// get all modules
+	const modulePaths = [];
+	for await (const dirEntry of walk(rootPath, { exts: ["ts", "tsx"] })) {
+		modulePaths.push(dirEntry.path);
 	}
-	for (const scope of options.frontend) {
-		const entrypoint = getEntrypoint(scope)
-		if (entrypoint) entrypoints.push(entrypoint.normal_pathname)
-	}
-	
-	return await generateReactiveIndicesForEntrypoints(
-		entrypoints,
+
+	return await generateReactiveIndicesForModules(
+		modulePaths,
 		options.import_map.path.toString(),
 		options.import_map.imports,
 		watch
@@ -56,21 +51,14 @@ async function cacheDependencies() {
 	logDone();
 }
 
-
-function getEntrypoint(path: Path) {
-	const entrypoint = getExistingFileExclusive(path, 'entrypoint.ts', 'entrypoint.tsx');
-	if (entrypoint) return new Path(entrypoint);
-}
-
-
-async function generateReactiveIndicesForEntrypoints(
-	entrypoints: string[],
+async function generateReactiveIndicesForModules(
+	modulePaths: string[],
 	importMapPath: string,
 	imports: Record<string, string>,
 	watch: boolean,
 ): Promise<() => Promise<void>> {
 	const generator = new TSXTypeInferenceGenerator({
-		sourcePaths: entrypoints,
+		sourcePaths: modulePaths,
 		importMapPath,
 		imports,
 		watch,

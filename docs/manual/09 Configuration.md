@@ -31,6 +31,7 @@ The `app.dx` file serves as the main configuration file for a UIX application. I
 The following options provide some general information or behavior of the app.
 
 * `name`: *(text)* - The name of the app
+* `version`: *(text)* - The version of the app
 * `description`: *(text)* - Short description for the app
 * `icon`: *(text or url)* - URL path to an app icon image - can also be a relative path, e.g. `./common/res/icon.png`
 * `installable`: *(boolean)* - Tells UIX to make the app installable as standalone web app
@@ -68,6 +69,13 @@ By default, the frontend path is `./frontend/`, the backend path is `./backend/`
 * `backend`:  *(url or url[])* - Directory for backend code
 * `common`: *(url or url[])* - Directory with access from both frontend end backend code
 * `pages`: *(url or url[])* **experimental!** - Common directory with structural access from both frontend end backend code. File paths are automaticially mapped to app routes.
+
+### Code Checking and Transpilation
+
+* `minify_js`: *(boolean)* - Minify transpiled JavaScript modules to reduce file size (default: true)
+* `preload_dependencies`: *(boolean)* - Automatically preload all TypeScript module dependencies to reduce load time in the browser (default: true)
+* `source_maps`: *(boolean)* - Generate Source Maps for transpiled JavaScript modules (default: false, true for "dev" stage)
+* `check_ts`: *(boolean)* - Check TypeScript files for errors and prevent app start if errors are found (default: true)
 
 ### Example app.dx configuration
 ```datex title="app.dx"

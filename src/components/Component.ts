@@ -33,8 +33,11 @@ export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child
 export type standalonePropertyData = {type:'prop'}
 export type standaloneProperties = Record<string, (standaloneContentPropertyData | standalonePropertyData) & {init?:propInit }>;
 
+// deno-lint-ignore no-empty-interface
+interface DefaultProps {}
+
 // @template("uix:component") 
-export abstract class Component<Props extends Record<string,unknown> = Record<string,unknown>, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
+export abstract class Component<Props extends DefaultProps = DefaultProps, ChildElement = JSX.singleOrMultipleChildren> extends domContext.HTMLElement implements RouteManager {
 
     /************************************ STATIC ***************************************/
 

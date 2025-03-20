@@ -22,8 +22,13 @@ interface NotRef {
 	__ref__?: void
 }
 
-export type MappedProps<Props extends Record<string, unknown>> = {
-	[K in keyof Props]: 
+// deno-lint-ignore no-empty-interface
+interface AnyInterface {}
+
+export type MappedProps<Props extends Record<string, unknown>|AnyInterface> = {
+	[K in keyof Props]:
+		// children are always allowed as ref values
+		K extends "children" ? unknown :
 		Props[K] extends Ref<infer T> ? T | Ref<T>
 		: (
 			// if Props[K] allows Ref values (only for unions up to 4)

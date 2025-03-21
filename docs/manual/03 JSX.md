@@ -342,6 +342,23 @@ const list = <ul>
 items.add("Item 4");
 ```
 
+### Reactive async expressions
+
+Inside JSX expressions, it is also possible to call and await asynchronous functions.
+
+```tsx
+const myAsyncFunction = async (userId: number) => {
+    return await fetch('https://example.com/users/' + userId);
+};
+
+const myDiv = <div>
+    User: {await myAsyncFunction(userId.val)}
+</div>;
+```
+
+> [!WARNING] Only values that are captured before or in the first `await` statement inside an expression are recorded as dependencies.
+> Changes to values that are captured after the first `await` statement are not tracked and will not trigger DOM updates.
+
 ## Input validation
 
 Input validation ensures that user inputs on [HTMLInputElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement) or [HTMLSelectElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLSelectElement) meet the expected data requirements of their bound `Ref`.

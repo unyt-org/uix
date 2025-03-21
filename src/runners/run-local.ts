@@ -1,19 +1,12 @@
-import { cache_path, ptr_cache_path } from "datex-core-legacy/runtime/cache_path.ts";
-import { clear, path, rootPath } from "../app/args.ts";
+import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
+import { clear, live, rootPath, watch, watch_backend } from "../app/args.ts";
 import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { logger, runParams } from "./runner.ts";
 import { verboseArg } from "datex-core-legacy/utils/logger.ts";
-
-
-export const CSI = '\u001b['
-export const CTRLSEQ = {
-	CLEAR_SCREEN:						CSI + '2J',
-	HOME:								CSI + 'H'
-} as const;
-
-
+import { generateReactiveIndices } from "./reactive-index-generation.ts";
+import { CTRLSEQ, CSI, printReloadingStatus, printRunningStatus, printErrorStatus } from "../utils/logging.ts";
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
 
@@ -52,7 +45,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	const cmd = [
 		"run",
 		"-Aq",
-		"--unstable-ffi" // required for sqlite3
+		"--unstable-ffi", // required for sqlite3
 	];
 
 	const args = [...Deno.args];
@@ -84,19 +77,19 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		args.push("--path", rootPath.normal_pathname)
 	}
 
-	let process: Deno.ChildProcess;
+	let process: Deno.ChildProcess | undefined;
 
 	// explicitly kill child process to trigger SIG event on child process
 	// (required for saving state on exit)
 	addEventListener("unload", ()=>{
+		// show cursor again
+		console.log(CSI + "?25h");
 		if (process) {
 			try {
 				process.kill();
+				process = undefined;
 			}
 			catch {/* ignore */}
-		}
-		else {
-			logger.error("Cannot kill child process")
 		}
 	}, {capture: true});
 
@@ -111,23 +104,64 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	catch {
 		/* ignore */
 	}
+
+	// hide cursor
+	console.log(CSI + "?25l");
 	
 	// handle clear state when live reloading
 	let isClearingState = clear;
 	let stateCleared = false;
-	
 
+	let tscWatching = watch || watch_backend || live;
+	let updateReactiveIndices = options.jusix ? await generateReactiveIndices(root_path, options, tscWatching) : null;
+
+	// Enable raw mode to capture key events
+	const createCtrlPromise = listenForKeyShortcuts();
 	await run();
-	
-	async function run() {
-		if (!verboseArg) {
-			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.CLEAR_SCREEN));
-			await Deno.stdout.write(new TextEncoder().encode(CTRLSEQ.HOME));
+
+	async function reRun() {
+		process = undefined;
+		// init watch based TSC if not yet watching
+		if (!tscWatching) {
+			tscWatching = true;
+			// wait for reactive index update before restarting
+			updateReactiveIndices = options.jusix ? await generateReactiveIndices(root_path, options, tscWatching, false) : null;
 		}
-		
+		else {
+			// wait until reactive index update, or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
+			await updateReactiveIndices?.();
+		}
+		await run(true);
+	}
+	
+	async function run(restart = false) {
+		if (!verboseArg) {
+			Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
+			Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
+		}
+
+		if (restart) {
+			printReloadingStatus("Relauching \"" + options.name + "\"...");
+		}
+		else {
+			printReloadingStatus("Launching \"" + options.name + "\"...");
+		}
+
 		if (stateCleared) {
 			stateCleared = false;
 			logger.warn("Cleared all eternal states on the backend");
+		}
+
+		// run ts code checks
+		if (options.check_ts) {
+			await checkTSCode(root_path);
+		}
+
+		if (restart) {
+			printReloadingStatus("Relauching \"" + options.name + "\"...");
+		}
+		else {
+			printReloadingStatus("Launching \"" + options.name + "\"...");
 		}
 
 		// handle clear state when deployed in docker
@@ -157,6 +191,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			],
 			env: {
 				SQLITE_STORAGE: options.experimental_features.includes("sqlite-storage") ? "1" : "0",
+				UIX_METADATA_DIR: new Path("./uix/jusix/metadata", cache_path).normal_pathname,
 			}
 		})
 
@@ -168,16 +203,34 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			console.log(`UIX App running in background (PID ${process.pid})`);
 			Deno.exit(0);
 		}
-		const exitStatus = await process.output();
-		if (exitStatus.code == 42) {
-			await run();
+		  
+		// Start listening to Ctrl+R and Ctrl+C in the background
+		const exitStatus = await Promise.race([
+			createCtrlPromise(),
+			process.output()
+		]);
+
+		// CTRL+R
+		if (exitStatus.code == 420) {
+			console.log("CTRL+R pressed, restarting backend...");
+			try {
+				process.kill()
+			}
+			catch {
+				// ignore
+			}
+			await reRun();
+		}
+		// Restart triggered from child process
+		else if (exitStatus.code == 42) {
+			await reRun();
 		}
 		else if (isClearingState) {
 			stateCleared = true;
 			isClearingState = false;
 			// restart without --clear
 			args.splice(args.indexOf("--clear"), 1);
-			await run();
+			await reRun();
 		}
 		else if (isWatching) {
 			console.log("waiting until files are updated...");
@@ -187,13 +240,105 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 					break;
 				}
 			}
-			catch (e) {
+			catch (e: any) {
 				if (e.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
 				else throw e;
 			}
-			await run();
+			await reRun();
 		}
 
 		Deno.exit(exitStatus.code);
 	}
 }
+
+
+function listenForKeyShortcuts() {
+	const decoder = new TextDecoder();
+	Deno.stdin.setRaw(true); 
+
+	const resolvers = new Set<((value: {code: number}) => void)>();
+
+	const createCtrlPromise = () => new Promise<{code: number}>((resolve) => {
+		resolvers.add(resolve);
+	});
+
+	(async () => {
+		for await (const chunk of Deno.stdin.readable) {
+			const key = decoder.decode(chunk);
+			// Ctrl+R (ASCII 18)
+			if (key === "\x12") { 
+				for (const resolve of resolvers) {
+					resolve({code: 420});
+				};
+				resolvers.clear();
+			}
+			// CTRL+C - exit
+			else if (key === "\x03") {
+				console.log("CTRL+C pressed, exiting...");
+				Deno.exit();
+			}
+		}
+	})();
+
+	return createCtrlPromise;
+}
+
+async function checkTSCode(root_path: URL) {
+
+	do {
+		const { valid, stderr } = await getCodeStatus(root_path);
+		if (!valid) {
+			if (!verboseArg) {
+				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
+				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
+			}
+			printErrorStatus("TypeScript code check failed - Please fix all errors in your code");
+			console.error(stderr);
+
+			// watch for changes in root path files
+
+			try {
+				for await (const _event of Deno.watchFs(new Path(root_path).normal_pathname, {recursive: true})) {
+					printErrorStatus("Checking TypeScript code...");
+					break;
+				}
+			}
+			catch (e) {
+				Deno.exit(1);
+			}
+		}
+		else {
+			if (!verboseArg) {
+				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
+				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
+			}
+			break;
+		}
+	} while (true);
+
+}
+
+
+async function getCodeStatus(root_path: URL) {
+	const command = new Deno.Command(Deno.execPath(), {
+		args: [
+			'check',
+			'--allow-import',
+			new Path(root_path).normal_pathname,
+		]
+	});
+	const { code, stderr } = await command.output();
+
+	return {
+		valid: code === 0,
+		// remove preamble from error output
+		// deno-lint-ignore no-control-regex
+		stderr: new TextDecoder().decode(stderr).replace(/^(.|\n)*?(?=\x1b\[0m\x1b\[1m)/, "")
+	}
+}
+
+async function streamToString(stream: ReadableStream<Uint8Array>): Promise<string> {
+	const response = new Response(stream);
+	return await response.text();
+  }
+  

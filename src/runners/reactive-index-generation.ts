@@ -1,0 +1,150 @@
+import { encodeHex } from "jsr:@std/encoding@0.221/hex";
+import { Positions, TSXTypeInferenceGenerator } from "../tsx-type-inference/generator.ts";
+import { sha256 } from "../tsx-type-inference/sha256.js";
+import { normalizedAppOptions } from "../app/options.ts";
+import { Path } from "datex-core-legacy/utils/path.ts";
+import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
+import { stdout } from "node:process";
+import { debounce } from "https://deno.land/std@0.104.0/async/debounce.ts";
+import { ESCAPE_SEQUENCES, Logger } from "datex-core-legacy/utils/logger.ts";
+import { walk } from "jsr:@std/fs@0.221/walk";
+
+const logger = new Logger("JUSIX", true)
+
+const metadataDir = new Path("./uix/jusix/metadata/", cache_path).asDir();
+// reset metadata directory
+try {
+	Deno.removeSync(metadataDir, {recursive: true});
+}
+catch {
+	// ignore
+}
+Deno.mkdirSync(metadataDir, {recursive: true})
+const requestPath = metadataDir.getChildPath("_request");
+Deno.writeTextFile(requestPath, "");
+
+export async function generateReactiveIndices(rootPath: URL, options: normalizedAppOptions, watch: boolean, loadDependencies = true): Promise<() => Promise<void>> {
+	if (!options.import_map.path) throw new Error("Import map path must be defined")
+
+	if (loadDependencies) await cacheDependencies();
+
+	// get all modules
+	const modulePaths = [];
+	for await (const dirEntry of walk(rootPath, { exts: ["ts", "tsx"] })) {
+		modulePaths.push(dirEntry.path);
+	}
+
+	return await generateReactiveIndicesForModules(
+		modulePaths,
+		options.import_map.path.toString(),
+		options.import_map.imports,
+		watch
+	)
+}
+
+// make sure all required depencency modules are cached locally by Deno
+// TODO: this works for known dependencies (e.g. template.ts), but not all remote dependencies are cached or up to date - this is definitely a problem
+async function cacheDependencies() {
+	const templatePath = new Path("../html/template.ts", import.meta.url);
+	logInfoOneline("Loading dependencies into cache...")
+	await TSXTypeInferenceGenerator.cacheDependencies([templatePath])
+	logDone();
+}
+
+async function generateReactiveIndicesForModules(
+	modulePaths: string[],
+	importMapPath: string,
+	imports: Record<string, string>,
+	watch: boolean,
+): Promise<() => Promise<void>> {
+	const generator = new TSXTypeInferenceGenerator({
+		sourcePaths: modulePaths,
+		importMapPath,
+		imports,
+		watch,
+		jsxImportSource: "jusix",
+		detectRefMarkers: true
+	})
+
+	logInfoOneline("Generating reactive indices...")
+	const reactiveIndices = await generator.getReactivePositions();
+	logDone();
+	// wait 50ms to show done message
+	await new Promise(resolve => setTimeout(resolve, 50))
+	handleReactiveIndices(reactiveIndices);
+
+	if (watch) {
+		initRequestListener(generator);
+	}
+
+	return async () => {
+		logInfoOneline("Updating reactive indices...")
+		const reactiveIndices = await generator.getReactivePositions();
+		logDone();
+		// wait 50ms to show done message
+		await new Promise(resolve => setTimeout(resolve, 50))
+		await handleReactiveIndices(reactiveIndices);
+	};
+}
+
+const handleRequest = debounce(async (generator: TSXTypeInferenceGenerator) => {
+	const timestamp = Deno.readTextFileSync(requestPath);
+	if (timestamp) {
+		logInfoOneline("Updating reactive indices...")
+		const reactiveIndices = await generator.getReactivePositions();
+		logDone();
+		await handleReactiveIndices(reactiveIndices);
+		// check if timestamp has not changed during processing
+		if (timestamp == Deno.readTextFileSync(requestPath)) {
+			Deno.writeTextFileSync(requestPath, "");
+		}
+	}
+}, 200);
+
+async function initRequestListener(generator: TSXTypeInferenceGenerator) {
+	// watch _request file for changes
+	if (requestPath.fs_exists) {
+		const watcher = Deno.watchFs(requestPath.normal_pathname);
+		for await (const event of watcher) {
+			if (event.kind == "modify") {
+				handleRequest(generator);
+			}
+		}
+	}
+}
+
+function logDone() {
+	stdout.write(`${ESCAPE_SEQUENCES.UNYT_GREEN}done${ESCAPE_SEQUENCES.RESET}\n`)
+}
+
+function logInfoOneline(message: string) {
+	stdout.write(logger.getInfoMessage(message))
+}
+
+
+async function handleReactiveIndices(reactiveIndices: Positions) {
+	//console.log("reactiveIndices", reactiveIndices)
+	const promises = [];
+	for (const [modulePath, indices] of reactiveIndices) {
+		promises.push(saveReactiveIndices(modulePath, indices));
+	}
+	await Promise.all(promises);
+}
+
+
+async function saveReactiveIndices(modulePath: string, indices: number[]) {
+	const hash = encodeHex(sha256(modulePath) as Uint8Array);
+	const path = metadataDir.getChildPath(hash);
+	// save indices to path
+	if (indices.length) {
+		// create parent directory if not exists
+		if (!await path.parent_dir.fsExists()) {
+			await Deno.mkdir(path.parent_dir, {recursive: true})
+		}
+		await Deno.writeTextFile(path, indices.join(","))
+	}
+	// delete file if no indices
+	else if (path.fs_exists) {
+		await Deno.remove(path)
+	}
+}

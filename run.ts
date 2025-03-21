@@ -90,7 +90,7 @@ if (await handleAutoUpdate(new Path(import.meta.resolve("datex-core-legacy")).pa
 await Promise.all(updatePromises)
 
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.WARNING
-Datex.Logger.production_log_level = Datex.LOG_LEVEL.WARNING
+Datex.Logger.production_log_level = Datex.LOG_LEVEL.DEFAULT;
 
 
 

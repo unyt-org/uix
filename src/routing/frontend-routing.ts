@@ -11,9 +11,12 @@ import { displayError } from "../html/errors.tsx";
 import { setCookie } from "../session/cookies.ts";
 import { app } from "../app/app.ts";
 
+let navigationAPIPolyfillEnabled = false;
 // navigation api polyfill
 if (!(globalThis as any).navigation) {
-	await import("../lib/navigation-api-polyfill/navigation-api.js");
+	const {applyPolyfill} = await import("../lib/navigation-api-polyfill/navigation-api.js");
+	applyPolyfill();
+	navigationAPIPolyfillEnabled = true;
 }
 
 const logger = new Logger("frontend router");
@@ -255,8 +258,8 @@ export class FrontendRouter {
 		const _globalThis = globalThis as any;
 		if (_globalThis.navigation) {
 			_globalThis.navigation?.addEventListener("navigate", (e:any)=>{
-				
-				if (!e.userInitiated || !e.canIntercept || e.downloadRequest || e.formData) return;
+				if (!e.canIntercept || e.downloadRequest || e.formData) return;
+				if (!navigationAPIPolyfillEnabled && !e.userInitiated) return;
 				
 				const url = new URL(e.destination.url);
 				// pass links to /@uix/...

@@ -9,11 +9,18 @@ import { UIX } from "../../uix.ts";
 import { reload } from "../app/args.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
 import { getJusix } from "./jusix.ts";
+import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
+import { sha256 } from "../tsx-type-inference/sha256.js";
+import { encodeHex } from "jsr:@std/encoding@0.221/hex";
 
 const copy = client_type === "deno" ? (await import("https://deno.land/std@0.160.0/fs/copy.ts")) : null;
 const walk = client_type === "deno" ? (await import("https://deno.land/std@0.177.0/fs/mod.ts")).walk : null;
 const sass = client_type === "deno" ? (await import("https://deno.land/x/denosass@1.0.6/mod.ts")).default : null;
 
+const metadataDir = new Path("./uix/jusix/metadata/", cache_path).asDir();
+if (!metadataDir.fs_exists) Deno.mkdirSync(metadataDir, {recursive: true})
+const requestPath = metadataDir.getChildPath("_request");
+if (!requestPath.fs_exists) Deno.writeTextFile(requestPath, "");
 
 const logger = new Logger("transpiler");
 
@@ -70,6 +77,7 @@ export class Transpiler {
     #virtual_files = new Set<string>()
 
     #import_resolver?: TypescriptImportResolver
+
     get import_resolver() {return this.#import_resolver}
 
     get src_dir() {return this.#src_dir}
@@ -147,6 +155,52 @@ export class Transpiler {
 
     #initialized = false;
 
+    static async #requestTscIndexGeneration() {
+        // write current timestamp to _request file
+        const timestamp = Date.now().toString();
+        await Deno.writeTextFile(requestPath, timestamp);
+    }
+
+    static #awaitTscIndexGenerationPromise: Promise<void> | null = null;
+
+    static async #awaitTscIndexGeneration() {
+        // currently not generating tsc index
+        const fileContents = Deno.readTextFileSync(requestPath);
+        if (fileContents === "") return;
+
+        if (this.#awaitTscIndexGenerationPromise) return this.#awaitTscIndexGenerationPromise;
+        const {promise, resolve} = Promise.withResolvers<void>();
+        this.#awaitTscIndexGenerationPromise = promise;
+
+        try {
+            // wait until _lock file is removed
+            const watcher = Deno.watchFs(requestPath.normal_pathname);      
+            for await (const event of watcher) {
+                if (event.kind === "modify") {
+                    const fileContents = Deno.readTextFileSync(requestPath);
+                    if (fileContents === "") {
+                        // TODO: leads to Bad Resource ID error??
+                        // watcher.close(); 
+                        return;
+                    }
+                }
+            }
+        }
+        finally {
+            resolve();
+            this.#awaitTscIndexGenerationPromise = null;
+        }
+    }
+
+    static async #getTypeInferencePositionsForFile(modulePath: string): Promise<string> {
+        await this.#awaitTscIndexGeneration();
+
+        const hash = encodeHex(sha256(modulePath) as Uint8Array);
+        const path = metadataDir.getChildPath(hash);
+        const positions = await path.fsExists() ? await Deno.readTextFile(path) : "";
+        return positions
+    }    
+
     public async init(){
 
         if (this.#initialized) return;
@@ -218,7 +272,7 @@ export class Transpiler {
         else if (path instanceof URL) resolved = new Path(path);
         else resolved = new Path(path, this.src_dir);
         if (!resolved.isChildOf(this.src_dir)) {
-            logger.warn("path " + path + " is not inside the source directory");
+            logger.warn("path " + path + " is not inside the source directory " + this.src_dir);
             return null
         }
         return resolved;
@@ -261,6 +315,11 @@ export class Transpiler {
 
                 logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
     
+                // only if ts or tsx file
+                if (src_path.hasFileExtension("ts", "tsx")) {
+                    await Transpiler.#requestTscIndexGeneration();
+                }
+
                 // is eternal file, update
                 if (src_path.hasFileExtension(...eternalExts)) {
                     await updateEternalFile(src_path, app.base_url, app.options!.import_map, app.options!);
@@ -279,7 +338,7 @@ export class Transpiler {
                 // ignore file if using file from original src directory
                 else if (!this.#options.copy_all && !src_path.hasFileExtension(...this.#transpile_exts) && !this.#forceCopySrcFiles.has(src_path_string)) {
                     for (const handler of this.#file_update_listeners) handler(src_path);
-                } 
+                }
                 
                 // trigger file update
                 else {
@@ -526,6 +585,11 @@ export class Transpiler {
                         const src_path = new Path(path);
 
                         logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
+                        // only if ts or tsx file
+                        if (src_path.hasFileExtension("ts", "tsx")) {
+                            await Transpiler.#requestTscIndexGeneration();
+                        }
+
                         await this.updateVirtualFile(virtual_path, await Deno.readFile(src_path.normal_pathname));
                     }
                 }
@@ -535,7 +599,7 @@ export class Transpiler {
             }
         }
         catch (e) {
-            if (e.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
+            if (e?.message?.includes("os error 38")) logger.warn("Watching for file changes is not supported");
             else throw e;
         }
     }
@@ -611,7 +675,7 @@ export class Transpiler {
     }
 
     private async transpileToJSSWC(ts_dist_path: Path.File, src_path: Path.File, useJusix = false) {
-        const {transform} = await import("npm:@swc/core@1.7.23");
+        const {transform} = await import("npm:@swc/core@1.9.3");
 
         const jusixPath = useJusix && await getJusix(reload);
 
@@ -623,6 +687,10 @@ export class Transpiler {
         } as Record<string, any> : undefined;
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
+
+        // get reactive positions
+        const positions = src_path.hasFileExtension("tsx") ? await Transpiler.#getTypeInferencePositionsForFile(src_path.toString()) : null;
+
         try {
 
             // workaround: select decorators based on uix/datex version
@@ -635,7 +703,15 @@ export class Transpiler {
                 pathname.match(/\/uix-components-new-0\.0\.\d+\//)
             ) decoratorVersion = "2021-12";
 
-            const file = await Deno.readTextFile(ts_dist_path.normal_pathname)
+            let file = await Deno.readTextFile(ts_dist_path.normal_pathname)
+
+            if (positions?.length) {
+                logger.debug("reactive uix positions for " + src_path.normal_pathname + ": ", positions)
+            }
+            if (positions != null) {
+                file = `const __UIX_REACTIVE_POSITIONS=[${positions}];\n` + file;
+            }
+
             let {code: transpiled, map} = await transform(file, {
                 sourceMaps: !!this.#options.sourceMaps,
                 minify: false,
@@ -702,8 +778,7 @@ export class Transpiler {
             else throw "unknown error"
         }
         catch (e) {
-            console.log(e)
-            logger.error("could not transpile " + ts_dist_path + ": " + e.message??e);
+            console.log("Could not transpile " + ts_dist_path + ": ", e);
         }
        
         return js_dist_path;

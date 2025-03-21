@@ -6,6 +6,7 @@ import { domContext, domUtils } from "../app/dom-context.ts";
 import { initDefaultOptions } from "../base/decorators.ts";
 import type { Class } from "datex-core-legacy/utils/global_types.ts";
 import { METADATA } from "datex-core-legacy/js_adapter/js_class_adapter.ts";
+import { MappedProps } from "./template-types.ts";
 
 /**
  * cloneNode(true), but also clones shadow roots.
@@ -89,6 +90,7 @@ export type jsxInputGenerator<
 	) => Return;
 
 
+
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
  * Default HTML Attributes defined in JSX are also set for the root element.
@@ -121,13 +123,13 @@ export type jsxInputGenerator<
  * @param elementGenerator 
  */
 export function template<
-	Options extends Record<string, unknown> = Record<string,never>,
+	Props extends Record<string, unknown> = Record<string,never>,
 	Children = JSX.childrenOrChildrenPromise|JSX.childrenOrChildrenPromise[], 
 	Context extends typeof HTMLElement = typeof HTMLElement
 > (
-	elementGenerator: jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, never, false, false, InstanceType<Context>>
+	elementGenerator: jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Props, never, false, false, InstanceType<Context>>
 ):
-	jsxInputGenerator<JSX.Element|Promise<JSX.Element>, Options, Children>&((cl: Context, context: ClassDecoratorContext<Context>)=>any)
+	jsxInputGenerator<JSX.Element, MappedProps<Props>, Children> & ((cl: Context, context: ClassDecoratorContext<Context>)=>any)
 
 /**
  * Define an HTML template that can be used as an anonymous JSX component.
@@ -154,7 +156,7 @@ export function template<Options extends Record<string, any> = {}, Children = JS
 export function template():jsxInputGenerator<JSX.Element, Record<string, never>, never>&((cl: Class, context: ClassDecoratorContext)=>any)
 
 
-export function template(templateOrGenerator?:JSX.Element|jsxInputGenerator<JSX.Element|Promise<JSX.Element>, any, any, any>) {
+export function template(templateOrGenerator?: any): any {
 	const module = getCallerFile();
 	return createTemplateGenerator(templateOrGenerator, module);
 }

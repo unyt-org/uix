@@ -261,7 +261,7 @@ class App {
 		}
 		
 		this.#ready = true;
-		for (const handler of this.#ready_handlers) await handler();	
+		for (const handler of this.#ready_handlers) await handler();
 	}
 
 

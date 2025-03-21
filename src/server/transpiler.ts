@@ -169,8 +169,9 @@ export class Transpiler {
         if (fileContents === "") return;
 
         if (this.#awaitTscIndexGenerationPromise) return this.#awaitTscIndexGenerationPromise;
-        const {promise, resolve} = Promise.withResolvers<void>();
+        const {promise, resolve, reject} = Promise.withResolvers<void>();
         this.#awaitTscIndexGenerationPromise = promise;
+        const timeout = setTimeout(() => reject("TSC did not run successfully or was not activated"), 15_000);
 
         try {
             // wait until _lock file is removed
@@ -187,6 +188,7 @@ export class Transpiler {
             }
         }
         finally {
+            clearTimeout(timeout);
             resolve();
             this.#awaitTscIndexGenerationPromise = null;
         }
@@ -316,7 +318,7 @@ export class Transpiler {
                 logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
     
                 // only if ts or tsx file
-                if (src_path.hasFileExtension("ts", "tsx")) {
+                if (app.options?.jusix && src_path.hasFileExtension("ts", "tsx")) {
                     await Transpiler.#requestTscIndexGeneration();
                 }
 
@@ -586,7 +588,7 @@ export class Transpiler {
 
                         logger.info("#color(grey)file update: " + src_path.getAsRelativeFrom(this.src_dir.parent_dir).replace(/^\.\//, ''));
                         // only if ts or tsx file
-                        if (src_path.hasFileExtension("ts", "tsx")) {
+                        if (app.options?.jusix && src_path.hasFileExtension("ts", "tsx")) {
                             await Transpiler.#requestTscIndexGeneration();
                         }
 
@@ -688,10 +690,11 @@ export class Transpiler {
 
         const js_dist_path = this.getFileWithMappedExtension(ts_dist_path);
 
-        // get reactive positions
-        const positions = src_path.hasFileExtension("tsx") ? await Transpiler.#getTypeInferencePositionsForFile(src_path.toString()) : null;
-
         try {
+            // get reactive positions
+            const positions = useJusix && src_path.hasFileExtension("tsx") ? 
+                await Transpiler.#getTypeInferencePositionsForFile(src_path.toString()) :
+                null;
 
             // workaround: select decorators based on uix/datex version
             let decoratorVersion:"2022-03" | "2021-12" = "2022-03";

@@ -123,7 +123,6 @@ function logInfoOneline(message: string) {
 
 
 async function handleReactiveIndices(reactiveIndices: Positions) {
-	//console.log("reactiveIndices", reactiveIndices)
 	const promises = [];
 	for (const [modulePath, indices] of reactiveIndices) {
 		promises.push(saveReactiveIndices(modulePath, indices));

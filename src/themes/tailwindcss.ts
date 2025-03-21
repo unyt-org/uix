@@ -14,7 +14,6 @@ export const tailwindcss = {
 	async onRegister() {
 		const { app } = await import("../app/app.ts" /*lazy*/);
 		const { watch, watch_backend, live } = await import("../app/args.ts" /*lazy*/);
-
 		const logger = new Logger("tailwindcss")
 
 		// install tailwindcss via GitHub Releases if not available
@@ -26,16 +25,15 @@ export const tailwindcss = {
 			cmdAvailable = commandExists(tailwindCssCmd);
 		}
 
-		if (!cmdAvailable) {
+		if (!cmdAvailable)
 			await installTailwind4(executableTarget, logger);
-		}
-		else {
-			// check if v4 is installed
-			const version = await getCurrentTailwindVersion(tailwindCssCmd);
-			if (!version.includes("v4")) {
-				logger.warn("Detected outdated version " + version + " - installing TailwindCSS v4");
-				await installTailwind4(executableTarget, logger);
-			}
+
+		// check if v4 is installed
+		let version = await getCurrentTailwindVersion(tailwindCssCmd);
+		if (!version.includes("v4")) {
+			logger.warn("Detected outdated version " + version + " - installing TailwindCSS v4");
+			await installTailwind4(executableTarget, logger);
+			version = await getCurrentTailwindVersion(tailwindCssCmd);
 		}
 
 		const outFile = new Path(this.stylesheets![0]);
@@ -44,11 +42,9 @@ export const tailwindcss = {
 		if (!inFile.fs_exists) {
 			Deno.writeTextFileSync(inFile.normal_pathname, "@import 'tailwindcss';")
 		}
+		logger.info("using", version);
 
 		try {
-			const version = await getCurrentTailwindVersion(tailwindCssCmd);
-			logger.info("using", version);
-	
 			const args =  [
 				"-i",
 				inFile.normal_pathname,
@@ -59,7 +55,6 @@ export const tailwindcss = {
 				logger.info("watching files");
 				args.push("--watch");
 			}
-	
 
 			const status = new Deno.Command(tailwindCssCmd, {args, stderr: "piped", stdout: "piped"}).spawn();
 			const decoder = new TextDecoder();
@@ -78,9 +73,9 @@ export const tailwindcss = {
 					resolver = resolve;
 					registerBuildLock(Promise.race<void>([
 						promise,
-						sleep(10_000).then(()=> {
+						sleep(15_000).then(()=> {
 							if (!isResolved)
-								logger.warn("TailwindCSS has not finished building in 10s");
+								logger.warn("TailwindCSS has not finished building in 15s");
 						}).catch(reject)
 					]));
 				}

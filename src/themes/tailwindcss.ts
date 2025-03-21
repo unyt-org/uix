@@ -27,85 +27,31 @@ export const tailwindcss = {
 		}
 
 		if (!cmdAvailable) {
-			const os = getOS();
-			const executableName = {
-				'linux-x86_64': "tailwindcss-linux-x64",
-				'linux-aarm': "tailwindcss-linux-arm64",
-				'windows-x86_64': "tailwindcss-windows-x64.exe",
-				'windows-aarch64': "tailwindcss-windows-arm64.exe",
-				'darwin-x86_64': "tailwindcss-macos-x64",
-				'darwin-aarch64': "tailwindcss-macos-arm64"
-			}[os];
-			if (!executableName)
-				handleError(
-					new KnownError(
-						`TailwindCSS executable could not be installed for your platform (${os}).`,
-						["Please open an issue on https://www.github.com/unyt-org/uix providing your platform details"]
-					),
-					logger
-				);
-			
-			try {
-				logger.info("Downloading TailwindCSS. HTTP requests / page loads will be deferred until the installation is complete.");
-				// fixed to tailwindcss v3.4.17 (v4 does not work)
-				const downloadMap = await datex.get<{assets: {browser_download_url: string, name: string}[]}>("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/191250475");
-				const releaseURL = downloadMap.assets.find(e => e.name === executableName)?.browser_download_url;
-				if (!releaseURL)
-					throw new Error(`Could not get release URL for ${executableName}`);
-
-				await Deno.writeFile(
-					executableTarget.normal_pathname,
-					new Uint8Array(await (await fetch(releaseURL)).arrayBuffer()),
-					{
-						create: true
-					}
-				);
-
-				try {
-					await Deno.chmod(
-						executableTarget.normal_pathname,
-						0o777
-					);
-				}
-				catch  {
-					// ignore if chmod fails on Windows
-				}
-				logger.success(`TailwindCSS was installed to ${executableTarget}`);
-			} catch (e) {
-				handleError(
-					new KnownError(
-						`The TailwindCSS executable could not be downloaded\n(${e})`,
-						[
-							"Check your internet connectivity",
-							"Ensure that you have enough disk space and that the directory is writable"
-						]
-					),
-					logger
-				);
+			await installTailwind4(executableTarget, logger);
+		}
+		else {
+			// check if v4 is installed
+			const version = await getCurrentTailwindVersion(tailwindCssCmd);
+			if (!version.includes("v4")) {
+				logger.warn("Detected outdated version " + version + " - installing TailwindCSS v4");
+				await installTailwind4(executableTarget, logger);
 			}
 		}
 
 		const outFile = new Path(this.stylesheets![0]);
 		const inFile = new Path(app.base_url).getChildPath("tailwind.css");
-		const configFile = new Path(app.base_url).getChildPath("tailwind.config.js");
 
 		if (!inFile.fs_exists) {
-			Deno.writeTextFileSync(inFile.normal_pathname, '@tailwind base;\n@tailwind components;\n@tailwind utilities;')
-		}
-		if (!configFile.fs_exists) {	
-			Deno.writeTextFileSync(configFile.normal_pathname, 'export default {\n  content: ["./**/*.{html,tsx,ts,jsx,js}"],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}')
+			Deno.writeTextFileSync(inFile.normal_pathname, "@import 'tailwindcss';")
 		}
 
 		try {
-			console.log("running", tailwindCssCmd)
-			const version = new TextDecoder().decode((await new Deno.Command(tailwindCssCmd, {args: ['--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
+			const version = await getCurrentTailwindVersion(tailwindCssCmd);
 			logger.info("using", version);
 	
 			const args =  [
 				"-i",
 				inFile.normal_pathname,
-				"-c",
-				configFile.normal_pathname,
 				"-o",
 				outFile.normal_pathname
 			]
@@ -150,6 +96,70 @@ export const tailwindcss = {
 		}
 	}
 } satisfies Theme;
+
+
+async function getCurrentTailwindVersion(tailwindCssCmd: string) {
+	return new TextDecoder().decode((await new Deno.Command(tailwindCssCmd, {args: ['--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
+}
+
+
+async function installTailwind4(executableTarget: Path, logger: Logger) {
+	const os = getOS();
+	const executableName = {
+		'linux-x86_64': "tailwindcss-linux-x64",
+		'linux-aarm': "tailwindcss-linux-arm64",
+		'windows-x86_64': "tailwindcss-windows-x64.exe",
+		'windows-aarch64': "tailwindcss-windows-arm64.exe",
+		'darwin-x86_64': "tailwindcss-macos-x64",
+		'darwin-aarch64': "tailwindcss-macos-arm64"
+	}[os];
+	if (!executableName)
+		handleError(
+			new KnownError(
+				`TailwindCSS executable could not be installed for your platform (${os}).`,
+				["Please open an issue on https://www.github.com/unyt-org/uix providing your platform details"]
+			),
+			logger
+		);
+	
+	try {
+		logger.info("Downloading TailwindCSS. HTTP requests / page loads will be deferred until the installation is complete.");
+		const downloadMap = await datex.get<{assets: {browser_download_url: string, name: string}[]}>("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest");
+		const releaseURL = downloadMap.assets.find(e => e.name === executableName)?.browser_download_url;
+		if (!releaseURL)
+			throw new Error(`Could not get release URL for ${executableName}`);
+
+		await Deno.writeFile(
+			executableTarget.normal_pathname,
+			new Uint8Array(await (await fetch(releaseURL)).arrayBuffer()),
+			{
+				create: true
+			}
+		);
+
+		try {
+			await Deno.chmod(
+				executableTarget.normal_pathname,
+				0o777
+			);
+		}
+		catch  {
+			// ignore if chmod fails on Windows
+		}
+		logger.success(`TailwindCSS was installed to ${executableTarget}`);
+	} catch (e) {
+		handleError(
+			new KnownError(
+				`The TailwindCSS executable could not be downloaded\n(${e})`,
+				[
+					"Check your internet connectivity",
+					"Ensure that you have enough disk space and that the directory is writable"
+				]
+			),
+			logger
+		);
+	}
+}
 
 
 function commandExists(cmd: string, arg = "-h") {

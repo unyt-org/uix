@@ -120,7 +120,7 @@ async function installTailwind4(executableTarget: Path, logger: Logger) {
 	try {
 		logger.info("Downloading TailwindCSS. HTTP requests / page loads will be deferred until the installation is complete.");
 		const downloadMap = await datex.get<{assets: {browser_download_url: string, name: string}[]}>("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest");
-		const releaseURL = downloadMap.assets.find(e => e.name === executableName)?.browser_download_url;
+		const releaseURL = downloadMap.assets.find(e => e.name === executableName && e.browser_download_url.includes("v4."))?.browser_download_url;
 		if (!releaseURL)
 			throw new Error(`Could not get release URL for ${executableName}`);
 

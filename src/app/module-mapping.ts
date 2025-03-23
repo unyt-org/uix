@@ -68,10 +68,19 @@ async function updateDenoConfigImportMap(denoConfigPath:URL, proxyImportMapPath:
 
 	if (importMapPath) {
 		const newDenoConfig = {
+			...denoConfig,
 			_publicImportMap: importMapPath.getAsRelativeFrom(denoConfigPath),
 			importMap: proxyImportMapPath.getAsRelativeFrom(denoConfigPath),
 			compilerOptions: denoConfig.compilerOptions
 		}
+
+		// disable react specific jsx rules in deno.json
+		if (!newDenoConfig.lint) newDenoConfig.lint = {};
+		if (!newDenoConfig.lint.rules) newDenoConfig.lint.rules = {};
+		if (!newDenoConfig.lint.rules.exclude) newDenoConfig.lint.rules.exclude = [];
+		const excludedRules = ["jsx-key"];
+
+		newDenoConfig.lint.rules.exclude = [...new Set([...newDenoConfig.lint.rules.exclude, ...excludedRules])];
 		await Deno.writeTextFile(new Path(denoConfigPath).normal_pathname, JSON.stringify(newDenoConfig, null, "    "))
 	}
 }

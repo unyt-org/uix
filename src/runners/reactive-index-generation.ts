@@ -30,7 +30,7 @@ export async function generateReactiveIndices(rootPath: URL, options: normalized
 
 	// get all modules
 	const modulePaths = [];
-	for await (const dirEntry of walk(rootPath, { exts: ["ts", "tsx"] })) {
+	for await (const dirEntry of walk(rootPath, { exts: [".ts", ".tsx"] })) {
 		modulePaths.push(dirEntry.path);
 	}
 

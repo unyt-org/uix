@@ -6,6 +6,7 @@ import { StringLiteralLike } from "npm:typescript";
 import { encodeHex } from "jsr:@std/encoding/hex";
 import { sha256 } from "./sha256.js";
 import { stdout } from "node:process";
+import { Path } from "datex-core-legacy/utils/path.ts";
 
 export type TypeInferenceOptions = {
 	/**
@@ -107,10 +108,6 @@ export class TSXTypeInferenceGenerator {
 			}
 			return this.getReactivePositions(false);
 		}
-		else if (this.#unresolvedFiles.size > 0) {
-			console.warn("Could not resolve the following files:", this.#unresolvedFiles);
-		}
-
 
 		return positions;
 	}
@@ -122,6 +119,12 @@ export class TSXTypeInferenceGenerator {
 		}).output();
 	}
 
+	#getFilePathFromSourceFile(sourceFile: SourceFile) {
+		// if starts with C: or any other letter in the fckn window alphabet fix it and throw your windows PC out of the window
+		const fileName = sourceFile.fileName.replace(/(\w\:)/, '/$1');
+		return this.#denoCacheFileUrls.get(new Path(fileName).toString()) || ('file://' + fileName);
+	}
+
 	#getReactivePositionsForProgram(program: ts.Program): Positions {
 		const positions: Positions = new Map();
 
@@ -129,7 +132,7 @@ export class TSXTypeInferenceGenerator {
 			// skip non-tsx files
 			if (sourceFile.languageVariant !== ts.LanguageVariant.JSX) return;
 
-			const fileIdentifier = this.#denoCacheFileUrls.get(sourceFile.fileName) || ('file://' + sourceFile.fileName);
+			const fileIdentifier = this.#getFilePathFromSourceFile(sourceFile);
 
 			positions.set(fileIdentifier, []);
 			const positionsData: PositionsData = { attrIndex: 0, positions: positions };
@@ -137,28 +140,9 @@ export class TSXTypeInferenceGenerator {
 			this.#visit(sourceFile, positionsData);
 		});
 
-		// for (const [file] of positions) {
-		// 	// fix for remote cached modules: remove transpile cache for each file to force recompilation
-		// 	if (file.startsWith("http://") || file.startsWith("https://")) {
-		// 		this.#deleteDenoTranspileCacheForFile(file);
-		// 	}
-		// }
 		return positions;
 	}
 
-	#deleteDenoTranspileCacheForFile(file: string) {
-		const resolvedModuleURL = new URL(file);
-		const basePath = this.#denoCacheDirs.typescriptCache;
-		const pathHash = encodeHex(sha256(resolvedModuleURL.pathname) as Uint8Array);
-		const fullPath = `${basePath}/${resolvedModuleURL.protocol.slice(0,-1)}/${resolvedModuleURL.host}/${pathHash}.js`;
-		console.log("deleting cache for", file, fullPath);
-		try {
-			Deno.removeSync(fullPath);
-		}
-		catch {
-			// ignore
-		}
-	}
 
 	async #init() {
 		if (this.#intiializePromise) return this.#intiializePromise;
@@ -200,7 +184,9 @@ export class TSXTypeInferenceGenerator {
 	async #getDenoCacheDir() {
 		const output = await new Deno.Command("deno", {args: ["info", "--json"]}).output();
 		const info = JSON.parse(new TextDecoder().decode(output.stdout));
-		return info as {modulesCache: string, typescriptCache: string};
+		const modulesCache = new Path(info.modulesCache).toString();
+		const typescriptCache = new Path(info.typescriptCache).toString();
+		return {modulesCache, typescriptCache};
 	}
 
 	#getLocalDenoCacheFile(moduleURL: string, extension?: string) {
@@ -211,10 +197,10 @@ export class TSXTypeInferenceGenerator {
 		const resolvedModuleURL = new URL(moduleURL);
 		const basePath = this.#denoCacheDirs.modulesCache;
 		const pathHash = encodeHex(sha256(resolvedModuleURL.pathname) as Uint8Array);
-		const fullPath = `${basePath}/${resolvedModuleURL.protocol.slice(0,-1)}/${resolvedModuleURL.host}/${pathHash}`;
-		const newPath = fullPath + (extension||"");
+		const fullPath = new Path(`${basePath}/${resolvedModuleURL.protocol.slice(0,-1)}/${resolvedModuleURL.host}/${pathHash}`);
+		const newPath = extension ? new Path(fullPath.toString() + extension) : fullPath;
 
-		this.#denoCacheFileUrls.set(newPath, moduleURL);
+		this.#denoCacheFileUrls.set(newPath.toString(), moduleURL);
 		// check if fullPath exists
 		try {
 			Deno.statSync(fullPath);
@@ -227,23 +213,26 @@ export class TSXTypeInferenceGenerator {
 			this.#unresolvedFiles.add(moduleURL);
 		}
 		
-		return newPath;
+		return newPath.toString();
 	}
 
 	#resolveModule(moduleName: string, containingFile?: string) {
-		// resovle specifier path
+
+		// normalize containing file path
+		containingFile = new Path(containingFile).toString();
+
+		// resolve specifier path
 		// already an http path
 		if (moduleName.startsWith("http://") || moduleName.startsWith("https://")) return moduleName;
 
 		// if relative path, try to resolve
 		if (moduleName.startsWith("./") || moduleName.startsWith("../")) {
 			if (!containingFile) throw new Error("containing file required for relative paths");
-			let parentFile = this.#denoCacheFileUrls.get(containingFile) || containingFile;
+			let parentFile = this.#denoCacheFileUrls.get(new Path(containingFile).toString()) || containingFile;
 			if (parentFile.startsWith("/")) parentFile = "file://" + parentFile;
-			const resolvedPath = new URL(moduleName, parentFile).toString();
-			return resolvedPath;
+			const resolvedPath = new Path(moduleName, parentFile);
+			return resolvedPath.toString();
 		}
-
 		// get first part of path and check if in imports
 		const firstPart = moduleName.split("/")[0] + "/";
 
@@ -259,13 +248,11 @@ export class TSXTypeInferenceGenerator {
 			if (resolvedPath.startsWith("./") || resolvedPath.startsWith("../")) {
 				if (!this.#options.importMapPath) throw new Error("importMapPath required for relative paths");
 				const importMapPath = this.#options.importMapPath.startsWith("file://") ? this.#options.importMapPath : 'file://' + this.#options.importMapPath;
-				resolvedPath = new URL(resolvedPath, importMapPath).toString();
+				resolvedPath = new Path(resolvedPath, importMapPath).toString();
 			}
-			const res = new URL("./" + moduleName.replace(firstPart, ""), resolvedPath).toString();
-			//console.log("resolved:", moduleName, res);
-			return res;
+			const res = new Path("./" + moduleName.replace(firstPart, ""), resolvedPath);
+			return res.toString();
 		}
-
 		
 	}
 
@@ -283,7 +270,7 @@ export class TSXTypeInferenceGenerator {
 
 
 			const mod = this.#resolveModule(moduleLiteral.text, containingFile)??moduleLiteral.text;
-			const resolvedPath = this.#getLocalDenoCacheFile(mod, mod.endsWith(".tsx") ? '.tsx' : undefined) || mod.replace("file://", "");
+			const resolvedPath = (this.#getLocalDenoCacheFile(mod, mod.endsWith(".tsx") ? '.tsx' : undefined) || mod).replace("file://", "").replace(/\/(\w\:)/, '$1');
 
 			return {
 				resolvedModule: {
@@ -406,7 +393,7 @@ export class TSXTypeInferenceGenerator {
 				//console.log(this.#typeChecker.typeToString(requiredType!), node.pos, node.getText());
 				// append pos as new line to file
 				const sourceFile = node.getSourceFile();
-				const fileIdentifier = this.#denoCacheFileUrls.get(sourceFile.fileName) || ('file://' + sourceFile.fileName);
+				const fileIdentifier = this.#getFilePathFromSourceFile(sourceFile);
 				if (!positionsData.positions.has(fileIdentifier)) positionsData.positions.set(fileIdentifier, []);
 				positionsData.positions.get(fileIdentifier)!.push(positionsData.attrIndex);
 				if (this.#typeChecker.typeToString(requiredType!) == "unknown") {

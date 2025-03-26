@@ -77,6 +77,12 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		args.push("--path", rootPath.normal_pathname)
 	}
 
+	// add WIPS port for parent-child process communication
+	if (watch || watch_backend || live) {
+		const wipsParent = (await import("../utils/wips/wips-parent.ts")).wipsParent;
+		args.push("--wips", wipsParent.port.toString());
+	}
+
 	let process: Deno.ChildProcess | undefined;
 
 	// explicitly kill child process to trigger SIG event on child process

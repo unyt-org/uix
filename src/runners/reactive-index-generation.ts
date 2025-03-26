@@ -20,8 +20,7 @@ catch {
 	// ignore
 }
 Deno.mkdirSync(metadataDir, {recursive: true})
-const requestPath = metadataDir.getChildPath("_request");
-Deno.writeTextFile(requestPath, "");
+
 
 export async function generateReactiveIndices(rootPath: URL, options: normalizedAppOptions, watch: boolean, loadDependencies = true): Promise<() => Promise<void>> {
 	if (!options.import_map.path) throw new Error("Import map path must be defined")
@@ -88,29 +87,21 @@ async function generateReactiveIndicesForModules(
 }
 
 const handleRequest = debounce(async (generator: TSXTypeInferenceGenerator) => {
-	const timestamp = Deno.readTextFileSync(requestPath);
-	if (timestamp) {
-		logInfoOneline("Updating reactive indices...")
-		const reactiveIndices = await generator.getReactivePositions();
-		logDone();
-		await handleReactiveIndices(reactiveIndices);
-		// check if timestamp has not changed during processing
-		if (timestamp == Deno.readTextFileSync(requestPath)) {
-			Deno.writeTextFileSync(requestPath, "");
-		}
-	}
+	const wipsParent = (await import("../utils/wips/wips-parent.ts")).wipsParent;
+	logInfoOneline("Updating reactive indices...")
+	const reactiveIndices = await generator.getReactivePositions();
+	await handleReactiveIndices(reactiveIndices);
+	logDone();
+	wipsParent.sendMessage("tsc-index-generation-done");
 }, 200);
 
 async function initRequestListener(generator: TSXTypeInferenceGenerator) {
-	// watch _request file for changes
-	if (requestPath.fs_exists) {
-		const watcher = Deno.watchFs(requestPath.normal_pathname);
-		for await (const event of watcher) {
-			if (event.kind == "modify") {
-				handleRequest(generator);
-			}
+	const wipsParent = (await import("../utils/wips/wips-parent.ts")).wipsParent;
+	wipsParent.onReceive(msg => {
+		if (msg == "tsc-index-generation") {
+			handleRequest(generator);
 		}
-	}
+	});
 }
 
 function logDone() {

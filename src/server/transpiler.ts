@@ -19,8 +19,7 @@ const sass = client_type === "deno" ? (await import("https://deno.land/x/denosas
 
 const metadataDir = new Path("./uix/jusix/metadata/", cache_path).asDir();
 if (!metadataDir.fs_exists) Deno.mkdirSync(metadataDir, {recursive: true})
-const requestPath = metadataDir.getChildPath("_request");
-if (!requestPath.fs_exists) Deno.writeTextFile(requestPath, "");
+
 
 const logger = new Logger("transpiler");
 
@@ -156,47 +155,37 @@ export class Transpiler {
     #initialized = false;
 
     static async #requestTscIndexGeneration() {
-        // write current timestamp to _request file
-        const timestamp = Date.now().toString();
-        await Deno.writeTextFile(requestPath, timestamp);
+        // await tsc index generation
+        const { promise, resolve } = Promise.withResolvers<void>();
+        this.#awaitTscIndexGenerationPromise = promise;
+
+        // lazy init wips child if needed
+        const wipsChild = (await import("../utils/wips/wips-child.ts")).wipsChild;
+        wipsChild.onReceiveOnce("tsc-index-generation-done", () => {
+            resolve();
+            this.#awaitTscIndexGenerationPromise = null;
+        });     
+        // request tsc index generation
+        wipsChild.sendMessage("tsc-index-generation");
     }
 
     static #awaitTscIndexGenerationPromise: Promise<void> | null = null;
 
     static async #awaitTscIndexGeneration() {
-        // currently not generating tsc index
-        const fileContents = Deno.readTextFileSync(requestPath);
-        if (fileContents === "") return;
-
-        if (this.#awaitTscIndexGenerationPromise) return this.#awaitTscIndexGenerationPromise;
-        const {promise, resolve, reject} = Promise.withResolvers<void>();
-        this.#awaitTscIndexGenerationPromise = promise;
-        const timeout = setTimeout(() => reject("TSC did not run successfully or was not activated"), 15_000);
-
-        try {
-            // wait until _lock file is removed
-            const watcher = Deno.watchFs(requestPath.normal_pathname);      
-            for await (const event of watcher) {
-                if (event.kind === "modify") {
-                    const fileContents = Deno.readTextFileSync(requestPath);
-                    if (fileContents === "") {
-                        // TODO: leads to Bad Resource ID error??
-                        // watcher.close(); 
-                        return;
-                    }
-                }
-            }
-        }
-        finally {
-            clearTimeout(timeout);
-            resolve();
-            this.#awaitTscIndexGenerationPromise = null;
-        }
+        await Promise.race([
+            this.#awaitTscIndexGenerationPromise,
+            // log error if not resolved after 10s
+            new Promise((_, reject) => {
+                setTimeout(() => {
+                    reject("Reactive index generation not finished after 10s (TSC is probably not running or stuck)")
+                }, 10000)  
+            })
+        ])
     }
 
     static async #getTypeInferencePositionsForFile(modulePath: string): Promise<string> {
         await this.#awaitTscIndexGeneration();
-
+        
         const hash = encodeHex(sha256(modulePath) as Uint8Array);
         const path = metadataDir.getChildPath(hash);
         const positions = await path.fsExists() ? await Deno.readTextFile(path) : "";

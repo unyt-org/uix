@@ -73,7 +73,7 @@ async function generateReactiveIndicesForModules(
 	handleReactiveIndices(reactiveIndices);
 
 	if (watch) {
-		initRequestListener(generator);
+		await initRequestListener(generator);
 	}
 
 	return async () => {

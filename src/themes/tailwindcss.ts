@@ -30,6 +30,13 @@ export const tailwindcss = {
 
 		// check if v4 is installed
 		let version = await getCurrentTailwindVersion(tailwindCssCmd);
+
+		// check version of self-installed tailwindcss
+		if (!version.includes("v4")) {
+			tailwindCssCmd = executableTarget.normal_pathname
+			version = await getCurrentTailwindVersion(tailwindCssCmd);
+		}
+		
 		if (!version.includes("v4")) {
 			logger.warn("Detected outdated version " + version + " - installing TailwindCSS v4");
 			await installTailwind4(executableTarget, logger);

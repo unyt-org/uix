@@ -49,6 +49,8 @@ export const transpileCachePath = transpileCachePathRaw ? new URL(transpileCache
 
 export const reload = command_line_options.option("reload", {type:"boolean", aliases: ["r"], default: false, description: "Reload dependency caches"});
 
+export const _wipsPort = command_line_options.option("wips", {type:"number", description: "WIPS port (used internally for communication between runner and app processes)"});
+
 // print uix version
 const version = command_line_options.option("version", {type:"boolean", description: "Get the version of your UIX installation"});
 

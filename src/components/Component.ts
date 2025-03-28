@@ -1063,6 +1063,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
             })
         }
     
+        this.onDetach?.();
     }
 
     bindOriginMethods() {
@@ -1425,7 +1426,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
     protected onDisplay?():void|Promise<void>
 
     /** called after removed from DOM (not moved) */
-    protected onRemove?():void
+    protected onDetach?():void
 
     /** called after constructor */
     protected onConstruct?():Promise<void>|void

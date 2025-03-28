@@ -338,6 +338,9 @@ class CustomComponent extends Component {
 
     // called after onAnchor when the component is displayed in a browser context
     protected override onDisplay(): void | Promise<void> { }
+
+    // called when the component is removed from the DOM
+    protected override onDetach(): void | Promise<void> { }
 }
 ```
 

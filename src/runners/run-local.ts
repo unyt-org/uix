@@ -326,9 +326,13 @@ async function checkTSCode(root_path: URL) {
 
 
 async function getCodeStatus(root_path: URL) {
+	const denoConfigPath = new Path(root_path).getChildPath("deno.json").normal_pathname;
+
 	const command = new Deno.Command(Deno.execPath(), {
 		args: [
 			'check',
+			'--config',
+			denoConfigPath,
 			'--allow-import',
 			new Path(root_path).normal_pathname,
 		]

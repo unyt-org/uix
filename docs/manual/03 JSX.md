@@ -417,6 +417,8 @@ You can use the `@assert` decorator to apply custom validation logic to your [Cl
 
 
 ```tsx
+import { template, Component } from "uix/components/Component.ts";
+
 @template(function() {
 	return <input type="text" value={this.myEmail}/>;
 })

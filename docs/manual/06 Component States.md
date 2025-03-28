@@ -12,8 +12,7 @@ In the following example a property `myVal` is declared that gets assigned to th
 Modifing the inputs value will modify the value of the `myVal` property and vice versa.
 
 ```tsx
-import { template } from "uix/html/template.ts";
-import { Component } from "uix/components/Component.ts";
+import { template, Component } from "uix/components/Component.ts";
 
 @template(() => {
     return <div>
@@ -29,8 +28,7 @@ class CustomComponent extends Component {
 ## Restorable state example
 
 ```tsx
-import { template } from "uix/html/template.ts";
-import { Component } from "uix/components/Component.ts";
+import { template, Component } from "uix/components/Component.ts";
 
 @template()
 class CustomComponent extends Component {

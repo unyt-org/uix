@@ -29,8 +29,7 @@ export default <h1>{plane}</h1>;
 DATEX Script exports can also get automatically mapped to component properties with the [`@include` decorator](./04%20Components.md):
 
 ```tsx
-import { Component } from "uix/components/Component.ts";
-import { template } from "uix/html/template.ts";
+import { template, Component } from "uix/components/Component.ts";
 import { include } from "uix/base/decorators.ts";
 
 @template(function(this: MyApp) {

@@ -13,7 +13,7 @@ To define a shadow or light root for a component, you can use:
 The Shadow DOM provides encapsulation for a component, separating its internal structure and styles from the rest of the document. 
 
 ```tsx
-import { template } from "uix/html/template.ts";
+import { template, Component } from "uix/components/Component.ts";
 
 @template(
     <shadow-root>
@@ -82,6 +82,8 @@ The Light DOM uses a `<light-root>` element to explicitly manage content placeme
 As a result, global styles, scripts, and DOM behavior can directly affect the content inside a light root.
 
 ```tsx
+import { template, Component } from "uix/components/Component.ts";
+
 @template(
     <light-root>
         <slot name="heading"/>

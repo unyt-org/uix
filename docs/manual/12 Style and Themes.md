@@ -49,6 +49,8 @@ If you need to apply styles to elements outside of a component, you can use [glo
 Another way to add CSS rules to a component is to use inline styles with the `@style` decorator:
 
 ```ts
+import { template, style, Component } from "uix/components/Component.ts";
+
 @style(css `
   div {
     background: red;

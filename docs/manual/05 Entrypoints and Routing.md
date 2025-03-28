@@ -292,6 +292,8 @@ class Component {
 
 Component routing can be used to display or focus on different child components depending on the route:
 ```tsx
+import { template, Component } from "uix/components/Component.ts";
+
 @template()
 class Parent extends Component {
     #activeChild?: HTMLElement

@@ -27,6 +27,8 @@ import { DISPOSE_BOUND_PROTOTYPE } from "../standalone/get_prototype_properties.
 import { getDeclaredExternalVariables, getDeclaredExternalVariablesAsync } from "datex-core-legacy/types/function-utils.ts";
 import { JSTransferableFunction } from "datex-core-legacy/types/js-function.ts";
 import { MappedProps } from "../html/template-types.ts";
+export { template } from "../html/template.ts";
+export { style } from "../html/style.ts";
 
 export type propInit = {datex?:boolean};
 export type standaloneContentPropertyData = {type:'id'|'content'|'layout'|'child',id:string};

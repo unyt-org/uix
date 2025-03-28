@@ -53,6 +53,8 @@ When a component is rendered using hybrid rendering, the `onConstruct` and `onCr
 If `onDisplay` is marked with `@frontend`, it will be called as soon as the component is available on the frontend. Without the `@frontend` decorator, `onDisplay` is never called.
 
 ```tsx
+import { template, Component } from "uix/components/Component.ts";
+
 @template()
 export class ButtonComponent extends Component {
 

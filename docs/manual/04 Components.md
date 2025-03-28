@@ -175,8 +175,7 @@ You can create custom UIX components by extending the `Component` class and regi
 
 
 ```typescript
-import { template } from "uix/html/template.ts";
-import { Component } from "uix/components/Component.ts";
+import { template, Component } from "uix/components/Component.ts";
 
 // register the component and set default options
 @template()
@@ -191,6 +190,8 @@ Templates defined with `template` can also be used as a base layout for componen
 
 The simplest form is to use a static template definition by passing JSX directly to the `template` decorator:
 ```tsx
+import { template, Component } from "uix/components/Component.ts";
+
 @template(
     <article>
         <h1 id="header">UIX</h1>
@@ -207,6 +208,8 @@ class MyCustomComponent extends Component {
 To allow for attributes to be handled in the template definition, it is recommended to use a template generator by passing a callback function that returns JSX to the template decorator:
 
 ```tsx
+import { template, Component } from "uix/components/Component.ts";
+
 @template(({title}) =>
     <article>
         <h1>{title}</h1>
@@ -278,6 +281,8 @@ With the `@id` decorator, component properties can be bound to the element insid
 To access elements defined in the template layout consider assigning an unique id attribute to the corresponding elements:
 
 ```tsx
+import { template, Component } from "uix/components/Component.ts";
+
 @template(
     <div id="parent">
         <h1>Hello</h1>

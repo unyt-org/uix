@@ -259,8 +259,6 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 
 function listenForKeyShortcuts() {
-	const decoder = new TextDecoder();
-	Deno.stdin.setRaw(true); 
 
 	const resolvers = new Set<((value: {code: number}) => void)>();
 
@@ -268,24 +266,31 @@ function listenForKeyShortcuts() {
 		resolvers.add(resolve);
 	});
 
-	(async () => {
-		for await (const chunk of Deno.stdin.readable) {
-			const key = decoder.decode(chunk);
-			// Ctrl+R (ASCII 18)
-			if (key === "\x12") { 
-				for (const resolve of resolvers) {
-					resolve({code: 420});
-				};
-				resolvers.clear();
-			}
-			// CTRL+C - exit
-			else if (key === "\x03") {
-				console.log("CTRL+C pressed, exiting...");
-				Deno.exit();
-			}
-		}
-	})();
+	try {
+		const decoder = new TextDecoder();
+		Deno.stdin.setRaw(true); 
 
+		(async () => {
+			for await (const chunk of Deno.stdin.readable) {
+				const key = decoder.decode(chunk);
+				// Ctrl+R (ASCII 18)
+				if (key === "\x12") { 
+					for (const resolve of resolvers) {
+						resolve({code: 420});
+					};
+					resolvers.clear();
+				}
+				// CTRL+C - exit
+				else if (key === "\x03") {
+					console.log("CTRL+C pressed, exiting...");
+					Deno.exit();
+				}
+			}
+		})();
+	}
+	catch {
+		logger.info("note: could not enable keyboard shortcuts");
+	}
 	return createCtrlPromise;
 }
 

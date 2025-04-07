@@ -113,7 +113,7 @@ export class TSXTypeInferenceGenerator {
 	}
 
 	public static async cacheDependencies(dependencies: (URL|string)[]) {
-		await new Deno.Command("deno", {
+		await new Deno.Command(Deno.execPath(), {
 			args: ["cache", "-I", ...dependencies.map((dep) => dep.toString())],
 			stdout: "piped",
 		}).output();
@@ -182,7 +182,7 @@ export class TSXTypeInferenceGenerator {
 	#denoCacheFileUrls = new Map<string, string>();
 
 	async #getDenoCacheDir() {
-		const output = await new Deno.Command("deno", {args: ["info", "--json"]}).output();
+		const output = await new Deno.Command(Deno.execPath(), {args: ["info", "--json"]}).output();
 		const info = JSON.parse(new TextDecoder().decode(output.stdout));
 		const modulesCache = new Path(info.modulesCache).toString();
 		const typescriptCache = new Path(info.typescriptCache).toString();

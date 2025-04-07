@@ -7,6 +7,8 @@ import { logger, runParams } from "./runner.ts";
 import { verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { generateReactiveIndices } from "./reactive-index-generation.ts";
 import { CTRLSEQ, CSI, printReloadingStatus, printRunningStatus, printErrorStatus } from "../utils/logging.ts";
+import { isDenoForUIX } from "../utils/version.ts";
+import { handleError, KnownError } from "datex-core-legacy/utils/error-handling.ts";
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
 
@@ -21,6 +23,17 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	// 		console.error(e)
 	// 	}
 	// }
+
+	// check if using custom deno for uix if jusix is enabled
+	if (options.jusix && !isDenoForUIX()) {
+		handleError(
+			new KnownError(
+				"JUSIX is enabled but the current Deno installation does not support JUSIX syntax.",
+				["Please install Deno for UIX to use JUSIX syntax"],
+			)
+		)
+	}
+
 	
 	const run_script_url = "app/start.ts"
 	const run_script_import_map_entry = options.import_map.imports['uix/'] + run_script_url;

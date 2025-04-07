@@ -1,8 +1,6 @@
 import type { Tuple } from "datex-core-legacy/types/tuple.ts";
 import { ImportMap } from "../utils/importmap.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-import { isDenoForUIX } from "../utils/version.ts";
-import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
 import { logger } from "../utils/global-values.ts";
 
 
@@ -79,16 +77,6 @@ export async function normalizeAppOptions(options:appOptions = {}, baseURL?:stri
 	n_options.dependency_maps = options.dependency_maps;
 	n_options.check_ts = options.check_ts ?? true;
 	n_options.jusix = options.jusix ?? false;
-
-	// check if using custom deno for uix if jusix is enabled
-	if (n_options.jusix && !isDenoForUIX()) {
-		handleError(
-			new KnownError(
-				"JUSIX is enabled but the current Deno installation does not support JUSIX syntax.",
-				["Please install Deno for UIX to use JUSIX syntax"],
-			)
-		)
-	}
 
 	if (!n_options.jusix) {
 		logger.warn("Embedded JSX reactivity (JUSIX) is disabled. Enable it by setting the jsxImportSource to \"jusix\" in your deno.json");

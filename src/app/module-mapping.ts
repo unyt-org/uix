@@ -67,10 +67,12 @@ async function updateDenoConfigImportMap(denoConfigPath:URL, proxyImportMapPath:
 	}
 
 	if (importMapPath) {
+		delete denoConfig._publicImportMap;
+		delete denoConfig.importMap;
 		const newDenoConfig = {
-			...denoConfig,
 			_publicImportMap: importMapPath.getAsRelativeFrom(denoConfigPath),
 			importMap: proxyImportMapPath.getAsRelativeFrom(denoConfigPath),
+			...denoConfig,
 			compilerOptions: denoConfig.compilerOptions
 		}
 

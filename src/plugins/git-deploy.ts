@@ -95,7 +95,7 @@ export default class GitDeployPlugin implements AppPlugin {
 					},
 					{
 						name: 'Setup Deno',
-						uses: 'denoland/setup-deno@v1'
+						uses: 'denoland/setup-deno@v2'
 					},
 					{
 						name: 'Run Tests',

@@ -16,5 +16,5 @@ export const version = _version;
  * returns true if running custom Deno for UIX build
  */
 export function isDenoForUIX() {
-	return (Deno as any).uix
+	return !!(Deno as any).uix
 }

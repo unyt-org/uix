@@ -242,6 +242,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		}
 		// Restart triggered from child process
 		else if (exitStatus.code == 42) {
+			await sleep(500);
+
 			await reRun();
 		}
 		else if (isClearingState) {

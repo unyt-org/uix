@@ -242,17 +242,28 @@ function generateURLParamsObject(matches: URLPatternResult) {
 	return params;
 }
 
+function hasWildcard(route: string | URL) {
+	route = route instanceof URL ? route.pathname : route;
+	return route.includes("*") || route.includes("/:")
+}
+
 async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>): Promise<resolvedEntrypointData|undefined> {
 	resolveContext(entrypointData)
 
 	// find longest matching route
 	let closest_match_key:string|filter|null = null;
 	let closest_match_route:Path.Route|null = null;
-
 	const isBetterMatch = (potential_route_key: string) => {
 		// compare length of current closest_match with potential_route, ignoring *
 		if (!closest_match_route) return true;
-		return potential_route_key.replace(/\*$/, '').length > closest_match_route.routename.replace(/\*$/, '').length
+		if (closest_match_route.routename === potential_route_key) return true;
+		if (
+			(hasWildcard(closest_match_route.routename) && hasWildcard(potential_route_key)) ||
+			(!hasWildcard(closest_match_route.routename) && !hasWildcard(potential_route_key))
+		)
+			return potential_route_key.replace(/\*$/, '').length > 
+				closest_match_route.routename.replace(/\*$/, '').length
+		return false;
 	}
 	// if true, the remaing '*' child routes are resolved in the next layer
 	let handle_children_separately = false;

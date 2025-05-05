@@ -885,7 +885,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
         // this.bindOriginMethods();
 
         await this.onInit?.() // element was constructed, not fully loaded / added to DOM!
-        this.enableDefaultOpenGraphGenerator();
+        // this.enableDefaultOpenGraphGenerator();
 
         //await Promise.all(loaders); // TODO: await stylesheet loading? leads to errors
     }

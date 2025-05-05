@@ -881,10 +881,13 @@ if (!globalThis.location.origin.endsWith(".unyt.app")) {
 			);
 
 			// set opengraph metadata extracted from HTML
-			if (extractedData.title) {
-				if (openGraphData) openGraphData.data.title = extractedData.title;
-				else openGraphData = new OpenGraphInformation({title: extractedData.title});
-			}
+			if (extractedData.openGraph) 
+				openGraphData = extractedData.openGraph
+			
+			if (!openGraphData) openGraphData = new OpenGraphInformation({
+				title:  app.options?.name ?? extractedData.title ?? "A UIX application",
+				description: app.options?.description ?? "A UIX application",
+			});
 
 			return [html, render_method, status_code, openGraphData, headers, content as Element, requiredPointers];
 		}

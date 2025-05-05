@@ -1,5 +1,5 @@
 import { Datex } from "datex-core-legacy";
-import { OpenGraphInformation } from "../base/open-graph.ts";
+import { OPEN_GRAPH, OpenGraphInformation } from "../base/open-graph.ts";
 import { indent } from "datex-core-legacy/utils/indent.ts";
 import type { HTMLProvider } from "../providers/html.ts";
 import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_properties.ts";
@@ -41,7 +41,8 @@ type _renderOptions = {
 }
 
 export type extractedData = {
-	title?: string
+	title?: string,
+	openGraph?: OpenGraphInformation,
 }
 
 export const CACHED_CONTENT = Symbol("CACHED_CONTENT");
@@ -144,7 +145,10 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 			}
 		}
 	}
-	
+
+	if (el?.[OPEN_GRAPH]) {
+		opts.extractedData.openGraph = el[OPEN_GRAPH];
+	}
 
 	if (el instanceof domContext.Text) {
 		// special case: localized text
@@ -216,8 +220,6 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 	// if (opts?.lang) {
 	// 	UIX.language = opts.lang
 	// };
-
-
 
 	for (let i = 0; i < el.attributes.length; i++) {
 		const attrib = el.attributes[i];

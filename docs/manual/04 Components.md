@@ -319,24 +319,19 @@ const parent =
 ``` -->
 
 ### Component lifecycle
-Class components extending the `Component` class will expose methods to handle the components lifecyle. 
+Class components extending the `Component` class will expose methods to handle the components lifecyle. Note that all lifecycle methods are called after the template function has been executed.
 
 ```typescript
 @template
 class CustomComponent extends Component {
-    // called when component is constructed
-    protected override onConstruct(): Promise<void> | void { }
-
-    // called after component is constructed or restored
-    protected override onInit(): Promise<void> | void { }
-
-    // called once before onAnchor
+    // called when the component is constructed (either on the backend or frontend)
     protected override onCreate(): void | Promise<void> { }
 
     // called every time the component is added to a new parent in the DOM
     protected override onAnchor(): void | Promise<void> { }
 
     // called after onAnchor when the component is displayed in a browser context
+    // this method is never called on the backend
     protected override onDisplay(): void | Promise<void> { }
 
     // called when the component is removed from the DOM
@@ -345,6 +340,20 @@ class CustomComponent extends Component {
 ```
 
 It is recommended to use the `onDisplay` method to run user code that should be executed when the component has has finished rendering in the browser.
+When rendered using `renderBackend`, the `onDisplay` method must be decorated with `@standalone` to be executed:
+
+```ts
+@template
+class CustomComponent extends Component {
+    @standalone
+    protected override onDisplay(): void | Promise<void> { 
+        console.log("Called on the frontend");
+    }
+}
+
+// backend/entrypoint.tsx
+export default renderBackend(<CustomComponent/>);
+```
 
 ## Children handling
 

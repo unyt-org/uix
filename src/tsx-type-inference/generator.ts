@@ -61,10 +61,6 @@ export class TSXTypeInferenceGenerator {
 	constructor(options: TypeInferenceOptions) {
 		this.#options = options;
 
-		const paths = this.#options.imports ?
-			this.#importMapToPaths(this.#options.imports!, this.#options.importMapPath) :
-			{};
-
 		this.#compilerOptions = {
 			jsx: ts.JsxEmit.ReactJSX,
 			jsxImportSource: this.#options.jsxImportSource,
@@ -75,8 +71,7 @@ export class TSXTypeInferenceGenerator {
 			moduleResolution: ts.ModuleResolutionKind.NodeNext,
 			allowJs: true,
 			esModuleInterop: true,
-			strict: true,
-			paths
+			strict: true
 		};
 		
 	}
@@ -270,8 +265,9 @@ export class TSXTypeInferenceGenerator {
 
 
 			const mod = this.#resolveModule(moduleLiteral.text, containingFile)??moduleLiteral.text;
-			const resolvedPath = (this.#getLocalDenoCacheFile(mod, mod.endsWith(".tsx") ? '.tsx' : undefined) || mod).replace("file://", "").replace(/\/(\w\:)/, '$1');
-
+			const resolvedPath = decodeURIComponent(
+				(this.#getLocalDenoCacheFile(mod, mod.endsWith(".tsx") ? '.tsx' : undefined) || mod).replace("file://", "").replace(/\/(\w\:)/, '$1')
+			);
 			return {
 				resolvedModule: {
 					extension: resolvedPath.endsWith(".tsx") || mod.endsWith(".tsx") ? ts.Extension.Tsx : ts.Extension.Ts,
@@ -380,11 +376,14 @@ export class TSXTypeInferenceGenerator {
 				hasRefMarker = requiredType!.types.some((type) => {
 					return this.#isRef(type)
 				});
+				console.log(node.parent.getText(), hasRefMarker, requiredType!.types.map((type) => this.#typeChecker.typeToString(type)));
+
 			}
 			else {
 				hasRefMarker = requiredType ? this.#isRef(requiredType) : false;
+				console.log(node.parent.getText(), hasRefMarker, requiredType ? this.#typeChecker.typeToString(requiredType) : "unknown");
 			}
-	
+
 			// optimization: skip ref for internal elements if literal value (they all accept either refs or const values, so we can just skip them)
 			const skipRefForInternalElement = hasRefMarker && !isCustomComponent && this.#jsxAttributeIsLiteral(node);
 

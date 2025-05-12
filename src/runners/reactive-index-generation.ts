@@ -123,7 +123,9 @@ async function handleReactiveIndices(reactiveIndices: Positions) {
 
 
 async function saveReactiveIndices(modulePath: string, indices: number[]) {
-	const hash = encodeHex(sha256(modulePath) as Uint8Array);
+	const hash = encodeHex(sha256(
+		new URL(modulePath).toString()
+	) as Uint8Array);
 	const path = metadataDir.getChildPath(hash);
 	// save indices to path
 	if (indices.length) {

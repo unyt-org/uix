@@ -17,6 +17,7 @@ import { serializeJSValue } from "../utils/serialize-js.ts";
 import { Component } from "../components/Component.ts";
 import { DX_VALUE } from "datex-core-legacy/runtime/constants.ts";
 import { resolveDependencies } from "./dependency-resolver.ts"
+import { RawHTML } from "./unsafe-html.ts";
 
 let stage:string|undefined = '?'
 
@@ -145,6 +146,10 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		}
 	}
 	
+
+	if (el instanceof RawHTML) {
+		return el.html;
+	}
 
 	if (el instanceof domContext.Text) {
 		// special case: localized text

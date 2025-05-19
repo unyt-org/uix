@@ -9,21 +9,24 @@ The most important point to take away is that you don't have to think about a da
 In UIX, you can simply write your application code as if the application would run forever and all your data would be available in application memory.
 Need to store a list of user data? Just think about how you would normally do that in JavaScript:
 
-```tsx title="data.ts" icon="fa-file"
-interface UserData {
+```tsx title="common/types.ts" icon="fa-file"
+export interface UserData {
     name: string,
     email: string
 }
+```
+
+```tsx title="data.ts" icon="fa-file"
+import { UserData } from "common/types.ts"
+
 export const users = new Set<UserData>()
 ```
 
 Now make the module containing the `users` Set eternal by using the `eternal.ts` file extension:
 ```tsx title="data.eternal.ts" icon="fa-file"
 // The code stays the same:
-interface UserData {
-    name: string,
-    email: string
-}
+import { UserData } from "common/types.ts"
+
 export const users = new Set<UserData>()
 ```
 
@@ -32,15 +35,17 @@ The exported `users` set is now stored persistently and the current state is sti
 This works out of the box without any special functions or data types. For larger data sets, you can optimize this
 by using a special storage collection instead of a native `Set`:
 ```tsx title="data.eternal.ts" icon="fa-file"
-interface UserData {
-    name: string,
-    email: string
-}
+import { UserData } from "common/types.ts"
+
 export const users = new StorageSet<UserData>()
 ```
 
 A `StorageSet` has the same methods and properties as a normal `Set`, but it works asynchronously and saves a lot of memory by lazily loading
 data from storage into memory when required.
+
+> [!WARNING]
+> While it is possible to export any kind of data from an eternal module, it is currently not possible to export type definitions from an eternal module. It is recommended to use a common module for type definitions that are used in both the backend and frontend.
+> Generally, you should also avoid exporting classes or functions from eternal modules, as they are mainly intended for storing data.
 
 ## Storage locations
 

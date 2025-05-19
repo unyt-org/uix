@@ -37,7 +37,7 @@ console.log(await getData()); // [1,2,3]
 
 Modules from the common directory can be imported by both the backend and the frontend.
 
-This is useful for defining components that can be rendered by the backend or frontend, or for utility functions and libraries that are used on the backend and frontend.
+This is useful for defining components that can be rendered by the backend or frontend, or for utility functions, type definitions and libraries that are used on the backend and frontend.
 
 > [!NOTE]
 > Common modules allow the use of the *same source code* for the backend and frontend, but they do not share a state between the backend and frontend endpoints: Each module is initialized individually on each endpoint.

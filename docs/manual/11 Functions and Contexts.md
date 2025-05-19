@@ -174,7 +174,7 @@ export function incrementCounter() {
 
 > [!NOTE]
 > It is recommended that eternal modules be used primarily to store data and functions.
-> Class definitions with DATEX bindings should always be declared in separate non-eternal modules so that they can be properly recreated on restart. This is a limitation of the current datex-core beta implementation and will be fixed in the next releases.
+> Class definitions and type definitions should always be declared in separate non-eternal modules so that they can be properly recreated on restart. This is a limitation of the current datex-core beta implementation and will be fixed in the next releases.
 
 ## Limitations of use() declarations
 

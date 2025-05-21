@@ -160,6 +160,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 		// live ref value
 		else if ((el as any)[DX_VALUE] instanceof Datex.ReactiveValue) {
 			if (opts) opts.forceParentLive = true;
+			content = el.textContent;
 		}
 		// static value
 		else {

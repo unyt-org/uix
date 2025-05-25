@@ -393,11 +393,9 @@ class ThemeManager  {
 	}
 
 	#clearCustomStyleSheets(exclude?: Set<string>) {
-		console.debug("clearing custom stylesheets", exclude);
 		if (client_type == "browser") {
 			for (const link of document.head.querySelectorAll('link.custom-theme') as unknown as HTMLElement[]) {
 				if (exclude?.has(link.href)) continue;
-				console.debug("removing custom stylesheet", link.href);
 				link.remove();
 			}
 		}
@@ -407,7 +405,6 @@ class ThemeManager  {
 
 	#updateCustomStylesheets(customStyleSheets: Set<string>) {
 		if (client_type == "browser") {
-			console.debug("updating custom stylesheets", customStyleSheets);
 			// remove stylesheets which are not in the new list
 			this.#clearCustomStyleSheets(customStyleSheets);
 
@@ -419,7 +416,6 @@ class ThemeManager  {
 				stylesheet.classList.add("custom-theme");
 				stylesheet.rel = "stylesheet"
 				stylesheet.href = url.toString()
-				console.debug("adding custom stylesheet", url);
 				document.head.append(stylesheet)
 			}
 		}
@@ -492,7 +488,6 @@ class ThemeManager  {
 				const val = rule.style.getPropertyValue(prop);
 				values[key] = val;
 			}
-			console.log(themeStylesheets,name)
 
 			this.registerTheme({
 				name,

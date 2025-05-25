@@ -270,6 +270,7 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 
 	// handle symbol keys (request methods)
 	let matchingSymbol = false;
+	let lastMatch:URLPatternResult|null = null;
 
 	for (const potential_route_key of Object.keys(entrypointData.entrypoint)) {
 		let matchWith = entrypointData.route!;
@@ -296,10 +297,7 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 			closest_match_route = Path.Route(reconstructMatchedURL(potential_route_key, match));
 			// route ends with * -> allow child routes
 			handle_children_separately = potential_route_key.endsWith("*");
-	
-			// extend context with additional URL params
-			entrypointData.context.params = {...entrypointData.context.params, ...generateURLParamsObject(match)};
-			entrypointData.context.urlPattern = match;	
+			lastMatch = match;
 		}
 	}
 	
@@ -322,6 +320,12 @@ async function resolvePathMap(entrypointData: entrypointData<EntrypointRouteMap>
 		val = await val;
 		// only update route if a string key, symbol keys don't mutate the route
 		const new_path = matchingSymbol ? entrypointData.route : closest_match_route ? Path.Route(entrypointData.route!.routename.replace(closest_match_route.routename.replace(/\*$/,""), "") || "/") : Path.Route("/");
+
+		// extend context with additional URL params
+		if (lastMatch) {
+			entrypointData.context.params = {...entrypointData.context.params, ...generateURLParamsObject(lastMatch)};
+			entrypointData.context.urlPattern = lastMatch;
+		}
 		
 		const resolved = await resolveEntrypointRoute({...entrypointData, entrypoint: val, route: new_path});
 		if (!handle_children_separately) resolved.remaining_route = Path.Route("/");

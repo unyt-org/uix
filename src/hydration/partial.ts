@@ -1,5 +1,6 @@
 import { Datex } from "datex-core-legacy";
 import { DOMUtils } from "../uix-dom/datex-bindings/dom-utils.ts";
+import { RawHTML } from "../html/unsafe-html.ts";
 
 /**
  * Returns a list of all nodes in a DOM tree that have live pointer binding
@@ -18,14 +19,15 @@ export function getLiveNodes(treeRoot: Element, includeEventListeners = true, _l
 
 	// iterate children
 	for (const val of (serialized.content instanceof Array ? serialized.content : [serialized.content]) ?? []) {
-		if (val instanceof Element) getLiveNodes(val, includeEventListeners, _list);
-		else {
-			const ptr = Datex.Pointer.pointerifyValue(val);
-			if (ptr instanceof Datex.Pointer) {
-				isLive = true;
-			}
-		}
-	}
+        if (val instanceof RawHTML) continue;
+        if (val instanceof Element) getLiveNodes(val, includeEventListeners, _list);
+        else {
+            const ptr = Datex.Pointer.pointerifyValue(val);
+            if (ptr instanceof Datex.Pointer) {
+                isLive = true;
+            }
+        }
+    }
 	
 	if (!isLive) {
 		if (treeRoot[DOMUtils.ATTR_BINDINGS]?.size) isLive = true

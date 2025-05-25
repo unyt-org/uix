@@ -102,7 +102,8 @@ class ThemeManager  {
 		for (const sheet of document.styleSheets??[]) {
 			// themes
 			if ((<HTMLStyleElement>sheet.ownerNode)?.classList?.contains("uix-themes")) {
-				this.addThemeFromParsedStylesheet(sheet)
+				const themeStylesheets = JSON.parse(decodeURI(sheet.ownerNode.getAttribute("data-stylesheets")??"{}"));
+				this.addThemeFromParsedStylesheet(sheet, themeStylesheets)
 			}
 		}
 		
@@ -112,7 +113,7 @@ class ThemeManager  {
 		if (!this.getTheme(uixDark.name, true)) this.registerTheme(uixDark);
 		if (!this.getTheme(uixLight.name, true)) this.registerTheme(uixLight);
 
-		const currentModeCookie = client_type == "browser" && getCookie(UIX_COOKIE.colorMode) as "dark"|"light";
+		const currentModeCookie = client_type == "browser" && (getCookie(UIX_COOKIE.colorMode) || getCookie(UIX_COOKIE.initialColorMode)) as "dark"|"light";
 		const currentMode = currentModeCookie || (client_type == "browser" ? (globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") : "light");
 		
 		const currentDarkTheme = client_type == "browser" ? (getCookie(UIX_COOKIE.themeDark) ?? "uix-dark") : "uix-dark";
@@ -303,6 +304,10 @@ class ThemeManager  {
 		return this.#themeCustomStylesheets.get(name);
 	}
 
+	getAllStyleSheets() {
+		return this.#themeCustomStylesheets;
+	}
+
 	// update the current theme (changes immediately)
 	#activateTheme(theme:Theme) {
 
@@ -388,9 +393,11 @@ class ThemeManager  {
 	}
 
 	#clearCustomStyleSheets(exclude?: Set<string>) {
+		console.debug("clearing custom stylesheets", exclude);
 		if (client_type == "browser") {
 			for (const link of document.head.querySelectorAll('link.custom-theme') as unknown as HTMLElement[]) {
 				if (exclude?.has(link.href)) continue;
+				console.debug("removing custom stylesheet", link.href);
 				link.remove();
 			}
 		}
@@ -400,7 +407,7 @@ class ThemeManager  {
 
 	#updateCustomStylesheets(customStyleSheets: Set<string>) {
 		if (client_type == "browser") {
-
+			console.debug("updating custom stylesheets", customStyleSheets);
 			// remove stylesheets which are not in the new list
 			this.#clearCustomStyleSheets(customStyleSheets);
 
@@ -412,6 +419,7 @@ class ThemeManager  {
 				stylesheet.classList.add("custom-theme");
 				stylesheet.rel = "stylesheet"
 				stylesheet.href = url.toString()
+				console.debug("adding custom stylesheet", url);
 				document.head.append(stylesheet)
 			}
 		}
@@ -470,7 +478,7 @@ class ThemeManager  {
 		}
 	}
 
-	addThemeFromParsedStylesheet(sheet:CSSStyleSheet) {
+	addThemeFromParsedStylesheet(sheet:CSSStyleSheet, themeStylesheets: Record<string, string[]>) {
 		for (const rule of <CSSStyleRule[]><any>sheet.cssRules) {
 			const name = rule.selectorText.replace(".theme-","")
 			const values:Record<string,string> = {};
@@ -484,14 +492,13 @@ class ThemeManager  {
 				const val = rule.style.getPropertyValue(prop);
 				values[key] = val;
 			}
+			console.log(themeStylesheets,name)
 
 			this.registerTheme({
 				name,
 				mode,
 				values,
-				stylesheets: [
-					...document.head.querySelectorAll('link.custom-theme') as unknown as HTMLLinkElement[]
-				].map(l => l.href),
+				stylesheets: themeStylesheets[name] ?? [],
 				parsed: true
 			});
 		}

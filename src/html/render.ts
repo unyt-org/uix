@@ -847,7 +847,12 @@ export async function generateHTMLPage({
 	}
 	
 	// available global uix themes
-	global_style += `<style class="uix-themes">`
+	const themeStylesheets = UIX.Theme.getAllStyleSheets();
+	const stylesheetsAttrs:Record<string, string[]> = {};
+	for (const [name, stylesheets] of themeStylesheets) {
+		stylesheetsAttrs[name] = stylesheets;
+	}
+	global_style += `<style class="uix-themes" data-stylesheets="${encodeURI(JSON.stringify(stylesheetsAttrs))}">`
 	global_style += UIX.Theme.getThemesCSS().replaceAll("\n","");
 	global_style += "</style>"
 

@@ -855,7 +855,7 @@ export async function generateHTMLPage({
 	const themeStylesheets = UIX.Theme.getAllStyleSheets();
 	const stylesheetsAttrs:Record<string, string[]> = {};
 	for (const [name, stylesheets] of themeStylesheets) {
-		stylesheetsAttrs[name] = stylesheets;
+		stylesheetsAttrs[name] = stylesheets.map(s => provider.resolveImport(s, true));
 	}
 	global_style += `<style class="uix-themes" data-stylesheets="${encodeURI(JSON.stringify(stylesheetsAttrs))}">`
 	global_style += UIX.Theme.getThemesCSS().replaceAll("\n","");

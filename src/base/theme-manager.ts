@@ -166,7 +166,12 @@ class ThemeManager  {
 	public registerTheme(theme: Theme) {
 		if (theme.stylesheets) {
 			const dir = getCallerDir();
-			theme.stylesheets = theme.stylesheets.map(s => new Path(s, dir))
+			theme.stylesheets = theme.stylesheets.map(
+				s => new Path(
+					s, 
+					s.toString().startsWith("/") && client_type == "browser" ? globalThis.location.origin : dir
+				)
+			)
 		}
 		this.#loadedThemes.set(theme.name, theme);
 		this.addGlobalThemeClass(theme);
@@ -510,7 +515,10 @@ class ThemeManager  {
 		for (const [key, value] of Object.entries(overrideValues)) {
 			override.values![key] = value;
 		}
-		override.stylesheets = [...(theme.stylesheets??[]), ...(override.stylesheets?.map(s => new Path(s, dir))??[])]
+		override.stylesheets = [...(theme.stylesheets??[]), ...(override.stylesheets?.map(s => new Path(
+			s,
+			s.toString().startsWith("/") && client_type == "browser" ? globalThis.location.origin : dir
+		))??[])]
 		
 		return override as Theme;
 	}

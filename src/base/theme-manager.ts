@@ -535,11 +535,11 @@ class ThemeManager  {
 
 }
 
-let themeManager:ThemeManager|undefined;
+globalThis.themeManager = undefined;
 
 export function getThemeManager() {
-	if (!themeManager) themeManager = new ThemeManager();
-	return themeManager;
+	if (!globalThis.themeManager) globalThis.themeManager = new ThemeManager();
+	return globalThis.themeManager;
 }
 
 export type ThemeManagerType = ThemeManager;

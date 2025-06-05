@@ -905,7 +905,7 @@ if (!globalThis.location.origin.endsWith(".unyt.app")) {
 		const url = new Path(requestEvent.request.url);
 
 		const pathAndQueryParameters = url.normal_pathname + url.search;
-		const lang = ContextBuilder.getRequestLanguage(requestEvent.request);
+		let lang = ContextBuilder.getRequestLanguage(requestEvent.request);
 
 		const port = new URL(requestEvent.request.url).port;
 		const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
@@ -923,7 +923,11 @@ if (!globalThis.location.origin.endsWith(".unyt.app")) {
 				headers, 
 				contentElement, 
 				requiredPointers
-			] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : [];
+			] = entrypoint ? await this.getEntrypointContent(entrypoint, pathAndQueryParameters, lang, this.getUIXContextGenerator(requestEvent, path, conn)) : []
+
+			if (contentElement && contentElement instanceof Element) {
+				lang = contentElement.getAttribute("lang") || lang;
+			}
 
 			// empty backend route & UIX-Inline-Backend => return 400 and just render frontend route
 			if (isInlineRendered && render_method == RenderMethod.DYNAMIC && prerendered_content==null) {

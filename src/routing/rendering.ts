@@ -34,7 +34,13 @@ if (!globalThis.URLPattern) {
 export async function createSnapshot<T extends Element|DocumentFragment>(content:T, render_method = RenderMethod.HYBRID):Promise<T> {
 	await preloadElementOnBackend(content);
 	// @ts-ignore
-	content[CACHED_CONTENT] = getOuterHTML(content, {injectStandaloneJS:render_method!=RenderMethod.STATIC, injectStandaloneComponents:render_method!=RenderMethod.STATIC, lang:Datex.Runtime.ENV.LANG, includeShadowRoots: true});
+	content[CACHED_CONTENT] = getOuterHTML(content, {
+		injectStandaloneJS:render_method!=RenderMethod.STATIC, 
+		injectStandaloneComponents:render_method!=RenderMethod.STATIC, 
+		lang:Datex.Runtime.ENV.LANG,
+		extractedData: {},
+		includeShadowRoots: true
+	});
 	return content;
 }
 

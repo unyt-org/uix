@@ -151,7 +151,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
         return el.html;
     }
 
-	if (el?.[OPEN_GRAPH]) {
+	if (el?.[OPEN_GRAPH] && opts?.extractedData) {
 		opts.extractedData.openGraph = el[OPEN_GRAPH];
 	}
 

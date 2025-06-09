@@ -207,7 +207,7 @@ These themes are designed with a clean, professional look that fits a wide varie
 If you don't want any predefined styles, you can use the plain themes [`uix-light-plain`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-light-plain.ts) and [`uix-dark-plain`](https://github.com/unyt-org/uix/blob/uix-new/src/themes/uix-dark-plain.ts). They only define basic text and background colors for dark and light mode, everything else is up to you.
 
 #### Tailwind CSS
-UIX also offers full support for [Tailwind CSS](https://tailwindcss.com/), a popular utility-first CSS framework that allows developers to rapidly build modern UIs using predefined CSS classes.
+UIX also offers full support for [Tailwind CSS 4](https://tailwindcss.com/), a popular utility-first CSS framework that allows developers to rapidly build modern UIs using predefined CSS classes.
 
 To use TailwindCSS in your UIX application, import the theme and apply it on both the frontend and backend:
 
@@ -232,10 +232,19 @@ export default <div class="text-red-500">
 </div>;
 ```
 
+When the theme is activated on the backend, a `tailwind.css` file will automatically be generated in the root directory
+of your project.
+You can use this file to customize your tailwind theme and add custom styles. 
+
 More information can be found in the [Tailwind CSS documentation](https://tailwindcss.com/docs).
 
 > [!NOTE]
 > We recommend using live reloading ([`uix -l`](./01%20Getting%20Started.md#the-uix-cli)) during development to update Tailwind CSS styles and automatically reload the pages when changes are made.
+
+> [!NOTE]
+> The default UIX dark/light mode system (e.g. `UIX.Theme.setMode("dark")`) does not work in combination with the TailwindCSS theme.
+> If you need dark/light mode support, we recommend that you use the built-in tailwind dark mode functionality (https://tailwindcss.com/docs/dark-mode)
+
 
 ### Manually overriding the mode
 

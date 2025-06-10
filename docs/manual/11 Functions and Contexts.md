@@ -131,8 +131,9 @@ const counter = $(0);
 
 export default 
     <button onclick:frontend={() => {
-        use (counter) // use the counter variable from the origin context
-        console.log('button was clicked')
+        use (counter, console) // use the counter variable from the origin context
+        console.log('button was clicked'); // this log is displayed on the backend
+        globalThis.console.log('button was clicked'); // this log is displayed on the frontend
         counter.val++
     }}>
         I was clicked {counter} times
@@ -141,10 +142,37 @@ export default
 
 Now everything works as expected.
 
-
 > [!NOTE]
 > use() declarations don't have any effect when used in normal functions. 
 > There is no harm in adding them to a stationary function that may be transferred at some point.
+
+#### Automatic `use` injections in `:frontend` callback functions
+
+UIX automatically injects variables from the top level scope into frontend functions when using hybrid rendering and `:frontend` callback functions.
+This means that in most cases, you don't need to explicitly declare top level variables in `use` statements. 
+
+However, the `use` statement give you more fine-grained control over the variable injections. By explicitly declaring
+variables in this way, you can make sure that you don't accidentally expose variable from the backend to the frontend.
+
+```ts title="backend/entrypoint.tsx" icon="fa-file"
+const counter = $(0);
+
+export default 
+    <button onclick:frontend={() => {
+        console.log('button was clicked'); // this log is displayed on the backend ('console' is automatically injected from the backend context)
+        globalThis.console.log('button was clicked'); // this log is displayed on the frontend
+        counter.val++ // 'counter' is automatically injected from the backend context
+    }}>
+        I was clicked {counter} times
+    </button>;
+```
+
+> [!WARNING]
+> When you are not explictily declaring injected variables from the parent scope with a `use` statement, *all* variables
+> used inside the function are injected from the parent context. This includes global variables like `console` and `alert`,
+> meaning that although the function is executed on the frontend, it still calls `console.log()` etc. on the backend.
+> The only exception from this rule is the `globalThis` variable, which you can use to explicitly refer to variables
+> inside the global scope of the frontend context (e.g. by calling `globalThis.console.log()`).
 
 ### Restorable contexts (eternal modules)
 

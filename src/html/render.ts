@@ -313,6 +313,8 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 			for (const [listener] of listeners) {
 
 				const listenerFn = getFunctionWithContext(listener, isStandaloneContext);
+				if (Datex.Pointer.isRef(listener)) opts?.requiredPointers?.add(listener);
+
 
 				// special form "action" on submit (no js required)
 				if (event == "submit" && Datex.Pointer.getByValue(listenerFn)) {
@@ -326,6 +328,7 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 					const eventName = String(event);
 					try {
 						const fnSource = getFunctionSource(listener, isStandaloneContext)
+						opts?.requiredPointers?.add(fnSource.listenerFn);
 						script += `{\n`
 						script += fnSource.companionSource;
 						script += `const __f__ = ${fnSource.source};\n`;
@@ -495,7 +498,7 @@ function getFunctionSource(fn: (...args: unknown[]) => unknown, isStandaloneCont
 
 	const source = hasContext ? getFunctionWrapper(listenerFn, "ctx") : listenerFn.toString()
 
-	return {source, companionSource}
+	return {source, companionSource, listenerFn}
 }
 
 function getFunctionWrapper(fn: Function, contextName = "ctx") {
@@ -588,6 +591,8 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{
 		// global imports and definitions
 		script += `import {bindPrototype} from "uix/standalone/get_prototype_properties.ts";\n`
 		script += `import {bindContentProperties} from "uix/standalone/bound_content_properties.ts";\n`
+		script += `import "uix/standalone/call-compat.ts";\n`
+
 		script += `globalThis.querySelector = querySelector;\nglobalThis.querySelectorAll = querySelectorAll;\n`
 		script += `globalThis.bindPrototype = bindPrototype;\n`
 		script += `globalThis.bindContentProperties = bindContentProperties;\n`
@@ -610,25 +615,7 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{
 	}
 
 	// scripts when DOM loaded:
-	script += `
-	(globalThis.addEventListenerOnce ?? globalThis.addEventListener)("DOMContentLoaded", async ()=>{
-		// polyfill for browsers that don't support declarative shadow DOM
-		if (!HTMLTemplateElement.prototype.hasOwnProperty('shadowRootMode')) {
-			(function attachShadowRoots(root) {
-				querySelectorAll("template[shadowrootmode]").forEach((template) => {
-					const mode = template.getAttribute("shadowrootmode");
-					if (template.parentNode) {
-						const shadowRoot = template.parentNode.attachShadow({ mode });
-						shadowRoot.appendChild(template.content);
-						template.remove();
-						attachShadowRoots(shadowRoot);
-					}
-				});
-			})(document);
-		}
-
-		${init_script};
-	})\n`
+	script += `${init_script};`
 
 	script += `</script>`
 
@@ -914,8 +901,8 @@ export async function generateHTMLPage({
 				${provider.app_options.installable||provider.app_options.manifest ? `<link rel="manifest" href="/@uix/manifest.json">` : ''}
 				${provider.app_options.installable||provider.app_options.manifest ? `<script async src="https://cdn.jsdelivr.net/npm/pwacompat" crossorigin="anonymous"></script>` : ''}
 				${global_style}
-				${files}
 				${prerendered_content instanceof Array ? prerendered_content[0] : ''}
+				${files}
 				${
 					render_method != RenderMethod.HYBRID ? 
 					`<script>

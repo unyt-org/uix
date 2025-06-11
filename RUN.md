@@ -45,6 +45,12 @@ Optional:
  * `--unstable`               Enable unstable deno features
  * `-d, --detach`             Keep the app running in background
 
+
+> [!WARNING]
+> When using the `--inspect` option, native functions like `console.log` will not work correctly when being transfered
+> between backend and frontend. You might get unrelated DATEX errors ("Cannot convert a bound function to a DATEX function").
+
+
 ## Other Options
 
 Optional:

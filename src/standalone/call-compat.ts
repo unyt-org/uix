@@ -9,7 +9,7 @@ import { createStaticObject } from "./create-static-object.ts";
  */
 export async function callCompat(ptrId: string, args: unknown[]) {
 	// use datex
-	if ((globalThis as any).datex && (globalThis as any).Datex && (globalThis as any).Datex.Runtime.initialized) {
+	if ((globalThis as any).datex && (globalThis as any).Datex && (globalThis as any).Datex.Runtime.initialized && (globalThis as any).Datex?.Supranet?.connected) {
 		await (globalThis as any).Datex.Supranet.connect();
 		return datex(`${ptrId}(Tuple(?))`, [args]);
 	}

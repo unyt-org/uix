@@ -89,6 +89,7 @@ export const tailwindcss = {
 			}
 			if ((await status.status).code != 0) {
 				logger.error("Error running tailwindcss");
+				console.error("Command:", tailwindCssCmd, args.join(" "));
 				const output = (await status.output());
 				console.error(decoder.decode(output.stdout).trim() + "\n" + decoder.decode(output.stderr).trim());
 			}

@@ -141,7 +141,7 @@ export default class LocalDockerRunner implements UIXRunner {
 			version: "3",
 
 			services: {
-				"uix-app": {
+				[name.replace(/[^a-zA-Z0-9_.-]/g, '-')]: {
 					container_name: `${name}`,
 					image: "denoland/deno",
 

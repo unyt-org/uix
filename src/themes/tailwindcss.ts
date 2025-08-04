@@ -2,7 +2,9 @@ import { UIX } from "../../uix.ts";
 import type { Theme } from "../base/theme-manager.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { Logger } from "datex-core-legacy/utils/logger.ts";
-import { runCommand } from "../utils/run-command.ts";
+import { getBaseDirectory, getOS } from "../utils/uix-base-directory.ts";
+import { KnownError, handleError } from "datex-core-legacy/utils/error-handling.ts";
+import { registerBuildLock } from "../app/build-lock.ts";
 
 export const tailwindcss = {
 	name: 'tailwindcss',
@@ -12,63 +14,160 @@ export const tailwindcss = {
 	async onRegister() {
 		const { app } = await import("../app/app.ts" /*lazy*/);
 		const { watch, watch_backend, live } = await import("../app/args.ts" /*lazy*/);
-
 		const logger = new Logger("tailwindcss")
-		const tailwindCssCmd = "tailwindcss"
 
-		// install tailwindcss via npm if not available
+		// install tailwindcss via GitHub Releases if not available
+		const executableTarget = getBaseDirectory().getChildPath("tailwindcss");
+		let tailwindCssCmd = "tailwindcss"
 		let cmdAvailable = commandExists(tailwindCssCmd);
-
 		if (!cmdAvailable) {
-			const npmInstalled = commandExists("npm", "-v");
-			if (npmInstalled) {
-				logger.info("installing via npm...");
-				cmdAvailable = runCommand("npm", {args:["install", "-g", tailwindCssCmd]}).outputSync().code == 0;
-				if (!cmdAvailable) {
-					logger.error("Could not install tailwindcss. Try to install it manually (https://tailwindcss.com/docs/installation)")
-					return;
-				}
-			}
-			else {
-				logger.error("Could not install tailwindcss. Please install npm.")
-				return;
-			}
-		} 
+			tailwindCssCmd = executableTarget.normal_pathname
+			cmdAvailable = commandExists(tailwindCssCmd);
+		}
+
+		if (!cmdAvailable)
+			await installTailwind4(executableTarget, logger);
+
+		// check if v4 is installed
+		let version = await getCurrentTailwindVersion(tailwindCssCmd);
+
+		// check version of self-installed tailwindcss
+		if (!version.includes("v4")) {
+			tailwindCssCmd = executableTarget.normal_pathname
+			version = await getCurrentTailwindVersion(tailwindCssCmd);
+		}
+		
+		if (!version.includes("v4")) {
+			logger.warn("Detected outdated version " + version + " - installing TailwindCSS v4");
+			await installTailwind4(executableTarget, logger);
+			version = await getCurrentTailwindVersion(tailwindCssCmd);
+		}
 
 		const outFile = new Path(this.stylesheets![0]);
 		const inFile = new Path(app.base_url).getChildPath("tailwind.css");
-		const configFile = new Path(app.base_url).getChildPath("tailwind.config.js");
 
 		if (!inFile.fs_exists) {
-			Deno.writeTextFileSync(inFile.normal_pathname, '@tailwind base;\n@tailwind components;\n@tailwind utilities;')
+			Deno.writeTextFileSync(inFile.normal_pathname, "@import 'tailwindcss';")
 		}
-		if (!configFile.fs_exists) {	
-			Deno.writeTextFileSync(configFile.normal_pathname, 'export default {\n  content: ["./**/*.{html,tsx,ts,jsx,js}"],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}')
-		}
-
-		const version = new TextDecoder().decode((await runCommand(tailwindCssCmd, {args: cmdAvailable ? ['--help'] : ['tailwindcss', '--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
 		logger.info("using", version);
 
-		const args =  [
-			"-i",
-			inFile.normal_pathname,
-			"-o",
-			outFile.normal_pathname
-		]
-		if (watch || watch_backend || live) {
-			logger.info("watching files");
-			args.push("--watch")
-		}
+		try {
+			const args =  [
+				"-i",
+				inFile.normal_pathname,
+				"-o",
+				outFile.normal_pathname
+			]
+			if (watch || watch_backend || live) {
+				logger.info("watching files");
+				args.push("--watch");
+			}
 
-		const status = await runCommand(tailwindCssCmd, {args}).spawn().status
-		if (status.code != 0) logger.error("Error running tailwindcss")
+			const status = new Deno.Command(tailwindCssCmd, {args, stderr: "piped", stdout: "piped"}).spawn();
+			const decoder = new TextDecoder();
+			let resolver: (() => void) | undefined = undefined;
+			let isResolved = false;
+
+			for await (const data of status.stderr) {
+				const out = decoder.decode(data);
+				if (out.includes("Done in")) {
+					logger.success("finished building");
+					isResolved = true;
+					resolver?.();
+				} else if (out.includes("Rebuilding...")) {
+					isResolved = false;
+					const { promise, resolve, reject } = Promise.withResolvers<void>();
+					resolver = resolve;
+					registerBuildLock(Promise.race<void>([
+						promise,
+						sleep(15_000).then(()=> {
+							if (!isResolved)
+								logger.warn("TailwindCSS has not finished building in 15s");
+						}).catch(reject)
+					]));
+				}
+			}
+			if ((await status.status).code != 0) {
+				logger.error("Error running tailwindcss");
+				console.error("Command:", tailwindCssCmd, args.join(" "));
+				const output = (await status.output());
+				console.error(decoder.decode(output.stdout).trim() + "\n" + decoder.decode(output.stderr).trim());
+			}
+		}
+		catch (e) {
+			logger.error(e);
+		}
 	}
-} satisfies Theme
+} satisfies Theme;
+
+
+async function getCurrentTailwindVersion(tailwindCssCmd: string) {
+	return new TextDecoder().decode((await new Deno.Command(tailwindCssCmd, {args: ['--help'], stdout: "piped"}).spawn().output()).stdout).trim().split("\n")[0];
+}
+
+
+async function installTailwind4(executableTarget: Path, logger: Logger) {
+	const os = getOS();
+	const executableName = {
+		'linux-x86_64': "tailwindcss-linux-x64",
+		'linux-aarm': "tailwindcss-linux-arm64",
+		'windows-x86_64': "tailwindcss-windows-x64.exe",
+		'windows-aarch64': "tailwindcss-windows-arm64.exe",
+		'darwin-x86_64': "tailwindcss-macos-x64",
+		'darwin-aarch64': "tailwindcss-macos-arm64"
+	}[os];
+	if (!executableName)
+		handleError(
+			new KnownError(
+				`TailwindCSS executable could not be installed for your platform (${os}).`,
+				["Please open an issue on https://www.github.com/unyt-org/uix providing your platform details"]
+			),
+			logger
+		);
+	
+	try {
+		logger.info("Downloading TailwindCSS. HTTP requests / page loads will be deferred until the installation is complete.");
+		const downloadMap = await datex.get<{assets: {browser_download_url: string, name: string}[]}>("https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest");
+		const releaseURL = downloadMap.assets.find(e => e.name === executableName && e.browser_download_url.includes("v4."))?.browser_download_url;
+		if (!releaseURL)
+			throw new Error(`Could not get release URL for ${executableName}`);
+
+		await Deno.writeFile(
+			executableTarget.normal_pathname,
+			new Uint8Array(await (await fetch(releaseURL)).arrayBuffer()),
+			{
+				create: true
+			}
+		);
+
+		try {
+			await Deno.chmod(
+				executableTarget.normal_pathname,
+				0o777
+			);
+		}
+		catch  {
+			// ignore if chmod fails on Windows
+		}
+		logger.success(`TailwindCSS was installed to ${executableTarget}`);
+	} catch (e) {
+		handleError(
+			new KnownError(
+				`The TailwindCSS executable could not be downloaded\n(${e})`,
+				[
+					"Check your internet connectivity",
+					"Ensure that you have enough disk space and that the directory is writable"
+				]
+			),
+			logger
+		);
+	}
+}
 
 
 function commandExists(cmd: string, arg = "-h") {
 	try {
-		console.log(new TextDecoder().decode(runCommand(cmd, {args:[arg]}).outputSync().stderr));
+		console.log(new TextDecoder().decode(new Deno.Command(cmd, {args:[arg]}).outputSync().stderr));
 		return true;
 	}
 	catch {

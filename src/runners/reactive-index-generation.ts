@@ -22,7 +22,7 @@ catch {
 Deno.mkdirSync(metadataDir, {recursive: true})
 
 
-export async function generateReactiveIndices(rootPath: URL, options: normalizedAppOptions, watch: boolean, loadDependencies = true): Promise<() => Promise<void>> {
+export async function generateReactiveIndices(rootPath: URL, options: normalizedAppOptions, watch: boolean, loadDependencies = true): Promise<{ update: () => Promise<void> }> {
 	if (!options.import_map.path) throw new Error("Import map path must be defined")
 
 	if (loadDependencies) await cacheDependencies();
@@ -45,9 +45,7 @@ export async function generateReactiveIndices(rootPath: URL, options: normalized
 // TODO: this works for known dependencies (e.g. template.ts), but not all remote dependencies are cached or up to date - this is definitely a problem
 async function cacheDependencies() {
 	const templatePath = new Path("../html/template.ts", import.meta.url);
-	logInfoOneline("Loading dependencies into cache...")
 	await TSXTypeInferenceGenerator.cacheDependencies([templatePath])
-	logDone();
 }
 
 async function generateReactiveIndicesForModules(
@@ -55,7 +53,7 @@ async function generateReactiveIndicesForModules(
 	importMapPath: string,
 	imports: Record<string, string>,
 	watch: boolean,
-): Promise<() => Promise<void>> {
+): Promise<{ update: () => Promise<void> }> {
 	const generator = new TSXTypeInferenceGenerator({
 		sourcePaths: modulePaths,
 		importMapPath,
@@ -65,9 +63,7 @@ async function generateReactiveIndicesForModules(
 		detectRefMarkers: true
 	})
 
-	logInfoOneline("Generating reactive indices...")
 	const reactiveIndices = await generator.getReactivePositions();
-	logDone();
 	// wait 50ms to show done message
 	await new Promise(resolve => setTimeout(resolve, 50))
 	handleReactiveIndices(reactiveIndices);
@@ -76,22 +72,20 @@ async function generateReactiveIndicesForModules(
 		await initRequestListener(generator);
 	}
 
-	return async () => {
-		logInfoOneline("Updating reactive indices...")
-		const reactiveIndices = await generator.getReactivePositions();
-		logDone();
-		// wait 50ms to show done message
-		await new Promise(resolve => setTimeout(resolve, 50))
-		await handleReactiveIndices(reactiveIndices);
+	return {
+		async update() {
+			const reactiveIndices = await generator.getReactivePositions();
+			// wait 50ms to show done message
+			await new Promise(resolve => setTimeout(resolve, 50))
+			await handleReactiveIndices(reactiveIndices);
+		}
 	};
 }
 
 const handleRequest = debounce(async (generator: TSXTypeInferenceGenerator) => {
 	const wipsParent = (await import("../utils/wips/wips-parent.ts")).wipsParent;
-	logInfoOneline("Updating reactive indices...")
 	const reactiveIndices = await generator.getReactivePositions();
 	await handleReactiveIndices(reactiveIndices);
-	logDone();
 	wipsParent.sendMessage("tsc-index-generation-done");
 }, 200);
 
@@ -102,14 +96,6 @@ async function initRequestListener(generator: TSXTypeInferenceGenerator) {
 			handleRequest(generator);
 		}
 	});
-}
-
-function logDone() {
-	stdout.write(`${ESCAPE_SEQUENCES.UNYT_GREEN}done${ESCAPE_SEQUENCES.RESET}\n`)
-}
-
-function logInfoOneline(message: string) {
-	stdout.write(logger.getInfoMessage(message))
 }
 
 

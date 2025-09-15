@@ -246,6 +246,7 @@ class App {
 	}
 
 	public async start(options:appOptions = {}, originalBaseURL?:string|URL) {
+		console.debug("[app.ts] Loading App Start Functionality");
 		const { startApp } = await import("./start-app.ts" /*lazy*/);
 		const {nOptions, baseURL, defaultServer, frontends} = await startApp(this, options, originalBaseURL)
 		this.options = nOptions;

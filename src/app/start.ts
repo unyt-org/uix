@@ -4,6 +4,8 @@ import { env, rootPath } from "./args.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import "./dom-context.ts";
 import { app } from "./app.ts";
+import { StatusBar, StatusType } from "../utils/logging.ts";
+
 const logger = new Datex.Logger("UIX App Runner");
 
 if (client_type !== "deno") {
@@ -20,4 +22,7 @@ for (const envVar of env) {
 
 // get app.dx / app.json
 const config = await getAppOptions(rootPath);
-app.start(config, rootPath)
+StatusBar.message = `Launching "${config.name}"...`;
+StatusBar.status = StatusType.Loading;
+StatusBar.sideMessage = "Backend Initializing (10%)";
+app.start(config, rootPath);

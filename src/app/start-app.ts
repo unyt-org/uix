@@ -14,6 +14,7 @@ import { communicationHub } from "datex-core-legacy/network/communication-hub.ts
 import { resolveDependencies } from "../html/dependency-resolver.ts";
 import { ReactiveValue } from "datex-core-legacy/runtime/pointers.ts";
 import { StatusBar, StatusType } from "../utils/logging.ts";
+import { normalizeAppOptions } from "./options.ts";
 
 const logger = new Datex.Logger("UIX App");
 
@@ -27,10 +28,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 
 	const frontends = new Map<string, FrontendManager>()
 
-	// prevent circular dependency problems
-	console.debug("[start-app.ts] Loading options.ts");
-	const {normalizeAppOptions} = await import("./options.ts")
-
+	StatusBar.sideMessage = "Backend Initializing (30%)";
 	const [nOptions, baseURL] = await normalizeAppOptions(options, original_base_url);
 
 	// set app base_url + options directly
@@ -44,19 +42,20 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 	// for unyt log
 	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") && Deno.env.get("UIX_HOST_ENDPOINT")!.startsWith("@") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, dynamicData: app})
 
-	console.debug("[start-app.ts] Loading .dx configuration");
+	StatusBar.sideMessage = "Backend Initializing (50%)"
 	// set .dx path to backend
 	if (nOptions.backend.length) {
 		await endpoint_config.load(new URL("./.dx", nOptions.backend[0]))
 	}
 
-	console.debug("[start-app.ts] Connecting to the Supranet");
+	StatusBar.sideMessage = "Backend Initializing (80%)";
 	// connect to supranet
 	if (endpoint_config.connect !== false) await Datex.Supranet.connect();
 	else await Datex.Supranet.init(undefined);
 
 	const reloadText = live ? "Hot reloading enabled" : "Press [CTRL+R] to restart";
 
+	StatusBar.sideMessage = "";
 	StatusBar.status = StatusType.Running;
 	StatusBar.message = `${ nOptions.name } is running | ${reloadText}`;
 

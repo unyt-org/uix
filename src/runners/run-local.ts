@@ -4,11 +4,13 @@ import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { logger, runParams } from "./runner.ts";
-import { verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { generateReactiveIndices } from "./reactive-index-generation.ts";
 import { CTRLSEQ, CSI, StatusBar, StatusType } from "../utils/logging.ts";
 import { isDenoForUIX } from "../utils/version.ts";
 import { handleError, KnownError } from "datex-core-legacy/utils/error-handling.ts";
+import { filterOutputStream } from "../utils/stdout-filter.ts";
+
+import  { toText } from "jsr:@std/streams@1.0.12";
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
 
@@ -126,7 +128,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 	// hide cursor
 	console.log(CSI + "?25l");
-	if (!verboseArg) StatusBar.clearScreen();
+	StatusBar.clearScreen();
 	
 	// handle clear state when live reloading
 	let isClearingState = clear;
@@ -161,7 +163,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 	}
 	
 	async function run(restart = false) {
-		if (restart && !verboseArg) StatusBar.clearScreen();
+		StatusBar.clearScreen();
 
 		if (restart) StatusBar.message = `Relaunching "${options.name}"...`;
 		else StatusBar.message = `Launching "${options.name}"...`;
@@ -208,14 +210,16 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			env: {
 				SQLITE_STORAGE: options.experimental_features.includes("sqlite-storage") ? "1" : "0",
 				UIX_METADATA_DIR: new Path("./uix/jusix/metadata", cache_path).normal_pathname,
-			}
-		})
+			},
+			stdout: "piped"
+		});
 
 		StatusBar.message = `Launching "${options.name}"...`;
 		StatusBar.sideMessage = "Spawning Backend Instance";
 		StatusBar.clearScreen();
 
 		process = command.spawn();
+		ReadableStream.from(filterOutputStream(process.stdout)).pipeTo(Deno.stdout.writable, { preventClose: true });
 
 		// detach, continues in background
 		// TODO: fix child process does not keep running correctly
@@ -227,14 +231,14 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		// Start listening to Ctrl+R and Ctrl+C in the background
 		const exitStatus = await Promise.race([
 			createCtrlPromise(),
-			process.output()
+			process.status
 		]);
 
 		// CTRL+R
 		if (exitStatus.code == 420) {
 			console.log("CTRL+R pressed, restarting backend...");
 			try {
-				process.kill()
+				process.kill();
 			}
 			catch {
 				// ignore
@@ -315,7 +319,7 @@ async function checkTSCode(root_path: URL) {
 	do {
 		const { valid, stderr } = await getCodeStatus(root_path);
 		if (!valid) {
-			if (!verboseArg) StatusBar.clearScreen();
+			StatusBar.clearScreen();
 
 			StatusBar.message = "TypeScript code check failed - Please fix all errors in your code";
 			StatusBar.status = StatusType.Error;
@@ -335,7 +339,7 @@ async function checkTSCode(root_path: URL) {
 			}
 		}
 		else {
-			if (!verboseArg) StatusBar.clearScreen();
+			StatusBar.clearScreen();
 			break;
 		}
 	} while (true);
@@ -349,20 +353,23 @@ async function getCodeStatus(root_path: URL) {
 	const command = new Deno.Command(Deno.execPath(), {
 		args: [
 			'check',
+			'--quiet',
 			'--config',
 			denoConfigPath,
 			'--allow-import',
 			new Path(root_path).normal_pathname,
 		],
-		stdout: "inherit"
+		stderr: "piped"
 	});
-	const { code, stderr } = await command.output();
+
+	const process = command.spawn();
+	const stderr = ReadableStream.from(filterOutputStream(process.stderr));
 
 	return {
-		valid: code === 0,
+		valid: (await process.status).code === 0,
 		// remove preamble from error output
 		// deno-lint-ignore no-control-regex
-		stderr: new TextDecoder().decode(stderr).replace(/^(.|\n)*?(?=\x1b\[0m\x1b\[1m)/, "")
+		stderr: (await toText(stderr)).replace(/^(.|\n)*?(?=\x1b\[0m\x1b\[1m)/, "")
 	}
 }
 

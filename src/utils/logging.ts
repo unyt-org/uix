@@ -1,4 +1,5 @@
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
+import { verboseArg } from "datex-core-legacy/utils/logger.ts";
 
 export const CSI = '\u001b[';
 export const CTRLSEQ = {
@@ -66,6 +67,7 @@ export class StatusBar {
 
 	/** Clears the screen with respect for the status bar by moving the cursor to the third line afterwards */
 	static clearScreen() {
+		if (verboseArg) return; /* Do not clear the screen in verbose mode */
 		Deno.stdout.writeSync(textEncoder.encode(CTRLSEQ.FULL_CLEAR));
 		this.update();
 		Deno.stdout.writeSync(textEncoder.encode(CSI + '2E'));

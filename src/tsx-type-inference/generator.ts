@@ -8,6 +8,7 @@ import { sha256 } from "./sha256.js";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { handleError, KnownError } from "datex-core-legacy/utils/error-handling.ts";
 import { StatusBar } from "../utils/logging.ts";
+import { filterOutputStream } from "../utils/stdout-filter.ts";
 
 export type TypeInferenceOptions = {
 	/**
@@ -118,9 +119,11 @@ export class TSXTypeInferenceGenerator {
 		StatusBar.sideMessage = `Downloading ${dependencies.length} ${ dependencies.length == 1 ? "dependency" : "dependencies" } into cache...`;
 		const command = new Deno.Command(Deno.execPath(), {
 			args: ["cache", "-I", ...dependencies.map((dep) => dep.toString())],
-			stdout: "inherit",
+			stderr: "piped",
 		});
 		const process = command.spawn();
+		ReadableStream.from(filterOutputStream(process.stderr)).pipeTo(Deno.stderr.writable, { preventClose: true });
+		
 		const { success } = await process.status;
 		if (!success) {
 			handleError(

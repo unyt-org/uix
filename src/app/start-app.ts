@@ -53,11 +53,11 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 	if (endpoint_config.connect !== false) await Datex.Supranet.connect();
 	else await Datex.Supranet.init(undefined);
 
-	const reloadText = live ? "Hot reloading enabled" : "Press [CTRL+R] to restart";
+	const reloadText = live ? "Hot reloading enabled" : "[CTRL+R] to restart";
 
 	StatusBar.sideMessage = "";
 	StatusBar.status = StatusType.Running;
-	StatusBar.message = `${ nOptions.name } is running | ${reloadText}`;
+	StatusBar.message = `"${ nOptions.name }" running | ${reloadText}`;
 
 	// TODO: map multiple backends to multiple frontends?
 	let backend_with_default_export:BackendManager|undefined;
@@ -163,7 +163,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 
 		setTimeout(() => {
 			const address = server.getFormattedAddress();
-			StatusBar.message = `"${nOptions.name}" is running | ${reloadText} | ${address}`;
+			StatusBar.message = `"${nOptions.name}" running | ${reloadText} | ${address}`;
 		}, 100)
 	}
 

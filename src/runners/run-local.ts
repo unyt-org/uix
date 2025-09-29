@@ -59,7 +59,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 	const cmd = [
 		"run",
-		"-Aq",
+		"-A",
 		"--unstable-ffi", // required for sqlite3
 	];
 
@@ -211,7 +211,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 				SQLITE_STORAGE: options.experimental_features.includes("sqlite-storage") ? "1" : "0",
 				UIX_METADATA_DIR: new Path("./uix/jusix/metadata", cache_path).normal_pathname,
 			},
-			stdout: "piped"
+			stdout: "piped",
+			stderr: "piped"
 		});
 
 		StatusBar.message = `Launching "${options.name}"...`;
@@ -220,6 +221,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 		process = command.spawn();
 		ReadableStream.from(filterOutputStream(process.stdout)).pipeTo(Deno.stdout.writable, { preventClose: true });
+		ReadableStream.from(filterOutputStream(process.stderr)).pipeTo(Deno.stderr.writable, { preventClose: true });
 
 		// detach, continues in background
 		// TODO: fix child process does not keep running correctly
@@ -322,6 +324,7 @@ async function checkTSCode(root_path: URL) {
 			StatusBar.clearScreen();
 
 			StatusBar.message = "TypeScript code check failed - Please fix all errors in your code";
+			StatusBar.sideMessage = "";
 			StatusBar.status = StatusType.Error;
 			console.error(stderr);
 

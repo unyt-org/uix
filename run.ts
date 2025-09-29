@@ -31,6 +31,7 @@ import { logger, runParams } from "./src/runners/runner.ts";
 import { applyPlugins } from "./src/app/config-files.ts";
 import { handleError } from "datex-core-legacy/utils/error-handling.ts";
 
+StatusBar.clearScreen();
 StatusBar.message = "Loading UIX...";
 StatusBar.status = StatusType.Loading;
 

@@ -1,18 +1,8 @@
-import { OutputMode, exec as _exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
-
-const CMD = {
-	GET_BRANCH: 'git rev-parse --abbrev-ref HEAD',
-	GET_ORIGIN: 'git config --get remote.origin.url',
-	GET_UNADDED_FILES: 'git ls-files --deleted --modified --others --exclude-standard -- :/',
-	GET_UNCOMMITTED_CHANGES: 'git diff HEAD  --name-only',
-	GET_ROOT_PATH: 'git rev-parse --show-toplevel',
-	GET_STATUS: 'git status'
-} as const;
 
 export function isGitInstalled(): boolean {
 	try {
-		return (new Deno.Command("git", { args: ["--version"] }).outputSync().success);
+		return new Deno.Command("git", { args: ["--version"] }).outputSync().success;
 	} catch {
 		return false;
 	}
@@ -30,29 +20,29 @@ export class GitRepo {
 	}
 
 	public async getOrigin() {
-		this.#origin = await exec(CMD.GET_ORIGIN);
-		return this.origin
+		this.#origin = await git(["config", "--get", "remote.origin.url"]);
+		return this.origin;
 	}
 
 	public async getBranch() {
-		this.#branch = await exec(CMD.GET_BRANCH);
-		return this.branch
+		this.#branch = await git(["rev-parse", "--abbrev-ref", "HEAD"]);
+		return this.branch;
 	}
 
 	public async getRootPath() {
-		return Path.File(await exec(CMD.GET_ROOT_PATH)).asDir();
+		return Path.File(await git(["rev-parse", "--show-toplevel"])).asDir();
 	}
 
 	public async getUnaddedFiles() {
-		return await exec(CMD.GET_UNADDED_FILES);
+		return await git(["ls-files", "--deleted", "--modified", "--others", "--exclude-standard", "--", ":/"]);
 	}
 
 	public async getUncommittedChanges() {
-		return await exec(CMD.GET_UNCOMMITTED_CHANGES);
+		return await git(["diff", "HEAD", "--name-only"]);
 	}
 
-	public async getHasUnpushedChanges() {
-		return (await exec(CMD.GET_STATUS)).includes("Your branch is ahead of");
+	public async hasUnpushedChanges() {
+		return (await git(["status"])).includes("Your branch is ahead of");
 	}
 
 	public static async get() { // path: Path
@@ -78,9 +68,18 @@ export class GitRepo {
 	
 }
 
-async function exec(cmd: string) {
-	const {output, status} = await _exec(cmd, {output: OutputMode.Capture});
-	if (status.code !== 0)
-		throw new Error("Ecec failed", { cause: output});
-	return output;
+/**
+ * Executes the git CLI with the specified arguments
+ * and returns its stdout.
+ * 
+ * @param args command line arguments
+ * @returns git's stdout output
+ */
+async function git(args: string[]) {
+	const process = new Deno.Command("git", { args , stderr: "piped", stdout: "piped" }).spawn();
+
+	if ((await process.status).code !== 0)
+		throw new Error("Git execution failed", { cause: new TextDecoder().decode((await process.output()).stderr).trimEnd() });
+
+	return new TextDecoder().decode((await process.output()).stdout).trimEnd();
 }

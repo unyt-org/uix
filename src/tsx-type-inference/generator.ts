@@ -5,8 +5,10 @@ import { ResolvedProjectReference } from "npm:typescript";
 import { StringLiteralLike } from "npm:typescript";
 import { encodeHex } from "jsr:@std/encoding/hex";
 import { sha256 } from "./sha256.js";
-import { stdout } from "node:process";
 import { Path } from "datex-core-legacy/utils/path.ts";
+import { handleError, KnownError } from "datex-core-legacy/utils/error-handling.ts";
+import { StatusBar } from "../utils/logging.ts";
+import { filterOutputStream } from "../utils/stdout-filter.ts";
 
 export type TypeInferenceOptions = {
 	/**
@@ -70,6 +72,7 @@ export class TSXTypeInferenceGenerator {
 			target: ts.ScriptTarget.ESNext,
 			moduleResolution: ts.ModuleResolutionKind.NodeNext,
 			allowJs: true,
+			incremental: true,
 			esModuleInterop: true,
 			strict: true
 		};
@@ -83,18 +86,22 @@ export class TSXTypeInferenceGenerator {
 	 * @returns Array with file paths and positions 
 	 */
 	public async getReactivePositions(tryCache = true): Promise<Positions> {
+		StatusBar.sideMessage = "Generating Reactivity Indices (10%)";
 		await this.#init();
+		StatusBar.sideMessage = "Generating Reactivity Indices (45%)";
 
 		const program = this.#watchProgram ?
 			this.#watchProgram.getProgram().getProgram() :
 			ts.createProgram(this.#sourcePaths, this.#compilerOptions, this.#getCompilerHost());
+
+		StatusBar.sideMessage = "Generating Reactivity Indices (75%)";
 		this.#typeChecker = program.getTypeChecker();
 
+		StatusBar.sideMessage = "Generating Reactivity Indices (90%)";
 		const positions = this.#getReactivePositionsForProgram(program);
 
 		// cache missing dependencies
 		if (this.#unresolvedFiles.size > 0 && tryCache) {
-			stdout.write("Caching " + this.#unresolvedFiles.size + (this.#unresolvedFiles.size == 1 ? " dependency" : " dependencies") + "...");
 			await TSXTypeInferenceGenerator.cacheDependencies([...this.#unresolvedFiles]);
 			this.#unresolvedFiles.clear();
 			// completely reset watch program
@@ -104,14 +111,32 @@ export class TSXTypeInferenceGenerator {
 			return this.getReactivePositions(false);
 		}
 
+		StatusBar.sideMessage = "Generating Reactivity Indices (100%)";
 		return positions;
 	}
 
 	public static async cacheDependencies(dependencies: (URL|string)[]) {
-		await new Deno.Command(Deno.execPath(), {
+		StatusBar.sideMessage = `Downloading ${dependencies.length} ${ dependencies.length == 1 ? "dependency" : "dependencies" } into cache...`;
+		const command = new Deno.Command(Deno.execPath(), {
 			args: ["cache", "-I", ...dependencies.map((dep) => dep.toString())],
-			stdout: "piped",
-		}).output();
+			stderr: "piped",
+		});
+		const process = command.spawn();
+		ReadableStream.from(filterOutputStream(process.stderr)).pipeTo(Deno.stderr.writable, { preventClose: true });
+		
+		const { success } = await process.status;
+		if (!success) {
+			handleError(
+				new KnownError(
+					"Could not cache some dependencies",
+					[
+						"Ensure that the URLs of the imports in your code are valid.",
+						"Make sure that you have an active internet connection",
+						"Update UIX and all its dependencies to the latest versions"
+					]
+				)
+			);
+		}
 	}
 
 	#getFilePathFromSourceFile(sourceFile: SourceFile) {
@@ -167,8 +192,9 @@ export class TSXTypeInferenceGenerator {
 			() => {}, // Empty diagnostic reporter (no logging)
 			() => {} // Empty watch status change handler
 		);
-		host.resolveModuleNameLiterals = (moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined) =>
-			this.#customModuleResolver(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, reusedNames);
+		host.resolveModuleNameLiterals = (moduleLiterals: readonly StringLiteralLike[], containingFile: string, redirectedReference: ResolvedProjectReference | undefined, options: CompilerOptions, containingSourceFile: SourceFile, reusedNames: readonly StringLiteralLike[] | undefined) => {
+			return this.#customModuleResolver(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, reusedNames);
+		}
 
 		this.#watchProgram = ts.createWatchProgram(host);
 	}

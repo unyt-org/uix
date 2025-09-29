@@ -4,11 +4,13 @@ import type { normalizedAppOptions } from "../app/options.ts";
 import { getExistingFile } from "../utils/file-utils.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { logger, runParams } from "./runner.ts";
-import { verboseArg } from "datex-core-legacy/utils/logger.ts";
 import { generateReactiveIndices } from "./reactive-index-generation.ts";
-import { CTRLSEQ, CSI, printReloadingStatus, printRunningStatus, printErrorStatus } from "../utils/logging.ts";
+import { CTRLSEQ, CSI, StatusBar, StatusType } from "../utils/logging.ts";
 import { isDenoForUIX } from "../utils/version.ts";
 import { handleError, KnownError } from "datex-core-legacy/utils/error-handling.ts";
+import { filterOutputStream } from "../utils/stdout-filter.ts";
+
+import  { toText } from "jsr:@std/streams@1.0.12";
 
 export async function runLocal(params: runParams, root_path: URL, options: normalizedAppOptions, isWatching: boolean) {
 
@@ -57,7 +59,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 	const cmd = [
 		"run",
-		"-Aq",
+		"-A",
 		"--unstable-ffi", // required for sqlite3
 	];
 
@@ -126,13 +128,16 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 	// hide cursor
 	console.log(CSI + "?25l");
+	StatusBar.clearScreen();
 	
 	// handle clear state when live reloading
 	let isClearingState = clear;
 	let stateCleared = false;
 
+	// generate reactive indices in the background
 	let tscWatching = watch || watch_backend || live;
-	let updateReactiveIndices = options.jusix ? await generateReactiveIndices(root_path, options, tscWatching) : null;
+	let reactiveIndicesManager = options.jusix ? generateReactiveIndices(root_path, options, tscWatching) : null;
+	let indicesGenerationPromise: Promise<unknown> | null = reactiveIndicesManager;
 
 	// Enable raw mode to capture key events
 	const createCtrlPromise = listenForKeyShortcuts();
@@ -143,28 +148,25 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		// init watch based TSC if not yet watching
 		if (!tscWatching) {
 			tscWatching = true;
-			// wait for reactive index update before restarting
-			updateReactiveIndices = options.jusix ? await generateReactiveIndices(root_path, options, tscWatching, false) : null;
+			reactiveIndicesManager = options.jusix ? generateReactiveIndices(root_path, options, tscWatching, false) : null;
+			indicesGenerationPromise = reactiveIndicesManager;
 		}
 		else {
-			// wait until reactive index update, or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
-			await updateReactiveIndices?.();
+			// wait until reactive index update
+			// or continue after timeout (assuming a non-tsx file was updated and triggered the restart)
+			if (reactiveIndicesManager) {
+				const { update } = await reactiveIndicesManager;
+				indicesGenerationPromise = update();
+			}
 		}
 		await run(true);
 	}
 	
 	async function run(restart = false) {
-		if (!verboseArg) {
-			Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
-			Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
-		}
+		StatusBar.clearScreen();
 
-		if (restart) {
-			printReloadingStatus("Relauching \"" + options.name + "\"...");
-		}
-		else {
-			printReloadingStatus("Launching \"" + options.name + "\"...");
-		}
+		if (restart) StatusBar.message = `Relaunching "${options.name}"...`;
+		else StatusBar.message = `Launching "${options.name}"...`;
 
 		if (stateCleared) {
 			stateCleared = false;
@@ -173,15 +175,12 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 		// run ts code checks
 		if (options.check_ts) {
+			StatusBar.message = "Checking TypeScript Code";
 			await checkTSCode(root_path);
 		}
-
-		if (restart) {
-			printReloadingStatus("Relauching \"" + options.name + "\"...");
-		}
-		else {
-			printReloadingStatus("Launching \"" + options.name + "\"...");
-		}
+		
+		// make sure the reactive indices generation has been finished
+		await indicesGenerationPromise;
 
 		// handle clear state when deployed in docker
 		// prevent clearing again when the docker container restarts
@@ -211,10 +210,18 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			env: {
 				SQLITE_STORAGE: options.experimental_features.includes("sqlite-storage") ? "1" : "0",
 				UIX_METADATA_DIR: new Path("./uix/jusix/metadata", cache_path).normal_pathname,
-			}
-		})
+			},
+			stdout: "piped",
+			stderr: "piped"
+		});
+
+		StatusBar.message = `Launching "${options.name}"...`;
+		StatusBar.sideMessage = "Spawning Backend Instance";
+		StatusBar.clearScreen();
 
 		process = command.spawn();
+		ReadableStream.from(filterOutputStream(process.stdout)).pipeTo(Deno.stdout.writable, { preventClose: true });
+		ReadableStream.from(filterOutputStream(process.stderr)).pipeTo(Deno.stderr.writable, { preventClose: true });
 
 		// detach, continues in background
 		// TODO: fix child process does not keep running correctly
@@ -226,14 +233,14 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		// Start listening to Ctrl+R and Ctrl+C in the background
 		const exitStatus = await Promise.race([
 			createCtrlPromise(),
-			process.output()
+			process.status
 		]);
 
 		// CTRL+R
 		if (exitStatus.code == 420) {
 			console.log("CTRL+R pressed, restarting backend...");
 			try {
-				process.kill()
+				process.kill();
 			}
 			catch {
 				// ignore
@@ -314,18 +321,19 @@ async function checkTSCode(root_path: URL) {
 	do {
 		const { valid, stderr } = await getCodeStatus(root_path);
 		if (!valid) {
-			if (!verboseArg) {
-				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
-				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
-			}
-			printErrorStatus("TypeScript code check failed - Please fix all errors in your code");
+			StatusBar.clearScreen();
+
+			StatusBar.message = "TypeScript code check failed - Please fix all errors in your code";
+			StatusBar.sideMessage = "";
+			StatusBar.status = StatusType.Error;
 			console.error(stderr);
 
 			// watch for changes in root path files
 
 			try {
 				for await (const _event of Deno.watchFs(new Path(root_path).normal_pathname, {recursive: true})) {
-					printErrorStatus("Checking TypeScript code...");
+					StatusBar.message = "Rechecking TypeScript code...";
+					StatusBar.status = StatusType.Loading;
 					break;
 				}
 			}
@@ -334,10 +342,7 @@ async function checkTSCode(root_path: URL) {
 			}
 		}
 		else {
-			if (!verboseArg) {
-				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.FULL_CLEAR));
-				Deno.stdout.writeSync(new TextEncoder().encode(CTRLSEQ.HOME));
-			}
+			StatusBar.clearScreen();
 			break;
 		}
 	} while (true);
@@ -351,19 +356,23 @@ async function getCodeStatus(root_path: URL) {
 	const command = new Deno.Command(Deno.execPath(), {
 		args: [
 			'check',
+			'--quiet',
 			'--config',
 			denoConfigPath,
 			'--allow-import',
 			new Path(root_path).normal_pathname,
-		]
+		],
+		stderr: "piped"
 	});
-	const { code, stderr } = await command.output();
+
+	const process = command.spawn();
+	const stderr = ReadableStream.from(filterOutputStream(process.stderr));
 
 	return {
-		valid: code === 0,
+		valid: (await process.status).code === 0,
 		// remove preamble from error output
 		// deno-lint-ignore no-control-regex
-		stderr: new TextDecoder().decode(stderr).replace(/^(.|\n)*?(?=\x1b\[0m\x1b\[1m)/, "")
+		stderr: (await toText(stderr)).replace(/^(.|\n)*?(?=\x1b\[0m\x1b\[1m)/, "")
 	}
 }
 

@@ -4,7 +4,6 @@ import { clear, stage, watch } from "../app/args.ts";
 import { createHash } from "https://deno.land/std@0.91.0/hash/mod.ts";
 import { UIXRunner, runOptions } from "./runner.ts";
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
-import { OutputMode, exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
 
 import { verboseArg } from "datex-core-legacy/utils/logger.ts"
 import { getInferredRunPaths } from "../app/options.ts";
@@ -219,18 +218,14 @@ export default class LocalDockerRunner implements UIXRunner {
 	}
 }
 
-async function execCommand<DenoRun extends boolean = false>(command:string, denoRun?:DenoRun): Promise<DenoRun extends true ? Deno.ProcessStatus : string> {
-	if (denoRun) {
-		const status = await Deno.run({
-			cmd: command.split(" "),
-		}).status();
-	
-		if (!status.success) throw status.code;
-		else return status as any;
-	}
-	else {
-		const {status, output} = (await exec(`bash -c "${command.replaceAll('"', '\\"')}"`, {output: OutputMode.Capture}));
-		if (!status.success) throw output;
-		else return output  as any;
-	}
+async function execCommand(command: string) {
+		const process = new Deno.Command("bash", { args: ["-c", command.replaceAll('"', '\\"')] , stderr: "piped", stdout: "piped" }).spawn();
+
+		if ((await process.status).code !== 0)
+			throw new Error(
+				"Bash command execution failed (" + command.replaceAll('"', '\\"') + ")",
+				{ cause: new TextDecoder().decode((await process.output()).stderr).trimEnd() }
+			);
+
+		return new TextDecoder().decode((await process.output()).stdout).trimEnd();
 }

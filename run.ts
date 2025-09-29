@@ -19,6 +19,7 @@ import { createProxyImports } from "./src/app/module-mapping.ts";
 import { getDXConfigData } from "./src/app/dx-config-parser.ts";
 import { Path } from "./src/utils/path.ts";
 import { handleAutoUpdate, updateCache } from "./auto-update.ts";
+import { StatusBar, StatusType } from "./src/utils/logging.ts";
 
 import { addUIXNamespace } from "./src/base/uix-datex-module.ts"
 
@@ -30,13 +31,19 @@ import { logger, runParams } from "./src/runners/runner.ts";
 import { applyPlugins } from "./src/app/config-files.ts";
 import { handleError } from "datex-core-legacy/utils/error-handling.ts";
 
+StatusBar.clearScreen();
+StatusBar.message = "Loading UIX...";
+StatusBar.status = StatusType.Loading;
+
 // catch unhandledrejections
 enableUnhandledRejectionHandler(logger);
 
 // login flow
 if (login) await triggerLogin();
+
 // init
 if (init != undefined) {
+	StatusBar.sideMessage = "Initializing Project"
 	if (rootPath)
 		handleError("A UIX Project exists already in this location", logger);
 	else {
@@ -67,8 +74,7 @@ if (stage === "dev") {
 }
 
 
-
-// version update?
+StatusBar.sideMessage = "Checking for UIX Updates";
 let forceUpdate = false;
 const updatePromises = []
 if (await handleAutoUpdate(new Path(import.meta.url).parent_dir, "UIX")) {
@@ -82,17 +88,18 @@ if (await handleAutoUpdate(new Path(import.meta.url).parent_dir, "UIX")) {
 	updatePromises.push(getJusix(true));
 	forceUpdate = true
 }
+
+StatusBar.sideMessage = "Checking for DATEX Updates";
 if (await handleAutoUpdate(new Path(import.meta.resolve("datex-core-legacy")).parent_dir, "DATEX Core")) {
 	updatePromises.push(updateCache(import.meta.resolve("datex-core-legacy/datex.ts")))
 	forceUpdate = true
 }
 
+StatusBar.sideMessage = "Waiting for Updates to Finish";
 await Promise.all(updatePromises)
 
 Datex.Logger.development_log_level = Datex.LOG_LEVEL.WARNING
 Datex.Logger.production_log_level = Datex.LOG_LEVEL.DEFAULT;
-
-
 
 const isWatching = live || watch_backend;
 
@@ -150,16 +157,18 @@ async function loadPlugins() {
 await addUIXNamespace();
 
 // find importmap (from app.dx or deno.json) to start the actual deno process with valid imports
+StatusBar.sideMessage = "Loading Plugins";
 const plugins = await loadPlugins();
 const runners = [new LocalDockerRunner()];
 const [options, new_base_url] = await normalizeAppOptions(await getAppOptions(rootPath), rootPath);
 if (!options.import_map) throw new Error("Could not find importmap");
 options.import_map = await createProxyImports(options, new_base_url, params.deno_config_path!);
 
+StatusBar.sideMessage = "Applying Plugins";
 await applyPlugins(plugins, rootPath, options)
 
+StatusBar.sideMessage = "Starting Backend Instance(s)";
 await runBackends(options);
-
 
 async function runBackends(options: normalizedAppOptions) {
 

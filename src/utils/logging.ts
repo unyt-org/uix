@@ -1,77 +1,101 @@
 import { ESCAPE_SEQUENCES } from "datex-core-legacy/datex_all.ts";
+import { verboseArg } from "datex-core-legacy/utils/logger.ts";
 
-export const CSI = '\u001b['
+export const CSI = '\u001b[';
 export const CTRLSEQ = {
-	FULL_CLEAR:							CSI + '3J' + CSI + 'H' + CSI + '2J',
-	CLEAR_SCREEN:						CSI + '2J',
-	HOME:								CSI + 'H',
-	TOP_LEFT:							CSI + '1;1H',
+	FULL_CLEAR:		CSI + '3J' + CSI + 'H' + CSI + '2J',
+	CLEAR_SCREEN:	CSI + '2J',
+	HOME:			CSI + 'H',
+	TOP_LEFT:		CSI + '1;1H',
 } as const;
 
-const textEncoder = new TextEncoder();
-
-export const STATUS_TYPE = {
-	RELOADING: "RELOADING",
-	RUNNING: "RUNNING",
-	WARNING: "WARNING",
-	ERROR: "ERROR",
-} as const
-export type STATUS_TYPE = typeof STATUS_TYPE[keyof typeof STATUS_TYPE];
+export enum StatusType {
+	Loading = "loading",
+	Running = "running",
+	Warning = "warning",
+	Error = "error",
+};
 
 const statusColors = {
-	[STATUS_TYPE.RELOADING]: ESCAPE_SEQUENCES.UNYT_BG_CYAN,
-	[STATUS_TYPE.RUNNING]: ESCAPE_SEQUENCES.UNYT_BG_GREEN,
-	[STATUS_TYPE.WARNING]: ESCAPE_SEQUENCES.UNYT_BG_YELLOW,
-	[STATUS_TYPE.ERROR]: ESCAPE_SEQUENCES.UNYT_BG_RED,
+	[StatusType.Loading]: ESCAPE_SEQUENCES.UNYT_BG_CYAN,
+	[StatusType.Running]: ESCAPE_SEQUENCES.UNYT_BG_GREEN,
+	[StatusType.Warning]: ESCAPE_SEQUENCES.UNYT_BG_YELLOW,
+	[StatusType.Error]: ESCAPE_SEQUENCES.UNYT_BG_RED,
 } as const;
 
 const textColors = {
-	[STATUS_TYPE.RELOADING]: ESCAPE_SEQUENCES.BLACK,
-	[STATUS_TYPE.RUNNING]: ESCAPE_SEQUENCES.BLACK,
-	[STATUS_TYPE.WARNING]: ESCAPE_SEQUENCES.BLACK,
-	[STATUS_TYPE.ERROR]: ESCAPE_SEQUENCES.WHITE,
+	[StatusType.Loading]: ESCAPE_SEQUENCES.BLACK,
+	[StatusType.Running]: ESCAPE_SEQUENCES.BLACK,
+	[StatusType.Warning]: ESCAPE_SEQUENCES.BLACK,
+	[StatusType.Error]: ESCAPE_SEQUENCES.WHITE,
 } as const;
 
+const statusIcons = {
+	[StatusType.Loading]: "🚀",
+	[StatusType.Running]: "🌍",
+	[StatusType.Warning]: "⚠️",
+	[StatusType.Error]: "🚨"
+};
 
-export function printStatus(message: string, type: STATUS_TYPE, reset = true, restoreCursor = !reset) {
-	let data = "";
+const progressIcons = ["🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚"];
 
-	// save cursor position
-	if (restoreCursor) data += CSI + 's';
+const textEncoder = new TextEncoder();
 
-	// move cursor to top left
-	data += CTRLSEQ.TOP_LEFT;
+export class StatusBar {
+	static #message = "";
+	static #sideMessage = "";
+	static #status: StatusType = StatusType.Loading;
+	static #currentProgressIndex = -1;
 
-	// status log with formatting
-	data += `${statusColors[type]}${ESCAPE_SEQUENCES.BOLD}${textColors[type]} ${message} ${CSI}K${ESCAPE_SEQUENCES.RESET}\n\n`;
-
-	// restore cursor position
-	if (restoreCursor) data += CSI + 'u';
-
-	if (reset) {
-		// put cursor back to start to allow overwriting
-		data += CTRLSEQ.TOP_LEFT;
+	static set message(message: string) {
+		this.#message = message;
+		this.update();
 	}
 
-	Deno.stdout.writeSync(textEncoder.encode(data));
-}
+	static set sideMessage(message: string) {
+		this.#currentProgressIndex++;
+		if (this.#currentProgressIndex > progressIcons.length - 1) 
+			this.#currentProgressIndex = 0;
+		this.#sideMessage = message;
+		this.update();
+	}
 
-export function printReloadingStatus(message: string) {
-	printStatus("🚀 " + message, STATUS_TYPE.RELOADING, true, false);
-}
+	static set status(status: StatusType) {
+		this.#status = status;
+		this.update();
+	}
 
-export function printRunningStatus(message: string) {
-	printStatus("🚀 " + message, STATUS_TYPE.RUNNING, false, false);
-}
+	/** Clears the screen with respect for the status bar by moving the cursor to the third line afterwards */
+	static clearScreen() {
+		if (verboseArg) return; /* Do not clear the screen in verbose mode */
+		Deno.stdout.writeSync(textEncoder.encode(CTRLSEQ.FULL_CLEAR));
+		this.update();
+		Deno.stdout.writeSync(textEncoder.encode(CSI + '2E'));
+	}
 
-export function updateRunningStatus(message: string) {
-	printStatus("🌍 " + message, STATUS_TYPE.RUNNING, false, true);
-}
+	static update() {
+		let output = "";
 
-export function updateWarningStatus(message: string) {
-	printStatus("🌍  " + message, STATUS_TYPE.WARNING, false, true);
-}
+		// save cursor position
+		output += CSI + 's';
 
-export function printErrorStatus(message: string) {
-	printStatus("🚨 " + message, STATUS_TYPE.ERROR, false, false);
+		// move cursor to top left
+		output += CTRLSEQ.TOP_LEFT;
+
+		// status log with formatting
+		output += `${statusColors[this.#status]}${ESCAPE_SEQUENCES.BOLD}${textColors[this.#status]} ${statusIcons[this.#status]} ${this.#message} ${CSI}K`;
+
+		if (this.#sideMessage) {
+			output += CSI + '9999G'; // move cursor to the end of the line
+			output += CSI + (this.#sideMessage.length + 3) + "D"; // move cursor left
+			output += `${this.#sideMessage} ${progressIcons[this.#currentProgressIndex]}`;
+		}
+
+		output += ESCAPE_SEQUENCES.RESET;
+
+		// restore cursor position
+		output += CSI + 'u';
+
+		Deno.stdout.writeSync(textEncoder.encode(output));
+	}
 }

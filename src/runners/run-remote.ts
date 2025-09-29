@@ -56,8 +56,7 @@ export async function runRemote(params: runParams, root_path: Path.File, options
 
 
 	// Git: changes have to be pushed
-	const hasUnpushedChanges = await repo.getHasUnpushedChanges();
-	if (hasUnpushedChanges) {
+	if (await repo.hasUnpushedChanges()) {
 		logger.error(`You have not pushed your recent changes in the '${repo.branch}' branch to ${repo.origin}.\nPlease run 'git push' first.`)
 		Deno.exit(1)
 	}

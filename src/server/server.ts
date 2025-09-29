@@ -33,7 +33,7 @@ import { Crypto } from "datex-core-legacy/runtime/crypto.ts";
 import { Target } from "datex-core-legacy/datex_all.ts";
 import { createSession, validateUnverifiedSession, validateVerifiedSession, unverifiedSessionExists } from "../session/backend.ts";
 import { isSafariClient } from "../utils/safari.ts";
-import {SourceMapConsumer} from "npm:source-map@0.7.4";
+import {SourceMapConsumer} from "npm:source-map@0.7.6";
 import { hasDependencyList } from "../html/dependency-resolver.ts";
 
 import { UIX_COOKIE } from "../session/cookies.ts";
@@ -48,7 +48,7 @@ let customPort = false;
 let enable_tls = false;
 
 SourceMapConsumer?.initialize?.({
-    "lib/mappings.wasm": "https://unpkg.com/source-map@0.7.4/lib/mappings.wasm"
+    "lib/mappings.wasm": "https://unpkg.com/source-map@0.7.6/lib/mappings.wasm"
 });
 
 const langsByExtension = {

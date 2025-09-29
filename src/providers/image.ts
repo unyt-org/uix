@@ -1,9 +1,10 @@
 import satori, { init as initSatori } from "https://esm.sh/satori@0.10.4/wasm";
 // @ts-ignore $
-import { initStreaming } from "https://esm.sh/yoga-wasm-web@0.3.0";
+
+// import { initStreaming } from "https://esm.sh/yoga-wasm-web@0.3.0";
+import { initStreaming, type Yoga } from "https://cdn.jsdelivr.net/npm/yoga-wasm-web@0.3.3/+esm";
 import { render as convertSVGToPNG } from "https://deno.land/x/resvg_wasm@0.2.0/mod.ts";
 import { html } from "https://cdn.jsdelivr.net/npm/satori-html@0.3.2/+esm";
-import { type Yoga } from "https://esm.sh/v135/yoga-wasm-web@0.3.3/dist/index.js";
 import { provideContent } from "./common.tsx";
 import { getOuterHTML } from "../html/render.ts";
 

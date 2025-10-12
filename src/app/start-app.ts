@@ -8,6 +8,7 @@ import { FrontendManager } from "./frontend-manager.ts";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { convertToWebPath } from "./convert-to-web-path.ts";
 import { getDirType } from "./utils.ts";
+import { abortFiltering } from "../utils/stdout-filter.ts";
 import { WebSocketServerInterface } from "datex-core-legacy/network/communication-interfaces/websocket-server-interface.ts"
 import { HTTPServerInterface } from "datex-core-legacy/network/communication-interfaces/http-server-interface.ts"
 import { communicationHub } from "datex-core-legacy/network/communication-hub.ts";
@@ -28,6 +29,7 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 
 	const frontends = new Map<string, FrontendManager>()
 
+	abortFiltering();
 	StatusBar.sideMessage = "Backend Initializing (30%)";
 	const [nOptions, baseURL] = await normalizeAppOptions(options, original_base_url);
 

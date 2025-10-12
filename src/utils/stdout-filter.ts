@@ -3,6 +3,7 @@ const PATTERNS: Pattern[] = [
 	{ includes: "Warning The following packages contained npm lifecycle scripts" },
 	{ includes: "Warning the configuration file" },
 	{ includes: "Resolver diagnostics:" },
+	{ includes: "Lifecycle scripts are only supported when using a `node_modules` directory" },
 	{ statusStartsWith: "Download https://" }
 ];
 
@@ -13,7 +14,18 @@ type Pattern = {
 	includes?: string
 };
 
-export async function* filterOutputStream(stream: ReadableStream<Uint8Array>, allowStatusFormatting = true) {
+/**
+ * Async generator that filters a {@link ReadableStream}, given a set of patterns.
+ * Outputs unfiltered chunks once the {@link ABORT_CODE} is encountered.
+ * @param stream The input stream
+ * @param [allowStatusFormatting] Whether to allow grouping status-classified messages together
+ * @param [patterns] A set of patterns to match, uses standard set of {@link PATTERNS} by defalt
+ */
+export async function* filterStream(
+	stream: ReadableStream<Uint8Array>,
+	allowStatusFormatting = true,
+	patterns = PATTERNS
+) {
 	const decoder = new TextDecoder();
 	const encoder = new TextEncoder();
 	let statusModeActive = false;
@@ -22,7 +34,7 @@ export async function* filterOutputStream(stream: ReadableStream<Uint8Array>, al
 		// deno-lint-ignore no-control-regex
 		const text = rawText.replaceAll(/\u001b\[.*?m/g, "");
 		// console.log("OUT", text)
-		for (const pattern of PATTERNS) {
+		for (const pattern of patterns) {
 			if ("matches" in pattern) {
 				if (pattern.matches instanceof RegExp && pattern.matches.test(text)) continue streaming;
 				else if (typeof pattern.matches === "string" && pattern.matches === text) continue streaming;
@@ -43,6 +55,40 @@ export async function* filterOutputStream(stream: ReadableStream<Uint8Array>, al
 		if (statusModeActive) {
 			statusModeActive = false;
 			yield encoder.encode("\n" + rawText);
-		} else yield chunk;
+		} else {
+			yield chunk;
 	}
+	}
+}
+
+/**
+ * Filters a {@link ReadableStream} and calls a callback for each chunk.
+ * Outputs unfiltered chunks once the {@link ABORT_CODE} is encountered.
+ * Invokes {@link filterStream} to process the input.
+ * 
+ * 
+ * @param stream The input stream
+ * @param onChunk If specified, called whenver a chunk passed the filter successfully
+ * @param [allowStatusFormatting] Whether to allow grouping status-classified messages together
+ * @param [patterns] A set of patterns to match, uses standard set of {@link PATTERNS} by defalt
+ */
+export async function filterStreamToCallback(
+	stream: ReadableStream<Uint8Array>,
+	onChunk: (chunk: Uint8Array) => void,
+	allowStatusFormatting = true,
+	patterns = PATTERNS
+) {
+	for await (const chunk of filterStream(stream, allowStatusFormatting, patterns)) {
+		onChunk(chunk);
+	}
+}
+
+/**
+ * When a subprocess' output is piped and filtered through {@link filterStream},
+ * the subprocess can call this function to emit an {@link ABORT_CODE} on stdout and stderr.
+ * This will cause the parent process to let all output pass through without filtering.
+ */
+export function abortFiltering() {
+	Deno.stdout.writeSync(new TextEncoder().encode(ABORT_CODE));
+	Deno.stderr.writeSync(new TextEncoder().encode(ABORT_CODE));
 }

@@ -7,6 +7,8 @@ const PATTERNS: Pattern[] = [
 	{ statusStartsWith: "Download https://" }
 ];
 
+const ABORT_CODE = "\u001b4";
+
 type Pattern = {
 	statusStartsWith?: string,
 	matches?: string | RegExp,
@@ -29,8 +31,16 @@ export async function* filterStream(
 	const decoder = new TextDecoder();
 	const encoder = new TextEncoder();
 	let statusModeActive = false;
+	let aborted = false;
+
 	streaming: for await (const chunk of stream) {
 		const rawText = decoder.decode(chunk);
+		if (aborted || rawText.includes(ABORT_CODE)) {
+			aborted = true;
+			yield chunk;
+			continue;
+		}
+
 		// deno-lint-ignore no-control-regex
 		const text = rawText.replaceAll(/\u001b\[.*?m/g, "");
 		// console.log("OUT", text)
@@ -57,7 +67,7 @@ export async function* filterStream(
 			yield encoder.encode("\n" + rawText);
 		} else {
 			yield chunk;
-	}
+		}
 	}
 }
 

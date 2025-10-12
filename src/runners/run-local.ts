@@ -220,8 +220,9 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		StatusBar.clearScreen();
 
 		process = command.spawn();
-		ReadableStream.from(filterOutputStream(process.stdout)).pipeTo(Deno.stdout.writable, { preventClose: true });
-		ReadableStream.from(filterOutputStream(process.stderr)).pipeTo(Deno.stderr.writable, { preventClose: true });
+		const outputFilterAbortController = new AbortController();
+		ReadableStream.from(filterOutputStream(process.stdout)).pipeTo(Deno.stdout.writable, { preventClose: true, signal: outputFilterAbortController.signal });
+		ReadableStream.from(filterOutputStream(process.stderr)).pipeTo(Deno.stderr.writable, { preventClose: true, signal: outputFilterAbortController.signal });
 
 		// detach, continues in background
 		// TODO: fix child process does not keep running correctly
@@ -241,6 +242,7 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 			console.log("CTRL+R pressed, restarting backend...");
 			try {
 				process.kill();
+				outputFilterAbortController.abort();
 			}
 			catch {
 				// ignore

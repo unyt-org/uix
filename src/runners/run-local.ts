@@ -8,7 +8,7 @@ import { generateReactiveIndices } from "./reactive-index-generation.ts";
 import { CTRLSEQ, CSI, StatusBar, StatusType } from "../utils/logging.ts";
 import { isDenoForUIX } from "../utils/version.ts";
 import { handleError, KnownError } from "datex-core-legacy/utils/error-handling.ts";
-import { filterOutputStream } from "../utils/stdout-filter.ts";
+import { filterStream, filterStreamToCallback } from "../utils/stdout-filter.ts";
 
 import  { toText } from "jsr:@std/streams@1.0.12";
 
@@ -221,8 +221,8 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 
 		process = command.spawn();
 		const outputFilterAbortController = new AbortController();
-		ReadableStream.from(filterOutputStream(process.stdout)).pipeTo(Deno.stdout.writable, { preventClose: true, signal: outputFilterAbortController.signal });
-		ReadableStream.from(filterOutputStream(process.stderr)).pipeTo(Deno.stderr.writable, { preventClose: true, signal: outputFilterAbortController.signal });
+		filterStreamToCallback(process.stdout, (chunk) => Deno.stdout.writeSync(chunk));
+		filterStreamToCallback(process.stderr, (chunk) => Deno.stderr.writeSync(chunk));
 
 		// detach, continues in background
 		// TODO: fix child process does not keep running correctly
@@ -240,9 +240,9 @@ export async function runLocal(params: runParams, root_path: URL, options: norma
 		// CTRL+R
 		if (exitStatus.code == 420) {
 			console.log("CTRL+R pressed, restarting backend...");
+			outputFilterAbortController.abort();
 			try {
 				process.kill();
-				outputFilterAbortController.abort();
 			}
 			catch {
 				// ignore
@@ -368,8 +368,7 @@ async function getCodeStatus(root_path: URL) {
 	});
 
 	const process = command.spawn();
-	const stderr = ReadableStream.from(filterOutputStream(process.stderr));
-
+	const stderr = ReadableStream.from(filterStream(process.stderr));
 	return {
 		valid: (await process.status).code === 0,
 		// remove preamble from error output
@@ -377,9 +376,3 @@ async function getCodeStatus(root_path: URL) {
 		stderr: (await toText(stderr)).replace(/^(.|\n)*?(?=\x1b\[0m\x1b\[1m)/, "")
 	}
 }
-
-async function streamToString(stream: ReadableStream<Uint8Array>): Promise<string> {
-	const response = new Response(stream);
-	return await response.text();
-  }
-  

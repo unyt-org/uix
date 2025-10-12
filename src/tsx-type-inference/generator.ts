@@ -8,7 +8,7 @@ import { sha256 } from "./sha256.js";
 import { Path } from "datex-core-legacy/utils/path.ts";
 import { handleError, KnownError } from "datex-core-legacy/utils/error-handling.ts";
 import { StatusBar } from "../utils/logging.ts";
-import { filterOutputStream } from "../utils/stdout-filter.ts";
+import { filterStreamToCallback } from "../utils/stdout-filter.ts";
 
 export type TypeInferenceOptions = {
 	/**
@@ -122,7 +122,7 @@ export class TSXTypeInferenceGenerator {
 			stderr: "piped",
 		});
 		const process = command.spawn();
-		ReadableStream.from(filterOutputStream(process.stderr)).pipeTo(Deno.stderr.writable, { preventClose: true });
+		filterStreamToCallback(process.stderr, (chunk) => Deno.stderr.writeSync(chunk));
 		
 		const { success } = await process.status;
 		if (!success) {

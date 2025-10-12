@@ -381,7 +381,9 @@ export class Server {
         const httpConn = Deno.serveHttp(conn);
         try {
             for await (const requestEvent of httpConn) {
-                this.handleRequest(requestEvent, conn);
+                this.handleRequest(requestEvent, conn).catch((e)=>{
+                    requestEvent.respondWith(new Response("Internal Server Error", {status: 500}));
+                });
             }
         }
         catch {}

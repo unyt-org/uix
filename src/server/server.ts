@@ -374,7 +374,9 @@ export class Server {
         const httpConn = Deno.serveHttp(conn);
         try {
             for await (const requestEvent of httpConn) {
-                this.handleRequest(requestEvent, conn);
+                this.handleRequest(requestEvent, conn).catch((e)=>{
+                    requestEvent.respondWith(new Response("Internal Server Error", {status: 500}));
+                });
             }
         }
         catch {}
@@ -415,7 +417,6 @@ export class Server {
     }
 
     public async handleRequest(requestEvent:Deno.RequestEvent, conn: Deno.Conn){
-        
         let normalized_path:string|false = this.normalizeURL(requestEvent.request);
         let handled:boolean|void|string = false;
         const url = new URL(requestEvent.request.url);

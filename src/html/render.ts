@@ -602,7 +602,7 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{
 		if (opts?.injectStandaloneComponents) {
 			script += `globalThis.UIX_Standalone = {};\n`
 			for (const [name, val] of Object.entries(scriptData.declare)) {
-				script += `globalThis.UIX_Standalone.${name} = ${val};\n`
+				script += `globalThis.UIX_Standalone.${name} = ${escapeJsContent(val)};\n`
 			}
 		}
 		
@@ -611,7 +611,7 @@ export function getOuterHTML(el:Element|DocumentFragment, opts?:{
 	// initialization scripts
 	let init_script = "";
 	for (const val of scriptData.init) {
-		init_script += `{\n${val}\n}\n`
+		init_script += `{\n${escapeJsContent(val)}\n}\n`
 	}
 
 	// scripts when DOM loaded:
@@ -638,6 +638,10 @@ if (!domContext.Element.prototype.getOuterHTML) {
 	domContext.Element.prototype.getOuterHTML = function(opts?:{includeShadowRoots?:boolean, injectStandaloneJS?:boolean, injectStandaloneComponents?: boolean, lang?:string}) {
 		return getOuterHTML(this, opts);
 	}
+}
+
+function escapeJsContent(content: string) {
+	return content.replaceAll(/<\//g, '<\\/');
 }
 
 
@@ -816,7 +820,7 @@ export async function generateHTMLPage({
 		}
 
 		for (const file of static_js_files) {
-			if (file) files += indent(4) `<script type="module" src="${provider.resolveImport(file).toString()}"></script>`
+			if (file) files += indent(4) `<script type="module" src="${escapeJsContent(provider.resolveImport(file).toString())}"></script>`
 		}
 	}
 

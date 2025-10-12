@@ -1,7 +1,7 @@
 import { Pointer, ReactiveValue } from "datex-core-legacy/runtime/pointers.ts";
 
 export function serializeJSValue(val:any):string {
-	let serialized = JSON.stringify(val);
+	let serialized = String(JSON.stringify(val)).replaceAll(/<\//g, '<\\/');
 
 	// create mock pointer for type compatibility
 	if (val instanceof Pointer) {

@@ -31,7 +31,7 @@ export type TypeInferenceOptions = {
 	/**
 	 * Path to the import map file
 	 */
-	importMapPath?: string,
+	importMapPath?: Path,
 	/**
 	 * jsxImportSource compiler option
 	 */
@@ -102,7 +102,7 @@ export class TSXTypeInferenceGenerator {
 
 		// cache missing dependencies
 		if (this.#unresolvedFiles.size > 0 && tryCache) {
-			await TSXTypeInferenceGenerator.cacheDependencies([...this.#unresolvedFiles]);
+			await TSXTypeInferenceGenerator.cacheDependencies([...this.#unresolvedFiles], this.#options.importMapPath!);
 			this.#unresolvedFiles.clear();
 			// completely reset watch program
 			if (this.#options.watch) {
@@ -115,10 +115,12 @@ export class TSXTypeInferenceGenerator {
 		return positions;
 	}
 
-	public static async cacheDependencies(dependencies: (URL|string)[]) {
+
+	public static async cacheDependencies(dependencies: (URL|string)[], importMapPath: Path) {
+
 		StatusBar.sideMessage = `Downloading ${dependencies.length} ${ dependencies.length == 1 ? "dependency" : "dependencies" } into cache...`;
 		const command = new Deno.Command(Deno.execPath(), {
-			args: ["cache", "-I", ...dependencies.map((dep) => dep.toString())],
+			args: ["cache", "--import-map", importMapPath!.normal_pathname, "-I", ...dependencies.map((dep) => dep.toString())],
 			stderr: "piped",
 		});
 		const process = command.spawn();
@@ -268,7 +270,7 @@ export class TSXTypeInferenceGenerator {
 			// if path is relative, resolve
 			if (resolvedPath.startsWith("./") || resolvedPath.startsWith("../")) {
 				if (!this.#options.importMapPath) throw new Error("importMapPath required for relative paths");
-				const importMapPath = this.#options.importMapPath.startsWith("file://") ? this.#options.importMapPath : 'file://' + this.#options.importMapPath;
+				const importMapPath = this.#options.importMapPath.toString().startsWith("file://") ? this.#options.importMapPath.toString() : 'file://' + this.#options.importMapPath.toString();
 				resolvedPath = new Path(resolvedPath, importMapPath).toString();
 			}
 			const res = new Path("./" + moduleName.replace(firstPart, ""), resolvedPath);

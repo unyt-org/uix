@@ -25,7 +25,7 @@ Deno.mkdirSync(metadataDir, {recursive: true})
 export async function generateReactiveIndices(rootPath: URL, options: normalizedAppOptions, watch: boolean, loadDependencies = true): Promise<{ update: () => Promise<void> }> {
 	if (!options.import_map.path) throw new Error("Import map path must be defined")
 
-	if (loadDependencies) await cacheDependencies();
+	if (loadDependencies) await cacheDependencies(options.import_map.path);
 
 	// get all modules
 	const modulePaths = [];
@@ -35,7 +35,7 @@ export async function generateReactiveIndices(rootPath: URL, options: normalized
 
 	return await generateReactiveIndicesForModules(
 		modulePaths,
-		options.import_map.path.toString(),
+		options.import_map.path,
 		options.import_map.imports,
 		watch
 	)
@@ -43,14 +43,14 @@ export async function generateReactiveIndices(rootPath: URL, options: normalized
 
 // make sure all required depencency modules are cached locally by Deno
 // TODO: this works for known dependencies (e.g. template.ts), but not all remote dependencies are cached or up to date - this is definitely a problem
-async function cacheDependencies() {
+async function cacheDependencies(importMapPath: Path) {
 	const templatePath = new Path("../html/template.ts", import.meta.url);
-	await TSXTypeInferenceGenerator.cacheDependencies([templatePath])
+	await TSXTypeInferenceGenerator.cacheDependencies([templatePath], importMapPath)
 }
 
 async function generateReactiveIndicesForModules(
 	modulePaths: string[],
-	importMapPath: string,
+	importMapPath: Path,
 	imports: Record<string, string>,
 	watch: boolean,
 ): Promise<{ update: () => Promise<void> }> {

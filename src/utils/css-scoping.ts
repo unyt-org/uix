@@ -5,6 +5,8 @@
  * @returns 
  */
 export function addCSSScopeSelector(css: string, scope: string) {
+  // remove block comments to avoid mis-detection of at-rule blocks
+  css = removeBlockComments(css);
 	// first extract all @-rule blocks except @media and move them outside of the scope
 	const atBlocks: string[] = [];
 	const normalizedCSS = replaceAtRuleBlocks(css, (block) => {
@@ -21,6 +23,10 @@ export function addCSSScopeSelector(css: string, scope: string) {
 			.replaceAll(':root', '&')
 			.replaceAll('\n', '\n    ')
 	}\n}\n\n${atBlocks.join('\n\n')}`;
+}
+
+function removeBlockComments(cssText: string): string {
+  return cssText.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
 // Helper function to replace at-rule blocks in CSS text

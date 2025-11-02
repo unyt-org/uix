@@ -250,7 +250,8 @@ function _getOuterHTML(el:Node, opts?:_renderOptions, collectedStylesheets?:stri
 
 		// is a module identifier -> resolve - only for specific attributes:
 		// * src
-		if (attrib.name == "src" && val.match(/^[a-zA-Z0-9_]/)) {
+		// * href
+		if ((attrib.name == "src" || attrib.name == "href") && val.match(/^[a-zA-Z0-9_]/)) {
 			val = import.meta.resolve(val);
 		}
 

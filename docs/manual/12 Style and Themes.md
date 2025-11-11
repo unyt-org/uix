@@ -19,11 +19,14 @@ You can define general global styles in an `entrypoint.css` file next to the `en
 
 ## Component style sheets
 
-To apply CSS styles to a component in a module, you can create a CSS file next to the module file (e.g. `MyComponent.tsx`) sharing the same base name (e.g. `MyComponent.css`).
+To apply CSS styles to a class component in a module, you can create a CSS file next to the module file (e.g. `MyComponent.tsx`) sharing the same base name (e.g. `MyComponent.css`).
 
 The styles declared in the CSS file are automatically applied to all instances of the component and are not exposed to other components.
 
 You can use the `:host` selector to access the component root element (also when not using a [Shadow DOM](./13%20Shadow%20DOM.md)).
+
+> [!IMPORTANT]
+> Automatic component stylesheet loading only works for **class components** defined with the `@template` decorator.
 
 ```tsx title="common/MyComponent.tsx" icon="fa-file"
 @template(<p>Hello, UIX!</p>)

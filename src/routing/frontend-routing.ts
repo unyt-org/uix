@@ -256,7 +256,9 @@ export class FrontendRouter {
 
 	enableNavigationInterception() {
 		const _globalThis = globalThis as any;
-		if (_globalThis.navigation) {
+		// disable for now in non-chromium browsers until navigate event is fully supported
+		const isChromium = !!_globalThis.chrome && (!!_globalThis.chrome.webstore || !!_globalThis.chrome.runtime);
+		if (isChromium && _globalThis.navigation) {
 			_globalThis.navigation?.addEventListener("navigate", (e:any)=>{
 				if (!e.canIntercept || e.downloadRequest || e.formData) return;
 				if (!navigationAPIPolyfillEnabled && !e.userInitiated) return;

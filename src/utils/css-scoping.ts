@@ -16,13 +16,13 @@ export function addCSSScopeSelector(css: string, scope: string) {
 	});
 
 	// wrap the rest with the scope and append the extracted @-rule blocks at the end
-	return `${scope} {\n${
+	return `${atBlocks.join('\n\n')}\n\n${scope} {\n${
 		'    ' + 
 		normalizedCSS
 			.replaceAll(':host', '&')
 			.replaceAll(':root', '&')
 			.replaceAll('\n', '\n    ')
-	}\n}\n\n${atBlocks.join('\n\n')}`;
+	}\n}\n`;
 }
 
 function removeBlockComments(cssText: string): string {

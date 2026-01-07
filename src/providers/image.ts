@@ -1,10 +1,7 @@
-import satori, { init as initSatori } from "https://esm.sh/satori@0.10.4/wasm";
-// @ts-ignore $
-
-// import { initStreaming } from "https://esm.sh/yoga-wasm-web@0.3.0";
-import { initStreaming, type Yoga } from "https://cdn.jsdelivr.net/npm/yoga-wasm-web@0.3.3/+esm";
+import satori, { init as initSatori } from "https://esm.sh/satori@0.18.3";
+import { initStreaming, type Yoga } from "https://esm.sh/yoga-wasm-web@0.3.3";
 import { render as convertSVGToPNG } from "https://deno.land/x/resvg_wasm@0.2.0/mod.ts";
-import { html } from "https://cdn.jsdelivr.net/npm/satori-html@0.3.2/+esm";
+import { html } from "https://esm.sh/satori-html@0.3.2";
 import { provideContent } from "./common.tsx";
 import { getOuterHTML } from "../html/render.ts";
 
@@ -18,11 +15,23 @@ const MIME_TYPE_LOOKUP = {
 	"webp": "image/webp"
 } as const;
 
-const loadFont = (url: string) => fetch(url).then((a) => a.arrayBuffer());
-const fallbackFont = await loadFont("https://cdn.jsdelivr.net/npm/@vercel/og@0.1.0/vendor/noto-sans-v27-latin-regular.ttf");
-const yoga_wasm = fetch("https://cdn.jsdelivr.net/npm/@vercel/og@0.1.0/vendor/yoga.wasm");
-const initializedYoga = initStreaming(yoga_wasm).then((yoga: Yoga) => initSatori(yoga));
-await initializedYoga;
+
+const loadFont = async (url: string) => {
+	const res = await fetch(url);
+	if (!res.ok) throw new Error(`Failed to load font: ${url}`);
+	return await res.arrayBuffer();
+};
+
+const fallbackFont = await loadFont(
+	"https://cdn.jsdelivr.net/npm/@vercel/og@0.1.0/vendor/noto-sans-v27-latin-regular.ttf",
+);
+
+const yogaWasm = fetch(
+	"https://cdn.jsdelivr.net/npm/yoga-wasm-web@0.3.3/dist/yoga.wasm",
+);
+
+const yoga: Yoga = await initStreaming(yogaWasm);
+initSatori(yoga);
 
 export type Font = {
 	data: Uint8Array | ArrayBuffer;

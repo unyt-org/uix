@@ -14,7 +14,7 @@ You can define general global styles in an `entrypoint.css` file next to the `en
 
 > [!NOTE]
 > Although SCSS is supported natively by UIX, we recommend using CSS files rather than SCSS files. Modern CSS already includes most of the features that are provided by SCSS.
-> For this reason, CSS support will be completely removed from UIX in future versions.
+> For this reason, SCSS support will be completely removed from UIX in future versions.
 
 
 ## Component style sheets

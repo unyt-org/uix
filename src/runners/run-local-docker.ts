@@ -205,7 +205,7 @@ export default class LocalDockerRunner implements UIXRunner {
 			labels.push(`traefik.http.routers.${name}-secured.tls.certresolver=mydnschallenge`);
 		} 
 		else {
-			labels.push(`traefik.http.routers.${name}-secured.tls.certresolver=myhttpchallenge`);
+			labels.push(`traefik.http.routers.${name}-secured.tls.certresolver=le`);
 		}
 
 		if (port) {

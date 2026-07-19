@@ -1,8 +1,8 @@
-import ts from "npm:typescript";
-import { SourceFile } from "npm:typescript";
-import { CompilerOptions } from "npm:typescript";
-import { ResolvedProjectReference } from "npm:typescript";
-import { StringLiteralLike } from "npm:typescript";
+import ts from "npm:typescript@6";
+import { SourceFile } from "npm:typescript@6";
+import { CompilerOptions } from "npm:typescript@6";
+import { ResolvedProjectReference } from "npm:typescript@6";
+import { StringLiteralLike } from "npm:typescript@6";
 import { encodeHex } from "jsr:@std/encoding/hex";
 import { sha256 } from "./sha256.js";
 import { Path } from "datex-core-legacy/utils/path.ts";

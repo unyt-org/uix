@@ -21,7 +21,7 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 import { Transpiler } from "./transpiler.ts";
 import { addCSSScope, addCSSScopeSelector } from "../utils/css-scoping.ts";
 import { getEternalModule } from "../app/eternal-module-generator.ts";
-import { highlightText } from 'https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js'
+import { highlightText } from 'https://cdn.jsdelivr.net/npm/@speed-highlight/core@1.2.24/+esm'
 import {serveFile} from "https://deno.land/std@0.164.0/http/file_server.ts"
 import { cache_path } from "datex-core-legacy/runtime/cache_path.ts";
 import { eternalExts } from "../app/module-mapping.ts";

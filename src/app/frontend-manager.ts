@@ -35,6 +35,23 @@ import { waitForBuildLocks } from "./build-lock.ts";
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
 /**
+ * SECURITY: returns true if the endpoint of a HTTP request is allowed to read the pointer.
+ * Requests without a (validated) endpoint session are never allowed to access pointers if pointer protection is enabled
+ * (Pointer.assertEndpointCanRead does not throw if no endpoint is provided)
+ */
+function canEndpointReadPointer(ptr: Datex.Pointer, endpoint?: Datex.Endpoint|null) {
+	if (!Datex.Runtime.OPTIONS.PROTECT_POINTERS) return true;
+	if (!endpoint) return false;
+	try {
+		ptr.assertEndpointCanRead(endpoint);
+		return true;
+	}
+	catch {
+		return false;
+	}
+}
+
+/**
  * SECURITY: returns false for requests that were sent from another site (CSRF protection)
  * Uses the Sec-Fetch-Site and Origin headers (set by browsers, cannot be modified by websites)
  */
@@ -271,10 +288,16 @@ export class FrontendManager extends HTMLProvider {
 		this.#sse_senders.delete(sender)
 	}
 
-	addSSEObserver(pointerId: string, sender: (cmd: string) => void) {
+	addSSEObserver(pointerId: string, sender: (cmd: string) => void, endpoint?: Datex.Endpoint|null) {
 		// TODO: handle element updates
 		const ptr = Datex.Pointer.get(pointerId);
 		if (!ptr) return;
+
+		// SECURITY: only allow observing pointers the requesting endpoint has read access to
+		if (!canEndpointReadPointer(ptr, endpoint)) {
+			logger.error("SSE observe: no read permission for pointer " + pointerId);
+			return;
+		}
 
 		if (!ptr.value_initialized || !(ptr.val instanceof Element)) {
 			logger.error("cannot observe sse value");
@@ -332,10 +355,7 @@ export class FrontendManager extends HTMLProvider {
 			}
 
 			// SECURITY: respect pointer permissions (if enabled)
-			try {
-				ptr.assertEndpointCanRead(getHTTPRequestEndpoint(req.request) ?? undefined);
-			}
-			catch {
+			if (!canEndpointReadPointer(ptr, getHTTPRequestEndpoint(req.request))) {
 				this.server.sendError(req, 403, "Invalid Form Action");
 				return;
 			}
@@ -356,7 +376,7 @@ export class FrontendManager extends HTMLProvider {
 
 		this.server.path("/@uix/sse", async (req) => {
 
-			// TODO: check if endpoint has pointer permissions if pointer observe requested
+			// endpoint of the requesting client (validated session), used for pointer permission checks
 			const endpoint = getHTTPRequestEndpoint(req.request);
 
 			let controller:ReadableStreamDefaultController|undefined;
@@ -403,7 +423,7 @@ export class FrontendManager extends HTMLProvider {
 				try {
 					const pointers = JSON.parse(observe);
 					for (const ptrId of pointers) {
-						this.addSSEObserver(ptrId, sender)
+						this.addSSEObserver(ptrId, sender, endpoint)
 					}
 				}
 				catch (e) {
@@ -1068,8 +1088,19 @@ if (!globalThis.location.origin.endsWith(".unyt.app")) {
 							}
 						}
 					}
+					// live nodes are observed via /@uix/sse, which requires read permissions
+					if (liveNodePointers && metadata.endpoint) {
+						for (const ptrId of liveNodePointers) {
+							try {
+								Datex.Pointer.get(ptrId)?.grantAccessTo(metadata.endpoint.main)
+							}
+							catch (e) {
+								console.error(e)
+							}
+						}
+					}
 				}
-				
+
 
 				await this.server.serveContent(
 					requestEvent, 

@@ -345,6 +345,17 @@ export function getHTTPRequestEndpoint(request: Request, responseHeaders?: Heade
 	if (!request) return null;
 	const port = new URL(request.url).port;
 
+	// endpoint verified by the server for this request (session renewed, new session cookie is only set in the response)
+	const verifiedEndpoint = (request as any)._verifiedEndpoint;
+	if (verifiedEndpoint) {
+		try {
+			return f(verifiedEndpoint as any) as Endpoint;
+		}
+		catch {
+			return null;
+		}
+	}
+
 	// endpoint set by the server for this request (new session)
 	const serverEndpoint = (request as any)._endpoint;
 	if (serverEndpoint) {
@@ -388,6 +399,8 @@ export function getHTTPRequestEndpoint(request: Request, responseHeaders?: Heade
  */
 export function getHTTPRequestEndpointIsTrusted(request: Request) {
 	if (!request) return false;
+	// endpoint signature was verified by the server for this request
+	if ((request as any)._verifiedEndpoint) return true;
 	const port = new URL(request.url).port;
 	const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers, port);
 	const verifiedSessionCookie = getCookie("uix-session", request.headers, port);

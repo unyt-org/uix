@@ -643,7 +643,12 @@ export class Server {
         const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
         const session = createSession(endpoint, true);
         const headers = new Headers();
-        
+
+        // The session cookie of the current request is outdated (e.g. sessions are lost after a backend restart),
+        // the new session cookie is only sent with the response. Mark the endpoint as verified for the
+        // current request, otherwise the request context would not find a valid session for this request.
+        (requestEvent.request as any)._verifiedEndpoint = endpoint.toString();
+
         // If we delete those cookies the backend can not verify the session on restart
         // deleteCookie('datex-endpoint-validation', headers, port, isSafariLocalhost)
         // deleteCookie('datex-endpoint-nonce', headers, port, isSafariLocalhost)

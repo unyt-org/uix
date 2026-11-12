@@ -421,9 +421,9 @@ export class Server {
         let handled:boolean|void|string = false;
         const url = new URL(requestEvent.request.url);
 
-        // error parsing url (TODO: this should not happen)
+        // invalid url (malformed encoding or path traversal)
         if (normalized_path == false) {
-            this.sendError(requestEvent, 500);
+            this.sendError(requestEvent, 400);
             return;
         }
 
@@ -672,7 +672,14 @@ export class Server {
         if (this.#options.resolve_index_html && req_url.is_dir) req_url.pathname += "index.html";
 
         try {
-            return decodeURIComponent(req_url.pathname);
+            const decoded = decodeURIComponent(req_url.pathname);
+            // SECURITY: prevent path traversal - encoded separators (%2F, %5C) are only decoded here,
+            // so ".." segments, backslashes or null bytes in the decoded path are never valid
+            if (decoded.includes("\\") || decoded.includes("\0") || decoded.split("/").some(segment => segment === "..")) {
+                logger.warn("Rejected request with invalid path: " + req_url.pathname);
+                return false;
+            }
+            return decoded;
         }
         catch (e) {
             console.log(e);

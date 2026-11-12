@@ -3,6 +3,7 @@ import { Datex, f } from "datex-core-legacy";
 import { BROADCAST, Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { client_type } from "datex-core-legacy/utils/constants.ts";
 import { UIX_COOKIE, deleteCookie, getCookie } from "../session/cookies.ts";
+import { validateUnverifiedSession, validateVerifiedSession } from "../session/backend.ts";
 import { getSharedDataPointer } from "../session/shared-data.ts";
 import type { datex_meta } from "datex-core-legacy/utils/global_types.ts";
 
@@ -325,7 +326,7 @@ export class ContextBuilder {
 	}
 
 	getEndpointIsTrusted(request: Request) {
-		return !!getCookie("uix-session", request.headers, new URL(request.url).port)
+		return getHTTPRequestEndpointIsTrusted(request)
 	}
 
 	build() {
@@ -343,19 +344,64 @@ export class ContextBuilder {
 export function getHTTPRequestEndpoint(request: Request, responseHeaders?: Headers) {
 	if (!request) return null;
 	const port = new URL(request.url).port;
-	const endpointCookie = (request as any)._endpoint ?? getCookie(UIX_COOKIE.endpoint, request.headers, port);
-	if (!endpointCookie) return null;
-	else {
+
+	// endpoint set by the server for this request (new session)
+	const serverEndpoint = (request as any)._endpoint;
+	if (serverEndpoint) {
 		try {
-			return f(endpointCookie as any);
+			return f(serverEndpoint as any) as Endpoint;
 		}
-		// invalid cookie content, reset
 		catch {
-			if (responseHeaders) deleteCookie(UIX_COOKIE.endpoint, responseHeaders, port)
 			return null;
 		}
 	}
-	// TODO signature validation
+
+	const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers, port);
+	if (!endpointCookie) return null;
+
+	let endpoint: Endpoint;
+	try {
+		endpoint = f(endpointCookie as any) as Endpoint;
+	}
+	// invalid cookie content, reset
+	catch {
+		if (responseHeaders) deleteCookie(UIX_COOKIE.endpoint, responseHeaders, port)
+		return null;
+	}
+
+	// SECURITY: the endpoint cookie can be set by the client - only accept it if it
+	// belongs to a valid (verified or unverified) session created by this server
+	const verifiedSessionCookie = getCookie("uix-session", request.headers, port);
+	const unverifiedSessionCookie = getCookie("uix-session-unverified", request.headers, port);
+	if (
+		(verifiedSessionCookie && validateVerifiedSession(endpoint, verifiedSessionCookie)) ||
+		(unverifiedSessionCookie && validateUnverifiedSession(endpoint, unverifiedSessionCookie))
+	) {
+		return endpoint;
+	}
+	return null;
+}
+
+/**
+ * Returns true if the HTTP request belongs to a verified endpoint session
+ * (the endpoint has proven that it owns the private keys of the endpoint)
+ */
+export function getHTTPRequestEndpointIsTrusted(request: Request) {
+	if (!request) return false;
+	const port = new URL(request.url).port;
+	const endpointCookie = getCookie(UIX_COOKIE.endpoint, request.headers, port);
+	const verifiedSessionCookie = getCookie("uix-session", request.headers, port);
+	if (!endpointCookie || !verifiedSessionCookie) return false;
+	try {
+		const endpoint = f(endpointCookie as any) as Endpoint;
+		// a server-assigned endpoint for this request must match the cookie
+		const serverEndpoint = (request as any)._endpoint;
+		if (serverEndpoint && serverEndpoint !== endpoint.toString()) return false;
+		return validateVerifiedSession(endpoint, verifiedSessionCookie);
+	}
+	catch {
+		return false;
+	}
 }
 
 export type ContextGenerator = () => Context

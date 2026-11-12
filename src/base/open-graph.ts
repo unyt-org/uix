@@ -2,6 +2,18 @@ import { convertToWebPath } from "../app/convert-to-web-path.ts";
 
 export const OPEN_GRAPH = Symbol("OPEN_GRAPH");
 
+/**
+ * SECURITY: escapes text for HTML text content and attribute values
+ */
+export function escapeHtmlText(value: unknown) {
+	return String(value ?? "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
 export interface OpenGraphData {
 	title: string,
 	description?: string
@@ -26,17 +38,20 @@ export class OpenGraphInformation {
 
 	async getMetaTags() {
 		if (!this.#meta_tags) {
-			const image_url = this.image_generator ? convertToWebPath(await this.image_generator.getImageURL(this.data)) : null;
+			const image_url = this.image_generator ? escapeHtmlText(convertToWebPath(await this.image_generator.getImageURL(this.data))) : null;
+			// SECURITY: title and description can contain user data
+			const title = escapeHtmlText(this.data.title);
+			const description = this.data.description ? escapeHtmlText(this.data.description) : undefined;
 			this.#meta_tags = `
-<title>${this.data.title}</title>
-${this.data.description?`<meta name="description" content="${this.data.description}">`:''}
-<meta property="og:title" content="${this.data.title}">
-${this.data.description?`<meta property="og:description" content="${this.data.description}">`:''}
+<title>${title}</title>
+${description?`<meta name="description" content="${description}">`:''}
+<meta property="og:title" content="${title}">
+${description?`<meta property="og:description" content="${description}">`:''}
 ${image_url?`<meta property="og:image" content="${image_url}">`:''}
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${this.data.title}">
-${this.data.description?`<meta name="twitter:description" content="${this.data.description}">`:''}
+<meta name="twitter:title" content="${title}">
+${description?`<meta name="twitter:description" content="${description}">`:''}
 ${image_url?`<meta name="twitter:image" content="${image_url}">`:''}`
 		}
 		

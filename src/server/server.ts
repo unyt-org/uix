@@ -387,6 +387,46 @@ export class Server {
         return arrayBufferToBase64(await Crypto.sign(endpoint.binary));
     }
 
+    /**
+     * Returns true if the endpoint was assigned to the client by this server:
+     * the nonce cookie must be a valid signature of the endpoint by this server (see getNonce).
+     * Used to restore unverified sessions after a backend restart (session tokens are only stored in memory).
+     */
+    private async isServerAssignedEndpoint(endpoint: Endpoint, datexEndpointNonceCookie: string) {
+        try {
+            if (!(endpoint instanceof Datex.Endpoint)) return false;
+            // there is already an active unverified session with another token for this endpoint
+            if (unverifiedSessionExists(endpoint)) return false;
+            const nonce = base64ToArrayBuffer(datexEndpointNonceCookie);
+            return !!(await Crypto.verify(endpoint.binary, nonce, Datex.Runtime.endpoint));
+        }
+        catch (e) {
+            logger.debug("could not validate endpoint nonce", e);
+            return false;
+        }
+    }
+
+    /**
+     * Creates a new unverified session for an existing endpoint (e.g. after a backend restart)
+     */
+    private restoreUnverifiedSession(requestEvent: Deno.RequestEvent, port: string, endpoint: Datex.Endpoint) {
+        const url = new URL(requestEvent.request.url);
+        const isSafariLocalhost = url.hostname == "localhost" && isSafariClient(requestEvent.request);
+        const unverifiedSession = createSession(endpoint, false);
+        const headers = new Headers();
+
+        setCookieUIX('uix-session-unverified', unverifiedSession, undefined, headers, port, isSafariLocalhost);
+
+        // the new session cookie is only set with the response, use the restored endpoint for the current request
+        (requestEvent.request as any)._endpoint = endpoint.toString();
+
+        const originalRespondWith = requestEvent.respondWith.bind(requestEvent);
+        requestEvent.respondWith = (response:Response) => {
+            for (const [key, value] of headers.entries()) response.headers.append(key, value);
+            return originalRespondWith(response)
+        }
+    }
+
     private async validateEndpoint(requestEvent:Deno.RequestEvent, port: string, datexEndpointNonceCookie: string, datexEndpointValidationCookie: string, datexEndpointCookie: string) {
         try {
             const nonce = base64ToArrayBuffer(datexEndpointNonceCookie)
@@ -549,7 +589,13 @@ export class Server {
                     // no valid session
                     if (!validateUnverifiedSession(endpoint, uixUnverifiedSessionCookie)) {
                         logger.debug("invalid session for " + endpoint + " (" + uixUnverifiedSessionCookie + ")")
-                        endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
+                        // sessions are only stored in memory and are lost after a backend restart:
+                        // restore the session if the endpoint was assigned by this server (nonce signed by the server)
+                        if (datexEndpointNonceCookie && await this.isServerAssignedEndpoint(endpoint, datexEndpointNonceCookie)) {
+                            logger.debug("restoring unverified session for " + endpoint);
+                            this.restoreUnverifiedSession(requestEvent, port, endpoint);
+                        }
+                        else endpoint = await this.setUnverifiedSessionInit(requestEvent, port);
                     }
                     else {
                         logger.debug("valid unverified session for " + endpoint + " (" + uixUnverifiedSessionCookie + ")")

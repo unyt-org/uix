@@ -728,6 +728,8 @@ export async function generateHTMLPage({
 		files += `const {frontendRouter} = (await import("${provider.resolveImport("uix/routing/frontend-routing.ts").toString()}"));`
 
 		if (app.options?.experimental_features.includes("indirect-references")) files +=  indent(4) `\nDatex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;`
+		// SECURITY: pointer protection is always enabled on the frontend as well
+		files += indent(4) `\nDatex.Runtime.OPTIONS.PROTECT_POINTERS = true;`
 
 
 		// set app info

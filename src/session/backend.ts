@@ -4,12 +4,8 @@ const sessions = new Map<Datex.Endpoint, Set<string>>().setAutoDefault(Set)
 const unverifiedSessions = new Map<Datex.Endpoint, Set<string>>().setAutoDefault(Set)
 
 export function createSession(endpoint: Datex.Endpoint, verified = true) {
-	const token = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-		.replaceAll('x', function (c) {
-			const r = Math.random() * 16 | 0, 
-				v = c == 'x' ? r : (r & 0x3 | 0x8);
-			return v.toString(16);
-		});
+	// SECURITY: cryptographically secure random session token (Math.random() is predictable)
+	const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, "0")).join("");
 	if (verified) sessions.getAuto(endpoint.main).add(token)
 	else unverifiedSessions.getAuto(endpoint.main).add(token)
 	return token;
@@ -20,9 +16,9 @@ export function validateVerifiedSession(endpoint: Datex.Endpoint, token: string)
 }
 
 export function validateUnverifiedSession(endpoint: Datex.Endpoint, token: string) {
-	const isValid = unverifiedSessions.getAuto(endpoint.main).has(token);
-	if (!isValid) return unverifiedSessions.delete(endpoint.main);
-	return isValid;
+	// SECURITY: previously returned the result of Map.delete() for invalid tokens (true if a session existed),
+	// which accepted any token for endpoints with an unverified session
+	return unverifiedSessions.get(endpoint.main)?.has(token) ?? false;
 }
 
 export function unverifiedSessionExists(endpoint: Datex.Endpoint) {

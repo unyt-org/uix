@@ -1,5 +1,5 @@
 import { Datex } from "datex-core-legacy";
-import { OpenGraphInformation } from "../base/open-graph.ts";
+import { OpenGraphInformation, escapeHtmlText } from "../base/open-graph.ts";
 import { indent } from "datex-core-legacy/utils/indent.ts";
 import type { HTMLProvider } from "../providers/html.ts";
 import { COMPONENT_CONTEXT, STANDALONE } from "../standalone/bound_content_properties.ts";
@@ -893,7 +893,7 @@ export async function generateHTMLPage({
 							}">`
 					}).join("\n") : ""
 				}
-				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${provider.app_options.name}</title>` : '')}
+				${await open_graph_meta_tags?.getMetaTags() ?? (provider.app_options.name ? `<title>${escapeHtmlText(provider.app_options.name)}</title>` : '')}
 				${custom_meta}
 				${favicon}
 				${provider.app_options.installable||provider.app_options.manifest ? `<link rel="manifest" href="/@uix/manifest.json">` : ''}

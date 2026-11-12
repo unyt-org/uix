@@ -117,19 +117,29 @@ export function getValueInitializer(value:any, forceDatex = false): string {
  * - uses datex-over-http when DATEX is not available
  * @param fn
  */
+/**
+ * Returns a JS string literal that can be safely embedded into inline <script> blocks
+ */
+function jsStringLiteral(value: string) {
+	return JSON.stringify(value).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+}
+
 export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, keepAlive = false, type: "number"|"string"|"bigint"|"boolean"|"Date"): string {
 	
 	// prevent garbage collection
 	if (ref instanceof Datex.Pointer) ref.is_persistent = true;
 
 	const ptrString = Datex.Runtime.valueToDatexString(ref);
+	// SECURITY: embed DATEX strings as escaped JS string literals (ptrString can contain quotes, e.g. for property keys)
+	const assignDatex = jsStringLiteral(ptrString + "=?");
+	const assignDatexPrefix = jsStringLiteral(ptrString + "=");
 	
 	if (forceDatex) {
 		if (keepAlive) throw new Error("Cannot use keepAlive=true with forceDatex=true")
 		return `async (val) => {
 			await import("datex-core-legacy" /*lazy*/);
 			await Datex.Supranet.connect();
-			return datex('${ptrString}=?', [val]);
+			return datex(${assignDatex}, [val]);
 		}
 		`
 	}
@@ -148,12 +158,12 @@ export function getValueUpdater(ref:Datex.ReactiveValue, forceDatex = false, kee
 			// use datex
 			if (globalThis.datex && globalThis.Datex) {
 				await Datex.Supranet.connect();
-				return datex('${ptrString}=?', [val]);
+				return datex(${assignDatex}, [val]);
 			}
 			// use datex-over-http
 			else {
-				${keepAlive ? `if (navigator.userAgent.includes("Firefox/")) {navigator.sendBeacon("/@uix/datex", "${ptrString}=" + JSON.stringify(val)); return};`: ""}
-				const res = await fetch("/@uix/datex", {method:"POST", keepalive: true, headers: {"Content-Type": "text/datex"}, body:"${ptrString}=" + JSON.stringify(val)});
+				${keepAlive ? `if (navigator.userAgent.includes("Firefox/")) {navigator.sendBeacon("/@uix/datex", ${assignDatexPrefix} + JSON.stringify(val)); return};`: ""}
+				const res = await fetch("/@uix/datex", {method:"POST", keepalive: true, headers: {"Content-Type": "text/datex"}, body:${assignDatexPrefix} + JSON.stringify(val)});
 				if (res.ok) return true
 				else throw new Error(await res.text())
 			}

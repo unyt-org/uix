@@ -34,6 +34,26 @@ import { waitForBuildLocks } from "./build-lock.ts";
 
 const {serveDir} = client_type === "deno" ? (await import("https://deno.land/std@0.164.0/http/file_server.ts")) : {serveDir:null};
 
+/**
+ * SECURITY: returns false for requests that were sent from another site (CSRF protection)
+ * Uses the Sec-Fetch-Site and Origin headers (set by browsers, cannot be modified by websites)
+ */
+function isSameOriginRequest(request: Request) {
+	const secFetchSite = request.headers.get("Sec-Fetch-Site");
+	if (secFetchSite && secFetchSite !== "same-origin" && secFetchSite !== "none") return false;
+	const origin = request.headers.get("Origin");
+	if (origin && origin !== "null") {
+		try {
+			if (new URL(origin).host !== new URL(request.url).host) return false;
+		}
+		catch {
+			return false;
+		}
+	}
+	else if (origin === "null") return false;
+	return true;
+}
+
 
 export class FrontendManager extends HTMLProvider {
 
@@ -299,8 +319,28 @@ export class FrontendManager extends HTMLProvider {
 			const ptrId = path.replace("/@uix/form-action/", "").split("/")[0].slice(1);
 			const ptr = Datex.Pointer.get(ptrId)
 
-			if (!ptr) this.server.sendError(req, 400, "Invalid Form Action");
-			else {
+			// SECURITY: reject cross-site form submissions (CSRF)
+			if (!isSameOriginRequest(req.request)) {
+				this.server.sendError(req, 403, "Cross-origin requests are not allowed");
+				return;
+			}
+
+			// SECURITY: only functions can be used as form actions (prevents reading/rendering arbitrary pointer values by id)
+			if (!ptr || typeof ptr.val !== "function") {
+				this.server.sendError(req, 400, "Invalid Form Action");
+				return;
+			}
+
+			// SECURITY: respect pointer permissions (if enabled)
+			try {
+				ptr.assertEndpointCanRead(getHTTPRequestEndpoint(req.request) ?? undefined);
+			}
+			catch {
+				this.server.sendError(req, 403, "Invalid Form Action");
+				return;
+			}
+
+			{
 				// console.log("form-action", ptrId, req);
 				this.handleRequest(req, path, con, metadata, ptr.val)
 			}
@@ -407,6 +447,13 @@ export class FrontendManager extends HTMLProvider {
 		// handle datex-over-http
 		this.server.path(/^\/@uix\/datex\/?$/, async (req, path)=>{
 			try {
+				// SECURITY: reject cross-site requests (CSRF) - cookies are sent with SameSite=None
+				if (!isSameOriginRequest(req.request)) {
+					logger.error("DATEX over HTTP: rejected cross-origin request");
+					req.respondWith(this.server.getErrorResponse(403, "Cross-origin requests are not allowed"));
+					return;
+				}
+
 				// TODO: fix mock requests
 				const dx = await req.request.text()
 				// TODO: rate limiting

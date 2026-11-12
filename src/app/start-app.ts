@@ -37,8 +37,11 @@ export async function startApp(app: {domains:string[], hostDomains: string[], op
 
 
 	// enable experimental features
-	if (app.options?.experimental_features.includes("protect-pointers")) Datex.Runtime.OPTIONS.PROTECT_POINTERS = true;
 	if (app.options?.experimental_features.includes("indirect-references")) Datex.Runtime.OPTIONS.INDIRECT_REFERENCES = true;
+
+	// SECURITY: pointer protection is always enabled (independent of the DATEX runtime default):
+	// remote endpoints need explicit permissions to read/write pointers of this endpoint
+	Datex.Runtime.OPTIONS.PROTECT_POINTERS = true;
 
 	// for unyt log
 	Datex.Unyt.setAppInfo({name:nOptions.name, version:nOptions.version, stage:stage, host:Deno.env.has("UIX_HOST_ENDPOINT") && Deno.env.get("UIX_HOST_ENDPOINT")!.startsWith("@") ? f(Deno.env.get("UIX_HOST_ENDPOINT") as any) : undefined, dynamicData: app})

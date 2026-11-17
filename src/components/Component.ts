@@ -695,8 +695,11 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
     }
 
 
-    #datex_lifecycle_ready_resolve?:Function
-    #datex_lifecycle_ready = new Promise((resolve)=>this.#datex_lifecycle_ready_resolve = resolve)
+    // Internal lifecycle callbacks consume the outcome without creating an unobserved
+    // rejection. Public waiters receive a rejecting promise through constructed.
+    #datex_lifecycle_ready_resolve?:(failure?:{error:unknown})=>void
+    #datex_lifecycle_ready = new Promise<{error:unknown}|undefined>((resolve)=>this.#datex_lifecycle_ready_resolve = resolve)
+    #constructed?:Promise<void>
 
     #create_lifecycle_ready_resolve?:Function
     #create_lifecycle_ready = new Promise((resolve)=>this.#create_lifecycle_ready_resolve = resolve)
@@ -708,10 +711,13 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
     private static style_templates?:Set<jsxInputGenerator<DynamicCSSStyleSheet|URL,any,any,any>>
 
     /**
-     * Promise that resolves after onConstruct is finished
+     * Promise that resolves after construction finishes, or rejects with its error.
+     * Does not wait for construction of descendant components.
      */
     get constructed() {
-        return this.#datex_lifecycle_ready
+        return this.#constructed ??= this.#datex_lifecycle_ready.then(failure=>{
+            if (failure) throw failure.error;
+        })
     }
 
     /**
@@ -739,39 +745,51 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
 
     // default constructor
     async construct(options?:Datex.DatexObjectInit<Props>): Promise<void> {
-        // options already handled in constructor
+        try {
+            // options already handled in constructor
 
-        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in Component.init
- 
-        if (!((<typeof Component>this.constructor).prototype instanceof Component)) {
-            logger.warn("Cannot initialize standalone component as normal UIX component (<"+this.tagName.toLowerCase()+">)")
-            return;
+            await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in Component.init
+
+            if (!((<typeof Component>this.constructor).prototype instanceof Component)) {
+                logger.warn("Cannot initialize standalone component as normal UIX component (<"+this.tagName.toLowerCase()+">)")
+                return;
+            }
+
+
+            // make sure static component data (e.g. datex module imports) is loaded
+            await (<typeof Component>this.constructor).init();
+            this.inheritDatexProperties();
+
+            if (!this.reconstructed_from_dom) await this.loadTemplate();
+            else this.logger.debug("Reconstructed from DOM, not creating new template content")
+            this.loadDefaultStyle()
+            await this.init(true);
+            await this.onConstructed?.();
+
+            this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
         }
-
-
-        // make sure static component data (e.g. datex module imports) is loaded
-        await (<typeof Component>this.constructor).init();
-        this.inheritDatexProperties();
-
-        if (!this.reconstructed_from_dom) await this.loadTemplate();
-        else this.logger.debug("Reconstructed from DOM, not creating new template content")
-        this.loadDefaultStyle()
-        await this.init(true);
-        await this.onConstructed?.();
-
-        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
+        catch (error) {
+            this.#datex_lifecycle_ready_resolve?.({error});
+            throw error;
+        }
     }
 
     // called when created from saved state
     async replicate() {
-        await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
-        // make sure static component data (e.g. datex module imports) is loaded
-        await (<typeof Component>this.constructor).init();
-        this.inheritDatexProperties();
+        try {
+            await sleep(0); // TODO: fix: makes sure constructor is finished?!, otherwise correct 'this' not yet available in child class init
+            // make sure static component data (e.g. datex module imports) is loaded
+            await (<typeof Component>this.constructor).init();
+            this.inheritDatexProperties();
 
-        this.loadDefaultStyle()
-        await this.init();
-        this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
+            this.loadDefaultStyle()
+            await this.init();
+            this.#datex_lifecycle_ready_resolve?.(); // onCreate can be called (required because of async)
+        }
+        catch (error) {
+            this.#datex_lifecycle_ready_resolve?.({error});
+            throw error;
+        }
     }
 
     /**
@@ -1048,6 +1066,14 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
         await handler(); 
     }
 
+    // DOM callbacks do not have a caller to await a rejection. Construction errors
+    // are still reported by DATEX and rejected by constructed/construct/replicate.
+    private static async deferConstructedIfSuccessful(components:Component[], handler:()=>unknown):Promise<void> {
+        const outcomes = await Promise.all(components.map(c => c.#datex_lifecycle_ready));
+        if (outcomes.some(failure=>failure !== undefined)) return;
+        await handler();
+    }
+
     disconnectedCallback() {
 
         // reset anchor lifecycle
@@ -1058,7 +1084,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
 
         // handle child on parent
         if (this.parentElement instanceof Component) {
-            Component.deferConstructed([this, this.parentElement], ()=>{
+            Component.deferConstructedIfSuccessful([this, this.parentElement], ()=>{
                 (this.parentElement as Component).onChildRemoved(this)
             })
         }
@@ -1088,7 +1114,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
 
         // handle child on parent
         if (this.parentElement instanceof Component) {
-            Component.deferConstructed([this, this.parentElement], ()=>{
+            Component.deferConstructedIfSuccessful([this, this.parentElement], ()=>{
                 if (this.parentElement instanceof Component) (this.parentElement as Component).onChildAdded(this)
             })
         }
@@ -1099,7 +1125,7 @@ export abstract class Component<Props extends DefaultProps = DefaultProps, Child
 
     private async connectedCallbackAsync(){
 
-        await this.#datex_lifecycle_ready; // wait for onConstruct, init
+        if (await this.#datex_lifecycle_ready) return; // failed construction cannot be anchored
 
         const new_create = !this.#created;
         this.#created = true;

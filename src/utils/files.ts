@@ -8,7 +8,24 @@ import { Path } from "datex-core-legacy/utils/path.ts";
 
 const directoryIndexFiles = new Map<string, object>();
 
-export async function fileExists(url: URL|string, {cached, fallbackRequest}: {cached?: boolean, fallbackRequest?: boolean} = {cached: true, fallbackRequest: true}) {
+// Results for web URLs with cached=true. Directory indexes are already cached for the
+// lifetime of the module, so the answer for a URL cannot change; this avoids repeating
+// Path/URL construction and index traversal for every component instance.
+const webExistsCache = new Map<string, Promise<boolean|undefined>>();
+
+export function fileExists(url: URL|string, options: {cached?: boolean, fallbackRequest?: boolean} = {cached: true, fallbackRequest: true}): Promise<boolean|undefined> {
+	if (!options.cached) return fileExistsUncached(url, options);
+	const key = (options.fallbackRequest ? "1" : "0") + url.toString();
+	let result = webExistsCache.get(key);
+	if (!result) {
+		result = fileExistsUncached(url, options);
+		const urlPath = url instanceof Path ? url : new Path(url);
+		if (urlPath.is_web) webExistsCache.set(key, result);
+	}
+	return result;
+}
+
+async function fileExistsUncached(url: URL|string, {cached, fallbackRequest}: {cached?: boolean, fallbackRequest?: boolean}) {
 	const urlPath = url instanceof Path ? url : new Path(url);
 
 	if (!urlPath.is_web) {

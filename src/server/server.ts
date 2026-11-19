@@ -39,6 +39,7 @@ import { hasDependencyList } from "../html/dependency-resolver.ts";
 import { UIX_COOKIE } from "../session/cookies.ts";
 import { Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { getCachedResponse } from "../routing/backend-entrypoint-proxy.ts";
+import { isSafeRequestPath, isServableFile } from "./path-security.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -675,9 +676,7 @@ export class Server {
 
         try {
             const decoded = decodeURIComponent(req_url.pathname);
-            // SECURITY: prevent path traversal - encoded separators (%2F, %5C) are only decoded here,
-            // so ".." segments, backslashes or null bytes in the decoded path are never valid
-            if (decoded.includes("\\") || decoded.includes("\0") || decoded.split("/").some(segment => segment === "..")) {
+            if (!isSafeRequestPath(req_url.pathname)) {
                 logger.warn("Rejected request with invalid path: " + req_url.pathname);
                 return false;
             }
@@ -776,6 +775,16 @@ export class Server {
 
         if (!filepath) {
             return this.getErrorResponse(500);
+        }
+
+        // SECURITY: only regular files may be read (no pipes, sockets, devices or /proc, /sys, /dev entries);
+        // directories are only allowed when directory indices are enabled
+        if (await filepath.fsExists()) {
+            const isDirectoryIndex = this.#options.directory_indices && await filepath.fsIsDir();
+            if (!isDirectoryIndex && !await isServableFile(filepath.normal_pathname)) {
+                logger.warn("Rejected request for non-regular file: " + filepath.normal_pathname);
+                return this.getErrorResponse(404, "Not found");
+            }
         }
 
         // handle request by proxy?

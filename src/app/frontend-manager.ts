@@ -1,4 +1,5 @@
 import { Transpiler } from "../server/transpiler.ts";
+import { isSameOriginRequest } from "../server/request-security.ts";
 import { TypescriptImportResolver } from "../server/ts-import-resolver.ts";
 
 import { $$, Datex } from "datex-core-legacy";
@@ -55,21 +56,6 @@ function canEndpointReadPointer(ptr: Datex.Pointer, endpoint?: Datex.Endpoint|nu
  * SECURITY: returns false for requests that were sent from another site (CSRF protection)
  * Uses the Sec-Fetch-Site and Origin headers (set by browsers, cannot be modified by websites)
  */
-function isSameOriginRequest(request: Request) {
-	const secFetchSite = request.headers.get("Sec-Fetch-Site");
-	if (secFetchSite && secFetchSite !== "same-origin" && secFetchSite !== "none") return false;
-	const origin = request.headers.get("Origin");
-	if (origin && origin !== "null") {
-		try {
-			if (new URL(origin).host !== new URL(request.url).host) return false;
-		}
-		catch {
-			return false;
-		}
-	}
-	else if (origin === "null") return false;
-	return true;
-}
 
 
 export class FrontendManager extends HTMLProvider {
@@ -335,9 +321,14 @@ export class FrontendManager extends HTMLProvider {
 		this.server.path("/favicon.ico", (req, path)=>this.handleFavicon(req, path));
 		this.server.path("/robots.txt", (req, path)=>this.handleRobotsTXT(req, path));
 
-		this.server.path(/^\/@uix\/cache\/.*$/, async (req, path)=>{
-			await req.respondWith(await serveDir!(req.request, {fsRoot:UIX.cacheDir.normal_pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
-		});
+		// SECURITY: the cache directory contains uploaded user files and other private data.
+		// It is only served directly (without any access control) if the app explicitly enables it,
+		// otherwise /@uix/cache/ requests are passed to the app entrypoint, which must handle access control.
+		if (this.app_options.serve_cache_dir) {
+			this.server.path(/^\/@uix\/cache\/.*$/, async (req, path)=>{
+				await req.respondWith(await serveDir!(req.request, {fsRoot:UIX.cacheDir.normal_pathname, urlRoot:'@uix/cache/', enableCors:true, quiet:true}))
+			});
+		}
 
 		this.server.path(/^\/@uix\/form-action\/.*$/, (req, path, con, metadata)=>{
 			const ptrId = path.replace("/@uix/form-action/", "").split("/")[0].slice(1);

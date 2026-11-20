@@ -906,7 +906,7 @@ export async function generateHTMLPage({
 				${custom_meta}
 				${favicon}
 				${provider.app_options.installable||provider.app_options.manifest ? `<link rel="manifest" href="/@uix/manifest.json">` : ''}
-				${provider.app_options.installable||provider.app_options.manifest ? `<script async src="https://cdn.jsdelivr.net/npm/pwacompat" crossorigin="anonymous"></script>` : ''}
+				${provider.app_options.installable||provider.app_options.manifest ? `<script async src="https://cdn.jsdelivr.net/npm/pwacompat@2.0.17/pwacompat.min.js" integrity="sha384-Rli908ex+eSk6Xo0v7OWhTha8ooKKFI2XDTQMLlU3yp5VrrY3+K6DmULV2FWtYbM" crossorigin="anonymous"></script>` : ''}
 				${global_style}
 				${prerendered_content instanceof Array ? prerendered_content[0] : ''}
 				${files}

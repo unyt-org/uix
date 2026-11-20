@@ -18,16 +18,35 @@ import { HTTPStatus } from "../html/http-status.ts";
  * @param entrypoint 
  * @returns 
  */
+// SECURITY: headers that are set by the reverse proxy / server and must not be supplied by the caller
+const PROXY_REQUEST_FORBIDDEN_HEADERS = ["x-real-ip", "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "forwarded", "cookie"];
+
+/**
+ * Removes headers from a caller supplied request that could be used to spoof the client address or session
+ */
+function sanitizeProxyRequest(request: unknown) {
+	if (!(request instanceof Request)) return request as Request;
+	const headers = new Headers(request.headers);
+	for (const name of PROXY_REQUEST_FORBIDDEN_HEADERS) headers.delete(name);
+	return new Request(request, { headers });
+}
+
 export function createBackendEntrypointProxy(entrypoint: Entrypoint) {
 	const fn = $(async function(_ctx: Context, _params:Record<string,string>) {
+
+		// SECURITY: the context (session, private data) is bound to the caller endpoint,
+		// unsigned sender information can be spoofed, so only verified callers are accepted
+		const meta = datex.meta;
+		if (!meta.signed && !meta.local) {
+			throw new Error("Entrypoint requests are only allowed from verified endpoints");
+		}
 
 		// set endpoint from datex meta
 		const path = Path.Route(_ctx.path);
 		const ctx = new ContextBuilder()
-			.setRequestData(_ctx.request, _ctx.path)
+			.setRequestData(sanitizeProxyRequest(_ctx.request), _ctx.path)
 			.build();
 		
-		const meta = datex.meta;
 		ctx.endpoint = meta.caller;
 		if (meta.signed) ctx.endpointIsTrusted = true;
 

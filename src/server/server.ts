@@ -40,6 +40,7 @@ import { UIX_COOKIE } from "../session/cookies.ts";
 import { Endpoint } from "datex-core-legacy/types/addressing.ts";
 import { getCachedResponse } from "../routing/backend-entrypoint-proxy.ts";
 import { isSafeRequestPath, isServableFile } from "./path-security.ts";
+import { isForbiddenCrossSiteRequest } from "./request-security.ts";
 
 const logger = new Datex.Logger("UIX Server");
 
@@ -427,6 +428,11 @@ export class Server {
         // invalid url (malformed encoding or path traversal)
         if (normalized_path == false) {
             this.sendError(requestEvent, 400);
+            return;
+        }
+
+        if (isForbiddenCrossSiteRequest(requestEvent.request)) {
+            this.sendError(requestEvent, 403);
             return;
         }
 

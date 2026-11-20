@@ -35,6 +35,7 @@ export type appOptions = {
 	preload_dependencies?: boolean // automatically preload all ts module dependencies, default: true
 	source_maps?: boolean // generate source maps for transpiled javascript modules, default: false, true for dev stage
 	dependency_maps?: boolean // generate dependency maps for js modules, default: false
+	serve_cache_dir?: boolean // serve the whole UIX cache directory publicly at /@uix/cache/ (no access control!), default: false
 }
 
 export interface normalizedAppOptions extends appOptions {
@@ -91,6 +92,7 @@ export async function normalizeAppOptions(options:appOptions = {}, baseURL?:stri
 	if (!n_options.jusix) {
 		logger.warn("Embedded JSX reactivity (JUSIX) is disabled. Enable it by setting the jsxImportSource to \"jusix\" in your deno.json");
 	}
+	n_options.serve_cache_dir = options.serve_cache_dir ?? false;
 
 	// import map or import map path
 	if (options.import_map) n_options.import_map = new ImportMap(options.import_map);
